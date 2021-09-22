@@ -1,0 +1,24 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "CradleLightControl",
+	"Description": "Light control for VP in Cradle",
+	"Category": "Other",
+	"CreatedBy": "Kamen",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "CradleLightControl",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
+		}
+	]
+}
