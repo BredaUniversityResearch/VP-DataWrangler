@@ -10,6 +10,7 @@ public class CradleLightControl : ModuleRules
 		
 		PublicIncludePaths.AddRange(
 			new string[] {
+				"Editor/Blutility/Classes/"
 				// ... add public include paths required here ...
 			}
 			);
@@ -17,6 +18,7 @@ public class CradleLightControl : ModuleRules
 		
 		PrivateIncludePaths.AddRange(
 			new string[] {
+				"Editor/Blutility/Classes/"
 				// ... add other private include paths required here ...
 			}
 			);
@@ -38,6 +40,12 @@ public class CradleLightControl : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
+                "InputCore", 
+				"Projects",
+				"RHI",
+				"RenderCore",
+				"AppFramework"
+
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

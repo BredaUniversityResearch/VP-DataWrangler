@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
+#include "LightControlTool.h"
 
 #include "IDetailCustomization.h"
 
@@ -15,5 +16,15 @@ public:
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
 
+	void TabShenanigans();
+
 	TSharedPtr<FUICommandList> CommandList;
+
+	TSharedPtr<SDockTab> DockTab;
+
+	TSharedPtr<SLightControlTool> LightControl;
+
+
+private:
+
 };

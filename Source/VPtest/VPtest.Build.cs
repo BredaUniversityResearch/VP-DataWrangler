@@ -1,20 +1,45 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
+using System.Security.AccessControl;
 using UnrealBuildTool;
 
 public class VPtest : ModuleRules
 {
     public VPtest(ReadOnlyTargetRules Target) : base(Target)
     {
+        var CommonIncludePaths = new[]
+        {
+            "SteamVR/Public",
+            "SteamVR/Classes",
+            "SteamVRInput/Public",
+            "SteamVRInput/Classes",
+            "Editor/Blutility/Classes",
+        };
+
+
+
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
         PublicDependencyModuleNames.AddRange(new string[]
-            {"Core", "CoreUObject", "Engine", "InputCore", "SteamVR", "SteamVRInput"});
+            {"Core",
+                "CoreUObject",
+                "Engine",
+                "InputCore", 
+                "SteamVR", 
+                "SteamVRInput",
+                "Slate",
+                "SlateCore",
+                "UnrealEd",
+                "Blutility",
+                "UMG"
+            });
 
-        PublicIncludePaths.AddRange(new string[] { "SteamVR/Public", "SteamVR/Classes",
-            "SteamVRInput/Public", "SteamVRInput/Classes" });
+        PublicIncludePaths.AddRange(CommonIncludePaths);
 
-    PrivateDependencyModuleNames.AddRange(new string[] {  });
+
+        PrivateIncludePaths.AddRange(CommonIncludePaths);
+
+        PrivateDependencyModuleNames.AddRange(new string[] {  });
 
 		// Uncomment if you are using Slate UI
 		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
