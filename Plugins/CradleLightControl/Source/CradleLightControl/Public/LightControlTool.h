@@ -5,11 +5,36 @@
 #include "Templates/SharedPointer.h"
 //#include "AppFramework/Public/Widgets/Colors/SComplexGradient.h"
 
+UENUM()
+enum ETreeItemType
+{
+    Folder = 0,
+    SkyLight,
+    SpotLight,
+    DirectionalLight,
+    PointLight,
+    Invalid
+};
+
 struct FTreeItem : public TSharedFromThis<FTreeItem>
 {
 public:
     FTreeItem(class SLightControlTool* InOwningWidget = nullptr, FString InName = "Unnamed",
         TArray<TSharedPtr<FTreeItem>> InChildren = TArray<TSharedPtr<FTreeItem>>());
+
+    ECheckBoxState IsLightEnabled() const;
+    void OnCheck(ECheckBoxState NewState);
+
+    FReply TreeDragDetected(const FGeometry& Geometry, const FPointerEvent& MouseEvent);
+    FReply TreeDropDetected(const FDragDropEvent& DragDropEvent);
+
+    void GenerateTableRow();
+
+    static bool VerifyDragDrop(TSharedPtr<FTreeItem> Dragged, TSharedPtr<FTreeItem> Destination);
+    bool HasAsIndirectChild(TSharedPtr<FTreeItem> Item);
+
+    FReply StartRename(const FGeometry&, const FPointerEvent&);
+    void EndRename(const FText& Text, ETextCommit::Type CommitType);
 
     UPROPERTY()
         TArray<TSharedPtr<FTreeItem>> Children;
@@ -20,12 +45,26 @@ public:
     UPROPERTY()
         FString Name;
 
+    union
+    {
+        class ASkyLight* SkyLight;
+        class APointLight* PointLight;
+        class ADirectionalLight* DirectionalLight;
+        class ASpotLight* SpotLight;
+    };
+
+    TEnumAsByte<ETreeItemType> Type;
+
     class SLightControlTool* OwningWidget;
 
-    FReply TreeDragDetected(const FGeometry& Geometry, const FPointerEvent& MouseEvent);
-    FReply TreeDropDetected(const FDragDropEvent& DragDropEvent);
+    TSharedPtr<SBox> TableRowBox;
+
+private:
+    bool bInRename;
+    TSharedPtr<SBox> TextSlot;
 
 };
+
 
 class FTreeDropOperation : public FDragDropOperation
 {
@@ -50,15 +89,17 @@ public:
     TSharedRef<ITableRow> AddToTree(TSharedPtr<FTreeItem> Item, const TSharedRef<STableViewBase>& OwnerTable);
 
     void GetChildren(TSharedPtr<FTreeItem> Item, TArray<TSharedPtr<FTreeItem>>& Children);
-
-    TArray<TSharedPtr<FTreeItem>> TreeItems;
-    TSharedPtr<STreeView<TSharedPtr<FTreeItem>>> Tree;
-
     void SelectionCallback(TSharedPtr<FTreeItem> Item, ESelectInfo::Type SelectType);
+
+    FReply AddFolderToTree();
 
     FText TestTextGetter() const;
 
     void ActorSpawnedCallback(AActor* Actor);
+
+    TSharedPtr<STreeView<TSharedPtr<FTreeItem>>> Tree;
+    TArray<TSharedPtr<FTreeItem>> TreeItems;
+
 
 private:
 
@@ -66,10 +107,12 @@ private:
 
     static TArray<FColor> HSVGradient(FVector2D Size = FVector2D(1.0f, 256.0f), EOrientation Orientation = Orient_Vertical);
 
-    static TSharedPtr<UTexture2D> MakeGradientTexture(int X = 1, int Y = 256);
+    static UTexture2D* MakeGradientTexture(int X = 1, int Y = 256);
 
     void LoadResources();
     void GenerateTextures();
+
+    void UpdateLightList();
 
     SVerticalBox::FSlot& LightHeader();
 
@@ -85,16 +128,18 @@ private:
     TSharedPtr<FSlateImageBrush> SaturationGradientBrush;
     TSharedPtr<FSlateImageBrush> TemperatureGradientBrush;
 
-    TSharedPtr<UTexture2D> IntensityGradientTexture;
-    TSharedPtr<UTexture2D> HSVGradientTexture;
-    TSharedPtr<UTexture2D> SaturationGradientTexture;
-    TSharedPtr<UTexture2D> TemperatureGradientTexture;
+    UPROPERTY()
+        UTexture2D* IntensityGradientTexture;
+    UPROPERTY()
+        UTexture2D* HSVGradientTexture;
+    UPROPERTY()
+        UTexture2D* SaturationGradientTexture;
+    UPROPERTY()
+        UTexture2D* TemperatureGradientTexture;
 
     TArray<TSharedPtr<FTreeItem>> SelectedItems;
 
+    FDelegateHandle ActorSpawnedListenerHandle;
+
+
 };
-//
-//class SMyGradient : public SComplexGradient
-//{
-//    virtual int32 OnPaint(const FPaintArgs& Args, const FGeometry& AllottedGeometry, const FSlateRect& MyCullingRect, FSlateWindowElementList& OutDrawElements, int32 LayerId, const FWidgetStyle& InWidgetStyle, bool bParentEnabled) const override;
-//};

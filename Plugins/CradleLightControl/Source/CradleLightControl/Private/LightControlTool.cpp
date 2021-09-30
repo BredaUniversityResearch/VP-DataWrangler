@@ -5,17 +5,224 @@
 #include "DetailCategoryBuilder.h"
 #include "DetailLayoutBuilder.h"
 #include "DetailWidgetRow.h"
+#include "Chaos/AABB.h"
+#include "Chaos/AABB.h"
+#include "Chaos/AABB.h"
+#include "Chaos/AABB.h"
+#include "Components/LightComponent.h"
+#include "Components/SkyLightComponent.h"
 #include "Engine/Engine.h"
 #include "Interfaces/IPluginManager.h"
-#include "AppFramework/Public/Widgets/Colors/SComplexGradient.h"
-#include "ImageUtils.h"
+#include "Kismet/GameplayStatics.h"
+#include "Engine/World.h"
+
+#include "Engine/SkyLight.h"
+#include "Engine/PointLight.h"
+#include "Engine/SpotLight.h"
+#include "Engine/DirectionalLight.h"
 
 
 FTreeItem::FTreeItem(SLightControlTool* InOwningWidget, FString InName, TArray<TSharedPtr<FTreeItem>> InChildren)
     : Name(InName)
     , Children(InChildren)
     , OwningWidget(InOwningWidget)
+    , bInRename(false)
 {
+}
+
+ECheckBoxState FTreeItem::IsLightEnabled() const
+{
+    bool AllOff = true, AllOn = true;
+
+    switch (Type)
+    {
+    case ETreeItemType::SkyLight:
+        return SkyLight->GetLightComponent()->IsVisible() ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
+    case ETreeItemType::SpotLight:
+        return SpotLight->GetLightComponent()->IsVisible() ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
+    case ETreeItemType::DirectionalLight:
+        return DirectionalLight->GetLightComponent()->IsVisible() ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
+    case ETreeItemType::PointLight:
+        return PointLight->GetLightComponent()->IsVisible() ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
+    case ETreeItemType::Folder:
+        for (auto& Child : Children)
+        {
+            auto State = Child->IsLightEnabled();
+            if (State == ECheckBoxState::Checked)
+                AllOff = false;
+            else if (State == ECheckBoxState::Unchecked)
+                AllOn = false;
+            else if (State == ECheckBoxState::Undetermined)
+                return ECheckBoxState::Undetermined;
+
+            if (!AllOff && !AllOn)
+                return ECheckBoxState::Undetermined;
+        }
+
+        if (AllOn)
+            return ECheckBoxState::Checked;
+        else
+            return ECheckBoxState::Unchecked;
+
+
+    default:
+        return ECheckBoxState::Undetermined;
+    }
+}
+
+void FTreeItem::OnCheck(ECheckBoxState NewState)
+{
+    bool B = false;
+    if (NewState == ECheckBoxState::Checked)
+        B = true;
+
+    switch (Type)
+    {
+    case ETreeItemType::SkyLight:
+        SkyLight->GetLightComponent()->SetVisibility(B);
+        break;
+    case ETreeItemType::SpotLight:
+        SpotLight->GetLightComponent()->SetVisibility(B);
+        break;
+    case ETreeItemType::DirectionalLight:
+        DirectionalLight->GetLightComponent()->SetVisibility(B);
+        break;
+    case ETreeItemType::PointLight:
+        PointLight->GetLightComponent()->SetVisibility(B);
+        break;
+    case ETreeItemType::Folder:
+        for (auto& Child : Children)
+        {
+            Child->OnCheck(NewState);
+        }
+        break;
+    }
+}
+
+void FTreeItem::GenerateTableRow()
+{
+    SHorizontalBox::FSlot& CheckBoxSlot = SHorizontalBox::Slot();
+    CheckBoxSlot.SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
+
+    if (!Type == Folder || Children.Num() > 0)
+    {
+        CheckBoxSlot[
+            SNew(SCheckBox)
+                .IsChecked_Raw(this, &FTreeItem::IsLightEnabled)
+                .OnCheckStateChanged_Raw(this, &FTreeItem::OnCheck)
+        ];
+    }
+    else
+        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Black, FString::Printf(TEXT("%s %d"), *Name, Children.Num()));
+
+
+    TableRowBox->SetContent(
+        SNew(SHorizontalBox)
+        + SHorizontalBox::Slot()
+        [
+            SAssignNew(TextSlot, SBox)    
+        ]
+        + CheckBoxSlot);
+
+    if (bInRename)
+    {
+        TextSlot->SetContent(
+            SNew(SEditableText)
+            .Text(FText::FromString(Name))
+            .OnTextChanged_Lambda([this](FText Input)
+                {
+                    Name = Input.ToString();
+                })
+            /*.OnKeyDownHandler(FOnKeyDown::CreateLambda([this](const FGeometry&, const FKeyEvent& KeyEvent)
+                {
+                    GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Black, KeyEvent.GetKey().ToString());
+
+                    if (KeyEvent.GetKey().ToString() == "Enter")
+                    {
+                        EndRename();
+                    }
+
+                    return FReply::Handled();
+                }))*/
+                    .OnTextCommitted(this, &FTreeItem::EndRename));
+        
+    }
+    else
+    {
+        TextSlot->SetContent(
+            SNew(STextBlock)
+            .Text(FText::FromString(Name))
+            .ShadowColorAndOpacity(FLinearColor::Blue)
+            .ShadowOffset(FIntPoint(-1, 1))
+            .OnDoubleClicked(this, &FTreeItem::StartRename));
+    }
+}
+
+bool FTreeItem::VerifyDragDrop(TSharedPtr<FTreeItem> Dragged, TSharedPtr<FTreeItem> Destination)
+{
+    // Would result in the child and parent creating a circle
+    if (Dragged->Children.Find(Destination) != INDEX_NONE)
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, "Cannot drag parent to child");
+        return false;
+    }
+
+    // Can't drag the item on itself, can we now
+    if (Dragged == Destination)
+    {
+        return false;
+    }
+
+
+    // Would cause a circular dependency between the tree items
+    if (Dragged->HasAsIndirectChild(Destination))
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, "Cannot drag parent to indirect child");
+        return false;
+    }
+
+    // No need to do anything in this case
+    if (Destination->Children.Find(Dragged) != INDEX_NONE)
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, "Drag drop cancelled");
+        return false;
+    }
+
+    return true;
+}
+
+bool FTreeItem::HasAsIndirectChild(TSharedPtr<FTreeItem> Item)
+{
+    if (Children.Find(Item) != INDEX_NONE)
+        return true;
+
+    for (auto TreeItem : Children)
+    {
+        if (TreeItem->HasAsIndirectChild(Item))
+            return true;
+    }
+
+    return false;
+}
+
+FReply FTreeItem::StartRename(const FGeometry&, const FPointerEvent&)
+{
+    bInRename = true;
+    GenerateTableRow();
+    return FReply::Handled();
+}
+
+
+void FTreeItem::EndRename(const FText& Text, ETextCommit::Type CommitType)
+{
+    if (ETextCommit::Type::OnEnter == CommitType)
+    {
+        Name = Text.ToString();
+    }
+
+
+    bInRename = false;
+    GenerateTableRow();
 }
 
 FReply FTreeItem::TreeDragDetected(const FGeometry& Geometry, const FPointerEvent& MouseEvent)
@@ -36,15 +243,76 @@ FReply FTreeItem::TreeDragDetected(const FGeometry& Geometry, const FPointerEven
 FReply FTreeItem::TreeDropDetected(const FDragDropEvent& DragDropEvent)
 {
     auto DragDrop = StaticCastSharedPtr<FTreeDropOperation>(DragDropEvent.GetOperation());
-    GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, Name + " Dropped like an anti vax child aged 4");
-
     auto Target = DragDrop->DraggedItem;
     auto Source = Target->Parent;
-    auto Destination = SharedThis(this);
 
-    Source->Children.Remove(Target);
-    Destination->Children.Add(Target);
-    Target->Parent = Destination;
+    if (!VerifyDragDrop(Target, SharedThis(this)))
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, "Drag drop cancelled");
+        auto Reply = FReply::Handled();
+        Reply.EndDragDrop();
+
+        return FReply::Handled();
+    }
+
+    if (Type == Folder)
+    {
+        if (true)
+        {
+            
+        }
+
+        auto Destination = SharedThis(this);
+
+        if (Source)
+            Source->Children.Remove(Target);
+        else
+            OwningWidget->TreeItems.Remove(Target);
+        Destination->Children.Add(Target);
+        Target->Parent = Destination;
+
+        if (Source)
+            Source->GenerateTableRow();
+        Destination->GenerateTableRow();        
+    }
+    else
+    {
+
+        auto Destination = MakeShared<FTreeItem>();
+        Destination->Name = Name + " Group";
+        Destination->OwningWidget = OwningWidget;
+        Destination->Type = Folder;
+        Destination->Parent = Parent;
+
+        if (Parent)
+        {
+            Parent->Children.Remove(SharedThis(this));
+            Parent->Children.Add(Destination);
+        }
+        else
+        {
+            OwningWidget->TreeItems.Remove(SharedThis(this));
+            OwningWidget->TreeItems.Add(Destination);
+        }
+
+        if (Source)
+            Source->Children.Remove(Target);
+        else
+            OwningWidget->TreeItems.Remove(Target);
+
+        Destination->Children.Add(Target);
+        Destination->Children.Add(SharedThis(this));
+
+        auto PrevParent = Parent;
+
+        Target->Parent = Destination;
+        Parent = Destination;
+
+        if (PrevParent)
+            PrevParent->GenerateTableRow();
+        if (Source)
+            Source->GenerateTableRow();
+    }
 
     OwningWidget->Tree->RequestTreeRefresh();
 
@@ -56,13 +324,19 @@ FReply FTreeItem::TreeDropDetected(const FDragDropEvent& DragDropEvent)
 
 void SLightControlTool::Construct(const FArguments& Args)
 {
-    /*auto ActorSpawnedDelegate = FOnActorSpawned::FDelegate::CreateRaw(this, &SLightControlTool::ActorSpawnedCallback);
-    GEngine->GetWorld()->AddOnActorSpawnedHandler(ActorSpawnedDelegate);*/
+    if (GWorld)
+    {
+        auto ActorSpawnedDelegate = FOnActorSpawned::FDelegate::CreateRaw(this, &SLightControlTool::ActorSpawnedCallback);
+        ActorSpawnedListenerHandle = GWorld->AddOnActorSpawnedHandler(ActorSpawnedDelegate);
+    }
+    else
+        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, "Could not set actor spawned callback");
+
 
     LoadResources();
     // Create a test data set
     // TODO: Replace with data from the editor 
-    TreeItems = {
+    /*TreeItems = {
         MakeShared<FTreeItem>(this, "Root 1"),
         MakeShared<FTreeItem>(this, "Root 2"),
         MakeShared<FTreeItem>(this, "Root 3"),
@@ -77,8 +351,9 @@ void SLightControlTool::Construct(const FArguments& Args)
     TreeItems[0]->Children[0]->Parent = TreeItems[0];
     TreeItems[0]->Children[1]->Parent = TreeItems[0];
 
-    TreeItems[0]->Children[0]->Children[0]->Parent = TreeItems[0]->Children[0];
+    TreeItems[0]->Children[0]->Children[0]->Parent = TreeItems[0]->Children[0];*/
        
+    UpdateLightList();
 
     // SVerticalBox slots are by default dividing the space equally between each other
     // Because of this we need to expose the slot with the search bar in order to disable that for it
@@ -130,6 +405,7 @@ void SLightControlTool::Construct(const FArguments& Args)
                 [
                     SNew(SBox)
                     .VAlign(VAlign_Top)
+                    .HAlign(HAlign_Fill)
                     [
                         SAssignNew(Tree, STreeView<TSharedPtr<FTreeItem>>)
                         .ItemHeight(24.0f)
@@ -145,7 +421,8 @@ void SLightControlTool::Construct(const FArguments& Args)
                 .Expose(NewFolderButtonSlot)
                 [
                     SNew(SButton)
-                    .Text(FText::FromString("New Folder"))
+                    .Text(FText::FromString("Add New Group"))
+                    .OnClicked_Raw(this, &SLightControlTool::AddFolderToTree)
                 ]
             ]
             + SSplitter::Slot()
@@ -202,17 +479,33 @@ void SLightControlTool::PreDestroy()
 
 TSharedRef<ITableRow> SLightControlTool::AddToTree(TSharedPtr<FTreeItem> Item, const TSharedRef<STableViewBase>& OwnerTable)
 {
-    return
+    SHorizontalBox::FSlot& CheckBoxSlot = SHorizontalBox::Slot();
+    CheckBoxSlot.SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
+
+    if (!Item->Type == Folder || Item->Children.Num() > 0)
+    {
+        CheckBoxSlot[
+            SNew(SCheckBox)
+                .IsChecked_Raw(Item.Get(), &FTreeItem::IsLightEnabled)
+                .OnCheckStateChanged_Raw(Item.Get(), &FTreeItem::OnCheck)
+        ];
+    }
+    else
+        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Black, FString::Printf(TEXT("%s %d"), *Item->Name, Item->Children.Num()));
+
+    auto Row = 
         SNew(STableRow<TSharedPtr<FString>>, OwnerTable)
         .Padding(2.0f)
         .OnDragDetected(Item.Get(), &FTreeItem::TreeDragDetected)
         .OnDrop_Raw(Item.Get(), &FTreeItem::TreeDropDetected)
         [
-            SNew(STextBlock)
-            .Text(FText::FromString(Item->Name))
-        .ShadowColorAndOpacity(FLinearColor::Blue)
-        .ShadowOffset(FIntPoint(-1, 1))
+            SAssignNew(Item->TableRowBox, SBox)           
         ];
+
+    Item->GenerateTableRow();
+
+    return Row;
+        
 
 
 }
@@ -224,11 +517,22 @@ void SLightControlTool::GetChildren(TSharedPtr<FTreeItem> Item, TArray<TSharedPt
 
 void SLightControlTool::SelectionCallback(TSharedPtr<FTreeItem> Item, ESelectInfo::Type SelectType)
 {
-    if (GEngine)
-    {
-        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Emerald, Item->Name);
-    }
     SelectedItems = Tree->GetSelectedItems();
+}
+
+FReply SLightControlTool::AddFolderToTree()
+{
+    TSharedPtr<FTreeItem> NewFolder = MakeShared<FTreeItem>();
+    NewFolder->OwningWidget = this;
+    NewFolder->Type = Folder;
+    NewFolder->Name = "New Group";
+    NewFolder->Parent = nullptr;
+
+    TreeItems.Add(NewFolder);
+
+    Tree->RequestTreeRefresh();
+
+    return FReply::Handled();
 }
 
 FText SLightControlTool::TestTextGetter() const
@@ -246,9 +550,45 @@ FText SLightControlTool::TestTextGetter() const
 
 void SLightControlTool::ActorSpawnedCallback(AActor* Actor)
 {
-    if (GEngine)
+    auto Type = Invalid;
+
+    if (Cast<ASkyLight>(Actor))
+        Type = ETreeItemType::SkyLight;
+    else if (Cast<ASpotLight>(Actor))
+        Type = ETreeItemType::SpotLight;
+    else if (Cast<ADirectionalLight>(Actor))
+        Type = ETreeItemType::DirectionalLight;
+    else if (Cast<APointLight>(Actor))
+        Type = ETreeItemType::PointLight;
+
+    if (Type != Invalid)
     {
-        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, "You just dropped some shit into the level didntya");
+        auto NewItem = MakeShared<FTreeItem>();
+
+        NewItem->Parent = nullptr;
+        NewItem->OwningWidget = this;
+        NewItem->Name = Actor->GetName();
+        NewItem->Type = Type;
+
+        switch (Type)
+        {
+        case SkyLight:
+            NewItem->SkyLight = Cast<ASkyLight>(Actor);
+            break;
+        case SpotLight:
+            NewItem->SpotLight = Cast<ASpotLight>(Actor);
+            break;
+        case DirectionalLight:
+            NewItem->DirectionalLight = Cast<ADirectionalLight>(Actor);
+            break;
+        case PointLight:
+            NewItem->PointLight = Cast<APointLight>(Actor);
+            break;
+        }
+
+        TreeItems.Add(NewItem);
+
+        Tree->RequestTreeRefresh();
     }
 }
 
@@ -337,9 +677,9 @@ TArray<FColor> SLightControlTool::HSVGradient(FVector2D Size, EOrientation Orien
     return GradientPixels;
 }
 
-TSharedPtr<UTexture2D> SLightControlTool::MakeGradientTexture(int X, int Y)
+UTexture2D* SLightControlTool::MakeGradientTexture(int X, int Y)
 {
-    auto Tex = TSharedPtr<UTexture2D>(UTexture2D::CreateTransient(X, Y));
+    auto Tex = UTexture2D::CreateTransient(X, Y);
     Tex->CompressionSettings = TextureCompressionSettings::TC_VectorDisplacementmap;
     Tex->SRGB = 0;
     Tex->AddToRoot();
@@ -359,10 +699,10 @@ void SLightControlTool::LoadResources()
 
     const FVector2D GradientSize(20.0f, 256.0f);
 
-    IntensityGradientBrush = MakeShared<FSlateImageBrush>(IntensityGradientTexture.Get(), GradientSize);
-    HSVGradientBrush = MakeShared<FSlateImageBrush>(HSVGradientTexture.Get(), GradientSize);
-    SaturationGradientBrush = MakeShared<FSlateImageBrush>(SaturationGradientTexture.Get(), GradientSize);
-    TemperatureGradientBrush = MakeShared<FSlateImageBrush>(TemperatureGradientTexture.Get(), GradientSize);
+    IntensityGradientBrush = MakeShared<FSlateImageBrush>(IntensityGradientTexture, GradientSize);
+    HSVGradientBrush = MakeShared<FSlateImageBrush>(HSVGradientTexture, GradientSize);
+    SaturationGradientBrush = MakeShared<FSlateImageBrush>(SaturationGradientTexture, GradientSize);
+    TemperatureGradientBrush = MakeShared<FSlateImageBrush>(TemperatureGradientTexture, GradientSize);
 
 }
 
@@ -945,4 +1285,67 @@ SHorizontalBox::FSlot& SLightControlTool::LightSpecificPropertyEditor()
 
 
     return Slot;
+}
+
+void SLightControlTool::UpdateLightList()
+{
+    TArray<AActor*> Actors;
+    // Fetch Point Lights
+    UGameplayStatics::GetAllActorsOfClass(GWorld, APointLight::StaticClass(), Actors);
+    for (auto Light : Actors)
+    {
+        TSharedPtr<FTreeItem> NewItem = MakeShared<FTreeItem>();
+        NewItem->OwningWidget = this;
+        NewItem->Parent = nullptr;
+        NewItem->Type = ETreeItemType::PointLight;
+        NewItem->Name = Light->GetName();
+        NewItem->PointLight = Cast<APointLight>(Light);
+
+
+        TreeItems.Add(NewItem);
+    }
+
+    // Fetch Sky Lights
+    UGameplayStatics::GetAllActorsOfClass(GWorld, ASkyLight::StaticClass(), Actors);
+    for (auto Light : Actors)
+    {
+        TSharedPtr<FTreeItem> NewItem = MakeShared<FTreeItem>();
+        NewItem->OwningWidget = this;
+        NewItem->Parent = nullptr;
+        NewItem->Type = ETreeItemType::SkyLight;
+        NewItem->Name = Light->GetName();
+        NewItem->SkyLight = Cast<ASkyLight>(Light);
+
+        TreeItems.Add(NewItem);
+    }
+
+    // Fetch Directional Lights
+    UGameplayStatics::GetAllActorsOfClass(GWorld, ADirectionalLight::StaticClass(), Actors);
+    for (auto Light : Actors)
+    {
+        TSharedPtr<FTreeItem> NewItem = MakeShared<FTreeItem>();;
+        NewItem->OwningWidget = this;
+        NewItem->Parent = nullptr;
+        NewItem->Type = ETreeItemType::DirectionalLight;
+        NewItem->Name = Light->GetName();
+        NewItem->DirectionalLight = Cast<ADirectionalLight>(Light);
+
+        TreeItems.Add(NewItem);
+    }
+
+    // Fetch Spot Lights
+    UGameplayStatics::GetAllActorsOfClass(GWorld, ASpotLight::StaticClass(), Actors);
+    for (auto Light : Actors)
+    {
+        TSharedPtr<FTreeItem> NewItem = MakeShared<FTreeItem>();;
+        NewItem->OwningWidget = this;
+        NewItem->Parent = nullptr;
+        NewItem->Type = ETreeItemType::SpotLight;
+        NewItem->Name = Light->GetName();
+        NewItem->SpotLight = Cast<ASpotLight>(Light);
+
+        TreeItems.Add(NewItem);
+    }
+
+    GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Orange, "Finished adding lights to tree");
 }
