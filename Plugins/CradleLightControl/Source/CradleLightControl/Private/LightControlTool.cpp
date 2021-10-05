@@ -6,16 +6,16 @@
 #include "DetailLayoutBuilder.h"
 #include "DetailWidgetRow.h"
 #include "Chaos/AABB.h"
-#include "Chaos/AABB.h"
-#include "Chaos/AABB.h"
-#include "Chaos/AABB.h"
 #include "Components/LightComponent.h"
 #include "Components/SkyLightComponent.h"
 #include "Engine/Engine.h"
 #include "Interfaces/IPluginManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "Engine/World.h"
+#include "Editor/EditorEngine.h"
+#include "Editor.h"
 
+#include "Styling/SlateIconFinder.h"
 #include "Engine/SkyLight.h"
 #include "Engine/PointLight.h"
 #include "Engine/SpotLight.h"
@@ -27,12 +27,16 @@ FTreeItem::FTreeItem(SLightControlTool* InOwningWidget, FString InName, TArray<T
     , Children(InChildren)
     , OwningWidget(InOwningWidget)
     , bInRename(false)
+    , ActorPtr(nullptr)
 {
 }
 
 ECheckBoxState FTreeItem::IsLightEnabled() const
 {
     bool AllOff = true, AllOn = true;
+
+    if (Type != Folder && !IsValid(SkyLight))
+        return ECheckBoxState::Undetermined;
 
     switch (Type)
     {
@@ -75,6 +79,8 @@ void FTreeItem::OnCheck(ECheckBoxState NewState)
     bool B = false;
     if (NewState == ECheckBoxState::Checked)
         B = true;
+    if (Type != Folder && !IsValid(SkyLight))
+        return;
 
     switch (Type)
     {
@@ -112,17 +118,31 @@ void FTreeItem::GenerateTableRow()
                 .OnCheckStateChanged_Raw(this, &FTreeItem::OnCheck)
         ];
     }
-    else
-        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Black, FString::Printf(TEXT("%s %d"), *Name, Children.Num()));
 
+    static auto Icon = *FSlateIconFinder::FindIconBrushForClass(APointLight::StaticClass());
+    Icon.SetImageSize(FVector2D(16.0f, 16.0f));
+    Icon.DrawAs = ESlateBrushDrawType::Box;
+    Icon.Margin = FVector2D(0.0f, 0.0f);
+    auto TintColor = FLinearColor(0.2f, 0.2f, 0.2f, 0.5f);
+    Icon.TintColor = FSlateColor(TintColor);
+
+    SHorizontalBox::FSlot* IconSlot;
 
     TableRowBox->SetContent(
         SNew(SHorizontalBox)
+        + SHorizontalBox::Slot()
+        .Expose(IconSlot)
+        [
+            SNew(SImage)
+            .Image(&Icon)            
+        ]
         + SHorizontalBox::Slot()
         [
             SAssignNew(TextSlot, SBox)    
         ]
         + CheckBoxSlot);
+
+    IconSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
 
     if (bInRename)
     {
@@ -225,6 +245,185 @@ void FTreeItem::EndRename(const FText& Text, ETextCommit::Type CommitType)
     GenerateTableRow();
 }
 
+TSharedPtr<FJsonValue> FTreeItem::SaveToJson()
+{
+    TSharedPtr<FJsonObject> Item = MakeShared<FJsonObject>();
+
+    auto Enabled = IsLightEnabled();
+
+    int ItemState = 0;// Unchecked
+    if (Enabled == ECheckBoxState::Undetermined)
+        ItemState = 1;
+    else if (Enabled == ECheckBoxState::Checked)
+        ItemState = 2;
+
+    Item->SetStringField("Name", Name);
+    Item->SetNumberField("Type", Type);
+    Item->SetBoolField("Expanded", bExpanded);
+    if (Type != Folder)
+    {
+        Item->SetStringField("RelatedLightName", SkyLight->GetName());
+        Item->SetNumberField("State", ItemState);
+    }
+
+    TArray<TSharedPtr<FJsonValue>> ChildrenJson;
+
+    for (auto Child : Children)
+    {
+        ChildrenJson.Add(Child->SaveToJson());
+    }
+
+    Item->SetArrayField("Children", ChildrenJson);
+
+    TSharedPtr<FJsonValue> JsonValue = MakeShared<FJsonValueObject>(Item);
+    return JsonValue;
+}
+
+bool FTreeItem::LoadFromJson(TSharedPtr<FJsonObject> JsonObject)
+{
+    Name = JsonObject->GetStringField("Name");
+    Type = StaticCast<ETreeItemType>(JsonObject->GetNumberField("Type"));
+    bExpanded = JsonObject->GetBoolField("Expanded");
+    if (Type != Folder)
+    {
+        if (!GWorld)
+            return false;
+
+        auto LightName = JsonObject->GetStringField("RelatedLightName");
+
+        UClass* ClassToFetch = AActor::StaticClass();
+
+        switch (Type)
+        {
+        case ETreeItemType::SkyLight:
+            ClassToFetch = ASkyLight::StaticClass();
+            break;
+        case ETreeItemType::SpotLight:
+            ClassToFetch = ASpotLight::StaticClass();
+            break;
+        case ETreeItemType::DirectionalLight:
+            ClassToFetch = ADirectionalLight::StaticClass();
+            break;
+        case ETreeItemType::PointLight:
+            ClassToFetch = APointLight::StaticClass();
+            break;
+        default:
+            return false;
+        }
+
+        TArray<AActor*> Actors;
+        UGameplayStatics::GetAllActorsOfClass(GWorld, ClassToFetch, Actors);
+
+        ActorPtr = *Actors.FindByPredicate([&LightName](AActor* Element)
+            {
+                return Element && Element->GetName() == LightName;
+            });
+
+        auto State = JsonObject->GetBoolField("State");
+
+        OnCheck(State == 0 ? ECheckBoxState::Unchecked : ECheckBoxState::Checked);
+    }
+    else
+    {
+        auto JsonChildren = JsonObject->GetArrayField("Children");
+
+        auto ChildrenLoadingSuccess = true;
+        for (auto Child : JsonChildren)
+        {
+            const TSharedPtr<FJsonObject>* ChildObjectPtr;
+            auto Success = Child->TryGetObject(ChildObjectPtr);
+            auto ChildObject = *ChildObjectPtr;
+            _ASSERT(Success);
+            int ChildType = ChildObject->GetNumberField("Type");
+            auto ChildItem = OwningWidget->AddTreeItem(ChildType == 0);
+
+            ChildItem->Parent = SharedThis(this);
+
+            ChildrenLoadingSuccess &= ChildItem->LoadFromJson(ChildObject);
+            if (!ChildrenLoadingSuccess)
+                break;
+
+            Children.Add(ChildItem);
+        }
+        return ChildrenLoadingSuccess;
+    }
+    
+
+    return true;
+}
+
+void FTreeItem::ExpandInTree()
+{
+    OwningWidget->Tree->SetItemExpansion(SharedThis(this), bExpanded);
+
+    for (auto Child : Children)
+    {
+        Child->ExpandInTree();
+    }
+}
+
+void FTreeItem::FetchDataFromLight()
+{
+    _ASSERT(Type != Folder);
+
+    FLinearColor RGB;
+
+    if (Type == ETreeItemType::SkyLight)
+    {
+        RGB = SkyLight->GetLightComponent()->GetLightColor();
+        
+    }
+    else
+    {
+        ALight* LightPtr = Cast<ALight>(PointLight);
+        RGB = LightPtr->GetLightColor();
+    }
+    auto HSV = RGB.LinearRGBToHSV();
+    Saturation = HSV.G;
+
+    // If Saturation is 0, the color is white. The RGB => HSV conversion calculates the Hue to be 0 in that case, even if it's not supposed to be.
+    // Do this to preserve the Hue previously used rather than it getting reset to 0.
+    if (Saturation == 0.0f)
+        Hue = HSV.R; 
+    Value = HSV.B;
+}
+
+void FTreeItem::UpdateLightColor()
+{
+    auto NewColor = FLinearColor::MakeFromHSV8(StaticCast<uint8>(Hue * 255.0f), StaticCast<uint8>(Saturation * 255.0f), 255);
+    UpdateLightColor(NewColor);
+}
+
+void FTreeItem::UpdateLightColor(FLinearColor& Color)
+{
+    if (Type == Folder)
+    {
+        // IDK how i am gonna do this crap
+    }
+    else if (Type == ETreeItemType::SkyLight)
+    {
+        SkyLight->GetLightComponent()->SetLightColor(Color);
+    }
+    else
+    {
+        auto LightPtr = Cast<ALight>(PointLight);
+        LightPtr->SetLightColor(Color);
+    }
+}
+
+void FTreeItem::GetLights(TArray<TSharedPtr<FTreeItem>>& Array)
+{
+    if (Type == Folder)
+    {
+        for (auto& Child : Children)
+            Child->GetLights(Array);
+    }
+    else
+    {
+        Array.Add(SharedThis(this));
+    }
+}
+
 FReply FTreeItem::TreeDragDetected(const FGeometry& Geometry, const FPointerEvent& MouseEvent)
 {
     GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, Name + "Dragggg");
@@ -273,16 +472,14 @@ FReply FTreeItem::TreeDropDetected(const FDragDropEvent& DragDropEvent)
 
         if (Source)
             Source->GenerateTableRow();
-        Destination->GenerateTableRow();        
+        Destination->GenerateTableRow();
+        OwningWidget->Tree->SetItemExpansion(Destination, true);
     }
     else
     {
 
-        auto Destination = MakeShared<FTreeItem>();
+        auto Destination = OwningWidget->AddTreeItem(true);
         Destination->Name = Name + " Group";
-        Destination->OwningWidget = OwningWidget;
-        Destination->Type = Folder;
-        Destination->Parent = Parent;
 
         if (Parent)
         {
@@ -312,6 +509,8 @@ FReply FTreeItem::TreeDropDetected(const FDragDropEvent& DragDropEvent)
             PrevParent->GenerateTableRow();
         if (Source)
             Source->GenerateTableRow();
+
+        OwningWidget->Tree->SetItemExpansion(Destination, true);
     }
 
     OwningWidget->Tree->RequestTreeRefresh();
@@ -332,7 +531,7 @@ void SLightControlTool::Construct(const FArguments& Args)
     else
         GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, "Could not set actor spawned callback");
 
-
+    LightVerificationTimer = RegisterActiveTimer(0.5f, FWidgetActiveTimerDelegate::CreateRaw(this, &SLightControlTool::VerifyLights));
     LoadResources();
     // Create a test data set
     // TODO: Replace with data from the editor 
@@ -365,8 +564,11 @@ void SLightControlTool::Construct(const FArguments& Args)
 
     GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Emerald, "Light control tool constructed");
 
+    SVerticalBox::FSlot* shit;
+
+    SSplitter::FSlot* SplitterSlot;
     ChildSlot
-    [
+        [
         SNew(SOverlay)
         + SOverlay::Slot()
         .HAlign(HAlign_Fill)
@@ -376,6 +578,9 @@ void SLightControlTool::Construct(const FArguments& Args)
             .PhysicalSplitterHandleSize(5.0f)
             .HitDetectionSplitterHandleSize(15.0f)
             +SSplitter::Slot()
+            .Expose(SplitterSlot)
+            .Value(0.50f)
+            //.SizeRule(SSplitter::ESizeRule::SizeToContent)
             [
                 SNew(SVerticalBox) // Light selection menu thingy
                 +SVerticalBox::Slot()
@@ -387,7 +592,8 @@ void SLightControlTool::Construct(const FArguments& Args)
                     +SVerticalBox::Slot()
                     .VAlign(VAlign_Top)
                     [
-                        SNew(SSearchBox) // Search bar for light
+                        SNew(SSearchBox)
+                        // Search bar for light
                     ]
                     +SVerticalBox::Slot()
                     .VAlign(VAlign_Top)
@@ -398,6 +604,20 @@ void SLightControlTool::Construct(const FArguments& Args)
                         .Font(Font24)
                     ]
                 ]
+                +SVerticalBox::Slot()
+                    .Expose(shit)
+                    [
+                        SNew(SButton)
+                        .Text(FText::FromString("Save"))
+                        .OnClicked(this, &SLightControlTool::SaveStateToJSON)
+                    ]
+                + SVerticalBox::Slot()
+                    [
+                        SNew(SButton)
+                        .Text(FText::FromString("Load"))
+                        .OnClicked(this, &SLightControlTool::LoadStateFromJSON)
+                    ]
+
                 +SVerticalBox::Slot()
                 .Padding(0.0f, 0.0f, 8.0f, 0.0f)
                 .HAlign(HAlign_Fill)
@@ -413,6 +633,7 @@ void SLightControlTool::Construct(const FArguments& Args)
                         .OnSelectionChanged(this, &SLightControlTool::SelectionCallback)
                         .OnGenerateRow(this, &SLightControlTool::AddToTree)
                         .OnGetChildren(this, &SLightControlTool::GetChildren)
+                        .OnExpansionChanged(this, &SLightControlTool::TreeExpansionCallback)
                     ]
                 ]
                 +SVerticalBox::Slot()
@@ -444,6 +665,10 @@ void SLightControlTool::Construct(const FArguments& Args)
             ]
         ]
     ];
+    //SplitterSlot->SizeValue = FMath::Min(180.0f, SplitterSlot->SizeValue.Get());
+
+    shit->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
+
     LightSearchBarSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
     NewFolderButtonSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
     //SeparatorSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
@@ -456,7 +681,7 @@ void SLightControlTool::Construct(const FArguments& Args)
 
 SLightControlTool::~SLightControlTool()
 {
-    PreDestroy();
+    //PreDestroy();
 }
 
 void SLightControlTool::PreDestroy()
@@ -467,6 +692,8 @@ void SLightControlTool::PreDestroy()
         IntensityGradientTexture->RemoveFromRoot();
         HSVGradientTexture->ConditionalBeginDestroy();
         HSVGradientTexture->RemoveFromRoot();
+        DefaultSaturationGradientTexture->ConditionalBeginDestroy();
+        DefaultSaturationGradientTexture->RemoveFromRoot();
         SaturationGradientTexture->ConditionalBeginDestroy();
         SaturationGradientTexture->RemoveFromRoot();
         TemperatureGradientTexture->ConditionalBeginDestroy();
@@ -474,6 +701,9 @@ void SLightControlTool::PreDestroy()
         //IntensityGradientTexture.Reset();        
     }
 
+
+    UnRegisterActiveTimer(LightVerificationTimer.ToSharedRef());
+    GWorld->RemoveOnActorSpawnedHandler(ActorSpawnedListenerHandle);
 }
 
 
@@ -517,22 +747,43 @@ void SLightControlTool::GetChildren(TSharedPtr<FTreeItem> Item, TArray<TSharedPt
 
 void SLightControlTool::SelectionCallback(TSharedPtr<FTreeItem> Item, ESelectInfo::Type SelectType)
 {
+
     SelectedItems = Tree->GetSelectedItems();
+    UpdateExtraLightDetailBox();
+    if (SelectedItems.Num())
+    {
+        int Index;
+        SelectedLightLeafs.Empty();
+        for (auto& Selected : SelectedItems)
+        {
+            Selected->GetLights(SelectedLightLeafs);
+        }
+
+        if (MasterLight == nullptr || !SelectedLightLeafs.Find(MasterLight, Index))
+        {
+            MasterLight = SelectedLightLeafs[0];
+        }
+        UpdateSaturationGradient(SelectedItems[0]->Hue);
+    }
+    else
+        MasterLight = nullptr;
 }
 
 FReply SLightControlTool::AddFolderToTree()
 {
-    TSharedPtr<FTreeItem> NewFolder = MakeShared<FTreeItem>();
-    NewFolder->OwningWidget = this;
-    NewFolder->Type = Folder;
+    TSharedPtr<FTreeItem> NewFolder = AddTreeItem(true);
     NewFolder->Name = "New Group";
-    NewFolder->Parent = nullptr;
 
     TreeItems.Add(NewFolder);
 
     Tree->RequestTreeRefresh();
 
     return FReply::Handled();
+}
+
+void SLightControlTool::TreeExpansionCallback(TSharedPtr<FTreeItem> Item, bool bExpanded)
+{
+    Item->bExpanded = bExpanded;
 }
 
 FText SLightControlTool::TestTextGetter() const
@@ -547,6 +798,8 @@ FText SLightControlTool::TestTextGetter() const
 
     return FText::FromString(N);
 }
+
+#include "LightLifeSpanTracker.h"
 
 void SLightControlTool::ActorSpawnedCallback(AActor* Actor)
 {
@@ -563,12 +816,10 @@ void SLightControlTool::ActorSpawnedCallback(AActor* Actor)
 
     if (Type != Invalid)
     {
-        auto NewItem = MakeShared<FTreeItem>();
-
-        NewItem->Parent = nullptr;
-        NewItem->OwningWidget = this;
-        NewItem->Name = Actor->GetName();
+        auto NewItem = AddTreeItem();
         NewItem->Type = Type;
+        NewItem->Name = Actor->GetName();
+
 
         switch (Type)
         {
@@ -585,11 +836,30 @@ void SLightControlTool::ActorSpawnedCallback(AActor* Actor)
             NewItem->PointLight = Cast<APointLight>(Actor);
             break;
         }
+        NewItem->FetchDataFromLight();
 
         TreeItems.Add(NewItem);
 
         Tree->RequestTreeRefresh();
     }
+}
+
+TSharedPtr<FTreeItem> SLightControlTool::AddTreeItem(bool bIsFolder)
+{
+    auto Item = MakeShared<FTreeItem>();
+    Item->OwningWidget = this;
+    Item->Parent = nullptr;
+
+
+    //TreeItems.Add(Item);
+    if (bIsFolder)
+    {
+        Item->Type = Folder;
+    }
+    else // Do this so that only actual lights which might be deleted in the editor are checked for validity
+        ListOfLightItems.Add(&Item.Get());
+
+    return Item;
 }
 
 TArray<FColor> SLightControlTool::LinearGradient(TArray<FColor> ControlPoints, FVector2D Size, EOrientation Orientation)
@@ -687,6 +957,43 @@ UTexture2D* SLightControlTool::MakeGradientTexture(int X, int Y)
     return Tex;
 }
 
+EActiveTimerReturnType SLightControlTool::VerifyLights(double, float)
+{
+    if (bCurrentlyLoading)
+        return EActiveTimerReturnType::Continue;
+    GEngine->AddOnScreenDebugMessage(-1, 0.5f, FColor::Blue, "Cleaning invalid lights");
+    TArray<FTreeItem*> ToRemove;
+    for (auto Item : ListOfLightItems)
+    {
+        if (!Item->ActorPtr || !IsValid(Item->SkyLight))
+        {
+            if (Item->Parent)
+                Item->Parent->Children.Remove(Item->AsShared());
+            else
+                TreeItems.Remove(Item->AsShared());
+
+
+            ToRemove.Add(Item);
+        }
+        else
+        {
+            //Item->FetchDataFromLight();
+        }
+    }
+
+    for (auto Item : ToRemove)
+    {
+        ListOfLightItems.Remove(Item);
+    }
+
+    if (ToRemove.Num())
+    {
+        Tree->RequestTreeRefresh();
+    }
+
+    return EActiveTimerReturnType::Continue;
+}
+
 void SLightControlTool::LoadResources()
 {
 
@@ -701,6 +1008,7 @@ void SLightControlTool::LoadResources()
 
     IntensityGradientBrush = MakeShared<FSlateImageBrush>(IntensityGradientTexture, GradientSize);
     HSVGradientBrush = MakeShared<FSlateImageBrush>(HSVGradientTexture, GradientSize);
+    DefaultSaturationGradientBrush = MakeShared<FSlateImageBrush>(DefaultSaturationGradientTexture, GradientSize);
     SaturationGradientBrush = MakeShared<FSlateImageBrush>(SaturationGradientTexture, GradientSize);
     TemperatureGradientBrush = MakeShared<FSlateImageBrush>(TemperatureGradientTexture, GradientSize);
 
@@ -711,6 +1019,7 @@ void SLightControlTool::GenerateTextures()
 
     IntensityGradientTexture = MakeGradientTexture();
     HSVGradientTexture = MakeGradientTexture();
+    DefaultSaturationGradientTexture = MakeGradientTexture();
     SaturationGradientTexture = MakeGradientTexture();
     TemperatureGradientTexture = MakeGradientTexture();
 
@@ -726,17 +1035,17 @@ void SLightControlTool::GenerateTextures()
 
         TArray<FColor> HSVGradientPixels = LinearGradient(TArray<FColor>{
             FColor::Red,
-            FColor::Yellow,
-            FColor::Green,
-            FColor::Cyan,
-            FColor::Blue,
             FColor::Magenta,
+            FColor::Blue,
+            FColor::Cyan,
+            FColor::Green,
+            FColor::Yellow,
             FColor::Red
         });
 
         TArray<FColor> SaturationGradientPixels = LinearGradient(TArray<FColor>{
-            FColor::White,
-            FColor::Red
+            FColor::Red,
+            FColor::White
         });
 
         TArray<FColor> TemperatureGradientPixels = LinearGradient(TArray<FColor>{
@@ -755,7 +1064,9 @@ void SLightControlTool::GenerateTextures()
 
         RHIUpdateTexture2D(HSVGradientTexture->GetResource()->GetTexture2DRHI(), 0, UpdateRegion,
             sizeof(FColor), reinterpret_cast<uint8_t*>(HSVGradientPixels.GetData()));
-        RHIUpdateTexture2D(SaturationGradientTexture->GetResource()->GetTexture2DRHI(), 0, UpdateRegion,
+        RHIUpdateTexture2D(DefaultSaturationGradientTexture->GetResource()->GetTexture2DRHI(), 0, UpdateRegion,
+            sizeof(FColor), reinterpret_cast<uint8_t*>(SaturationGradientPixels.GetData()));
+        RHIUpdateTexture2D(SaturationGradientTexture->GetResource()->GetTexture2DRHI(), 0, UpdateRegion, // Initialize the non-default saturation texture the same as the default one
             sizeof(FColor), reinterpret_cast<uint8_t*>(SaturationGradientPixels.GetData()));
         RHIUpdateTexture2D(TemperatureGradientTexture->GetResource()->GetTexture2DRHI(), 0, UpdateRegion,
             sizeof(FColor), reinterpret_cast<uint8_t*>(TemperatureGradientPixels.GetData()));
@@ -764,6 +1075,31 @@ void SLightControlTool::GenerateTextures()
         //EnqueueUniqueRenderCommand(l);
         ENQUEUE_RENDER_COMMAND(UpdateTextureDataCommand)(l);
         FlushRenderingCommands();
+}
+
+void SLightControlTool::UpdateSaturationGradient(float NewHue)
+{
+    ENQUEUE_RENDER_COMMAND(UpdateTextureDataCommand)([this, NewHue](FRHICommandListImmediate& RHICmdList)
+        {
+            auto UpdateRegion = FUpdateTextureRegion2D(0, 0, 0, 0, 1, 256);
+
+            auto C = FLinearColor::MakeFromHSV8(StaticCast<uint8>(NewHue * 255.0f), 255, 255).ToFColor(false);
+            auto NewGradient = LinearGradient(TArray<FColor>{
+                C,
+                    FColor::White
+            });
+
+            RHIUpdateTexture2D(SaturationGradientTexture->GetResource()->GetTexture2DRHI(), 0, UpdateRegion, sizeof(FColor), reinterpret_cast<uint8_t*>(NewGradient.GetData()));
+        });
+}
+
+const FSlateBrush* SLightControlTool::GetSaturationGradientBrush() const
+{
+    if (SelectedItems.Num())
+    {
+        return SaturationGradientBrush.Get();
+    }
+    return DefaultSaturationGradientBrush.Get();
 }
 
 SVerticalBox::FSlot& SLightControlTool::LightHeader()
@@ -800,36 +1136,63 @@ SVerticalBox::FSlot& SLightControlTool::LightPropertyEditor()
 {
     auto& Slot = SVerticalBox::Slot();
 
+    TSharedPtr<SVerticalBox> Box;
+
+    SVerticalBox::FSlot* ExtraLightBoxSlot;
+
     Slot
-    .Padding(20.0f, 30.0f, 20.0f, 0.0f)
-    .VAlign(VAlign_Fill)
-    .HAlign(HAlign_Fill)
-    [
-        SNew(SHorizontalBox)
-        +SHorizontalBox::Slot() // General light properties + scene parenting thingy from mock-up
-        //.MaxWidth(300) // Need to see just how big this is, very much subject to change this one
+        .Padding(20.0f, 30.0f, 20.0f, 0.0f)
+        .VAlign(VAlign_Fill)
+        .HAlign(HAlign_Fill)
+        [
+            SNew(SHorizontalBox)
+            + SHorizontalBox::Slot() // General light properties + extra light properties or group controls
         [
             SNew(SVerticalBox)
             + GeneralLightPropertyEditor()
-            + LightSceneTransformEditor()
+            + SVerticalBox::Slot()
+            .Expose(ExtraLightBoxSlot)
+            [
+                SAssignNew(ExtraLightDetailBox, SBox)
+                .Padding(FMargin(0.0f, 5.0f, 0.0f, 0.0f))
+            ]
         ]
         + LightSpecificPropertyEditor()
     ];
 
+    ExtraLightBoxSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
+
+    UpdateExtraLightDetailBox();
 
     return Slot;
+}
+
+void SLightControlTool::UpdateExtraLightDetailBox()
+{
+    if (SelectedItems.Num())
+    {
+        if (SelectedItems.Num() > 1 || SelectedItems[0]->Type == Folder)
+        {
+            ExtraLightDetailBox->SetContent(GroupControls());
+        }
+        else
+        {
+            ExtraLightDetailBox->SetContent(LightTransformViewer());
+        }
+    }
+    else
+        ExtraLightDetailBox->SetContent(SNew(SBox));
 }
 
 SVerticalBox::FSlot& SLightControlTool::GeneralLightPropertyEditor()
 {
     auto& Slot = SVerticalBox::Slot();
 
-    SVerticalBox::FSlot* IntensityNameSlot, * IntensityLumenSlot, * IntensityPercentageSlot;
-    SVerticalBox::FSlot* HSVNameSlot, * HSVLumenSlot, * HSVPercentageSlot;
-    SVerticalBox::FSlot* SaturationNameSlot, * SaturationLumenSlot, * SaturationPercentageSlot;
-    SVerticalBox::FSlot* TemperatureNameSlot, *TemperatureLumenSlot, *TemperaturePercentageSlot;
+    SVerticalBox::FSlot* IntensityNameSlot, *IntensityValueSlot, *IntensityPercentageSlot;
+    SVerticalBox::FSlot* HueNameSlot, *HueValueSlot, *HuePercentageSlot;
+    SVerticalBox::FSlot* SaturationNameSlot, *SaturationValueSlot, *SaturationPercentageSlot;
+    SVerticalBox::FSlot* TemperatureNameSlot, *TemperatureValueSlot, *TemperaturePercentageSlot;
 
-    
 
     Slot
     [
@@ -850,7 +1213,7 @@ SVerticalBox::FSlot& SLightControlTool::GeneralLightPropertyEditor()
                     .Text(FText::FromString("Intensity"))
                 ]
                 +SVerticalBox::Slot()
-                .Expose(IntensityLumenSlot)
+                .Expose(IntensityValueSlot)
                 [
                     SNew(STextBlock)
                     .Text(FText::FromString("300 lumens"))
@@ -859,12 +1222,17 @@ SVerticalBox::FSlot& SLightControlTool::GeneralLightPropertyEditor()
                 [
                     SNew(SHorizontalBox)
                     + SHorizontalBox::Slot()
+                    .Padding(3.0f, 0.0f)
                     .HAlign(HAlign_Right)
                     [
-                        SNew(SImage)
-                        .Image(IntensityGradientBrush.Get())
+                        SNew(SBorder)
+                        [
+                            SNew(SImage)
+                            .Image(IntensityGradientBrush.Get())
+                        ]
                     ]
                     +SHorizontalBox::Slot()
+                    .Padding(3.0f, 0.0f)
                     .HAlign(HAlign_Left)
                     [
                         SNew(SSlider)
@@ -890,16 +1258,18 @@ SVerticalBox::FSlot& SLightControlTool::GeneralLightPropertyEditor()
             [
                 SNew(SVerticalBox)
                 +SVerticalBox::Slot()
-                .Expose(HSVNameSlot)
+                .Expose(HueNameSlot)
                 [
                     SNew(STextBlock)
+                    .Justification(ETextJustify::Center)
                     .Text(FText::FromString("Hue"))
                 ]
                 +SVerticalBox::Slot()
-                .Expose(HSVLumenSlot)
+                .Expose(HueValueSlot)
                 [
                     SNew(STextBlock)
-                    .Text(FText::FromString("360"))
+                    .Justification(ETextJustify::Center)
+                    .Text(this, &SLightControlTool::GetHueValueText)
                 ]
                 +SVerticalBox::Slot()
                 [
@@ -915,14 +1285,16 @@ SVerticalBox::FSlot& SLightControlTool::GeneralLightPropertyEditor()
                     [
                         SNew(SSlider)
                         .Orientation(EOrientation::Orient_Vertical)
+                        .Value(this, &SLightControlTool::GetHueValue)
+                        .OnValueChanged_Raw(this, &SLightControlTool::OnHueValueChanged)
                     ]
                 ]
                 +SVerticalBox::Slot()
-                .Expose(HSVPercentageSlot)
+                .Expose(HuePercentageSlot)
                 [
                     SNew(STextBlock)
                     .Justification(ETextJustify::Center)
-                    .Text(FText::FromString("50%"))
+                    .Text(this, &SLightControlTool::GetHuePercentage)
                 ]
             ]
         ]
@@ -939,13 +1311,15 @@ SVerticalBox::FSlot& SLightControlTool::GeneralLightPropertyEditor()
                 .Expose(SaturationNameSlot)
                 [
                     SNew(STextBlock)
-                    .Text(FText::FromString("Saturation"))
+                    .Justification(ETextJustify::Center)
+            .Text(FText::FromString("Saturation"))
                 ]
                 +SVerticalBox::Slot()
-                .Expose(SaturationLumenSlot)
+                .Expose(SaturationValueSlot)
                 [
                     SNew(STextBlock)
-                    .Text(FText::FromString("33%"))
+                    .Justification(ETextJustify::Center)
+                    .Text(this, &SLightControlTool::GetSaturationValueText)
                 ]
                 +SVerticalBox::Slot()
                 [
@@ -954,13 +1328,15 @@ SVerticalBox::FSlot& SLightControlTool::GeneralLightPropertyEditor()
                     .HAlign(HAlign_Right)
                     [
                         SNew(SImage)
-                        .Image(SaturationGradientBrush.Get())
+                        .Image_Raw(this, &SLightControlTool::GetSaturationGradientBrush)
                     ]
                     +SHorizontalBox::Slot()
                     .HAlign(HAlign_Left)
                     [
                         SNew(SSlider)
                         .Orientation(EOrientation::Orient_Vertical)
+                        .Value_Raw(this, &SLightControlTool::GetSaturationValue)
+                        .OnValueChanged_Raw(this, &SLightControlTool::OnSaturationValueChanged)
                     ]
                 ]
                 +SVerticalBox::Slot()
@@ -968,7 +1344,7 @@ SVerticalBox::FSlot& SLightControlTool::GeneralLightPropertyEditor()
                 [
                     SNew(STextBlock)
                     .Justification(ETextJustify::Center)
-                    .Text(FText::FromString("50%"))
+                    .Text(this, &SLightControlTool::GetSaturationValueText) // The content is the same as the value text
                 ]
             ]
         ]
@@ -988,7 +1364,7 @@ SVerticalBox::FSlot& SLightControlTool::GeneralLightPropertyEditor()
                     .Text(FText::FromString("Temperature"))
                 ]
                 +SVerticalBox::Slot()
-                .Expose(TemperatureLumenSlot)
+                .Expose(TemperatureValueSlot)
                 [
                     SNew(STextBlock)
                     .Text(FText::FromString("3000 Kelvin"))
@@ -1022,34 +1398,32 @@ SVerticalBox::FSlot& SLightControlTool::GeneralLightPropertyEditor()
     ];
 
     IntensityNameSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
-    IntensityLumenSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
+    IntensityValueSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
     IntensityPercentageSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
 
-    HSVNameSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
-    HSVLumenSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
-    HSVPercentageSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
+    HueNameSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
+    HueValueSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
+    HuePercentageSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
 
     SaturationNameSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
-    SaturationLumenSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
+    SaturationValueSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
     SaturationPercentageSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
 
     TemperatureNameSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
-    TemperatureLumenSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
+    TemperatureValueSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
     TemperaturePercentageSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
 
 
     return Slot;
 }
 
-SVerticalBox::FSlot& SLightControlTool::LightSceneTransformEditor()
+TSharedRef<SBox> SLightControlTool::LightTransformViewer()
 {
-    auto& Slot = SVerticalBox::Slot();
-    Slot.SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
-
     SHorizontalBox::FSlot* ButtonsSlot;
 
-    Slot
-    .Padding(0.0f, 5.0f, 0.0f, 0.0f)
+    TSharedPtr<SBox> Box;
+
+    SAssignNew(Box, SBox)
     [
         SNew(SBorder)
         .HAlign(HAlign_Fill)
@@ -1076,7 +1450,7 @@ SVerticalBox::FSlot& SLightControlTool::LightSceneTransformEditor()
                     .HAlign(HAlign_Fill)
                     [
                         SNew(STextBlock)
-                        .Text(FText::FromString("none"))
+                        .Text(this, &SLightControlTool::GetItemParentName)
                     ]
                 ]
                 +SVerticalBox::Slot()
@@ -1095,7 +1469,7 @@ SVerticalBox::FSlot& SLightControlTool::LightSceneTransformEditor()
                     .HAlign(HAlign_Fill)
                     [
                         SNew(STextBlock)
-                        .Text(FText::FromString("0.0; 0.0; 0.0"))
+                        .Text(this, &SLightControlTool::GetItemPosition)
                     ]
                 ]
                 +SVerticalBox::Slot()
@@ -1114,7 +1488,7 @@ SVerticalBox::FSlot& SLightControlTool::LightSceneTransformEditor()
                     .HAlign(HAlign_Fill)
                     [
                         SNew(STextBlock)
-                        .Text(FText::FromString("0.0; 0.0; 270.0"))
+                        .Text(this, &SLightControlTool::GetItemRotation)
                     ]
                 ]
                 +SVerticalBox::Slot()
@@ -1133,7 +1507,7 @@ SVerticalBox::FSlot& SLightControlTool::LightSceneTransformEditor()
                     .HAlign(HAlign_Fill)
                     [
                         SNew(STextBlock)
-                        .Text(FText::FromString("1.0; 1.0; 1.0"))
+                        .Text(this, &SLightControlTool::GetItemScale)
                     ]
                 ]
             ]
@@ -1146,20 +1520,171 @@ SVerticalBox::FSlot& SLightControlTool::LightSceneTransformEditor()
                 [
                     SNew(SButton)
                     .Text(FText::FromString("Select Scene Object"))
+                    .OnClicked(this, &SLightControlTool::SelectItem)
                 ]
                 + SVerticalBox::Slot()
                 .Padding(5.0f)
                 [
                     SNew(SButton)
                     .Text(FText::FromString("Select Parent Object"))
+                    .IsEnabled(this, &SLightControlTool::SelectItemParentButtonEnable)
+                    .OnClicked(this, &SLightControlTool::SelectItemParent)
                 ]
             ]
         ]
     ];
 
     ButtonsSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
+    return Box.ToSharedRef();
+}
 
-    return Slot;
+FReply SLightControlTool::SelectItem()
+{
+    if (SelectedItems.Num() && SelectedItems[0]->Type != Folder)
+    {
+        GEditor->SelectNone(true, true);
+        GEditor->SelectActor(SelectedItems[0]->ActorPtr, true, true, false, true);        
+    }
+
+    return FReply::Handled();
+}
+
+FReply SLightControlTool::SelectItemParent()
+{
+    GEditor->SelectNone(true, true);
+    GEditor->SelectActor(SelectedItems[0]->ActorPtr->GetAttachParentActor(), true, true, false, true);
+
+    return FReply::Handled();
+}
+
+bool SLightControlTool::SelectItemParentButtonEnable() const
+{
+    return SelectedItems.Num() && SelectedItems[0]->Type != Folder && SelectedItems[0]->ActorPtr->GetAttachParentActor();
+}
+
+FText SLightControlTool::GetItemParentName() const
+{
+    if (SelectedItems.Num() && SelectedItems[0]->Type != Folder && SelectedItems[0]->ActorPtr->GetAttachParentActor())
+    {
+        return FText::FromString(SelectedItems[0]->ActorPtr->GetAttachParentActor()->GetName());
+    }
+    return FText::FromString("None");
+}
+
+FText SLightControlTool::GetItemPosition() const
+{
+    if (SelectedItems.Num() && SelectedItems[0]->Type != Folder)
+    {
+        return FText::FromString(SelectedItems[0]->ActorPtr->GetActorLocation().ToString());
+    }
+    return FText::FromString("");
+}
+
+FText SLightControlTool::GetItemRotation() const
+{
+    if (SelectedItems.Num() && SelectedItems[0]->Type != Folder)
+    {
+        return FText::FromString(SelectedItems[0]->ActorPtr->GetActorRotation().ToString());
+    }
+    return FText::FromString("");
+}
+
+FText SLightControlTool::GetItemScale() const
+{
+    if (SelectedItems.Num() && SelectedItems[0]->Type != Folder)
+    {
+        return FText::FromString(SelectedItems[0]->ActorPtr->GetActorScale().ToString());
+    }
+    return FText::FromString("");
+}
+
+TSharedRef<SBox> SLightControlTool::GroupControls()
+{
+    TSharedPtr<SBox> Box;
+
+    
+
+    SAssignNew(Box, SBox)
+    [
+        SNew(SBorder)
+        .Padding(FMargin(5.0f, 5.0f))
+        [
+            SNew(SVerticalBox)
+            + SVerticalBox::Slot()
+            [
+                SNew(SHorizontalBox)
+                + SHorizontalBox::Slot()
+                [
+                    SNew(STextBlock)
+                    .Text(FText::FromString("Master Light"))
+                ]
+                + SHorizontalBox::Slot()
+                [
+                    SNew(SComboBox<TSharedPtr<FTreeItem>>)
+                    .OptionsSource(&SelectedLightLeafs)
+                    .OnGenerateWidget(this, &SLightControlTool::GroupControlDropDownLabel)
+                    .OnSelectionChanged(this, &SLightControlTool::GroupControlDropDownSelection)
+                    .InitiallySelectedItem(MasterLight)[
+                        SNew(STextBlock).Text(this, &SLightControlTool::GroupControlDropDownDefaultLabel)
+                    ]
+                ]
+            ]
+            + SVerticalBox::Slot()
+            [
+                SNew(SHorizontalBox)
+                + SHorizontalBox::Slot()
+                [
+                    SNew(STextBlock)
+                    .Text(FText::FromString("Affected lights"))
+                ]
+                + SHorizontalBox::Slot()
+                [
+                    SNew(STextBlock)
+                    .Text(this, &SLightControlTool::GroupControlLightList)
+                    .AutoWrapText(true)
+                ]
+            ]
+        ]
+    ];
+
+
+    return Box.ToSharedRef();
+}
+
+TSharedRef<SWidget> SLightControlTool::GroupControlDropDownLabel(TSharedPtr<FTreeItem> Item)
+{
+    if (Item->Type == Folder)
+    {
+        return SNew(SBox);
+    }
+    return SNew(STextBlock).Text(FText::FromString(Item->Name));
+}
+
+void SLightControlTool::GroupControlDropDownSelection(TSharedPtr<FTreeItem> Item, ESelectInfo::Type SelectInfoType)
+{
+    MasterLight = Item;
+}
+
+FText SLightControlTool::GroupControlDropDownDefaultLabel() const
+{
+    if (MasterLight)
+    {
+        return FText::FromString(MasterLight->Name);
+    }
+    return FText::FromString("");
+}
+
+FText SLightControlTool::GroupControlLightList() const
+{
+    FString LightList = SelectedLightLeafs[0]->Name;
+
+    for (size_t i = 1; i < SelectedLightLeafs.Num(); i++)
+    {
+        LightList += ", ";
+        LightList += SelectedLightLeafs[i]->Name;
+    }
+
+    return FText::FromString(LightList);
 }
 
 SHorizontalBox::FSlot& SLightControlTool::LightSpecificPropertyEditor()
@@ -1287,6 +1812,136 @@ SHorizontalBox::FSlot& SLightControlTool::LightSpecificPropertyEditor()
     return Slot;
 }
 
+void SLightControlTool::OnHueValueChanged(float Value)
+{
+    for (auto SelectedItem : SelectedItems)
+    {
+        SelectedItem->Hue = Value;
+        SelectedItem->UpdateLightColor();
+        UpdateSaturationGradient(Value);
+    }
+}
+
+FText SLightControlTool::GetHueValueText() const
+{
+    FString Res = "0";
+    if (MasterLight)
+    {
+        Res = FString::FormatAsNumber(MasterLight->Hue * 360.0f);
+    }
+    return FText::FromString(Res);
+}
+
+float SLightControlTool::GetHueValue() const
+{
+    if (MasterLight)
+    {
+        return MasterLight->Hue;
+    }
+    return 0;
+}
+
+FText SLightControlTool::GetHuePercentage() const
+{
+    FString Res = "0%";
+    if (MasterLight)
+    {
+        Res = FString::FormatAsNumber(MasterLight->Hue * 100.0f) + "%";
+    }
+    return FText::FromString(Res);
+}
+
+void SLightControlTool::OnSaturationValueChanged(float Value)
+{
+    for (auto SelectedItem : SelectedItems)
+    {
+        SelectedItem->Saturation = Value;
+        SelectedItem->UpdateLightColor();
+    }
+}
+
+FText SLightControlTool::GetSaturationValueText() const
+{
+    FString Res = "0%";
+    if (MasterLight)
+    {
+        Res = FString::FormatAsNumber(MasterLight->Saturation * 100.0f) + "%";
+    }
+    return FText::FromString(Res);
+}
+
+float SLightControlTool::GetSaturationValue() const
+{
+    if (MasterLight)
+    {
+        return MasterLight->Saturation;
+    }
+    return 0.0f;
+}
+
+FReply SLightControlTool::SaveStateToJSON()
+{
+    TArray<TSharedPtr<FJsonValue>> TreeItemsJSON;
+
+    for (auto TreeItem : TreeItems)
+    {
+        TreeItemsJSON.Add(TreeItem->SaveToJson());
+    }
+    
+    TSharedPtr<FJsonObject> RootObject = MakeShared<FJsonObject>();
+
+    RootObject->SetArrayField("TreeElements", TreeItemsJSON);
+
+    FString Output;
+    TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&Output);
+    FJsonSerializer::Serialize(RootObject.ToSharedRef(), Writer);
+
+    auto ThisPlugin = IPluginManager::Get().FindPlugin("CradleLightControl");
+    auto Content = ThisPlugin->GetContentDir();
+    FFileHelper::SaveStringToFile(Output, *(Content + "\\TestFile.json"));
+    /*FArchive* Archive = 
+    TJsonWriter<char> Writer();*/
+
+    return FReply::Handled();
+}
+
+FReply SLightControlTool::LoadStateFromJSON()
+{
+    bCurrentlyLoading = true;
+    FString Input;
+    auto ThisPlugin = IPluginManager::Get().FindPlugin("CradleLightControl");
+    auto Content = ThisPlugin->GetContentDir();
+    if (FFileHelper::LoadFileToString(Input, *(Content + "\\TestFile.json")))
+    {
+        TreeItems.Empty();
+        ListOfLightItems.Empty();
+        TSharedPtr<FJsonObject> JsonRoot;
+        TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(Input);
+        FJsonSerializer::Deserialize(JsonReader, JsonRoot);
+
+        for (auto TreeElement : JsonRoot->GetArrayField("TreeElements"))
+        {
+            const TSharedPtr<FJsonObject>* TreeElementObjectPtr;
+            auto Success = TreeElement->TryGetObject(TreeElementObjectPtr);
+            auto TreeElementObject = *TreeElementObjectPtr;
+            _ASSERT(Success);
+            int Type = TreeElementObject->GetNumberField("Type");
+            auto Item = AddTreeItem(Type == 0); // If Type is 0, this element is a folder, so we add it as a folder
+            Item->LoadFromJson(TreeElementObject);
+
+            TreeItems.Add(Item);
+        }
+        Tree->RequestTreeRefresh();
+
+        for (auto TreeItem : TreeItems)
+        {
+            TreeItem->ExpandInTree();
+        }
+    }
+    bCurrentlyLoading = false;
+    return FReply::Handled();
+}
+
 void SLightControlTool::UpdateLightList()
 {
     TArray<AActor*> Actors;
@@ -1294,27 +1949,25 @@ void SLightControlTool::UpdateLightList()
     UGameplayStatics::GetAllActorsOfClass(GWorld, APointLight::StaticClass(), Actors);
     for (auto Light : Actors)
     {
-        TSharedPtr<FTreeItem> NewItem = MakeShared<FTreeItem>();
-        NewItem->OwningWidget = this;
-        NewItem->Parent = nullptr;
+        TSharedPtr<FTreeItem> NewItem = AddTreeItem();
         NewItem->Type = ETreeItemType::PointLight;
         NewItem->Name = Light->GetName();
         NewItem->PointLight = Cast<APointLight>(Light);
-
+        NewItem->FetchDataFromLight();
 
         TreeItems.Add(NewItem);
+
     }
 
     // Fetch Sky Lights
     UGameplayStatics::GetAllActorsOfClass(GWorld, ASkyLight::StaticClass(), Actors);
     for (auto Light : Actors)
     {
-        TSharedPtr<FTreeItem> NewItem = MakeShared<FTreeItem>();
-        NewItem->OwningWidget = this;
-        NewItem->Parent = nullptr;
+        TSharedPtr<FTreeItem> NewItem = AddTreeItem();
         NewItem->Type = ETreeItemType::SkyLight;
         NewItem->Name = Light->GetName();
         NewItem->SkyLight = Cast<ASkyLight>(Light);
+        NewItem->FetchDataFromLight();
 
         TreeItems.Add(NewItem);
     }
@@ -1323,12 +1976,11 @@ void SLightControlTool::UpdateLightList()
     UGameplayStatics::GetAllActorsOfClass(GWorld, ADirectionalLight::StaticClass(), Actors);
     for (auto Light : Actors)
     {
-        TSharedPtr<FTreeItem> NewItem = MakeShared<FTreeItem>();;
-        NewItem->OwningWidget = this;
-        NewItem->Parent = nullptr;
+        TSharedPtr<FTreeItem> NewItem = AddTreeItem();
         NewItem->Type = ETreeItemType::DirectionalLight;
         NewItem->Name = Light->GetName();
         NewItem->DirectionalLight = Cast<ADirectionalLight>(Light);
+        NewItem->FetchDataFromLight();
 
         TreeItems.Add(NewItem);
     }
@@ -1337,12 +1989,11 @@ void SLightControlTool::UpdateLightList()
     UGameplayStatics::GetAllActorsOfClass(GWorld, ASpotLight::StaticClass(), Actors);
     for (auto Light : Actors)
     {
-        TSharedPtr<FTreeItem> NewItem = MakeShared<FTreeItem>();;
-        NewItem->OwningWidget = this;
-        NewItem->Parent = nullptr;
+        TSharedPtr<FTreeItem> NewItem = AddTreeItem();
         NewItem->Type = ETreeItemType::SpotLight;
         NewItem->Name = Light->GetName();
         NewItem->SpotLight = Cast<ASpotLight>(Light);
+        NewItem->FetchDataFromLight();
 
         TreeItems.Add(NewItem);
     }

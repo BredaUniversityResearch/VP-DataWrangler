@@ -38,13 +38,15 @@ public class CradleLightControl : ModuleRules
 			{
 				"CoreUObject",
 				"Engine",
+				"UnrealEd",
 				"Slate",
 				"SlateCore",
                 "InputCore", 
 				"Projects",
 				"RHI",
 				"RenderCore",
-				"AppFramework"
+				"AppFramework",
+				"Json"
 
 				// ... add private dependencies that you statically link with here ...	
 			}

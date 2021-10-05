@@ -2,6 +2,8 @@
 
 #include "IDetailCustomization.h"
 #include "Slate.h"
+#include "Chaos/AABB.h"
+#include "Chaos/AABB.h"
 #include "Templates/SharedPointer.h"
 //#include "AppFramework/Public/Widgets/Colors/SComplexGradient.h"
 
@@ -36,6 +38,16 @@ public:
     FReply StartRename(const FGeometry&, const FPointerEvent&);
     void EndRename(const FText& Text, ETextCommit::Type CommitType);
 
+    TSharedPtr<FJsonValue> SaveToJson();
+    bool LoadFromJson(TSharedPtr<FJsonObject> JsonObject);
+    void ExpandInTree();
+
+    void FetchDataFromLight();
+    void UpdateLightColor();
+    void UpdateLightColor(FLinearColor& Color);
+
+    void GetLights(TArray<TSharedPtr<FTreeItem>>& Array);
+
     UPROPERTY()
         TArray<TSharedPtr<FTreeItem>> Children;
 
@@ -47,17 +59,26 @@ public:
 
     union
     {
+        class AActor* ActorPtr;
         class ASkyLight* SkyLight;
         class APointLight* PointLight;
         class ADirectionalLight* DirectionalLight;
         class ASpotLight* SpotLight;
     };
 
+    float Hue;
+    float Saturation;
+    float Value;
+
     TEnumAsByte<ETreeItemType> Type;
 
     class SLightControlTool* OwningWidget;
 
     TSharedPtr<SBox> TableRowBox;
+
+    FTreeItem* MasterLight;
+
+    bool bExpanded;
 
 private:
     bool bInRename;
@@ -90,8 +111,8 @@ public:
 
     void GetChildren(TSharedPtr<FTreeItem> Item, TArray<TSharedPtr<FTreeItem>>& Children);
     void SelectionCallback(TSharedPtr<FTreeItem> Item, ESelectInfo::Type SelectType);
-
     FReply AddFolderToTree();
+    void TreeExpansionCallback(TSharedPtr<FTreeItem> Item, bool bExpanded);
 
     FText TestTextGetter() const;
 
@@ -100,7 +121,7 @@ public:
     TSharedPtr<STreeView<TSharedPtr<FTreeItem>>> Tree;
     TArray<TSharedPtr<FTreeItem>> TreeItems;
 
-
+    TSharedPtr<FTreeItem> AddTreeItem(bool bIsFolder = false);
 private:
 
     static TArray<FColor> LinearGradient(TArray<FColor> ControlPoints, FVector2D Size = FVector2D(1.0f, 256.0f), EOrientation Orientation = Orient_Vertical);
@@ -109,8 +130,12 @@ private:
 
     static UTexture2D* MakeGradientTexture(int X = 1, int Y = 256);
 
+    EActiveTimerReturnType VerifyLights(double, float);
+
     void LoadResources();
     void GenerateTextures();
+    void UpdateSaturationGradient(float NewHue);
+    const FSlateBrush* GetSaturationGradientBrush() const;
 
     void UpdateLightList();
 
@@ -118,13 +143,47 @@ private:
 
     SVerticalBox::FSlot& LightPropertyEditor();
 
+
+    TSharedPtr<SBox> ExtraLightDetailBox;
+    TSharedPtr<FTreeItem> MasterLight;
+    TArray<TSharedPtr<FTreeItem>> SelectedLightLeafs;
+    void UpdateExtraLightDetailBox();
     SVerticalBox::FSlot& GeneralLightPropertyEditor();
-    SVerticalBox::FSlot& LightSceneTransformEditor();
+
+    void OnHueValueChanged(float Value);
+    FText GetHueValueText() const;
+    float GetHueValue() const;
+    FText GetHuePercentage() const;
+
+    void OnSaturationValueChanged(float Value);
+    FText GetSaturationValueText() const;
+    float GetSaturationValue() const;
+
+    TSharedRef<SBox> LightTransformViewer();
+    FReply SelectItem();
+    FReply SelectItemParent();
+    bool SelectItemParentButtonEnable() const;
+    FText GetItemParentName() const;
+    FText GetItemPosition() const;
+    FText GetItemRotation() const;
+    FText GetItemScale() const;
+
+    TSharedRef<SBox> GroupControls();
+    TSharedRef<SWidget> GroupControlDropDownLabel(TSharedPtr<FTreeItem> Item);
+    void GroupControlDropDownSelection(TSharedPtr<FTreeItem> Item, ESelectInfo::Type SelectInfoType);
+    FText GroupControlDropDownDefaultLabel() const;
+    FText GroupControlLightList() const;
 
     SHorizontalBox::FSlot& LightSpecificPropertyEditor();
 
+
+    FReply SaveStateToJSON();
+    FReply LoadStateFromJSON();
+    bool bCurrentlyLoading;
+
     TSharedPtr<FSlateImageBrush> IntensityGradientBrush;
     TSharedPtr<FSlateImageBrush> HSVGradientBrush;
+    TSharedPtr<FSlateImageBrush> DefaultSaturationGradientBrush;
     TSharedPtr<FSlateImageBrush> SaturationGradientBrush;
     TSharedPtr<FSlateImageBrush> TemperatureGradientBrush;
 
@@ -132,6 +191,8 @@ private:
         UTexture2D* IntensityGradientTexture;
     UPROPERTY()
         UTexture2D* HSVGradientTexture;
+    UPROPERTY()
+        UTexture2D* DefaultSaturationGradientTexture;
     UPROPERTY()
         UTexture2D* SaturationGradientTexture;
     UPROPERTY()
@@ -141,5 +202,6 @@ private:
 
     FDelegateHandle ActorSpawnedListenerHandle;
 
-
+    TArray<FTreeItem*> ListOfLightItems;
+    TSharedPtr<FActiveTimerHandle> LightVerificationTimer;
 };
