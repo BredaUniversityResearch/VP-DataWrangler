@@ -46,7 +46,8 @@ public class CradleLightControl : ModuleRules
 				"RHI",
 				"RenderCore",
 				"AppFramework",
-				"Json"
+				"Json",
+				"EditorStyle"
 
 				// ... add private dependencies that you statically link with here ...	
 			}

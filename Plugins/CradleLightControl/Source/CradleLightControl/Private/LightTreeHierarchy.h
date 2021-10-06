@@ -12,6 +12,7 @@ enum ETreeItemType
     SpotLight,
     DirectionalLight,
     PointLight,
+    Mixed,
     Invalid
 };
 
@@ -45,6 +46,10 @@ public:
     void SetLightIntensity(float NewValue);
 
     void GetLights(TArray<TSharedPtr<FTreeItem>>& Array);
+
+    void UpdateFolderIcon();
+
+    TSharedPtr<SCheckBox> InTreeCheckbox;
 
     UPROPERTY()
         TArray<TSharedPtr<FTreeItem>> Children;
@@ -90,9 +95,31 @@ public:
     TSharedPtr<FTreeItem> DraggedItem;
 };
 
+enum ETreeIconType
+{
+    SkyLightOff = 0,
+    SkyLightOn,
+    SkyLightUndetermined,
+    SpotLightOff,
+    SpotLightOn,
+    SpotLightUndetermined,
+    DirectionalLightOff,
+    DirectionalLightOn,
+    DirectionalLightUndetermined,
+    PointLightOff,
+    PointLightOn,
+    PointLightUndetermined,
+    GeneralLightOff,
+    GeneralLightOn,
+    GeneralLightUndetermined,
+    FolderClosed,
+    FolderOpened
+};
+
 class SLightTreeHierarchy : public SCompoundWidget
 {
 public:
+
 
     SLATE_BEGIN_ARGS(SLightTreeHierarchy){}
 
@@ -104,6 +131,8 @@ public:
     void PreDestroy();
 
     void OnActorSpawned(AActor* Actor);
+
+    void GenerateIcons();
 
     TSharedRef<ITableRow> AddToTree(TSharedPtr<FTreeItem> Item, const TSharedRef<STableViewBase>& OwnerTable);
 
@@ -132,6 +161,7 @@ public:
     TArray<TSharedPtr<FTreeItem>> LightsUnderSelection;
     TSharedPtr<FTreeItem> SelectionMasterLight;
 
+    TMap<ETreeIconType, FSlateBrush> Icons;
 
     TArray<FTreeItem*> ListOfLightItems;
 
