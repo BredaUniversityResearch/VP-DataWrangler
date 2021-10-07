@@ -47,7 +47,8 @@ public class CradleLightControl : ModuleRules
 				"RenderCore",
 				"AppFramework",
 				"Json",
-				"EditorStyle"
+				"EditorStyle",
+				"DesktopPlatform"
 
 				// ... add private dependencies that you statically link with here ...	
 			}

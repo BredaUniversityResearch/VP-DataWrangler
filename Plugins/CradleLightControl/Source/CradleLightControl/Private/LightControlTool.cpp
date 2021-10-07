@@ -15,12 +15,8 @@
 #include "Editor/EditorEngine.h"
 #include "Editor.h"
 
-#include "Styling/SlateIconFinder.h"
-#include "Engine/SkyLight.h"
-#include "Engine/PointLight.h"
-#include "Engine/SpotLight.h"
-#include "Engine/DirectionalLight.h"
-
+#include "IDesktopPlatform.h"
+#include "DesktopPlatformModule.h"
 
 
 void SLightControlTool::Construct(const FArguments& Args)
@@ -34,6 +30,8 @@ void SLightControlTool::Construct(const FArguments& Args)
         GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, "Could not set actor spawned callback");
 
     LoadResources();
+
+    ToolTab = Args._ToolTab;
        
     //SHorizontalBox::FSlot* SeparatorSlot;
 
@@ -128,6 +126,19 @@ void SLightControlTool::OnTreeSelectionChanged()
 TWeakPtr<SLightTreeHierarchy> SLightControlTool::GetTreeWidget()
 {
     return TreeWidget;
+}
+
+bool SLightControlTool::OpenFileDialog(FString Title, FString DefaultPath, uint32 Flags, FString FileTypeList, TArray<FString>& OutFilenames)
+{
+    IDesktopPlatform* Platform = FDesktopPlatformModule::Get();
+    return Platform->OpenFileDialog(ToolTab->GetParentWindow()->GetNativeWindow()->GetOSWindowHandle(), Title, DefaultPath, "", FileTypeList, Flags, OutFilenames);
+}
+
+bool SLightControlTool::SaveFileDialog(FString Title, FString DefaultPath, uint32 Flags, FString FileTypeList,
+    TArray<FString>& OutFilenames)
+{
+    IDesktopPlatform* Platform = FDesktopPlatformModule::Get();
+    return Platform->SaveFileDialog(ToolTab->GetParentWindow()->GetNativeWindow()->GetOSWindowHandle(), Title, DefaultPath, "", FileTypeList, Flags, OutFilenames);
 }
 
 void SLightControlTool::LoadResources()

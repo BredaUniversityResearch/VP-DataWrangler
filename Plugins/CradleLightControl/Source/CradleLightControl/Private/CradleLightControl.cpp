@@ -78,17 +78,22 @@ void FCradleLightControlModule::TabShenanigans()
 {
 	FGlobalTabmanager::Get()->RegisterNomadTabSpawner("LightControl", FOnSpawnTab::CreateLambda([this](const FSpawnTabArgs& Args)
 		{
-			return
-				SNew(SDockTab)
+			auto Tab = SNew(SDockTab)
 				.Label(FText::FromString("Light control tab"))
 				.TabRole(ETabRole::NomadTab)
 				.OnTabClosed_Lambda([this](TSharedRef<SDockTab>)
-		        {
+					{
 						LightControl->PreDestroy();
-		        })
-				[
-					SAssignNew(LightControl, SLightControlTool)
-				];
+					});
+
+		    Tab->SetContent(
+				    SAssignNew(LightControl, SLightControlTool)
+				    .ToolTab(Tab)
+				);
+
+
+		    return Tab;
+			
 		}));
 }
 

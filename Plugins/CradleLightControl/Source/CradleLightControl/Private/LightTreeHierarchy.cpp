@@ -715,6 +715,9 @@ void SLightTreeHierarchy::Construct(const FArguments& Args)
     // SVerticalBox slots are by default dividing the space equally between each other
     // Because of this we need to expose the slot with the search bar in order to disable that for it
 
+    SVerticalBox::FSlot* SaveButtonSlot;
+    SVerticalBox::FSlot* LoadButtonSlot;
+
     SVerticalBox::FSlot* LightSearchBarSlot;
     SVerticalBox::FSlot* NewFolderButtonSlot;
     ChildSlot[
@@ -741,12 +744,14 @@ void SLightTreeHierarchy::Construct(const FArguments& Args)
             ]
         ]
         +SVerticalBox::Slot()
+            .Expose(SaveButtonSlot)
             [
                 SNew(SButton)
                 .Text(FText::FromString("Save"))
                 .OnClicked(this, &SLightTreeHierarchy::SaveStateToJSON)
-            ]
+            ]   
         + SVerticalBox::Slot()
+            .Expose(LoadButtonSlot)
             [
                 SNew(SButton)
                 .Text(FText::FromString("Load"))
@@ -783,6 +788,8 @@ void SLightTreeHierarchy::Construct(const FArguments& Args)
         ]
     ];
 
+    SaveButtonSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
+    LoadButtonSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
 
     LightSearchBarSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
     NewFolderButtonSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
@@ -797,7 +804,6 @@ void SLightTreeHierarchy::Construct(const FArguments& Args)
 void SLightTreeHierarchy::PreDestroy()
 {
     UnRegisterActiveTimer(LightVerificationTimer.ToSharedRef());
-
 }
 
 void SLightTreeHierarchy::OnActorSpawned(AActor* Actor)
@@ -1080,6 +1086,9 @@ void SLightTreeHierarchy::UpdateLightList()
 
 FReply SLightTreeHierarchy::SaveStateToJSON()
 {
+
+    
+
     TArray<TSharedPtr<FJsonValue>> TreeItemsJSON;
 
     for (auto TreeItem : TreeItems)
@@ -1095,9 +1104,18 @@ FReply SLightTreeHierarchy::SaveStateToJSON()
     TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&Output);
     FJsonSerializer::Serialize(RootObject.ToSharedRef(), Writer);
 
+    /*auto ThisPlugin = IPluginManager::Get().FindPlugin("CradleLightControl");
+    auto Content = ThisPlugin->GetContentDir();*/
     auto ThisPlugin = IPluginManager::Get().FindPlugin("CradleLightControl");
     auto Content = ThisPlugin->GetContentDir();
-    FFileHelper::SaveStringToFile(Output, *(Content + "\\TestFile.json"));
+    //FFileHelper::SaveStringToFile(Output, *(Content + "\\TestFile.json"));
+
+    TArray<FString> Filenames;
+    if (CoreToolPtr->SaveFileDialog("Select file to save tool state to", Content, 0 /*Single file*/, "Data Table JSON (*.json)|*.json", Filenames))
+    {
+        auto TargetFile = Filenames[0];
+        FFileHelper::SaveStringToFile(Output, *TargetFile);
+    }
     /*FArchive* Archive =
     TJsonWriter<char> Writer();*/
 
@@ -1110,33 +1128,41 @@ FReply SLightTreeHierarchy::LoadStateFromJSON()
     FString Input;
     auto ThisPlugin = IPluginManager::Get().FindPlugin("CradleLightControl");
     auto Content = ThisPlugin->GetContentDir();
-    if (FFileHelper::LoadFileToString(Input, *(Content + "\\TestFile.json")))
+
+    TArray<FString> Filenames;
+    if (CoreToolPtr->OpenFileDialog("Select file to restore tool state from", Content, 0 /*Single file*/, "Data Table JSON (*.json)|*.json", Filenames))
     {
-        TreeItems.Empty();
-        ListOfLightItems.Empty();
-        TSharedPtr<FJsonObject> JsonRoot;
-        TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(Input);
-        FJsonSerializer::Deserialize(JsonReader, JsonRoot);
-
-        for (auto TreeElement : JsonRoot->GetArrayField("TreeElements"))
+        auto TargetFile = Filenames[0];
+        if (FFileHelper::LoadFileToString(Input, *TargetFile))
         {
-            const TSharedPtr<FJsonObject>* TreeElementObjectPtr;
-            auto Success = TreeElement->TryGetObject(TreeElementObjectPtr);
-            auto TreeElementObject = *TreeElementObjectPtr;
-            _ASSERT(Success);
-            int Type = TreeElementObject->GetNumberField("Type");
-            auto Item = AddTreeItem(Type == 0); // If Type is 0, this element is a folder, so we add it as a folder
-            Item->LoadFromJson(TreeElementObject);
+            TreeItems.Empty();
+            ListOfLightItems.Empty();
+            TSharedPtr<FJsonObject> JsonRoot;
+            TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(Input);
+            FJsonSerializer::Deserialize(JsonReader, JsonRoot);
 
-            TreeItems.Add(Item);
-        }
-        Tree->RequestTreeRefresh();
+            for (auto TreeElement : JsonRoot->GetArrayField("TreeElements"))
+            {
+                const TSharedPtr<FJsonObject>* TreeElementObjectPtr;
+                auto Success = TreeElement->TryGetObject(TreeElementObjectPtr);
+                auto TreeElementObject = *TreeElementObjectPtr;
+                _ASSERT(Success);
+                int Type = TreeElementObject->GetNumberField("Type");
+                auto Item = AddTreeItem(Type == 0); // If Type is 0, this element is a folder, so we add it as a folder
+                Item->LoadFromJson(TreeElementObject);
 
-        for (auto TreeItem : TreeItems)
-        {
-            TreeItem->ExpandInTree();
+                TreeItems.Add(Item);
+            }
+            Tree->RequestTreeRefresh();
+
+            for (auto TreeItem : TreeItems)
+            {
+                TreeItem->ExpandInTree();
+            }
         }
     }
+
+    
     bCurrentlyLoading = false;
     return FReply::Handled();
 }
