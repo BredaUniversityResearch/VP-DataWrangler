@@ -27,6 +27,7 @@ FTreeItem::FTreeItem(SLightTreeHierarchy* InOwningWidget, FString InName, TArray
     , OwningWidget(InOwningWidget)
     , bInRename(false)
     , ActorPtr(nullptr)
+    , bMatchesSearchString(true)
 {
 }
 
@@ -256,6 +257,11 @@ void FTreeItem::GenerateTableRow()
             .ShadowOffset(FIntPoint(-1, 1))
             .OnDoubleClicked(this, &FTreeItem::StartRename));
     }
+
+    if (bMatchesSearchString)
+        TableRowBox->SetVisibility(EVisibility::Visible);
+    else
+        TableRowBox->SetVisibility(EVisibility::Collapsed);
 }
 
 bool FTreeItem::VerifyDragDrop(TSharedPtr<FTreeItem> Dragged, TSharedPtr<FTreeItem> Destination)
@@ -602,6 +608,26 @@ void FTreeItem::UpdateFolderIcon()
         Parent->UpdateFolderIcon();
 }
 
+bool FTreeItem::CheckNameAgainstSearchString(const FString& SearchString)
+{
+    bMatchesSearchString = false;
+    if (SearchString.Len() == 0)
+    {
+        bMatchesSearchString = true;
+    }
+    else if (Name.Find(SearchString) != -1)
+    {
+        bMatchesSearchString = true;
+    }
+
+    for (auto ChildItem : Children)
+    {
+        bMatchesSearchString |= ChildItem->CheckNameAgainstSearchString(SearchString);
+    }
+
+    return bMatchesSearchString;
+}
+
 FReply FTreeItem::TreeDragDetected(const FGeometry& Geometry, const FPointerEvent& MouseEvent)
 {
     GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, Name + "Dragggg");
@@ -641,7 +667,7 @@ FReply FTreeItem::TreeDropDetected(const FDragDropEvent& DragDropEvent)
         if (Source)
             Source->Children.Remove(Target);
         else
-            OwningWidget->TreeItems.Remove(Target);
+            OwningWidget->TreeRootItems.Remove(Target);
         Destination->Children.Add(Target);
         Target->Parent = Destination;
 
@@ -663,14 +689,14 @@ FReply FTreeItem::TreeDropDetected(const FDragDropEvent& DragDropEvent)
         }
         else
         {
-            OwningWidget->TreeItems.Remove(SharedThis(this));
-            OwningWidget->TreeItems.Add(Destination);
+            OwningWidget->TreeRootItems.Remove(SharedThis(this));
+            OwningWidget->TreeRootItems.Add(Destination);
         }
 
         if (Source)
             Source->Children.Remove(Target);
         else
-            OwningWidget->TreeItems.Remove(Target);
+            OwningWidget->TreeRootItems.Remove(Target);
 
         Destination->Children.Add(Target);
         Destination->Children.Add(SharedThis(this));
@@ -732,6 +758,8 @@ void SLightTreeHierarchy::Construct(const FArguments& Args)
             .VAlign(VAlign_Top)
             [
                 SNew(SSearchBox)
+                //.OnSearch(this, &SLightTreeHierarchy::SearchBarSearch)
+                .OnTextChanged(this, &SLightTreeHierarchy::SearchBarOnChanged)
                 // Search bar for light
             ]
             +SVerticalBox::Slot()
@@ -769,7 +797,7 @@ void SLightTreeHierarchy::Construct(const FArguments& Args)
             [
                 SAssignNew(Tree, STreeView<TSharedPtr<FTreeItem>>)
                 .ItemHeight(24.0f)
-                .TreeItemsSource(&TreeItems)
+                .TreeItemsSource(&TreeRootItems)
                 .OnSelectionChanged(this, &SLightTreeHierarchy::SelectionCallback)
                 .OnGenerateRow(this, &SLightTreeHierarchy::AddToTree)
                 .OnGetChildren(this, &SLightTreeHierarchy::GetChildren)
@@ -795,7 +823,7 @@ void SLightTreeHierarchy::Construct(const FArguments& Args)
     NewFolderButtonSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
 
 
-    for (auto& TreeItem : TreeItems)
+    for (auto& TreeItem : TreeRootItems)
     {
         Tree->SetItemExpansion(TreeItem, true);
     }
@@ -843,7 +871,7 @@ void SLightTreeHierarchy::OnActorSpawned(AActor* Actor)
         }
         NewItem->FetchDataFromLight();
 
-        TreeItems.Add(NewItem);
+        TreeRootItems.Add(NewItem);
 
         Tree->RequestTreeRefresh();
     }
@@ -896,6 +924,7 @@ void SLightTreeHierarchy::GenerateIcons()
 TSharedRef<ITableRow> SLightTreeHierarchy::AddToTree(TSharedPtr<FTreeItem> Item,
                                                      const TSharedRef<STableViewBase>& OwnerTable)
 {
+    GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Emerald, "lmao");
     SHorizontalBox::FSlot& CheckBoxSlot = SHorizontalBox::Slot();
     CheckBoxSlot.SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
 
@@ -914,6 +943,7 @@ TSharedRef<ITableRow> SLightTreeHierarchy::AddToTree(TSharedPtr<FTreeItem> Item,
         .Padding(2.0f)
         .OnDragDetected(Item.Get(), &FTreeItem::TreeDragDetected)
         .OnDrop_Raw(Item.Get(), &FTreeItem::TreeDropDetected)
+        .Visibility_Lambda([Item]() {return Item->bMatchesSearchString ? EVisibility::Visible : EVisibility::Collapsed; })
         [
             SAssignNew(Item->TableRowBox, SBox)
         ];
@@ -959,7 +989,7 @@ FReply SLightTreeHierarchy::AddFolderToTree()
     TSharedPtr<FTreeItem> NewFolder = AddTreeItem(true);
     NewFolder->Name = "New Group";
 
-    TreeItems.Add(NewFolder);
+    TreeRootItems.Add(NewFolder);
 
     Tree->RequestTreeRefresh();
 
@@ -978,7 +1008,7 @@ TSharedPtr<FTreeItem> SLightTreeHierarchy::AddTreeItem(bool bIsFolder)
     Item->Parent = nullptr;
 
 
-    //TreeItems.Add(Item);
+    //TreeRootItems.Add(Item);
     if (bIsFolder)
     {
         Item->Type = Folder;
@@ -1002,7 +1032,7 @@ EActiveTimerReturnType SLightTreeHierarchy::VerifyLights(double, float)
             if (Item->Parent)
                 Item->Parent->Children.Remove(Item->AsShared());
             else
-                TreeItems.Remove(Item->AsShared());
+                TreeRootItems.Remove(Item->AsShared());
 
 
             ToRemove.Add(Item);
@@ -1039,7 +1069,7 @@ void SLightTreeHierarchy::UpdateLightList()
         NewItem->PointLight = Cast<APointLight>(Light);
         NewItem->FetchDataFromLight();
 
-        TreeItems.Add(NewItem);
+        TreeRootItems.Add(NewItem);
 
     }
 
@@ -1053,7 +1083,7 @@ void SLightTreeHierarchy::UpdateLightList()
         NewItem->SkyLight = Cast<ASkyLight>(Light);
         NewItem->FetchDataFromLight();
 
-        TreeItems.Add(NewItem);
+        TreeRootItems.Add(NewItem);
     }
 
     // Fetch Directional Lights
@@ -1066,7 +1096,7 @@ void SLightTreeHierarchy::UpdateLightList()
         NewItem->DirectionalLight = Cast<ADirectionalLight>(Light);
         NewItem->FetchDataFromLight();
 
-        TreeItems.Add(NewItem);
+        TreeRootItems.Add(NewItem);
     }
 
     // Fetch Spot Lights
@@ -1079,8 +1109,25 @@ void SLightTreeHierarchy::UpdateLightList()
         NewItem->SpotLight = Cast<ASpotLight>(Light);
         NewItem->FetchDataFromLight();
 
-        TreeItems.Add(NewItem);
+        TreeRootItems.Add(NewItem);
     }
+}
+
+void SLightTreeHierarchy::SearchBarSearch(SSearchBox::SearchDirection Dir)
+{
+}
+
+void SLightTreeHierarchy::SearchBarOnChanged(const FText& NewString)
+{
+    GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Cyan, NewString.ToString());
+
+    for (auto RootItem : TreeRootItems)
+    {
+        RootItem->CheckNameAgainstSearchString(NewString.ToString());
+    }
+
+    //Tree->RequestTreeRefresh();
+    Tree->RebuildList();
 }
 
 
@@ -1091,7 +1138,7 @@ FReply SLightTreeHierarchy::SaveStateToJSON()
 
     TArray<TSharedPtr<FJsonValue>> TreeItemsJSON;
 
-    for (auto TreeItem : TreeItems)
+    for (auto TreeItem : TreeRootItems)
     {
         TreeItemsJSON.Add(TreeItem->SaveToJson());
     }
@@ -1135,7 +1182,7 @@ FReply SLightTreeHierarchy::LoadStateFromJSON()
         auto TargetFile = Filenames[0];
         if (FFileHelper::LoadFileToString(Input, *TargetFile))
         {
-            TreeItems.Empty();
+            TreeRootItems.Empty();
             ListOfLightItems.Empty();
             TSharedPtr<FJsonObject> JsonRoot;
             TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(Input);
@@ -1151,11 +1198,11 @@ FReply SLightTreeHierarchy::LoadStateFromJSON()
                 auto Item = AddTreeItem(Type == 0); // If Type is 0, this element is a folder, so we add it as a folder
                 Item->LoadFromJson(TreeElementObject);
 
-                TreeItems.Add(Item);
+                TreeRootItems.Add(Item);
             }
             Tree->RequestTreeRefresh();
 
-            for (auto TreeItem : TreeItems)
+            for (auto TreeItem : TreeRootItems)
             {
                 TreeItem->ExpandInTree();
             }

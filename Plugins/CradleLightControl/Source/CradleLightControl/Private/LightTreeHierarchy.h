@@ -51,6 +51,8 @@ public:
 
     void UpdateFolderIcon();
 
+    bool CheckNameAgainstSearchString(const FString& SearchString);
+
     TSharedPtr<SCheckBox> InTreeCheckbox;
 
     UPROPERTY()
@@ -87,6 +89,7 @@ public:
     FTreeItem* MasterLight;
 
     bool bExpanded;
+    bool bMatchesSearchString;
 
 private:
     bool bInRename;
@@ -152,6 +155,8 @@ public:
 
     void UpdateLightList();
 
+    void SearchBarSearch(SSearchBox::SearchDirection Dir);
+    void SearchBarOnChanged(const FText& NewString);
 
     FReply SaveStateToJSON();
     FReply LoadStateFromJSON();
@@ -160,7 +165,7 @@ public:
     SLightControlTool* CoreToolPtr;
 
     TSharedPtr<STreeView<TSharedPtr<FTreeItem>>> Tree;
-    TArray<TSharedPtr<FTreeItem>> TreeItems;
+    TArray<TSharedPtr<FTreeItem>> TreeRootItems;
 
     TArray<TSharedPtr<FTreeItem>> SelectedItems;
     TArray<TSharedPtr<FTreeItem>> LightsUnderSelection;
