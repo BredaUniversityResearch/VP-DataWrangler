@@ -9,6 +9,27 @@
 
 
 
+enum EIconType
+{
+    SkyLightOff = 0,
+    SkyLightOn,
+    SkyLightUndetermined,
+    SpotLightOff,
+    SpotLightOn,
+    SpotLightUndetermined,
+    DirectionalLightOff,
+    DirectionalLightOn,
+    DirectionalLightUndetermined,
+    PointLightOff,
+    PointLightOn,
+    PointLightUndetermined,
+    GeneralLightOff,
+    GeneralLightOn,
+    GeneralLightUndetermined,
+    FolderClosed,
+    FolderOpened
+};
+
 
 class SLightControlTool : public SCompoundWidget
 {
@@ -40,15 +61,24 @@ public:
 
     bool OpenFileDialog(FString Title, FString DefaultPath, uint32 Flags, FString FileTypeList, TArray<FString>& OutFilenames);
     bool SaveFileDialog(FString Title, FString DefaultPath, uint32 Flags, FString FileTypeList, TArray<FString>& OutFilenames);
+
+    FCheckBoxStyle MakeCheckboxStyleForType(ETreeItemType IconType);
+
+    FSlateBrush& GetIcon(EIconType Icon);
+
 private:
 
     void LoadResources();
+    void GenerateIcons();
 
     SVerticalBox::FSlot& LightHeader();
+    void UpdateLightHeader();
+
+    void OnLightHeaderCheckStateChanged(ECheckBoxState NewState);
+    ECheckBoxState GetLightHeaderCheckState() const;
 
     SVerticalBox::FSlot& LightPropertyEditor();
 
-    TSharedPtr<SBox> ExtraLightDetailBox;
 
     TSharedRef<SBox> LightTransformViewer();
     FReply SelectItemInScene();
@@ -67,11 +97,16 @@ private:
 
     SHorizontalBox::FSlot& LightSpecificPropertyEditor();
 
+    TSharedPtr<SBox> ExtraLightDetailBox;
+    TSharedPtr<SBox> LightHeaderBox;
+    FCheckBoxStyle LightHeaderCheckboxStyle;
 
     TSharedPtr<SDockTab> ToolTab;
     TSharedPtr<SLightTreeHierarchy> TreeWidget;
     TSharedPtr<SLightPropertyEditor> LightPropertyWidget;
 
+
+    TMap<EIconType, FSlateBrush> Icons;
 
     FDelegateHandle ActorSpawnedListenerHandle;
 

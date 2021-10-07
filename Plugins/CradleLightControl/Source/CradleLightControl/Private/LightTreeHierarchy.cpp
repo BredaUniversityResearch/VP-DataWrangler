@@ -79,7 +79,7 @@ void FTreeItem::OnCheck(ECheckBoxState NewState)
     bool B = false;
     if (NewState == ECheckBoxState::Checked)
         B = true;
-    if (Type != Folder && !IsValid(SkyLight))
+    if (Type != Folder && !IsValid(ActorPtr))
         return;
 
     switch (Type)
@@ -107,13 +107,10 @@ void FTreeItem::OnCheck(ECheckBoxState NewState)
 
 void FTreeItem::GenerateTableRow()
 {
-    SHorizontalBox::FSlot& CheckBoxSlot = SHorizontalBox::Slot();
-    CheckBoxSlot.SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
-
-    if (!Type == Folder || Children.Num() > 0)
+    auto IconType = Type;
+    if (Type == Folder)
     {
-        auto IconType = Type;
-        if (Type == Folder)
+        if (Children.Num())
         {
             IconType = Children[0]->Type;
             for (size_t i = 1; i < Children.Num(); i++)
@@ -122,24 +119,15 @@ void FTreeItem::GenerateTableRow()
                 {
                     IconType = Mixed;                    
                 }
-            }
+            }            
         }
-        CheckBoxSlot[
-            SNew(SBox)
-            .MaxAspectRatio(FOptionalSize(1.0f))
-            [
-                SNew(SCheckBox)
-                .IsChecked_Raw(this, &FTreeItem::IsLightEnabled)
-                .OnCheckStateChanged_Raw(this, &FTreeItem::OnCheck)
-                .CheckedImage(&OwningWidget->Icons[StaticCast<ETreeIconType>((IconType - 1) * 3 + 1)])
-                .UncheckedImage(&OwningWidget->Icons[StaticCast<ETreeIconType>((IconType - 1) * 3 + 0)])
-                .CheckedHoveredImage(&OwningWidget->Icons[StaticCast<ETreeIconType>((IconType - 1) * 3 + 1)])
-                .UncheckedHoveredImage(&OwningWidget->Icons[StaticCast<ETreeIconType>((IconType - 1) * 3 + 0)])
-                .CheckedPressedImage(&OwningWidget->Icons[StaticCast<ETreeIconType>((IconType - 1) * 3 + 1)])
-                .UncheckedPressedImage(&OwningWidget->Icons[StaticCast<ETreeIconType>((IconType - 1) * 3 + 0)])
-            ]
-        ];
+        else
+            IconType = Mixed;
     }
+    CheckBoxStyle = OwningWidget->CoreToolPtr->MakeCheckboxStyleForType(IconType);
+
+    CheckBoxStyle.CheckedPressedImage = CheckBoxStyle.UndeterminedImage;
+    CheckBoxStyle.UncheckedPressedImage = CheckBoxStyle.UndeterminedImage;
 
     static auto Icon = *FSlateIconFinder::FindIconBrushForClass(APointLight::StaticClass());
     Icon.SetImageSize(FVector2D(16.0f, 16.0f));
@@ -148,44 +136,45 @@ void FTreeItem::GenerateTableRow()
     auto TintColor = FLinearColor(0.2f, 0.2f, 0.2f, 0.5f);
     Icon.TintColor = FSlateColor(TintColor);
 
-    //SHorizontalBox::FSlot* IconSlot;
+    SHorizontalBox::FSlot* CheckBoxSlot;
 
     if (Type != Folder)
     {
         TableRowBox->SetContent(
         SNew(SHorizontalBox)
-        /*+ SHorizontalBox::Slot()
-        .Expose(IconSlot)
-        [
-            SNew(SImage)
-            .Image(&Icon)
-        ]*/
-        + CheckBoxSlot 
-        + SHorizontalBox::Slot()
-        .VAlign(VAlign_Center)
-        [
-            SAssignNew(TextSlot, SBox)
-        ]
+        +SHorizontalBox::Slot()
+            .Expose(CheckBoxSlot) // On/Off toggle button 
+            [
+                SNew(SCheckBox)
+                .IsChecked_Raw(this, &FTreeItem::IsLightEnabled)
+                .OnCheckStateChanged_Raw(this, &FTreeItem::OnCheck)
+                .Style(&CheckBoxStyle)
+            ]
+        + SHorizontalBox::Slot() // Name slot
+            .VAlign(VAlign_Center)
+            [
+                SAssignNew(TextSlot, SBox) 
+            ]
         );
     }
     else
     {
-        SHorizontalBox::FSlot* FolderCheckBoxSlot;
         SHorizontalBox::FSlot* FolderImageSlot;
         TableRowBox->SetContent(
             SNew(SHorizontalBox)
-            +SHorizontalBox::Slot()
+            +SHorizontalBox::Slot() // Name slot
             .VAlign(VAlign_Center)
             [
                 SAssignNew(TextSlot, SBox)
             ]
-            +SHorizontalBox::Slot()
-            .Expose(FolderCheckBoxSlot)
+            +SHorizontalBox::Slot() // On/Off toggle button
+            .Expose(CheckBoxSlot)
             .HAlign(HAlign_Right)
             [
-                SAssignNew(InTreeCheckbox, SCheckBox)
+                SAssignNew(StateCheckbox, SCheckBox)
                 .IsChecked(this, &FTreeItem::IsLightEnabled)
                 .OnCheckStateChanged(this, &FTreeItem::OnCheck)
+                .Style(&CheckBoxStyle)
                 .RenderTransform(FSlateRenderTransform(FScale2D(1.1f)))
             ]
             + SHorizontalBox::Slot()
@@ -200,31 +189,26 @@ void FTreeItem::GenerateTableRow()
                         ExpandInTree();
                         return FReply::Handled();
                     })
-                [
-                    SNew(SImage)
-                    .Image_Lambda([this]() {return &(bExpanded ? OwningWidget->Icons[FolderOpened] : OwningWidget->Icons[FolderClosed]); })
-                    .RenderTransform(FSlateRenderTransform(FScale2D(1.1f)))
-                ]
-                
+                    [
+                        SNew(SImage) // Image overlay for the button
+                        .Image_Lambda([this]() {return &(bExpanded ? OwningWidget->CoreToolPtr->GetIcon(FolderOpened) : OwningWidget->CoreToolPtr->GetIcon(FolderClosed)); })
+                        .RenderTransform(FSlateRenderTransform(FScale2D(1.1f)))
+                    ]                
             ]
         );
         //TableRowBox->SetRenderTransform(FSlateRenderTransform(FScale2D(1.2f)));
         UpdateFolderIcon();
 
-        FolderCheckBoxSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
         FolderImageSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
     }
+    CheckBoxSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
 
-    //IconSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
     auto Font = FSlateFontInfo(FCoreStyle::GetDefaultFont(), 10);
-    if (Type == Folder)
+    if (Type == Folder) // Slightly larger font for group items
         Font.Size = 12;
 
     if (bInRename)
     {
-        
-
-
         TextSlot->SetContent(
             SNew(SEditableText)
             .Text(FText::FromString(Name))
@@ -233,19 +217,7 @@ void FTreeItem::GenerateTableRow()
                 {
                     Name = Input.ToString();
                 })
-            /*.OnKeyDownHandler(FOnKeyDown::CreateLambda([this](const FGeometry&, const FKeyEvent& KeyEvent)
-                {
-                    GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Black, KeyEvent.GetKey().ToString());
-
-                    if (KeyEvent.GetKey().ToString() == "Enter")
-                    {
-                        EndRename();
-                    }
-
-                    return FReply::Handled();
-                }))*/
-                    .OnTextCommitted(this, &FTreeItem::EndRename));
-    
+            .OnTextCommitted(this, &FTreeItem::EndRename));    
     }
     else
     {
@@ -542,16 +514,22 @@ void FTreeItem::SetLightIntensity(float NewValue)
 
 void FTreeItem::SetUseTemperature(bool NewState)
 {
-    bUseTemperature = NewState;
-    auto LightPtr = Cast<ALight>(ActorPtr);
-    LightPtr->GetLightComponent()->SetUseTemperature(NewState);        
+    if (Type != ETreeItemType::SkyLight)
+    {
+        bUseTemperature = NewState;
+        auto LightPtr = Cast<ALight>(ActorPtr);
+        LightPtr->GetLightComponent()->SetUseTemperature(NewState);                
+    }
 }
 
 void FTreeItem::SetTemperature(float NewValue)
 {
-    Temperature = NewValue;
-    auto LightPtr = Cast<ALight>(ActorPtr);
-    LightPtr->GetLightComponent()->SetTemperature(NewValue * (12000.0f - 1700.0f) + 1700.0f);
+    if (Type != ETreeItemType::SkyLight)
+    {
+        Temperature = NewValue;
+        auto LightPtr = Cast<ALight>(ActorPtr);
+        LightPtr->GetLightComponent()->SetTemperature(NewValue * (12000.0f - 1700.0f) + 1700.0f);
+    }
 }
 
 void FTreeItem::GetLights(TArray<TSharedPtr<FTreeItem>>& Array)
@@ -592,17 +570,7 @@ void FTreeItem::UpdateFolderIcon()
     else
         IconType = Mixed;
 
-    InTreeCheckbox->SetCheckedImage(&OwningWidget->Icons[StaticCast<ETreeIconType>((IconType - 1) * 3 + 1)]);
-    InTreeCheckbox->SetCheckedHoveredImage(&OwningWidget->Icons[StaticCast<ETreeIconType>((IconType - 1) * 3 + 1)]);
-    InTreeCheckbox->SetCheckedPressedImage(&OwningWidget->Icons[StaticCast<ETreeIconType>((IconType - 1) * 3 + 1)]);
-
-    InTreeCheckbox->SetUncheckedImage(&OwningWidget->Icons[StaticCast<ETreeIconType>((IconType - 1) * 3 + 0)]);
-    InTreeCheckbox->SetUncheckedHoveredImage(&OwningWidget->Icons[StaticCast<ETreeIconType>((IconType - 1) * 3 + 0)]);
-    InTreeCheckbox->SetUncheckedPressedImage(&OwningWidget->Icons[StaticCast<ETreeIconType>((IconType - 1) * 3 + 0)]);
-
-    InTreeCheckbox->SetUndeterminedImage(&OwningWidget->Icons[StaticCast<ETreeIconType>((IconType - 1) * 3 + 2)]);
-    InTreeCheckbox->SetUndeterminedHoveredImage(&OwningWidget->Icons[StaticCast<ETreeIconType>((IconType - 1) * 3 + 2)]);
-    InTreeCheckbox->SetUndeterminedPressedImage(&OwningWidget->Icons[StaticCast<ETreeIconType>((IconType - 1) * 3 + 2)]);
+    
 
     if (Parent)
         Parent->UpdateFolderIcon();
@@ -730,7 +698,6 @@ void SLightTreeHierarchy::Construct(const FArguments& Args)
 {
     LightVerificationTimer = RegisterActiveTimer(0.5f, FWidgetActiveTimerDelegate::CreateRaw(this, &SLightTreeHierarchy::VerifyLights));
 
-    GenerateIcons();
 
     FSlateFontInfo Font24(FCoreStyle::GetDefaultFont(), 20);
 
@@ -877,54 +844,9 @@ void SLightTreeHierarchy::OnActorSpawned(AActor* Actor)
     }
 }
 
-void SLightTreeHierarchy::GenerateIcons()
-{
-    FLinearColor OffTint(0.2f, 0.2f, 0.2f, 0.5f);
-    FLinearColor UndeterminedTint(0.8f, 0.8f, 0.0f, 0.5f);
-    FClassIconFinder::FindThumbnailForClass(APointLight::StaticClass());
-    Icons.Emplace(SkyLightOn, *FClassIconFinder::FindThumbnailForClass(ASkyLight::StaticClass()));
-    Icons.Emplace(SkyLightOff, Icons[SkyLightOn]);
-    Icons[SkyLightOff].TintColor = OffTint;
-    Icons.Emplace(SkyLightUndetermined, Icons[SkyLightOn]);
-    Icons[SkyLightUndetermined].TintColor = UndeterminedTint;
-
-    Icons.Emplace(DirectionalLightOn, *FClassIconFinder::FindThumbnailForClass(ADirectionalLight::StaticClass()));
-    Icons.Emplace(DirectionalLightOff, Icons[DirectionalLightOn]);
-    Icons[DirectionalLightOff].TintColor = OffTint;
-    Icons.Emplace(DirectionalLightUndetermined, Icons[DirectionalLightOn]);
-    Icons[DirectionalLightUndetermined].TintColor = UndeterminedTint;
-
-    Icons.Emplace(SpotLightOn, *FClassIconFinder::FindThumbnailForClass(ASpotLight::StaticClass()));
-    Icons.Emplace(SpotLightOff, Icons[SpotLightOn]);
-    Icons[SpotLightOff].TintColor = OffTint;
-    Icons.Emplace(SpotLightUndetermined, Icons[SpotLightOn]);
-    Icons[SpotLightUndetermined].TintColor = UndeterminedTint;
-
-    Icons.Emplace(PointLightOn, *FClassIconFinder::FindThumbnailForClass(APointLight::StaticClass()));
-    Icons.Emplace(PointLightOff, Icons[PointLightOn]);
-    Icons[PointLightOff].TintColor = OffTint;
-    Icons.Emplace(PointLightUndetermined, Icons[PointLightOn]);
-    Icons[PointLightUndetermined].TintColor = UndeterminedTint;
-
-    Icons.Emplace(GeneralLightOn, Icons[PointLightOn]);
-    Icons.Emplace(GeneralLightOff, Icons[PointLightOn]);
-    Icons.Emplace(GeneralLightUndetermined, Icons[PointLightUndetermined]);
-
-    Icons.Emplace(FolderClosed, *FEditorStyle::GetBrush("ContentBrowser.ListViewFolderIcon.Mask"));
-    Icons.Emplace(FolderOpened, *FEditorStyle::GetBrush("ContentBrowser.ListViewFolderIcon.Base"));
-
-    for (auto& Icon : Icons)
-    {
-        //Icon.Value.DrawAs = ESlateBrushDrawType::Box;
-        Icon.Value.SetImageSize(FVector2D(24.0f));
-    }
-}
-
-
 TSharedRef<ITableRow> SLightTreeHierarchy::AddToTree(TSharedPtr<FTreeItem> Item,
                                                      const TSharedRef<STableViewBase>& OwnerTable)
 {
-    GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Emerald, "lmao");
     SHorizontalBox::FSlot& CheckBoxSlot = SHorizontalBox::Slot();
     CheckBoxSlot.SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
 
@@ -932,7 +854,7 @@ TSharedRef<ITableRow> SLightTreeHierarchy::AddToTree(TSharedPtr<FTreeItem> Item,
     {
         CheckBoxSlot
         [
-            SAssignNew(Item->InTreeCheckbox, SCheckBox)
+            SAssignNew(Item->StateCheckbox, SCheckBox)
                 .IsChecked_Raw(Item.Get(), &FTreeItem::IsLightEnabled)
                 .OnCheckStateChanged_Raw(Item.Get(), &FTreeItem::OnCheck)
         ];
@@ -1113,14 +1035,8 @@ void SLightTreeHierarchy::UpdateLightList()
     }
 }
 
-void SLightTreeHierarchy::SearchBarSearch(SSearchBox::SearchDirection Dir)
-{
-}
-
 void SLightTreeHierarchy::SearchBarOnChanged(const FText& NewString)
 {
-    GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Cyan, NewString.ToString());
-
     for (auto RootItem : TreeRootItems)
     {
         RootItem->CheckNameAgainstSearchString(NewString.ToString());

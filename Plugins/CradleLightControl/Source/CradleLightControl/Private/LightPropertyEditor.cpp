@@ -250,8 +250,10 @@ void SLightPropertyEditor::Construct(const FArguments& Args)
                 [
                     SNew(STextBlock)
                     .Text(FText::FromString("Temperature"))
+                    .Justification(ETextJustify::Center)
                 ]
                 +SVerticalBox::Slot()
+                .HAlign(HAlign_Center)
                 .Expose(TemperatureCheckboxSlot)
                 [
                     SNew(SCheckBox)
@@ -265,6 +267,7 @@ void SLightPropertyEditor::Construct(const FArguments& Args)
                 [
                     SNew(STextBlock)
                     .Text(this, &SLightPropertyEditor::GetTemperatureValueText)
+                    .Justification(ETextJustify::Center)
                 ]
                 +SVerticalBox::Slot()
                 [
@@ -290,7 +293,7 @@ void SLightPropertyEditor::Construct(const FArguments& Args)
                 [
                     SNew(STextBlock)
                     .Justification(ETextJustify::Center)
-                    .Text(this, &SLightPropertyEditor::GetTemperatureValueText)
+                    .Text(this, &SLightPropertyEditor::GetTemperaturePercentage)
                 ]
             ]
         ]
@@ -606,7 +609,7 @@ FText SLightPropertyEditor::GetTemperaturePercentage() const
     FString Res = "0%";
     if (TreeWidget.IsValid() && CoreToolPtr->IsLightSelected())
     {
-        Res = FString::FormatAsNumber(TreeWidget.Pin()->SelectionMasterLight->Hue * 100.0f) + "%";
+        Res = FString::FormatAsNumber(TreeWidget.Pin()->SelectionMasterLight->Temperature * 100.0f) + "%";
     }
     return FText::FromString(Res);
 }

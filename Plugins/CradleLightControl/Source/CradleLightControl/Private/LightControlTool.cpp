@@ -6,18 +6,21 @@
 #include "DetailLayoutBuilder.h"
 #include "DetailWidgetRow.h"
 #include "Chaos/AABB.h"
-#include "Components/LightComponent.h"
-#include "Components/SkyLightComponent.h"
 #include "Engine/Engine.h"
-#include "Interfaces/IPluginManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "Engine/World.h"
 #include "Editor/EditorEngine.h"
 #include "Editor.h"
 
-#include "IDesktopPlatform.h"
-#include "DesktopPlatformModule.h"
+#include "ClassIconFinder.h"
 
+#include "Engine/SkyLight.h"
+#include "Engine/SpotLight.h"
+#include "Engine/DirectionalLight.h"
+#include "Engine/PointLight.h"
+
+#include "DesktopPlatformModule.h"
+#include "IDesktopPlatform.h"
 
 void SLightControlTool::Construct(const FArguments& Args)
 {
@@ -119,6 +122,7 @@ void SLightControlTool::OnTreeSelectionChanged()
     {
         LightPropertyWidget->UpdateSaturationGradient(TreeWidget->SelectionMasterLight->Hue);
         UpdateExtraLightDetailBox();
+        UpdateLightHeader();
     }
 
 }
@@ -141,9 +145,75 @@ bool SLightControlTool::SaveFileDialog(FString Title, FString DefaultPath, uint3
     return Platform->SaveFileDialog(ToolTab->GetParentWindow()->GetNativeWindow()->GetOSWindowHandle(), Title, DefaultPath, "", FileTypeList, Flags, OutFilenames);
 }
 
+FCheckBoxStyle SLightControlTool::MakeCheckboxStyleForType(ETreeItemType IconType)
+{
+    FCheckBoxStyle CheckBoxStyle;
+    CheckBoxStyle.CheckedImage = Icons[StaticCast<EIconType>((IconType - 1) * 3 + 1)];
+    CheckBoxStyle.CheckedHoveredImage = Icons[StaticCast<EIconType>((IconType - 1) * 3 + 1)];
+    CheckBoxStyle.CheckedPressedImage = Icons[StaticCast<EIconType>((IconType - 1) * 3 + 1)];
+
+    CheckBoxStyle.UncheckedImage = Icons[StaticCast<EIconType>((IconType - 1) * 3 + 0)];
+    CheckBoxStyle.UncheckedHoveredImage = Icons[StaticCast<EIconType>((IconType - 1) * 3 + 0)];
+    CheckBoxStyle.UncheckedPressedImage = Icons[StaticCast<EIconType>((IconType - 1) * 3 + 0)];
+
+    CheckBoxStyle.UndeterminedImage = Icons[StaticCast<EIconType>((IconType - 1) * 3 + 2)];
+    CheckBoxStyle.UndeterminedHoveredImage = Icons[StaticCast<EIconType>((IconType - 1) * 3 + 2)];
+    CheckBoxStyle.UndeterminedPressedImage = Icons[StaticCast<EIconType>((IconType - 1) * 3 + 2)];
+
+    return CheckBoxStyle;
+}
+
+FSlateBrush& SLightControlTool::GetIcon(EIconType Icon)
+{
+    return Icons[Icon];
+}
+
 void SLightControlTool::LoadResources()
 {
+    GenerateIcons();
+}
 
+void SLightControlTool::GenerateIcons()
+{
+    FLinearColor OffTint(0.2f, 0.2f, 0.2f, 0.5f);
+    FLinearColor UndeterminedTint(0.8f, 0.8f, 0.0f, 0.5f);
+    FClassIconFinder::FindThumbnailForClass(APointLight::StaticClass());
+    Icons.Emplace(SkyLightOn, *FClassIconFinder::FindThumbnailForClass(ASkyLight::StaticClass()));
+    Icons.Emplace(SkyLightOff, Icons[SkyLightOn]);
+    Icons[SkyLightOff].TintColor = OffTint;
+    Icons.Emplace(SkyLightUndetermined, Icons[SkyLightOn]);
+    Icons[SkyLightUndetermined].TintColor = UndeterminedTint;
+    
+    Icons.Emplace(DirectionalLightOn, *FClassIconFinder::FindThumbnailForClass(ADirectionalLight::StaticClass()));
+    Icons.Emplace(DirectionalLightOff, Icons[DirectionalLightOn]);
+    Icons[DirectionalLightOff].TintColor = OffTint;
+    Icons.Emplace(DirectionalLightUndetermined, Icons[DirectionalLightOn]);
+    Icons[DirectionalLightUndetermined].TintColor = UndeterminedTint;
+    
+    Icons.Emplace(SpotLightOn, *FClassIconFinder::FindThumbnailForClass(ASpotLight::StaticClass()));
+    Icons.Emplace(SpotLightOff, Icons[SpotLightOn]);
+    Icons[SpotLightOff].TintColor = OffTint;
+    Icons.Emplace(SpotLightUndetermined, Icons[SpotLightOn]);
+    Icons[SpotLightUndetermined].TintColor = UndeterminedTint;
+    
+    Icons.Emplace(PointLightOn, *FClassIconFinder::FindThumbnailForClass(APointLight::StaticClass()));
+    Icons.Emplace(PointLightOff, Icons[PointLightOn]);
+    Icons[PointLightOff].TintColor = OffTint;
+    Icons.Emplace(PointLightUndetermined, Icons[PointLightOn]);
+    Icons[PointLightUndetermined].TintColor = UndeterminedTint;
+    
+    Icons.Emplace(GeneralLightOn, Icons[PointLightOn]);
+    Icons.Emplace(GeneralLightOff, Icons[PointLightOn]);
+    Icons.Emplace(GeneralLightUndetermined, Icons[PointLightUndetermined]);
+    
+    Icons.Emplace(FolderClosed, *FEditorStyle::GetBrush("ContentBrowser.ListViewFolderIcon.Mask"));
+    Icons.Emplace(FolderOpened, *FEditorStyle::GetBrush("ContentBrowser.ListViewFolderIcon.Base"));
+    
+    for (auto& Icon : Icons)
+    {
+        //Icon.Value.DrawAs = ESlateBrushDrawType::Box;
+        Icon.Value.SetImageSize(FVector2D(24.0f));
+    }
 }
 
 SVerticalBox::FSlot& SLightControlTool::LightHeader()
@@ -152,28 +222,112 @@ SVerticalBox::FSlot& SLightControlTool::LightHeader()
 
     Slot.SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
 
+    TSharedPtr<SHorizontalBox> Box;
 
     Slot
     .HAlign(HAlign_Fill)
         [
-            SNew(SHorizontalBox)
-            +SHorizontalBox::Slot()
-            .HAlign(HAlign_Left)
+            SAssignNew(LightHeaderBox, SBox)
             [
-                SNew(STextBlock)
-                .Font(FSlateFontInfo(FCoreStyle::GetDefaultFont(), 18))
-                .Text(this, &SLightControlTool::TestTextGetter)
+                SAssignNew(Box, SHorizontalBox)
+                +SHorizontalBox::Slot()
+                .HAlign(HAlign_Left)
+                [
+                    SNew(STextBlock)
+                    .Font(FSlateFontInfo(FCoreStyle::GetDefaultFont(), 18))
+                    .Text(this, &SLightControlTool::TestTextGetter)
+                ]
             ]
-            +SHorizontalBox::Slot()
+        ];
+
+    if (IsLightSelected())
+    {
+        Box->AddSlot()
             .HAlign(HAlign_Right)
             [
                 SNew(SCheckBox)
-                .IsEnabled_Lambda([this]() {return TreeWidget->SelectionMasterLight != nullptr; })
-            ]
-
-        ];
-
+                .Style(&LightHeaderCheckboxStyle)
+            .IsEnabled_Lambda([this]() {return TreeWidget->SelectionMasterLight != nullptr; })
+            ];
+    }
     return Slot;
+}
+
+void SLightControlTool::UpdateLightHeader()
+{
+    if (IsLightSelected())
+    {
+        SHorizontalBox::FSlot* NameSlot;
+        SHorizontalBox::FSlot* CheckboxSlot;
+        auto IconType = TreeWidget->SelectionMasterLight->Type;
+        for (auto Light : TreeWidget->LightsUnderSelection)
+        {
+            if (IconType != Light->Type)
+            {
+                IconType = Mixed;
+                break;
+            }   
+        }
+        LightHeaderCheckboxStyle = MakeCheckboxStyleForType(IconType);
+        
+        LightHeaderBox->SetHAlign(HAlign_Fill);
+        LightHeaderBox->SetPadding(FMargin(5.0f, 0.0f));
+        LightHeaderBox->SetContent(
+            SNew(SVerticalBox)
+            +SVerticalBox::Slot()
+            [
+                SNew(SHorizontalBox)
+                +SHorizontalBox::Slot()
+                .HAlign(HAlign_Fill)
+                .Expose(NameSlot)
+                [
+                    SNew(STextBlock)
+                    .Text(FText::FromString(TreeWidget->SelectionMasterLight->Name))
+                    .Font(FSlateFontInfo(FCoreStyle::GetDefaultFont(), 18))
+                ]
+                +SHorizontalBox::Slot()
+                .HAlign(HAlign_Right)
+                .Padding(0.0f, 0.0f, 15.0f, 0.0f)
+                .Expose(CheckboxSlot)
+                [
+                    SNew(SCheckBox)
+                    .Style((&LightHeaderCheckboxStyle))
+                    .OnCheckStateChanged(this, &SLightControlTool::OnLightHeaderCheckStateChanged)
+                    .IsChecked(this, &SLightControlTool::GetLightHeaderCheckState)
+                    .RenderTransform(FSlateRenderTransform(1.2f))
+                ]
+            ]
+        );
+
+        //NameSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
+        CheckboxSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
+    }
+    else
+    {
+        LightHeaderBox->SetContent(
+            SNew(STextBlock)
+            .Text(FText::FromString("No lights currently selected")));
+    }
+}
+
+void SLightControlTool::OnLightHeaderCheckStateChanged(ECheckBoxState NewState)
+{
+    if (IsLightSelected())
+    {
+        for (auto Light : TreeWidget->LightsUnderSelection)
+        {
+            Light->OnCheck(NewState); // Use the callback used by the tree to modify the state
+        }
+    }
+}
+
+ECheckBoxState SLightControlTool::GetLightHeaderCheckState() const
+{
+    if (IsLightSelected())
+    {
+        return TreeWidget->SelectionMasterLight->IsLightEnabled();
+    }
+    return ECheckBoxState::Undetermined;
 }
 
 SVerticalBox::FSlot& SLightControlTool::LightPropertyEditor()
