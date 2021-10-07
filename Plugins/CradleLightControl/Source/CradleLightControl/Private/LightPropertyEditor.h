@@ -38,6 +38,13 @@ public:
     FText GetSaturationValueText() const;
     float GetSaturationValue() const;
 
+    void OnTemperatureValueChanged(float Value);
+    bool TemperatureEnabled() const;
+    void OnTemperatureCheckboxChecked(ECheckBoxState NewState);
+    ECheckBoxState GetTemperatureCheckboxChecked() const;
+    FText GetTemperatureValueText() const;
+    float GetTemperatureValue() const;
+    FText GetTemperaturePercentage() const;
 
     class SLightControlTool* CoreToolPtr;
     TWeakPtr<class SLightTreeHierarchy> TreeWidget;

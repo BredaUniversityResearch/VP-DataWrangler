@@ -77,7 +77,7 @@ void SLightPropertyEditor::Construct(const FArguments& Args)
     SVerticalBox::FSlot* IntensityNameSlot, *IntensityValueSlot, *IntensityPercentageSlot;
     SVerticalBox::FSlot* HueNameSlot, *HueValueSlot, *HuePercentageSlot;
     SVerticalBox::FSlot* SaturationNameSlot, *SaturationValueSlot, *SaturationPercentageSlot;
-    SVerticalBox::FSlot* TemperatureNameSlot, *TemperatureValueSlot, *TemperaturePercentageSlot;
+    SVerticalBox::FSlot* TemperatureNameSlot, * TemperatureCheckboxSlot, *TemperatureValueSlot, *TemperaturePercentageSlot;
 
 
     ChildSlot
@@ -252,10 +252,19 @@ void SLightPropertyEditor::Construct(const FArguments& Args)
                     .Text(FText::FromString("Temperature"))
                 ]
                 +SVerticalBox::Slot()
+                .Expose(TemperatureCheckboxSlot)
+                [
+                    SNew(SCheckBox)
+                    .ToolTipText(FText::FromString("Should the temperature be taken into account?"))
+                    .OnCheckStateChanged(this, &SLightPropertyEditor::OnTemperatureCheckboxChecked)
+                    .IsChecked(this, &SLightPropertyEditor::GetTemperatureCheckboxChecked)
+                    .IsEnabled(this, &SLightPropertyEditor::TemperatureEnabled)
+                ]
+                +SVerticalBox::Slot()
                 .Expose(TemperatureValueSlot)
                 [
                     SNew(STextBlock)
-                    .Text(FText::FromString("3000 Kelvin"))
+                    .Text(this, &SLightPropertyEditor::GetTemperatureValueText)
                 ]
                 +SVerticalBox::Slot()
                 [
@@ -271,6 +280,9 @@ void SLightPropertyEditor::Construct(const FArguments& Args)
                     [
                         SNew(SSlider)
                         .Orientation(EOrientation::Orient_Vertical)
+                        .OnValueChanged(this, &SLightPropertyEditor::OnTemperatureValueChanged)
+                        .Value(this, &SLightPropertyEditor::GetTemperatureValue)
+                        .IsEnabled(this, &SLightPropertyEditor::TemperatureEnabled)
                     ]
                 ]
                 +SVerticalBox::Slot()
@@ -278,7 +290,7 @@ void SLightPropertyEditor::Construct(const FArguments& Args)
                 [
                     SNew(STextBlock)
                     .Justification(ETextJustify::Center)
-                    .Text(FText::FromString("71%"))
+                    .Text(this, &SLightPropertyEditor::GetTemperatureValueText)
                 ]
             ]
         ]
@@ -297,6 +309,7 @@ void SLightPropertyEditor::Construct(const FArguments& Args)
     SaturationPercentageSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
 
     TemperatureNameSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
+    TemperatureCheckboxSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
     TemperatureValueSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
     TemperaturePercentageSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
 
@@ -529,5 +542,72 @@ float SLightPropertyEditor::GetSaturationValue() const
         return TreeWidget.Pin()->SelectionMasterLight->Saturation;
     }
     return 0.0f;
+}
+
+void SLightPropertyEditor::OnTemperatureValueChanged(float Value)
+{
+    if (TreeWidget.IsValid())
+        for (auto SelectedItem : TreeWidget.Pin()->LightsUnderSelection)
+        {
+            SelectedItem->SetTemperature(Value);
+        }
+}
+
+bool SLightPropertyEditor::TemperatureEnabled() const
+{
+    if (TreeWidget.IsValid())
+    {
+        auto MasterLight = TreeWidget.Pin()->SelectionMasterLight;
+        return MasterLight && MasterLight->Type != ETreeItemType::SkyLight;
+    }
+    return false;
+}
+
+void SLightPropertyEditor::OnTemperatureCheckboxChecked(ECheckBoxState NewState)
+{
+    if (TreeWidget.IsValid())
+        for (auto SelectedItem : TreeWidget.Pin()->LightsUnderSelection)
+        {
+            SelectedItem->SetUseTemperature(NewState == ECheckBoxState::Checked);            
+        }
+}
+
+FText SLightPropertyEditor::GetTemperatureValueText() const
+{
+    FString Res = "0";
+    if (TreeWidget.IsValid() && CoreToolPtr->IsLightSelected())
+    {
+        Res = FString::FormatAsNumber(TreeWidget.Pin()->SelectionMasterLight->Temperature * (12000.0f - 1700.0f) + 1700.0f) + " Kelvin";
+    }
+    return FText::FromString(Res);
+}
+
+ECheckBoxState SLightPropertyEditor::GetTemperatureCheckboxChecked() const
+{
+    ECheckBoxState State = ECheckBoxState::Unchecked;
+    if (TreeWidget.IsValid() && CoreToolPtr->IsLightSelected())
+    {
+        State = TreeWidget.Pin()->SelectionMasterLight->bUseTemperature ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
+    }
+    return State;
+}
+
+float SLightPropertyEditor::GetTemperatureValue() const
+{
+    if (TreeWidget.IsValid() && CoreToolPtr->IsLightSelected())
+    {
+        return TreeWidget.Pin()->SelectionMasterLight->Temperature;
+    }
+    return 0;
+}
+
+FText SLightPropertyEditor::GetTemperaturePercentage() const
+{
+    FString Res = "0%";
+    if (TreeWidget.IsValid() && CoreToolPtr->IsLightSelected())
+    {
+        Res = FString::FormatAsNumber(TreeWidget.Pin()->SelectionMasterLight->Hue * 100.0f) + "%";
+    }
+    return FText::FromString(Res);
 }
 

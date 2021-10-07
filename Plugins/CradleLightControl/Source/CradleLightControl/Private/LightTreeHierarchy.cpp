@@ -8,9 +8,13 @@
 
 #include "Components/LightComponent.h"
 #include "Components/SkyLightComponent.h"
-#include "Styling/SlateIconFinder.h"
 #include "Components/PointLightComponent.h"
 #include "Components/SpotLightComponent.h"
+
+#include "Widgets/Layout/SScaleBox.h"
+
+#include "Styling/SlateIconFinder.h"
+#include "ClassIconFinder.h"
 
 #include "Interfaces/IPluginManager.h"
 
@@ -120,7 +124,10 @@ void FTreeItem::GenerateTableRow()
             }
         }
         CheckBoxSlot[
-            SNew(SCheckBox)
+            SNew(SBox)
+            .MaxAspectRatio(FOptionalSize(1.0f))
+            [
+                SNew(SCheckBox)
                 .IsChecked_Raw(this, &FTreeItem::IsLightEnabled)
                 .OnCheckStateChanged_Raw(this, &FTreeItem::OnCheck)
                 .CheckedImage(&OwningWidget->Icons[StaticCast<ETreeIconType>((IconType - 1) * 3 + 1)])
@@ -129,6 +136,7 @@ void FTreeItem::GenerateTableRow()
                 .UncheckedHoveredImage(&OwningWidget->Icons[StaticCast<ETreeIconType>((IconType - 1) * 3 + 0)])
                 .CheckedPressedImage(&OwningWidget->Icons[StaticCast<ETreeIconType>((IconType - 1) * 3 + 1)])
                 .UncheckedPressedImage(&OwningWidget->Icons[StaticCast<ETreeIconType>((IconType - 1) * 3 + 0)])
+            ]
         ];
     }
 
@@ -153,6 +161,7 @@ void FTreeItem::GenerateTableRow()
         ]*/
         + CheckBoxSlot 
         + SHorizontalBox::Slot()
+        .VAlign(VAlign_Center)
         [
             SAssignNew(TextSlot, SBox)
         ]
@@ -165,6 +174,7 @@ void FTreeItem::GenerateTableRow()
         TableRowBox->SetContent(
             SNew(SHorizontalBox)
             +SHorizontalBox::Slot()
+            .VAlign(VAlign_Center)
             [
                 SAssignNew(TextSlot, SBox)
             ]
@@ -466,6 +476,14 @@ void FTreeItem::FetchDataFromLight()
         auto Comp = SpotLight->SpotLightComponent;
         Intensity = Comp->Intensity / 2010.619f;
     }
+
+    if (Type != ETreeItemType::SkyLight)
+    {
+        auto LightPtr = Cast<ALight>(ActorPtr);
+        auto LightComp = LightPtr->GetLightComponent();
+        bUseTemperature = LightComp->bUseTemperature;
+        Temperature = (LightComp->Temperature - 1700.0f) / (12000.0f - 1700.0f);
+    }
 }
 
 void FTreeItem::UpdateLightColor()
@@ -514,6 +532,20 @@ void FTreeItem::SetLightIntensity(float NewValue)
         }
     }
     Intensity = NewValue;
+}
+
+void FTreeItem::SetUseTemperature(bool NewState)
+{
+    bUseTemperature = NewState;
+    auto LightPtr = Cast<ALight>(ActorPtr);
+    LightPtr->GetLightComponent()->SetUseTemperature(NewState);        
+}
+
+void FTreeItem::SetTemperature(float NewValue)
+{
+    Temperature = NewValue;
+    auto LightPtr = Cast<ALight>(ActorPtr);
+    LightPtr->GetLightComponent()->SetTemperature(NewValue * (12000.0f - 1700.0f) + 1700.0f);
 }
 
 void FTreeItem::GetLights(TArray<TSharedPtr<FTreeItem>>& Array)
@@ -815,37 +847,43 @@ void SLightTreeHierarchy::GenerateIcons()
 {
     FLinearColor OffTint(0.2f, 0.2f, 0.2f, 0.5f);
     FLinearColor UndeterminedTint(0.8f, 0.8f, 0.0f, 0.5f);
-
-    Icons.Emplace(SkyLightOn, *FSlateIconFinder::FindIconBrushForClass(ASkyLight::StaticClass()));
+    FClassIconFinder::FindThumbnailForClass(APointLight::StaticClass());
+    Icons.Emplace(SkyLightOn, *FClassIconFinder::FindThumbnailForClass(ASkyLight::StaticClass()));
     Icons.Emplace(SkyLightOff, Icons[SkyLightOn]);
     Icons[SkyLightOff].TintColor = OffTint;
     Icons.Emplace(SkyLightUndetermined, Icons[SkyLightOn]);
-    Icons[SkyLightUndetermined].TintColor = OffTint;
+    Icons[SkyLightUndetermined].TintColor = UndeterminedTint;
 
-    Icons.Emplace(DirectionalLightOn, *FSlateIconFinder::FindIconBrushForClass(ADirectionalLight::StaticClass()));
+    Icons.Emplace(DirectionalLightOn, *FClassIconFinder::FindThumbnailForClass(ADirectionalLight::StaticClass()));
     Icons.Emplace(DirectionalLightOff, Icons[DirectionalLightOn]);
     Icons[DirectionalLightOff].TintColor = OffTint;
     Icons.Emplace(DirectionalLightUndetermined, Icons[DirectionalLightOn]);
-    Icons[DirectionalLightUndetermined].TintColor = OffTint;
+    Icons[DirectionalLightUndetermined].TintColor = UndeterminedTint;
 
-    Icons.Emplace(SpotLightOn, *FSlateIconFinder::FindIconBrushForClass(ASpotLight::StaticClass()));
+    Icons.Emplace(SpotLightOn, *FClassIconFinder::FindThumbnailForClass(ASpotLight::StaticClass()));
     Icons.Emplace(SpotLightOff, Icons[SpotLightOn]);
     Icons[SpotLightOff].TintColor = OffTint;
     Icons.Emplace(SpotLightUndetermined, Icons[SpotLightOn]);
-    Icons[SpotLightUndetermined].TintColor = OffTint;
+    Icons[SpotLightUndetermined].TintColor = UndeterminedTint;
 
-    Icons.Emplace(PointLightOn, *FSlateIconFinder::FindIconBrushForClass(APointLight::StaticClass()));
+    Icons.Emplace(PointLightOn, *FClassIconFinder::FindThumbnailForClass(APointLight::StaticClass()));
     Icons.Emplace(PointLightOff, Icons[PointLightOn]);
     Icons[PointLightOff].TintColor = OffTint;
     Icons.Emplace(PointLightUndetermined, Icons[PointLightOn]);
-    Icons[PointLightUndetermined].TintColor = OffTint;
+    Icons[PointLightUndetermined].TintColor = UndeterminedTint;
 
     Icons.Emplace(GeneralLightOn, Icons[PointLightOn]);
-    Icons.Emplace(GeneralLightOff, Icons[PointLightOff]);
+    Icons.Emplace(GeneralLightOff, Icons[PointLightOn]);
     Icons.Emplace(GeneralLightUndetermined, Icons[PointLightUndetermined]);
 
-    Icons.Emplace(FolderClosed, *FEditorStyle::GetBrush("ContentBrowser.AssetTreeFolderClosed"));
-    Icons.Emplace(FolderOpened, *FEditorStyle::GetBrush("ContentBrowser.AssetTreeFolderOpen"));
+    Icons.Emplace(FolderClosed, *FEditorStyle::GetBrush("ContentBrowser.ListViewFolderIcon.Mask"));
+    Icons.Emplace(FolderOpened, *FEditorStyle::GetBrush("ContentBrowser.ListViewFolderIcon.Base"));
+
+    for (auto& Icon : Icons)
+    {
+        //Icon.Value.DrawAs = ESlateBrushDrawType::Box;
+        Icon.Value.SetImageSize(FVector2D(24.0f));
+    }
 }
 
 

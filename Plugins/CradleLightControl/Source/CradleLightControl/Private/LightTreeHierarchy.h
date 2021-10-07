@@ -44,6 +44,8 @@ public:
     void UpdateLightColor();
     void UpdateLightColor(FLinearColor& Color);
     void SetLightIntensity(float NewValue);
+    void SetUseTemperature(bool NewState);
+    void SetTemperature(float NewValue);
 
     void GetLights(TArray<TSharedPtr<FTreeItem>>& Array);
 
@@ -72,6 +74,9 @@ public:
     float Hue;
     float Saturation;
     float Intensity;
+
+    bool bUseTemperature;
+    float Temperature;
 
     TEnumAsByte<ETreeItemType> Type;
 
