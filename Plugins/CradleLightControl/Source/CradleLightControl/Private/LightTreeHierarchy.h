@@ -8,11 +8,11 @@ UENUM()
 enum ETreeItemType
 {
     Folder = 0,
+    Mixed = Folder,
     SkyLight,
     SpotLight,
     DirectionalLight,
-    PointLight,
-    Mixed,
+    PointLight,    
     Invalid
 };
 
@@ -53,6 +53,8 @@ public:
 
     bool CheckNameAgainstSearchString(const FString& SearchString);
 
+    int LightCount() const;
+
     TSharedPtr<SCheckBox> StateCheckbox;
     FCheckBoxStyle CheckBoxStyle;
     UPROPERTY()
@@ -63,6 +65,8 @@ public:
 
     UPROPERTY()
         FString Name;
+
+    FString Note;
 
     union
     {
@@ -93,7 +97,7 @@ public:
 
 private:
     bool bInRename;
-    TSharedPtr<SBox> TextSlot;
+    TSharedPtr<SBox> RowNameBox;
 };
 
 class FTreeDropOperation : public FDragDropOperation

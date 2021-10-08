@@ -28,6 +28,10 @@ FTreeItem::FTreeItem(SLightTreeHierarchy* InOwningWidget, FString InName, TArray
     , bInRename(false)
     , ActorPtr(nullptr)
     , bMatchesSearchString(true)
+    , Intensity(0.0f)
+    , Temperature(0.0f)
+    , Hue(0.0f)
+    , Saturation(0.0f)
 {
 }
 
@@ -112,7 +116,7 @@ void FTreeItem::GenerateTableRow()
     {
         if (Children.Num())
         {
-            IconType = Children[0]->Type;
+            IconType = Children[0]->Type; // This is 0 if there is a folder as the first child, which leads to out of bounds indexing
             for (size_t i = 1; i < Children.Num(); i++)
             {
                 if (IconType != Children[i]->Type)
@@ -138,8 +142,10 @@ void FTreeItem::GenerateTableRow()
 
     SHorizontalBox::FSlot* CheckBoxSlot;
 
+
     if (Type != Folder)
     {
+        SHorizontalBox::FSlot* TextSlot;
         TableRowBox->SetContent(
         SNew(SHorizontalBox)
         +SHorizontalBox::Slot()
@@ -151,11 +157,21 @@ void FTreeItem::GenerateTableRow()
                 .Style(&CheckBoxStyle)
             ]
         + SHorizontalBox::Slot() // Name slot
+            .Expose(TextSlot)
             .VAlign(VAlign_Center)
             [
-                SAssignNew(TextSlot, SBox) 
+                SAssignNew(RowNameBox, SBox) 
+            ]
+        +SHorizontalBox::Slot()
+            .Padding(10.0f, 0.0f, 0.0f, 3.0f)
+            .VAlign(VAlign_Bottom)
+            [
+                SNew(STextBlock)
+                .Text(FText::FromString(Note))
             ]
         );
+
+        TextSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
     }
     else
     {
@@ -165,7 +181,7 @@ void FTreeItem::GenerateTableRow()
             +SHorizontalBox::Slot() // Name slot
             .VAlign(VAlign_Center)
             [
-                SAssignNew(TextSlot, SBox)
+                SAssignNew(RowNameBox, SBox)
             ]
             +SHorizontalBox::Slot() // On/Off toggle button
             .Expose(CheckBoxSlot)
@@ -209,7 +225,7 @@ void FTreeItem::GenerateTableRow()
 
     if (bInRename)
     {
-        TextSlot->SetContent(
+        RowNameBox->SetContent(
             SNew(SEditableText)
             .Text(FText::FromString(Name))
             .Font(Font)
@@ -217,11 +233,12 @@ void FTreeItem::GenerateTableRow()
                 {
                     Name = Input.ToString();
                 })
-            .OnTextCommitted(this, &FTreeItem::EndRename));    
+            .OnTextCommitted(this, &FTreeItem::EndRename));
+            
     }
     else
     {
-        TextSlot->SetContent(
+        RowNameBox->SetContent(
             SNew(STextBlock)
             .Text(FText::FromString(Name))
             .Font(Font)
@@ -316,12 +333,18 @@ TSharedPtr<FJsonValue> FTreeItem::SaveToJson()
         ItemState = 2;
 
     Item->SetStringField("Name", Name);
+    Item->SetStringField("Note", Note);
     Item->SetNumberField("Type", Type);
     Item->SetBoolField("Expanded", bExpanded);
     if (Type != Folder)
     {
         Item->SetStringField("RelatedLightName", SkyLight->GetName());
         Item->SetNumberField("State", ItemState);
+        Item->SetNumberField("Intensity", Intensity);
+        Item->SetNumberField("Hue", Hue);
+        Item->SetNumberField("Saturation", Saturation);
+        Item->SetBoolField("UseTemperature", bUseTemperature);
+        Item->SetNumberField("Temperature", Temperature);
     }
 
     TArray<TSharedPtr<FJsonValue>> ChildrenJson;
@@ -340,6 +363,7 @@ TSharedPtr<FJsonValue> FTreeItem::SaveToJson()
 bool FTreeItem::LoadFromJson(TSharedPtr<FJsonObject> JsonObject)
 {
     Name = JsonObject->GetStringField("Name");
+    Note = JsonObject->GetStringField("Note");
     Type = StaticCast<ETreeItemType>(JsonObject->GetNumberField("Type"));
     bExpanded = JsonObject->GetBoolField("Expanded");
     if (Type != Folder)
@@ -368,7 +392,6 @@ bool FTreeItem::LoadFromJson(TSharedPtr<FJsonObject> JsonObject)
         default:
             return false;
         }
-
         TArray<AActor*> Actors;
         UGameplayStatics::GetAllActorsOfClass(GWorld, ClassToFetch, Actors);
 
@@ -380,6 +403,14 @@ bool FTreeItem::LoadFromJson(TSharedPtr<FJsonObject> JsonObject)
         auto State = JsonObject->GetBoolField("State");
 
         OnCheck(State == 0 ? ECheckBoxState::Unchecked : ECheckBoxState::Checked);
+
+        SetLightIntensity(JsonObject->GetNumberField("Intensity"));
+        Hue = JsonObject->GetNumberField("Hue");
+        Saturation = JsonObject->GetNumberField("Saturation");
+        UpdateLightColor();
+        SetUseTemperature(JsonObject->GetBoolField("UseTemperature"));
+        SetTemperature(JsonObject->GetNumberField("Temperature"));
+
     }
     else
     {
@@ -425,6 +456,11 @@ void FTreeItem::FetchDataFromLight()
     _ASSERT(Type != Folder);
 
     FLinearColor RGB;
+
+    Intensity = 0.0f;
+    Hue = 0.0f;
+    Saturation = 0.0f;
+    Temperature = 0.0f;
 
     if (Type == ETreeItemType::SkyLight)
     {
@@ -596,6 +632,22 @@ bool FTreeItem::CheckNameAgainstSearchString(const FString& SearchString)
     return bMatchesSearchString;
 }
 
+int FTreeItem::LightCount() const
+{
+    if (Type != Folder)
+    {
+        return 1;
+    }
+    auto LightCount = 0;
+
+    for (auto Child : Children)
+    {
+        LightCount += Child->LightCount();
+    }
+
+    return LightCount;
+}
+
 FReply FTreeItem::TreeDragDetected(const FGeometry& Geometry, const FPointerEvent& MouseEvent)
 {
     GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, Name + "Dragggg");
@@ -649,7 +701,7 @@ FReply FTreeItem::TreeDropDetected(const FDragDropEvent& DragDropEvent)
 
         Destination = OwningWidget->AddTreeItem(true);
         Destination->Name = Name + " Group";
-
+        Destination->Parent = Parent;
         if (Parent)
         {
             Parent->Children.Remove(SharedThis(this));
@@ -1087,6 +1139,7 @@ FReply SLightTreeHierarchy::SaveStateToJSON()
 
 FReply SLightTreeHierarchy::LoadStateFromJSON()
 {
+    CoreToolPtr->ClearSelection();
     bCurrentlyLoading = true;
     FString Input;
     auto ThisPlugin = IPluginManager::Get().FindPlugin("CradleLightControl");

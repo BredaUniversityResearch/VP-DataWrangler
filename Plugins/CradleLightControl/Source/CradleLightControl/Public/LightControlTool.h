@@ -11,7 +11,10 @@
 
 enum EIconType
 {
-    SkyLightOff = 0,
+    GeneralLightOff = 0,
+    GeneralLightOn,
+    GeneralLightUndetermined,
+    SkyLightOff,
     SkyLightOn,
     SkyLightUndetermined,
     SpotLightOff,
@@ -23,9 +26,6 @@ enum EIconType
     PointLightOff,
     PointLightOn,
     PointLightUndetermined,
-    GeneralLightOff,
-    GeneralLightOn,
-    GeneralLightUndetermined,
     FolderClosed,
     FolderOpened
 };
@@ -47,15 +47,16 @@ public:
 
     void PreDestroy();
     
-
-    FText TestTextGetter() const;
-
     void ActorSpawnedCallback(AActor* Actor);
     void OnTreeSelectionChanged();
     void UpdateExtraLightDetailBox();
     
-    bool IsLightSelected() const;
+    bool IsAMasterLightSelected() const;
+    bool IsSingleGroupSelected() const;
     bool AreMultipleLightsSelected() const;
+    FTreeItem* GetMasterLight() const;
+    FTreeItem* GetSingleSelectedItem() const;
+    void ClearSelection();
 
     TWeakPtr<SLightTreeHierarchy> GetTreeWidget();
 
@@ -76,6 +77,18 @@ private:
 
     void OnLightHeaderCheckStateChanged(ECheckBoxState NewState);
     ECheckBoxState GetLightHeaderCheckState() const;
+    FText LightHeaderExtraLightsText() const;
+
+    void UpdateItemNameBox();
+    FReply StartItemNameChange(const FGeometry&, const FPointerEvent&); // called on text doubleclick
+    FText ItemNameText() const;
+    void CommitNewItemName(const FText& Text, ETextCommit::Type CommitType);
+
+
+    void UpdateExtraNoteBox();
+    FReply StartItemNoteChange(const FGeometry&, const FPointerEvent&);
+    FText ItemNoteText() const;
+    void CommitNewItemNote(const FText& Text, ETextCommit::Type CommitType);
 
     SVerticalBox::FSlot& LightPropertyEditor();
 
@@ -100,6 +113,13 @@ private:
     TSharedPtr<SBox> ExtraLightDetailBox;
     TSharedPtr<SBox> LightHeaderBox;
     FCheckBoxStyle LightHeaderCheckboxStyle;
+
+    bool bItemRenameInProgress;
+    bool bItemNoteChangeInProgress;
+
+    TSharedPtr<SBox> ExtraNoteBox;
+    TSharedPtr<SBox> LightHeaderNameBox;
+
 
     TSharedPtr<SDockTab> ToolTab;
     TSharedPtr<SLightTreeHierarchy> TreeWidget;

@@ -99,18 +99,6 @@ void SLightControlTool::PreDestroy()
     GWorld->RemoveOnActorSpawnedHandler(ActorSpawnedListenerHandle);
 }
 
-FText SLightControlTool::TestTextGetter() const
-{
-    FString N = "Nothing Selected";
-
-    if (IsLightSelected())
-    {
-        N = TreeWidget->SelectionMasterLight->Name;
-    }
-
-    return FText::FromString(N);
-}
-
 void SLightControlTool::ActorSpawnedCallback(AActor* Actor)
 {
     TreeWidget->OnActorSpawned(Actor);
@@ -118,7 +106,7 @@ void SLightControlTool::ActorSpawnedCallback(AActor* Actor)
 
 void SLightControlTool::OnTreeSelectionChanged()
 {
-    if (IsLightSelected())
+    if (IsAMasterLightSelected())
     {
         LightPropertyWidget->UpdateSaturationGradient(TreeWidget->SelectionMasterLight->Hue);
         UpdateExtraLightDetailBox();
@@ -148,17 +136,17 @@ bool SLightControlTool::SaveFileDialog(FString Title, FString DefaultPath, uint3
 FCheckBoxStyle SLightControlTool::MakeCheckboxStyleForType(ETreeItemType IconType)
 {
     FCheckBoxStyle CheckBoxStyle;
-    CheckBoxStyle.CheckedImage = Icons[StaticCast<EIconType>((IconType - 1) * 3 + 1)];
-    CheckBoxStyle.CheckedHoveredImage = Icons[StaticCast<EIconType>((IconType - 1) * 3 + 1)];
-    CheckBoxStyle.CheckedPressedImage = Icons[StaticCast<EIconType>((IconType - 1) * 3 + 1)];
+    CheckBoxStyle.CheckedImage = Icons[StaticCast<EIconType>(IconType * 3 + 1)];
+    CheckBoxStyle.CheckedHoveredImage = Icons[StaticCast<EIconType>(IconType * 3 + 1)];
+    CheckBoxStyle.CheckedPressedImage = Icons[StaticCast<EIconType>(IconType * 3 + 1)];
 
-    CheckBoxStyle.UncheckedImage = Icons[StaticCast<EIconType>((IconType - 1) * 3 + 0)];
-    CheckBoxStyle.UncheckedHoveredImage = Icons[StaticCast<EIconType>((IconType - 1) * 3 + 0)];
-    CheckBoxStyle.UncheckedPressedImage = Icons[StaticCast<EIconType>((IconType - 1) * 3 + 0)];
+    CheckBoxStyle.UncheckedImage = Icons[StaticCast<EIconType>(IconType * 3 + 0)];
+    CheckBoxStyle.UncheckedHoveredImage = Icons[StaticCast<EIconType>(IconType * 3 + 0)];
+    CheckBoxStyle.UncheckedPressedImage = Icons[StaticCast<EIconType>(IconType * 3 + 0)];
 
-    CheckBoxStyle.UndeterminedImage = Icons[StaticCast<EIconType>((IconType - 1) * 3 + 2)];
-    CheckBoxStyle.UndeterminedHoveredImage = Icons[StaticCast<EIconType>((IconType - 1) * 3 + 2)];
-    CheckBoxStyle.UndeterminedPressedImage = Icons[StaticCast<EIconType>((IconType - 1) * 3 + 2)];
+    CheckBoxStyle.UndeterminedImage = Icons[StaticCast<EIconType>(IconType * 3 + 2)];
+    CheckBoxStyle.UndeterminedHoveredImage = Icons[StaticCast<EIconType>(IconType * 3 + 2)];
+    CheckBoxStyle.UndeterminedPressedImage = Icons[StaticCast<EIconType>(IconType * 3 + 2)];
 
     return CheckBoxStyle;
 }
@@ -222,44 +210,33 @@ SVerticalBox::FSlot& SLightControlTool::LightHeader()
 
     Slot.SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
 
-    TSharedPtr<SHorizontalBox> Box;
-
     Slot
     .HAlign(HAlign_Fill)
         [
             SAssignNew(LightHeaderBox, SBox)
-            [
-                SAssignNew(Box, SHorizontalBox)
-                +SHorizontalBox::Slot()
-                .HAlign(HAlign_Left)
-                [
-                    SNew(STextBlock)
-                    .Font(FSlateFontInfo(FCoreStyle::GetDefaultFont(), 18))
-                    .Text(this, &SLightControlTool::TestTextGetter)
-                ]
-            ]
         ];
 
-    if (IsLightSelected())
-    {
-        Box->AddSlot()
-            .HAlign(HAlign_Right)
-            [
-                SNew(SCheckBox)
-                .Style(&LightHeaderCheckboxStyle)
-            .IsEnabled_Lambda([this]() {return TreeWidget->SelectionMasterLight != nullptr; })
-            ];
-    }
+    UpdateLightHeader();
+
     return Slot;
 }
 
 void SLightControlTool::UpdateLightHeader()
 {
-    if (IsLightSelected())
+    if (IsAMasterLightSelected() || IsSingleGroupSelected())
     {
         SHorizontalBox::FSlot* NameSlot;
         SHorizontalBox::FSlot* CheckboxSlot;
-        auto IconType = TreeWidget->SelectionMasterLight->Type;
+        SVerticalBox::FSlot* TopSlot;
+        TEnumAsByte<ETreeItemType> IconType;
+        if (IsSingleGroupSelected())
+        {
+            IconType = TreeWidget->SelectedItems[0]->Type;
+        }
+        else
+        {
+            IconType = TreeWidget->SelectionMasterLight->Type;                        
+        }
         for (auto Light : TreeWidget->LightsUnderSelection)
         {
             if (IconType != Light->Type)
@@ -275,44 +252,70 @@ void SLightControlTool::UpdateLightHeader()
         LightHeaderBox->SetContent(
             SNew(SVerticalBox)
             +SVerticalBox::Slot()
+            .Expose(TopSlot)
+            .Padding(0.0f, 0.0f, 0.0f, 5.0f)
             [
                 SNew(SHorizontalBox)
                 +SHorizontalBox::Slot()
                 .HAlign(HAlign_Fill)
                 .Expose(NameSlot)
                 [
-                    SNew(STextBlock)
-                    .Text(FText::FromString(TreeWidget->SelectionMasterLight->Name))
-                    .Font(FSlateFontInfo(FCoreStyle::GetDefaultFont(), 18))
+                    SAssignNew(LightHeaderNameBox, SBox)
+                   // SNew(STextBlock)
+                   // .Text(this, &SLightControlTool::LightHeaderText)
+                   // .Font(FSlateFontInfo(FCoreStyle::GetDefaultFont(), 18))
                 ]
+                
                 +SHorizontalBox::Slot()
                 .HAlign(HAlign_Right)
                 .Padding(0.0f, 0.0f, 15.0f, 0.0f)
                 .Expose(CheckboxSlot)
                 [
                     SNew(SCheckBox)
-                    .Style((&LightHeaderCheckboxStyle))
+                    .Style(&LightHeaderCheckboxStyle)
                     .OnCheckStateChanged(this, &SLightControlTool::OnLightHeaderCheckStateChanged)
                     .IsChecked(this, &SLightControlTool::GetLightHeaderCheckState)
                     .RenderTransform(FSlateRenderTransform(1.2f))
                 ]
             ]
+            +SVerticalBox::Slot()
+            .HAlign(HAlign_Fill)
+            .VAlign(VAlign_Bottom)
+            .Padding(0.0f, 3.0f, 30.0f, 3.0f)
+            [
+                SAssignNew(ExtraNoteBox, SBox)                
+            ]
+            +SVerticalBox::Slot()
+            .Padding(0.0f, 5.0f, 0.0f, 0.0f)
+            [
+                SNew(STextBlock)
+                .Text(this, &SLightControlTool::LightHeaderExtraLightsText)
+                .Visibility(IsSingleGroupSelected() || AreMultipleLightsSelected() ? 
+                    EVisibility::Visible : EVisibility::Collapsed)
+            ]
         );
+        bItemNoteChangeInProgress = false;
+        bItemRenameInProgress = false;
+        UpdateItemNameBox();
+        UpdateExtraNoteBox();
+
 
         //NameSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
         CheckboxSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
+        TopSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
     }
     else
     {
         LightHeaderBox->SetContent(
             SNew(STextBlock)
-            .Text(FText::FromString("No lights currently selected")));
+            .Text(FText::FromString("No lights currently selected"))
+            .Font(FSlateFontInfo(FCoreStyle::GetDefaultFont(), 18)));
     }
 }
 
 void SLightControlTool::OnLightHeaderCheckStateChanged(ECheckBoxState NewState)
 {
-    if (IsLightSelected())
+    if (IsAMasterLightSelected())
     {
         for (auto Light : TreeWidget->LightsUnderSelection)
         {
@@ -321,13 +324,158 @@ void SLightControlTool::OnLightHeaderCheckStateChanged(ECheckBoxState NewState)
     }
 }
 
+
 ECheckBoxState SLightControlTool::GetLightHeaderCheckState() const
 {
-    if (IsLightSelected())
+    if (IsAMasterLightSelected())
     {
         return TreeWidget->SelectionMasterLight->IsLightEnabled();
     }
     return ECheckBoxState::Undetermined;
+}
+
+FText SLightControlTool::LightHeaderExtraLightsText() const
+{
+    if (TreeWidget->SelectedItems.Num() > 1)
+    {
+        int GroupCount = 0;
+        int LightCount = 0;
+        int TotalLightCount = 0;
+        for (auto SelectedItem : TreeWidget->SelectedItems)
+        {
+            if (SelectedItem->Type == Folder)
+            {
+                GroupCount++;
+            }
+            else
+            {
+                LightCount++;
+            }
+            TotalLightCount += SelectedItem->LightCount();
+        }
+
+        return FText::FromString(FString::Printf(TEXT("%d Groups and %d Lights selected (Total %d lights affected)"), GroupCount, LightCount, TotalLightCount));
+    }
+    return FText::FromString("");
+}
+
+void SLightControlTool::UpdateItemNameBox()
+{
+    auto Item = GetSingleSelectedItem();
+    if (Item)
+    {
+        if (bItemRenameInProgress)
+        {
+            LightHeaderNameBox->SetContent(
+                SNew(SEditableText)
+                .Text(this, &SLightControlTool::ItemNameText)
+                .OnTextCommitted(this, &SLightControlTool::CommitNewItemName)
+                .SelectAllTextWhenFocused(true)                
+                .Font(FSlateFontInfo(FCoreStyle::GetDefaultFont(), 18))
+            );
+        }
+        else
+        {
+            LightHeaderNameBox->SetContent(
+                SNew(STextBlock)
+                .Text(this, &SLightControlTool::ItemNameText)
+                .OnDoubleClicked(this, &SLightControlTool::StartItemNameChange)
+                .Font(FSlateFontInfo(FCoreStyle::GetDefaultFont(), 18))
+            );
+        }
+    }
+}
+
+FReply SLightControlTool::StartItemNameChange(const FGeometry&, const FPointerEvent&)
+{
+    bItemRenameInProgress = true;
+    UpdateItemNameBox();
+    return FReply::Handled();
+}
+
+FText SLightControlTool::ItemNameText() const
+{
+    return FText::FromString(GetSingleSelectedItem()->Name);
+}
+
+void SLightControlTool::CommitNewItemName(const FText& Text, ETextCommit::Type CommitType)
+{
+    if (CommitType == ETextCommit::OnEnter && !Text.IsEmpty())
+    {
+        auto Item = GetSingleSelectedItem();
+        Item->Name = Text.ToString();
+        Item->GenerateTableRow();
+    }
+    bItemRenameInProgress = false;
+}
+
+void SLightControlTool::UpdateExtraNoteBox()
+{
+    ExtraNoteBox->SetVisibility(EVisibility::Visible);
+    if (IsSingleGroupSelected())
+    {
+        ExtraNoteBox->SetContent(
+            SNew(STextBlock)
+            .Text(FText::FromString("Group")));
+    }
+    else if (IsAMasterLightSelected())
+    {
+        auto MasterLight = GetMasterLight();
+        if (MasterLight->Note.IsEmpty() && !bItemNoteChangeInProgress)
+        {
+            ExtraNoteBox->SetContent(
+                SNew(STextBlock)
+                .Text(FText::FromString("+ Add note"))
+                .OnDoubleClicked(this, &SLightControlTool::StartItemNoteChange)
+            );
+        }
+        else if (bItemNoteChangeInProgress)
+        {
+            ExtraNoteBox->SetContent(
+                SNew(SEditableText)
+                .Text(this, &SLightControlTool::ItemNoteText)
+                .OnTextCommitted(this, &SLightControlTool::CommitNewItemNote)
+            );
+        }
+        else
+        {
+            ExtraNoteBox->SetContent(
+                SNew(STextBlock)
+                .Text(this, &SLightControlTool::ItemNoteText)
+                .OnDoubleClicked(this, &SLightControlTool::StartItemNoteChange)
+            );
+        }
+    }
+    else
+        ExtraNoteBox->SetVisibility(EVisibility::Collapsed);
+}
+
+FReply SLightControlTool::StartItemNoteChange(const FGeometry&, const FPointerEvent&)
+{
+    bItemNoteChangeInProgress = true;
+    UpdateExtraNoteBox();
+    return FReply::Handled();
+}
+
+FText SLightControlTool::ItemNoteText() const
+{
+    auto Item = GetMasterLight();
+    if (Item->Note.IsEmpty())
+    {
+        return FText::FromString("Note");
+    }
+    return FText::FromString(GetMasterLight()->Note);
+}
+
+void SLightControlTool::CommitNewItemNote(const FText& Text, ETextCommit::Type CommitType)
+{
+    if (CommitType == ETextCommit::OnEnter)
+    {
+        GetMasterLight()->Note = Text.ToString();
+        GetMasterLight()->GenerateTableRow();
+    }
+    bItemNoteChangeInProgress = false;
+    UpdateExtraNoteBox();
 }
 
 SVerticalBox::FSlot& SLightControlTool::LightPropertyEditor()
@@ -371,7 +519,7 @@ SVerticalBox::FSlot& SLightControlTool::LightPropertyEditor()
 
 void SLightControlTool::UpdateExtraLightDetailBox()
 {
-    if (IsLightSelected())
+    if (IsAMasterLightSelected())
     {
         if (AreMultipleLightsSelected())
         {
@@ -386,14 +534,51 @@ void SLightControlTool::UpdateExtraLightDetailBox()
         ExtraLightDetailBox->SetContent(SNew(SBox));
 }
 
-bool SLightControlTool::IsLightSelected() const
+bool SLightControlTool::IsAMasterLightSelected() const
 {
-    return TreeWidget != nullptr && TreeWidget->SelectionMasterLight != nullptr;
+    return GetMasterLight() != nullptr;
+}
+
+bool SLightControlTool::IsSingleGroupSelected() const
+{
+    return TreeWidget && // Tree view exists
+        TreeWidget->SelectedItems.Num() == 1 && // There is a single item selected
+        TreeWidget->SelectedItems[0]->Type == Folder; // The selected item is a group
 }
 
 bool SLightControlTool::AreMultipleLightsSelected() const
 {
     return TreeWidget != nullptr && TreeWidget->LightsUnderSelection.Num() > 1;
+}
+
+FTreeItem* SLightControlTool::GetMasterLight() const
+{
+    if (!TreeWidget || !TreeWidget->SelectionMasterLight)
+    {
+        return nullptr;
+    }
+    return TreeWidget->SelectionMasterLight.Get();
+}
+
+FTreeItem* SLightControlTool::GetSingleSelectedItem() const
+{
+    if (IsSingleGroupSelected())
+        return TreeWidget->SelectedItems[0].Get();
+    else
+        return GetMasterLight();
+}
+
+void SLightControlTool::ClearSelection()
+{
+    if (TreeWidget)
+    {
+        TreeWidget->SelectedItems.Empty();
+        TreeWidget->Tree->ClearSelection();
+        TreeWidget->SelectionMasterLight = nullptr;
+        TreeWidget->LightsUnderSelection.Empty();
+    }
+    UpdateLightHeader();
+    UpdateExtraLightDetailBox();
 }
 
 
@@ -520,7 +705,7 @@ TSharedRef<SBox> SLightControlTool::LightTransformViewer()
 
 FReply SLightControlTool::SelectItemInScene()
 {
-    if (IsLightSelected())
+    if (IsAMasterLightSelected())
     {
         GEditor->SelectNone(true, true);
         GEditor->SelectActor(TreeWidget->SelectionMasterLight->ActorPtr, true, true, false, true);        
@@ -539,12 +724,12 @@ FReply SLightControlTool::SelectItemParent()
 
 bool SLightControlTool::SelectItemParentButtonEnable() const
 {
-    return IsLightSelected() && TreeWidget->SelectionMasterLight->ActorPtr->GetAttachParentActor();
+    return IsAMasterLightSelected() && TreeWidget->SelectionMasterLight->ActorPtr->GetAttachParentActor();
 }
 
 FText SLightControlTool::GetItemParentName() const
 {
-    if (IsLightSelected() && TreeWidget->SelectionMasterLight->ActorPtr->GetAttachParentActor())
+    if (IsAMasterLightSelected() && TreeWidget->SelectionMasterLight->ActorPtr->GetAttachParentActor())
     {
         return FText::FromString(TreeWidget->SelectionMasterLight->ActorPtr->GetAttachParentActor()->GetName());
     }
@@ -553,7 +738,7 @@ FText SLightControlTool::GetItemParentName() const
 
 FText SLightControlTool::GetItemPosition() const
 {
-    if (IsLightSelected())
+    if (IsAMasterLightSelected())
     {
         return FText::FromString(TreeWidget->SelectionMasterLight->ActorPtr->GetActorLocation().ToString());
     }
@@ -562,7 +747,7 @@ FText SLightControlTool::GetItemPosition() const
 
 FText SLightControlTool::GetItemRotation() const
 {
-    if (IsLightSelected())
+    if (IsAMasterLightSelected())
     {
         return FText::FromString(TreeWidget->SelectionMasterLight->ActorPtr->GetActorRotation().ToString());
     }
@@ -571,7 +756,7 @@ FText SLightControlTool::GetItemRotation() const
 
 FText SLightControlTool::GetItemScale() const
 {
-    if (IsLightSelected())
+    if (IsAMasterLightSelected())
     {
         return FText::FromString(TreeWidget->SelectionMasterLight->ActorPtr->GetActorScale().ToString());
     }
@@ -583,7 +768,7 @@ TSharedRef<SBox> SLightControlTool::GroupControls()
     TSharedPtr<SBox> Box;
 
     
-
+    SVerticalBox::FSlot* MasterLightSlot;
     SAssignNew(Box, SBox)
     [
         SNew(SBorder)
@@ -591,6 +776,7 @@ TSharedRef<SBox> SLightControlTool::GroupControls()
         [
             SNew(SVerticalBox)
             + SVerticalBox::Slot()
+            .Expose(MasterLightSlot)
             [
                 SNew(SHorizontalBox)
                 + SHorizontalBox::Slot()
@@ -626,6 +812,8 @@ TSharedRef<SBox> SLightControlTool::GroupControls()
             ]
         ]
     ];
+
+    MasterLightSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
 
 
     return Box.ToSharedRef();

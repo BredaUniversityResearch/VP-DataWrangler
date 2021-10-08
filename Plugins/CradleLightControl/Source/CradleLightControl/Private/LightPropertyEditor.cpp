@@ -425,7 +425,7 @@ void SLightPropertyEditor::UpdateSaturationGradient(float NewHue)
 
 const FSlateBrush* SLightPropertyEditor::GetSaturationGradientBrush() const
 {
-    if (CoreToolPtr->IsLightSelected())
+    if (CoreToolPtr->IsAMasterLightSelected())
     {
         return SaturationGradientBrush.Get();
     }
@@ -445,7 +445,7 @@ void SLightPropertyEditor::OnIntensityValueChanged(float Value)
 FText SLightPropertyEditor::GetIntensityValueText() const
 {
     FString Res = "0";
-    if (TreeWidget.IsValid() && CoreToolPtr->IsLightSelected())
+    if (TreeWidget.IsValid() && CoreToolPtr->IsAMasterLightSelected())
     {
         auto Light = TreeWidget.Pin()->SelectionMasterLight;
         if (Light->Type == ETreeItemType::PointLight ||
@@ -461,7 +461,7 @@ FText SLightPropertyEditor::GetIntensityValueText() const
 
 float SLightPropertyEditor::GetIntensityValue() const
 {
-    if (TreeWidget.IsValid() && CoreToolPtr->IsLightSelected())
+    if (TreeWidget.IsValid() && CoreToolPtr->IsAMasterLightSelected())
     {
         return TreeWidget.Pin()->SelectionMasterLight->Intensity;
     }
@@ -471,7 +471,7 @@ float SLightPropertyEditor::GetIntensityValue() const
 FText SLightPropertyEditor::GetIntensityPercentage() const
 {
     FString Res = "0%";
-    if (TreeWidget.IsValid() && CoreToolPtr->IsLightSelected())
+    if (TreeWidget.IsValid() && CoreToolPtr->IsAMasterLightSelected())
     {
         Res = FString::FormatAsNumber(TreeWidget.Pin()->SelectionMasterLight->Intensity * 100.0f) + "%";
     }
@@ -492,7 +492,7 @@ void SLightPropertyEditor::OnHueValueChanged(float Value)
 FText SLightPropertyEditor::GetHueValueText() const
 {
     FString Res = "0";
-    if (TreeWidget.IsValid() && CoreToolPtr->IsLightSelected())
+    if (TreeWidget.IsValid() && CoreToolPtr->IsAMasterLightSelected())
     {
         Res = FString::FormatAsNumber(TreeWidget.Pin()->SelectionMasterLight->Hue * 360.0f);
     }
@@ -501,7 +501,7 @@ FText SLightPropertyEditor::GetHueValueText() const
 
 float SLightPropertyEditor::GetHueValue() const
 {
-    if (TreeWidget.IsValid() && CoreToolPtr->IsLightSelected())
+    if (TreeWidget.IsValid() && CoreToolPtr->IsAMasterLightSelected())
     {
         return TreeWidget.Pin()->SelectionMasterLight->Hue;
     }
@@ -511,7 +511,7 @@ float SLightPropertyEditor::GetHueValue() const
 FText SLightPropertyEditor::GetHuePercentage() const
 {
     FString Res = "0%";
-    if (TreeWidget.IsValid() && CoreToolPtr->IsLightSelected())
+    if (TreeWidget.IsValid() && CoreToolPtr->IsAMasterLightSelected())
     {
         Res = FString::FormatAsNumber(TreeWidget.Pin()->SelectionMasterLight->Hue * 100.0f) + "%";
     }
@@ -531,7 +531,7 @@ void SLightPropertyEditor::OnSaturationValueChanged(float Value)
 FText SLightPropertyEditor::GetSaturationValueText() const
 {
     FString Res = "0%";
-    if (TreeWidget.IsValid() && CoreToolPtr->IsLightSelected())
+    if (TreeWidget.IsValid() && CoreToolPtr->IsAMasterLightSelected())
     {
         Res = FString::FormatAsNumber(TreeWidget.Pin()->SelectionMasterLight->Saturation * 100.0f) + "%";
     }
@@ -540,7 +540,7 @@ FText SLightPropertyEditor::GetSaturationValueText() const
 
 float SLightPropertyEditor::GetSaturationValue() const
 {
-    if (TreeWidget.IsValid() && CoreToolPtr->IsLightSelected())
+    if (TreeWidget.IsValid() && CoreToolPtr->IsAMasterLightSelected())
     {
         return TreeWidget.Pin()->SelectionMasterLight->Saturation;
     }
@@ -578,7 +578,7 @@ void SLightPropertyEditor::OnTemperatureCheckboxChecked(ECheckBoxState NewState)
 FText SLightPropertyEditor::GetTemperatureValueText() const
 {
     FString Res = "0";
-    if (TreeWidget.IsValid() && CoreToolPtr->IsLightSelected())
+    if (TreeWidget.IsValid() && CoreToolPtr->IsAMasterLightSelected())
     {
         Res = FString::FormatAsNumber(TreeWidget.Pin()->SelectionMasterLight->Temperature * (12000.0f - 1700.0f) + 1700.0f) + " Kelvin";
     }
@@ -588,7 +588,7 @@ FText SLightPropertyEditor::GetTemperatureValueText() const
 ECheckBoxState SLightPropertyEditor::GetTemperatureCheckboxChecked() const
 {
     ECheckBoxState State = ECheckBoxState::Unchecked;
-    if (TreeWidget.IsValid() && CoreToolPtr->IsLightSelected())
+    if (TreeWidget.IsValid() && CoreToolPtr->IsAMasterLightSelected())
     {
         State = TreeWidget.Pin()->SelectionMasterLight->bUseTemperature ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
     }
@@ -597,7 +597,7 @@ ECheckBoxState SLightPropertyEditor::GetTemperatureCheckboxChecked() const
 
 float SLightPropertyEditor::GetTemperatureValue() const
 {
-    if (TreeWidget.IsValid() && CoreToolPtr->IsLightSelected())
+    if (TreeWidget.IsValid() && CoreToolPtr->IsAMasterLightSelected())
     {
         return TreeWidget.Pin()->SelectionMasterLight->Temperature;
     }
@@ -607,7 +607,7 @@ float SLightPropertyEditor::GetTemperatureValue() const
 FText SLightPropertyEditor::GetTemperaturePercentage() const
 {
     FString Res = "0%";
-    if (TreeWidget.IsValid() && CoreToolPtr->IsLightSelected())
+    if (TreeWidget.IsValid() && CoreToolPtr->IsAMasterLightSelected())
     {
         Res = FString::FormatAsNumber(TreeWidget.Pin()->SelectionMasterLight->Temperature * 100.0f) + "%";
     }
