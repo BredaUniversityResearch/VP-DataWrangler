@@ -5,6 +5,7 @@
 #include "Templates/SharedPointer.h"
 #include "LightTreeHierarchy.h"
 #include "LightPropertyEditor.h"
+#include "LightSpecificPropertyEditor.h"
 
 
 
@@ -124,6 +125,7 @@ private:
     TSharedPtr<SDockTab> ToolTab;
     TSharedPtr<SLightTreeHierarchy> TreeWidget;
     TSharedPtr<SLightPropertyEditor> LightPropertyWidget;
+    TSharedPtr<SLightSpecificProperties> LightSpecificWidget;
 
 
     TMap<EIconType, FSlateBrush> Icons;

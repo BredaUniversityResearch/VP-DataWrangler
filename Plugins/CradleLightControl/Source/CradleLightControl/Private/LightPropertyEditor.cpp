@@ -438,7 +438,6 @@ void SLightPropertyEditor::OnIntensityValueChanged(float Value)
         for (auto SelectedItem : TreeWidget.Pin()->LightsUnderSelection)
         {
             SelectedItem->SetLightIntensity(Value);
-            //UpdateSaturationGradient(Value);
         }
 }
 
@@ -451,7 +450,7 @@ FText SLightPropertyEditor::GetIntensityValueText() const
         if (Light->Type == ETreeItemType::PointLight ||
             Light->Type == ETreeItemType::SpotLight)
         {
-            Res = FString::FormatAsNumber(Light->Intensity * 2010.619f) + " Lumen";
+            Res = FString::FormatAsNumber(Light->Intensity) + " Lumen";
         }
         else
             Res = "Currently not supported";
@@ -463,7 +462,7 @@ float SLightPropertyEditor::GetIntensityValue() const
 {
     if (TreeWidget.IsValid() && CoreToolPtr->IsAMasterLightSelected())
     {
-        return TreeWidget.Pin()->SelectionMasterLight->Intensity;
+        return TreeWidget.Pin()->SelectionMasterLight->Intensity / 2010.619f;
     }
     return 0;
 }
@@ -473,7 +472,7 @@ FText SLightPropertyEditor::GetIntensityPercentage() const
     FString Res = "0%";
     if (TreeWidget.IsValid() && CoreToolPtr->IsAMasterLightSelected())
     {
-        Res = FString::FormatAsNumber(TreeWidget.Pin()->SelectionMasterLight->Intensity * 100.0f) + "%";
+        Res = FString::FormatAsNumber(TreeWidget.Pin()->SelectionMasterLight->Intensity / 20.10619f) + "%";
     }
     return FText::FromString(Res);
 }
@@ -483,7 +482,7 @@ void SLightPropertyEditor::OnHueValueChanged(float Value)
     if (TreeWidget.IsValid())
         for (auto SelectedItem : TreeWidget.Pin()->LightsUnderSelection)
         {
-            SelectedItem->Hue = Value;
+            SelectedItem->Hue = Value * 360.0f;
             SelectedItem->UpdateLightColor();
             UpdateSaturationGradient(Value);
         }
@@ -494,7 +493,7 @@ FText SLightPropertyEditor::GetHueValueText() const
     FString Res = "0";
     if (TreeWidget.IsValid() && CoreToolPtr->IsAMasterLightSelected())
     {
-        Res = FString::FormatAsNumber(TreeWidget.Pin()->SelectionMasterLight->Hue * 360.0f);
+        Res = FString::FormatAsNumber(TreeWidget.Pin()->SelectionMasterLight->Hue);
     }
     return FText::FromString(Res);
 }
@@ -503,7 +502,7 @@ float SLightPropertyEditor::GetHueValue() const
 {
     if (TreeWidget.IsValid() && CoreToolPtr->IsAMasterLightSelected())
     {
-        return TreeWidget.Pin()->SelectionMasterLight->Hue;
+        return TreeWidget.Pin()->SelectionMasterLight->Hue / 360.0f;
     }
     return 0;
 }
@@ -513,7 +512,7 @@ FText SLightPropertyEditor::GetHuePercentage() const
     FString Res = "0%";
     if (TreeWidget.IsValid() && CoreToolPtr->IsAMasterLightSelected())
     {
-        Res = FString::FormatAsNumber(TreeWidget.Pin()->SelectionMasterLight->Hue * 100.0f) + "%";
+        Res = FString::FormatAsNumber(TreeWidget.Pin()->SelectionMasterLight->Hue / 3.6f) + "%";
     }
     return FText::FromString(Res);
 }
@@ -580,7 +579,7 @@ FText SLightPropertyEditor::GetTemperatureValueText() const
     FString Res = "0";
     if (TreeWidget.IsValid() && CoreToolPtr->IsAMasterLightSelected())
     {
-        Res = FString::FormatAsNumber(TreeWidget.Pin()->SelectionMasterLight->Temperature * (12000.0f - 1700.0f) + 1700.0f) + " Kelvin";
+        Res = FString::FormatAsNumber(TreeWidget.Pin()->SelectionMasterLight->Temperature) + " Kelvin";
     }
     return FText::FromString(Res);
 }
@@ -599,7 +598,7 @@ float SLightPropertyEditor::GetTemperatureValue() const
 {
     if (TreeWidget.IsValid() && CoreToolPtr->IsAMasterLightSelected())
     {
-        return TreeWidget.Pin()->SelectionMasterLight->Temperature;
+        return (TreeWidget.Pin()->SelectionMasterLight->Temperature - 1700.0f) / (12000.0f - 1700.0f);
     }
     return 0;
 }
@@ -609,7 +608,8 @@ FText SLightPropertyEditor::GetTemperaturePercentage() const
     FString Res = "0%";
     if (TreeWidget.IsValid() && CoreToolPtr->IsAMasterLightSelected())
     {
-        Res = FString::FormatAsNumber(TreeWidget.Pin()->SelectionMasterLight->Temperature * 100.0f) + "%";
+        auto Norm = (TreeWidget.Pin()->SelectionMasterLight->Temperature - 1700.0f) / (12000.0f - 1700.0f);
+        Res = FString::FormatAsNumber(Norm * 100.0f) + "%";
     }
     return FText::FromString(Res);
 }

@@ -32,6 +32,11 @@ FTreeItem::FTreeItem(SLightTreeHierarchy* InOwningWidget, FString InName, TArray
     , Temperature(0.0f)
     , Hue(0.0f)
     , Saturation(0.0f)
+    , Horizontal(0.0f)
+    , Vertical(0.0f)
+    , InnerAngle(0.0f)
+    , OuterAngle(0.0f)
+    , bVerticalSliderCapture(false)
 {
 }
 
@@ -458,7 +463,6 @@ void FTreeItem::FetchDataFromLight()
     FLinearColor RGB;
 
     Intensity = 0.0f;
-    Hue = 0.0f;
     Saturation = 0.0f;
     Temperature = 0.0f;
 
@@ -477,18 +481,18 @@ void FTreeItem::FetchDataFromLight()
 
     // If Saturation is 0, the color is white. The RGB => HSV conversion calculates the Hue to be 0 in that case, even if it's not supposed to be.
     // Do this to preserve the Hue previously used rather than it getting reset to 0.
-    if (Saturation == 0.0f)
+    if (Saturation != 0.0f)
         Hue = HSV.R;
 
     if (Type == ETreeItemType::PointLight)
     {
         auto Comp = PointLight->PointLightComponent;
-        Intensity = Comp->Intensity / 2010.619f;       
+        Intensity = Comp->Intensity;       
     }    
     else if (Type == ETreeItemType::SpotLight)
     {
         auto Comp = SpotLight->SpotLightComponent;
-        Intensity = Comp->Intensity / 2010.619f;
+        Intensity = Comp->Intensity;
     }
 
     if (Type != ETreeItemType::SkyLight)
@@ -496,13 +500,32 @@ void FTreeItem::FetchDataFromLight()
         auto LightPtr = Cast<ALight>(ActorPtr);
         auto LightComp = LightPtr->GetLightComponent();
         bUseTemperature = LightComp->bUseTemperature;
-        Temperature = (LightComp->Temperature - 1700.0f) / (12000.0f - 1700.0f);
+        Temperature = LightComp->Temperature;
+    }
+
+    auto CurrentFwd = FQuat::MakeFromEuler(FVector(0.0f, Vertical, Horizontal)).GetForwardVector();
+    auto ActorQuat = ActorPtr->GetTransform().GetRotation().GetNormalized();
+    auto ActorFwd = ActorQuat.GetForwardVector();
+
+    if (CurrentFwd.Equals(ActorFwd))
+    //if (1.0f - FVector::DotProduct(CurrentFwd, ActorFwd) > 0.01f)
+    {
+        auto Euler = ActorQuat.Euler();
+        Horizontal = Euler.Z;
+        Vertical = Euler.Y;
+    }
+    
+
+    if (Type == ETreeItemType::SpotLight)
+    {
+        InnerAngle = SpotLight->SpotLightComponent->InnerConeAngle;
+        OuterAngle = SpotLight->SpotLightComponent->OuterConeAngle;
     }
 }
 
 void FTreeItem::UpdateLightColor()
 {
-    auto NewColor = FLinearColor::MakeFromHSV8(StaticCast<uint8>(Hue * 255.0f), StaticCast<uint8>(Saturation * 255.0f), 255);
+    auto NewColor = FLinearColor::MakeFromHSV8(StaticCast<uint8>(Hue / 360.0f * 255.0f), StaticCast<uint8>(Saturation * 255.0f), 255);
     UpdateLightColor(NewColor);
 }
 
@@ -537,15 +560,17 @@ void FTreeItem::SetLightIntensity(float NewValue)
             auto PointLightComp = Cast<UPointLightComponent>(PointLight->GetLightComponent());
             PointLightComp->SetIntensityUnits(ELightUnits::Lumens);
             PointLightComp->SetIntensity(NewValue * 2010.619f);            
+            Intensity = NewValue * 2010.619f;
         }
         else if (Type == ETreeItemType::SpotLight)
         {
             auto SpotLightComp = Cast<USpotLightComponent>(SpotLight->GetLightComponent());
             SpotLightComp->SetIntensityUnits(ELightUnits::Lumens);
             SpotLightComp->SetIntensity(NewValue * 2010.619f);
+            Intensity = NewValue * 2010.619f;
+
         }
     }
-    Intensity = NewValue;
 }
 
 void FTreeItem::SetUseTemperature(bool NewState)
@@ -562,9 +587,66 @@ void FTreeItem::SetTemperature(float NewValue)
 {
     if (Type != ETreeItemType::SkyLight)
     {
-        Temperature = NewValue;
+        Temperature = NewValue * (12000.0f - 1700.0f) + 1700.0f;
         auto LightPtr = Cast<ALight>(ActorPtr);
-        LightPtr->GetLightComponent()->SetTemperature(NewValue * (12000.0f - 1700.0f) + 1700.0f);
+        LightPtr->GetLightComponent()->SetTemperature(Temperature);
+    }
+}
+
+void FTreeItem::AddHorizontal(float Degrees)
+{    
+    auto Euler = ActorPtr->GetActorRotation().Euler();
+    Euler.Z += Degrees;
+    auto Rotator = FRotator::MakeFromEuler(Euler).GetNormalized();
+
+    ActorPtr->SetActorRotation(Rotator);
+
+    Horizontal += Degrees;
+    Horizontal = FMath::Fmod(Horizontal + 180.0f, 360.0001f) - 180.0f;
+}
+
+void FTreeItem::AddVertical(float Degrees)
+{
+    auto ActorRot = ActorPtr->GetActorRotation().Quaternion();
+    auto DeltaQuat = FVector::ForwardVector.RotateAngleAxis(Degrees, FVector::RightVector).Rotation().Quaternion();
+
+    ActorPtr->SetActorRotation(ActorRot * DeltaQuat);
+
+    Vertical += Degrees;
+    Vertical = FMath::Fmod(Vertical + 180.0f, 360.0001f) - 180.0f;
+}
+
+void FTreeItem::SetInnerConeAngle(float NewValue)
+{
+    InnerAngle = NewValue;
+    if (InnerAngle > OuterAngle)
+    {
+        SetOuterConeAngle(InnerAngle);
+    }
+    SpotLight->SetMobility(EComponentMobility::Movable);
+
+    SpotLight->SpotLightComponent->SetInnerConeAngle(InnerAngle);
+}
+
+
+void FTreeItem::SetOuterConeAngle(float NewValue)
+{
+    SpotLight->SetMobility(EComponentMobility::Movable);
+    if (bLockInnerAngleToOuterAngle)
+    {
+        auto Proportion = InnerAngle / OuterAngle;
+        InnerAngle = Proportion * NewValue;
+        SpotLight->SpotLightComponent->SetInnerConeAngle(InnerAngle);
+    }
+
+
+    OuterAngle = NewValue;
+    OuterAngle = FMath::Max(OuterAngle, 1.0f); // Set the lower limit to 1.0 degree
+    SpotLight->SpotLightComponent->SetOuterConeAngle(OuterAngle);
+
+    if (InnerAngle > OuterAngle)
+    {
+        SetInnerConeAngle(OuterAngle);
     }
 }
 
@@ -1013,7 +1095,7 @@ EActiveTimerReturnType SLightTreeHierarchy::VerifyLights(double, float)
         }
         else
         {
-            //Item->FetchDataFromLight();
+            Item->FetchDataFromLight();
         }
     }
 

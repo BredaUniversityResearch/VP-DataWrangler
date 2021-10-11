@@ -111,6 +111,7 @@ void SLightControlTool::OnTreeSelectionChanged()
         LightPropertyWidget->UpdateSaturationGradient(TreeWidget->SelectionMasterLight->Hue);
         UpdateExtraLightDetailBox();
         UpdateLightHeader();
+        LightSpecificWidget->UpdateToolState();
     }
 
 }
@@ -579,6 +580,7 @@ void SLightControlTool::ClearSelection()
     }
     UpdateLightHeader();
     UpdateExtraLightDetailBox();
+    LightSpecificWidget->UpdateToolState();
 }
 
 
@@ -860,122 +862,13 @@ SHorizontalBox::FSlot& SLightControlTool::LightSpecificPropertyEditor()
     auto& Slot = SHorizontalBox::Slot();
     Slot.SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
 
-    SVerticalBox::FSlot* HorizontalNameSlot, * HorizontalDegreesSlot, * HorizontalPercentageSlot;
-    SVerticalBox::FSlot* VerticalNameSlot, * VerticalDegreesSlot, * VerticalPercentageSlot;
-    SVerticalBox::FSlot* AngleNameSlot, *AngleDegreesSlot, *AnglePercentageSlot;
 
     Slot
     .Padding(5.0f, 0.0f, 0.0f, 0.0f)
     [
-        SNew(SBorder)
-        .HAlign(HAlign_Fill)
-        .VAlign(VAlign_Fill)
-        [
-            SNew(SVerticalBox)
-            +SVerticalBox::Slot()
-            [
-                SNew(SHorizontalBox)
-                +SHorizontalBox::Slot()
-                .Padding(5.0f)
-                [
-                    SNew(SVerticalBox)
-                    +SVerticalBox::Slot()
-                    .Expose(HorizontalNameSlot)
-                    [
-                        SNew(STextBlock)
-                        .Text(FText::FromString("Horizontal"))
-                    ]
-                    +SVerticalBox::Slot()
-                    .Expose(HorizontalDegreesSlot)
-                    [
-                        SNew(STextBlock)
-                        .Text(FText::FromString("0"))
-                    ]
-                    +SVerticalBox::Slot()
-                    [
-                        SNew(SSlider)
-                        .Orientation(Orient_Vertical)
-                    ]
-                    + SVerticalBox::Slot()
-                    .Expose(HorizontalPercentageSlot)
-                    [
-                        SNew(STextBlock)
-                        .Text(FText::FromString("50%"))
-                    ]
-                ]
-                +SHorizontalBox::Slot()
-                .Padding(5.0f)
-                [
-                    SNew(SVerticalBox)
-                    +SVerticalBox::Slot()
-                    .Expose(VerticalNameSlot)
-                    [
-                        SNew(STextBlock)
-                        .Text(FText::FromString("Vertical"))
-                    ]
-                    +SVerticalBox::Slot()
-                    .Expose(VerticalDegreesSlot)
-                    [
-                        SNew(STextBlock)
-                        .Text(FText::FromString("0"))
-                    ]
-                    +SVerticalBox::Slot()
-                    [
-                        SNew(SSlider)
-                        .Orientation(Orient_Vertical)
-                    ]
-                    + SVerticalBox::Slot()
-                    .Expose(VerticalPercentageSlot)
-                    [
-                        SNew(STextBlock)
-                        .Text(FText::FromString("50%"))
-                    ]
-                ]
-                +SHorizontalBox::Slot()
-                .Padding(5.0f)
-                [
-                    SNew(SVerticalBox)
-                    +SVerticalBox::Slot()
-                    .Expose(AngleNameSlot)
-                    [
-                        SNew(STextBlock)
-                        .Text(FText::FromString("Angle"))
-                    ]
-                    +SVerticalBox::Slot()
-                    .Expose(AngleDegreesSlot)
-                    [
-                        SNew(STextBlock)
-                        .Text(FText::FromString("0"))
-                    ]
-                    +SVerticalBox::Slot()
-                    [
-                        SNew(SSlider)
-                        .Orientation(Orient_Vertical)
-                    ]
-                    + SVerticalBox::Slot()
-                    .Expose(AnglePercentageSlot)
-                    [
-                        SNew(STextBlock)
-                        .Text(FText::FromString("50%"))
-                    ]
-                ]
-            ]
-        ]
+        SAssignNew(LightSpecificWidget, SLightSpecificProperties)
+        .CoreToolPtr(this)
     ];
-
-    HorizontalNameSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
-    HorizontalDegreesSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
-    HorizontalPercentageSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
-
-    VerticalNameSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
-    VerticalDegreesSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
-    VerticalPercentageSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
-
-    AngleNameSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
-    AngleDegreesSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
-    AnglePercentageSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
-
-
 
     return Slot;
 }

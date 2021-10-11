@@ -47,6 +47,11 @@ public:
     void SetUseTemperature(bool NewState);
     void SetTemperature(float NewValue);
 
+    void AddHorizontal(float Degrees);
+    void AddVertical(float Degrees);
+    void SetInnerConeAngle(float NewValue);
+    void SetOuterConeAngle(float NewValue);
+
     void GetLights(TArray<TSharedPtr<FTreeItem>>& Array);
 
     void UpdateFolderIcon();
@@ -83,6 +88,13 @@ public:
 
     bool bUseTemperature;
     float Temperature;
+
+    float Horizontal;
+    float Vertical;
+    bool bVerticalSliderCapture;
+    float InnerAngle;
+    float OuterAngle;
+    bool bLockInnerAngleToOuterAngle;
 
     TEnumAsByte<ETreeItemType> Type;
 
