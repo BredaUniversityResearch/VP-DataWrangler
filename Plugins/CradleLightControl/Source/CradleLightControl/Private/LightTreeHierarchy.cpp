@@ -867,7 +867,7 @@ FReply FTreeItem::TreeDropDetected(const FDragDropEvent& DragDropEvent)
 void SLightTreeHierarchy::Construct(const FArguments& Args)
 {
     LightVerificationTimer = RegisterActiveTimer(0.5f, FWidgetActiveTimerDelegate::CreateRaw(this, &SLightTreeHierarchy::VerifyLights));
-    AutoSaveTimer = RegisterActiveTimer(5.0f, FWidgetActiveTimerDelegate::CreateRaw(this, &SLightTreeHierarchy::AutoSave)); // once every 5 minutes
+    AutoSaveTimer = RegisterActiveTimer(300.0f, FWidgetActiveTimerDelegate::CreateRaw(this, &SLightTreeHierarchy::AutoSave)); // once every 5 minutes
 
     SaveIcon = FSlateIconFinder::FindIcon("AssetEditor.SaveAsset");
     SaveAsIcon = FSlateIconFinder::FindIcon("AssetEditor.SaveAssetAs");
@@ -1432,7 +1432,10 @@ void SLightTreeHierarchy::LoadStateFromJSON(FString Path, bool bUpdatePresetPath
         }
     }
     else
+    {
         UE_LOG(LogTemp, Error, TEXT("Could not open file %s"), *Path);
+        ToolPresetPath = "";
+    }
 
     
     bCurrentlyLoading = false;
