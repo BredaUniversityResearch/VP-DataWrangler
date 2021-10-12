@@ -19,6 +19,8 @@
 #include "Interfaces/IPluginManager.h"
 
 #include "LightControlTool.h"
+#include "Chaos/AABB.h"
+#include "Chaos/AABB.h"
 
 #pragma region TreeItemStruct
 FTreeItem::FTreeItem(SLightTreeHierarchy* InOwningWidget, FString InName, TArray<TSharedPtr<FTreeItem>> InChildren)
@@ -365,7 +367,7 @@ TSharedPtr<FJsonValue> FTreeItem::SaveToJson()
     return JsonValue;
 }
 
-bool FTreeItem::LoadFromJson(TSharedPtr<FJsonObject> JsonObject)
+FTreeItem::ELoadingResult FTreeItem::LoadFromJson(TSharedPtr<FJsonObject> JsonObject)
 {
     Name = JsonObject->GetStringField("Name");
     Note = JsonObject->GetStringField("Note");
@@ -373,9 +375,11 @@ bool FTreeItem::LoadFromJson(TSharedPtr<FJsonObject> JsonObject)
     bExpanded = JsonObject->GetBoolField("Expanded");
     if (Type != Folder)
     {
-        if (!GWorld)
-            return false;
-
+        if (!GWorld) 
+        {
+            UE_LOG(LogTemp, Error, TEXT("There was an error with the engine. Try loading again. If the issue persists, restart the engine."));
+            return EngineError;
+        }
         auto LightName = JsonObject->GetStringField("RelatedLightName");
 
         UClass* ClassToFetch = AActor::StaticClass();
@@ -395,15 +399,23 @@ bool FTreeItem::LoadFromJson(TSharedPtr<FJsonObject> JsonObject)
             ClassToFetch = APointLight::StaticClass();
             break;
         default:
-            return false;
+            UE_LOG(LogTemp, Error, TEXT("%s has invalid type: %n"), *Name, Type);
+            return InvalidType;
         }
         TArray<AActor*> Actors;
         UGameplayStatics::GetAllActorsOfClass(GWorld, ClassToFetch, Actors);
 
-        ActorPtr = *Actors.FindByPredicate([&LightName](AActor* Element)
-            {
+        auto ActorPPtr = Actors.FindByPredicate([&LightName](AActor* Element){
                 return Element && Element->GetName() == LightName;
             });
+
+            
+        if (!ActorPPtr)
+        {
+            UE_LOG(LogTemp, Error, TEXT("%s could not any lights in the scene named %s"), *Name, *LightName);
+            return LightNotFound;
+        }
+        ActorPtr = *ActorPPtr;
 
         auto State = JsonObject->GetBoolField("State");
 
@@ -421,7 +433,7 @@ bool FTreeItem::LoadFromJson(TSharedPtr<FJsonObject> JsonObject)
     {
         auto JsonChildren = JsonObject->GetArrayField("Children");
 
-        auto ChildrenLoadingSuccess = true;
+        auto ChildrenLoadingSuccess = Success;
         for (auto Child : JsonChildren)
         {
             const TSharedPtr<FJsonObject>* ChildObjectPtr;
@@ -433,17 +445,23 @@ bool FTreeItem::LoadFromJson(TSharedPtr<FJsonObject> JsonObject)
 
             ChildItem->Parent = SharedThis(this);
 
-            ChildrenLoadingSuccess &= ChildItem->LoadFromJson(ChildObject);
-            if (!ChildrenLoadingSuccess)
-                break;
-
-            Children.Add(ChildItem);
+            auto ChildResult = ChildItem->LoadFromJson(ChildObject);
+            if (ChildResult != ELoadingResult::Success)
+            {
+                if (ChildrenLoadingSuccess == ELoadingResult::Success)
+                {
+                    ChildrenLoadingSuccess = ChildResult;
+                }
+                else
+                    ChildrenLoadingSuccess = ELoadingResult::MultipleErrors;
+            }
+                Children.Add(ChildItem);
         }
         return ChildrenLoadingSuccess;
     }
 
 
-    return true;
+    return Success;
 }
 
 void FTreeItem::ExpandInTree()
@@ -559,15 +577,15 @@ void FTreeItem::SetLightIntensity(float NewValue)
         {
             auto PointLightComp = Cast<UPointLightComponent>(PointLight->GetLightComponent());
             PointLightComp->SetIntensityUnits(ELightUnits::Lumens);
-            PointLightComp->SetIntensity(NewValue * 2010.619f);            
-            Intensity = NewValue * 2010.619f;
+            PointLightComp->SetIntensity(NewValue);            
+            Intensity = NewValue;
         }
         else if (Type == ETreeItemType::SpotLight)
         {
             auto SpotLightComp = Cast<USpotLightComponent>(SpotLight->GetLightComponent());
             SpotLightComp->SetIntensityUnits(ELightUnits::Lumens);
-            SpotLightComp->SetIntensity(NewValue * 2010.619f);
-            Intensity = NewValue * 2010.619f;
+            SpotLightComp->SetIntensity(NewValue);
+            Intensity = NewValue;
 
         }
     }
@@ -587,7 +605,7 @@ void FTreeItem::SetTemperature(float NewValue)
 {
     if (Type != ETreeItemType::SkyLight)
     {
-        Temperature = NewValue * (12000.0f - 1700.0f) + 1700.0f;
+        Temperature = NewValue;
         auto LightPtr = Cast<ALight>(ActorPtr);
         LightPtr->GetLightComponent()->SetTemperature(Temperature);
     }
@@ -849,7 +867,11 @@ FReply FTreeItem::TreeDropDetected(const FDragDropEvent& DragDropEvent)
 void SLightTreeHierarchy::Construct(const FArguments& Args)
 {
     LightVerificationTimer = RegisterActiveTimer(0.5f, FWidgetActiveTimerDelegate::CreateRaw(this, &SLightTreeHierarchy::VerifyLights));
+    AutoSaveTimer = RegisterActiveTimer(5.0f, FWidgetActiveTimerDelegate::CreateRaw(this, &SLightTreeHierarchy::AutoSave)); // once every 5 minutes
 
+    SaveIcon = FSlateIconFinder::FindIcon("AssetEditor.SaveAsset");
+    SaveAsIcon = FSlateIconFinder::FindIcon("AssetEditor.SaveAssetAs");
+    LoadIcon = FSlateIconFinder::FindIcon("EnvQueryEditor.Profiler.LoadStats");
 
     FSlateFontInfo Font24(FCoreStyle::GetDefaultFont(), 20);
 
@@ -860,11 +882,13 @@ void SLightTreeHierarchy::Construct(const FArguments& Args)
     // SVerticalBox slots are by default dividing the space equally between each other
     // Because of this we need to expose the slot with the search bar in order to disable that for it
 
-    SVerticalBox::FSlot* SaveButtonSlot;
-    SVerticalBox::FSlot* LoadButtonSlot;
+    SHorizontalBox::FSlot* SaveButtonSlot;
+    SHorizontalBox::FSlot* SaveAsButtonSlot;
+    SHorizontalBox::FSlot* LoadButtonSlot;
 
     SVerticalBox::FSlot* LightSearchBarSlot;
     SVerticalBox::FSlot* NewFolderButtonSlot;
+
     ChildSlot[
         SNew(SVerticalBox) // Light selection menu thingy
         +SVerticalBox::Slot()
@@ -889,22 +913,69 @@ void SLightTreeHierarchy::Construct(const FArguments& Args)
                 .Text(FText::FromString("Scene Lights"))
                 .Font(Font24)
             ]
+            +SVerticalBox::Slot()
+                [
+                    SNew(SHorizontalBox)
+                    +SHorizontalBox::Slot()
+                    .HAlign(HAlign_Fill)
+                    .VAlign(VAlign_Center)
+                    [
+                        SNew(STextBlock)
+                        .Text(this, &SLightTreeHierarchy::GetPresetFilename)
+                        .Font(FSlateFontInfo(FCoreStyle::GetDefaultFont(), 14))
+                    ]
+                    +SHorizontalBox::Slot()
+                    .HAlign(HAlign_Right)
+                    .VAlign(VAlign_Center)
+                    .Expose(SaveButtonSlot)
+                    [
+                        SNew(SButton)
+                        .ButtonColorAndOpacity(FSlateColor(FColor::Transparent))
+                        .OnClicked(this, &SLightTreeHierarchy::SaveCallBack)
+                        .RenderTransform(FSlateRenderTransform(0.9f))
+                        .ToolTipText(FText::FromString("Save"))
+                        [
+                            SNew(SOverlay)
+                            +SOverlay::Slot()
+                            [
+                                SNew(SImage)
+                                .RenderOpacity(1.0f)
+                                .Image(SaveIcon.GetIcon())
+                            ]
+                        ]
+                    ]
+                    +SHorizontalBox::Slot()
+                    .HAlign(HAlign_Right)
+                    .VAlign(VAlign_Center)
+                    .Expose(SaveAsButtonSlot)
+                    [
+                        SNew(SButton)
+                        .ButtonColorAndOpacity(FSlateColor(FColor::Transparent))
+                        .OnClicked(this, &SLightTreeHierarchy::SaveAsCallback)
+                        .RenderTransform(FSlateRenderTransform(0.9f))
+                        .ToolTipText(FText::FromString("Save As"))
+                        [
+                            SNew(SImage)
+                            .Image(SaveAsIcon.GetIcon())
+                        ]
+                    ]
+                    +SHorizontalBox::Slot()
+                    .HAlign(HAlign_Right)
+                    .VAlign(VAlign_Center)
+                    .Expose(LoadButtonSlot)
+                    [
+                        SNew(SButton)
+                        .ButtonColorAndOpacity(FSlateColor(FColor::Transparent))
+                        .OnClicked(this, &SLightTreeHierarchy::LoadCallBack)
+                        .RenderTransform(FSlateRenderTransform(0.9f))
+                        .ToolTipText(FText::FromString("Load"))
+                        [
+                            SNew(SImage)
+                            .Image(LoadIcon.GetIcon())
+                        ]
+                    ]
+                ]
         ]
-        +SVerticalBox::Slot()
-            .Expose(SaveButtonSlot)
-            [
-                SNew(SButton)
-                .Text(FText::FromString("Save"))
-                .OnClicked(this, &SLightTreeHierarchy::SaveStateToJSON)
-            ]   
-        + SVerticalBox::Slot()
-            .Expose(LoadButtonSlot)
-            [
-                SNew(SButton)
-                .Text(FText::FromString("Load"))
-                .OnClicked(this, &SLightTreeHierarchy::LoadStateFromJSON)
-            ]
-
         +SVerticalBox::Slot()
         .Padding(0.0f, 0.0f, 8.0f, 0.0f)
         .HAlign(HAlign_Fill)
@@ -936,21 +1007,22 @@ void SLightTreeHierarchy::Construct(const FArguments& Args)
     ];
 
     SaveButtonSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
+    SaveAsButtonSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
     LoadButtonSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
 
     LightSearchBarSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
     NewFolderButtonSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
 
+    LoadMetaData();
 
-    for (auto& TreeItem : TreeRootItems)
-    {
-        Tree->SetItemExpansion(TreeItem, true);
-    }
 }
 
 void SLightTreeHierarchy::PreDestroy()
 {
     UnRegisterActiveTimer(LightVerificationTimer.ToSharedRef());
+    UnRegisterActiveTimer(AutoSaveTimer.ToSharedRef());
+    AutoSave(0.0, 0.0f);
+    SaveMetaData();
 }
 
 void SLightTreeHierarchy::OnActorSpawned(AActor* Actor)
@@ -1198,12 +1270,54 @@ void SLightTreeHierarchy::SearchBarOnChanged(const FText& NewString)
     Tree->RebuildList();
 }
 
-
-FReply SLightTreeHierarchy::SaveStateToJSON()
+EActiveTimerReturnType SLightTreeHierarchy::AutoSave(double, float)
 {
+    UE_LOG(LogTemp, Display, TEXT("Autosaving light control tool state."));
 
-    
+    if (ToolPresetPath.IsEmpty())
+    {
+        auto ThisPlugin = IPluginManager::Get().FindPlugin("CradleLightControl");
+        auto Content = ThisPlugin->GetContentDir();
 
+        SaveStateToJson(Content + "/LightsAutoSave.json", false);
+    }
+    else
+        SaveStateToJson(ToolPresetPath, false);
+
+    SaveMetaData();
+
+    return EActiveTimerReturnType::Continue;
+}
+
+FReply SLightTreeHierarchy::SaveCallBack()
+{
+    if (ToolPresetPath.IsEmpty())
+    {
+        return SaveAsCallback();
+    }
+    else
+        SaveStateToJson(ToolPresetPath);
+
+    return FReply::Handled();
+}
+
+
+FReply SLightTreeHierarchy::SaveAsCallback()
+{
+    auto ThisPlugin = IPluginManager::Get().FindPlugin("CradleLightControl");
+    auto Content = ThisPlugin->GetContentDir();
+
+    TArray<FString> Filenames;
+    if (CoreToolPtr->SaveFileDialog("Select file to save tool state to", Content, 0 /*Single file*/, "Data Table JSON (*.json)|*.json", Filenames))
+    {
+        auto TargetFile = Filenames[0];
+        SaveStateToJson(TargetFile);
+    }
+    return FReply::Handled();
+}
+
+void SLightTreeHierarchy::SaveStateToJson(FString Path, bool bUpdatePresetPath)
+{
     TArray<TSharedPtr<FJsonValue>> TreeItemsJSON;
 
     for (auto TreeItem : TreeRootItems)
@@ -1219,68 +1333,162 @@ FReply SLightTreeHierarchy::SaveStateToJSON()
     TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&Output);
     FJsonSerializer::Serialize(RootObject.ToSharedRef(), Writer);
 
-    /*auto ThisPlugin = IPluginManager::Get().FindPlugin("CradleLightControl");
-    auto Content = ThisPlugin->GetContentDir();*/
-    auto ThisPlugin = IPluginManager::Get().FindPlugin("CradleLightControl");
-    auto Content = ThisPlugin->GetContentDir();
-    //FFileHelper::SaveStringToFile(Output, *(Content + "\\TestFile.json"));
-
-    TArray<FString> Filenames;
-    if (CoreToolPtr->SaveFileDialog("Select file to save tool state to", Content, 0 /*Single file*/, "Data Table JSON (*.json)|*.json", Filenames))
-    {
-        auto TargetFile = Filenames[0];
-        FFileHelper::SaveStringToFile(Output, *TargetFile);
-    }
-    /*FArchive* Archive =
-    TJsonWriter<char> Writer();*/
-
-    return FReply::Handled();
+    FFileHelper::SaveStringToFile(Output, *Path);
+    if (bUpdatePresetPath)
+        ToolPresetPath = Path;
 }
 
-FReply SLightTreeHierarchy::LoadStateFromJSON()
+FReply SLightTreeHierarchy::LoadCallBack()
 {
-    CoreToolPtr->ClearSelection();
-    bCurrentlyLoading = true;
-    FString Input;
     auto ThisPlugin = IPluginManager::Get().FindPlugin("CradleLightControl");
     auto Content = ThisPlugin->GetContentDir();
-
     TArray<FString> Filenames;
     if (CoreToolPtr->OpenFileDialog("Select file to restore tool state from", Content, 0 /*Single file*/, "Data Table JSON (*.json)|*.json", Filenames))
     {
         auto TargetFile = Filenames[0];
-        if (FFileHelper::LoadFileToString(Input, *TargetFile))
-        {
-            TreeRootItems.Empty();
-            ListOfLightItems.Empty();
-            TSharedPtr<FJsonObject> JsonRoot;
-            TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(Input);
-            FJsonSerializer::Deserialize(JsonReader, JsonRoot);
-
-            for (auto TreeElement : JsonRoot->GetArrayField("TreeElements"))
-            {
-                const TSharedPtr<FJsonObject>* TreeElementObjectPtr;
-                auto Success = TreeElement->TryGetObject(TreeElementObjectPtr);
-                auto TreeElementObject = *TreeElementObjectPtr;
-                _ASSERT(Success);
-                int Type = TreeElementObject->GetNumberField("Type");
-                auto Item = AddTreeItem(Type == 0); // If Type is 0, this element is a folder, so we add it as a folder
-                Item->LoadFromJson(TreeElementObject);
-
-                TreeRootItems.Add(Item);
-            }
-            Tree->RequestTreeRefresh();
-
-            for (auto TreeItem : TreeRootItems)
-            {
-                TreeItem->ExpandInTree();
-            }
-        }
+        LoadStateFromJSON(TargetFile);
     }
-
-    
-    bCurrentlyLoading = false;
     return FReply::Handled();
 }
 
+void SLightTreeHierarchy::LoadStateFromJSON(FString Path, bool bUpdatePresetPath)
+{
+    bCurrentlyLoading = true;
 
+    FString Input;
+    if (CoreToolPtr) CoreToolPtr->ClearSelection();
+    if (FFileHelper::LoadFileToString(Input, *Path))
+    {
+        if (bUpdatePresetPath)
+            ToolPresetPath = Path;
+        UE_LOG(LogTemp, Display, TEXT("Beginning light control tool state loading from %s"), *Path);
+        TreeRootItems.Empty();
+        ListOfLightItems.Empty();
+        TSharedPtr<FJsonObject> JsonRoot;
+        TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(Input);
+        FJsonSerializer::Deserialize(JsonReader, JsonRoot);
+
+        auto LoadingResult = FTreeItem::ELoadingResult::Success;
+        for (auto TreeElement : JsonRoot->GetArrayField("TreeElements"))
+        {
+            const TSharedPtr<FJsonObject>* TreeElementObjectPtr;
+            auto Success = TreeElement->TryGetObject(TreeElementObjectPtr);
+            auto TreeElementObject = *TreeElementObjectPtr;
+            _ASSERT(Success);
+            int Type = TreeElementObject->GetNumberField("Type");
+            auto Item = AddTreeItem(Type == 0); // If Type is 0, this element is a folder, so we add it as a folder
+            auto Res = Item->LoadFromJson(TreeElementObject);
+
+            if (Res != FTreeItem::ELoadingResult::Success)
+            {
+                if (LoadingResult == FTreeItem::ELoadingResult::Success)
+                {
+                    LoadingResult = Res;
+                }
+                else LoadingResult = FTreeItem::ELoadingResult::MultipleErrors;
+            }
+
+            TreeRootItems.Add(Item);
+        }
+        Tree->RequestTreeRefresh();
+
+        for (auto TreeItem : TreeRootItems)
+        {
+            TreeItem->ExpandInTree();
+        }
+
+        if (LoadingResult == FTreeItem::ELoadingResult::Success)
+        {
+            UE_LOG(LogTemp, Display, TEXT("Light control state loaded successfully"));
+        }
+        else
+        {
+            FString ErrorMessage = "";
+
+            switch (LoadingResult)
+            {
+            case FTreeItem::LightNotFound:
+                ErrorMessage = "At least one light could not be found. Please ensure all lights exist and haven't been renamed since the save.";
+                break;
+            case FTreeItem::EngineError:
+                ErrorMessage = "There was an error with the engine. Please try loading again. If the error persists, restart the engine.";
+                break;
+            case FTreeItem::InvalidType:
+                ErrorMessage = "The item type that was tried to be loaded was not valid. Please ensure that the item type in the .json file is between 0 and 4.";
+                break;
+            case FTreeItem::MultipleErrors:
+                ErrorMessage = "Multiple errors occurred. See output log for more details.";
+                break;
+            }
+
+            UE_LOG(LogTemp, Display, TEXT("Light control state could not load with following message: %s"), *ErrorMessage);
+
+            FNotificationInfo NotificationInfo(FText::FromString(FString::Printf(TEXT("Light control tool state could not be loaded. Please check the output log."))));
+
+            NotificationInfo.ExpireDuration = 300.0f;
+            NotificationInfo.bUseSuccessFailIcons = false;
+
+            FSlateNotificationManager::Get().AddNotification(NotificationInfo);
+        }
+    }
+    else
+        UE_LOG(LogTemp, Error, TEXT("Could not open file %s"), *Path);
+
+    
+    bCurrentlyLoading = false;
+}
+
+FText SLightTreeHierarchy::GetPresetFilename() const
+{
+    if (ToolPresetPath.IsEmpty())
+    {
+        return FText::FromString("Not Saved");
+    }
+    FString Path, Name, Extension;
+    FPaths::Split(ToolPresetPath, Path, Name, Extension);
+    return FText::FromString(Name);
+}
+
+void SLightTreeHierarchy::SaveMetaData()
+{
+    UE_LOG(LogTemp, Display, TEXT("Saving light control meta data."));
+    auto ThisPlugin = IPluginManager::Get().FindPlugin("CradleLightControl");
+    auto Content = ThisPlugin->GetContentDir();
+
+    TSharedPtr<FJsonObject> RootObject = MakeShared<FJsonObject>();
+
+    RootObject->SetStringField("LastUsedPreset", ToolPresetPath);
+
+    FString Output;
+    TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&Output);
+    FJsonSerializer::Serialize(RootObject.ToSharedRef(), Writer);
+
+    FFileHelper::SaveStringToFile(Output, *(Content + "/LightControlMeta.json"));
+}
+
+void SLightTreeHierarchy::LoadMetaData()
+{
+    auto ThisPlugin = IPluginManager::Get().FindPlugin("CradleLightControl");
+    auto Content = ThisPlugin->GetContentDir();
+    FString Input;
+    if (FFileHelper::LoadFileToString(Input, *(Content + "/LightControlMeta.json")))
+    {
+        UE_LOG(LogTemp, Display, TEXT("Loading light control meta data."));
+        TSharedPtr<FJsonObject> JsonRoot;
+        TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(Input);
+        FJsonSerializer::Deserialize(JsonReader, JsonRoot);
+
+        ToolPresetPath = JsonRoot->GetStringField("LastUsedPreset");
+        if (!ToolPresetPath.IsEmpty())
+        {
+            LoadStateFromJSON(ToolPresetPath, false);            
+        }
+        else
+        {
+            LoadStateFromJSON(Content + "/LightsAutoSave.json", false);
+        }
+    }
+    else
+        UE_LOG(LogTemp, Error, TEXT("Failed to load light control meta data."));
+
+}

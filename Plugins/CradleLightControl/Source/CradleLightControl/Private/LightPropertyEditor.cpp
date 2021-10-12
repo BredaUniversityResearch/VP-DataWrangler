@@ -437,7 +437,7 @@ void SLightPropertyEditor::OnIntensityValueChanged(float Value)
     if (TreeWidget.IsValid())
         for (auto SelectedItem : TreeWidget.Pin()->LightsUnderSelection)
         {
-            SelectedItem->SetLightIntensity(Value);
+            SelectedItem->SetLightIntensity(Value * 2010.619f);
         }
 }
 
@@ -551,7 +551,7 @@ void SLightPropertyEditor::OnTemperatureValueChanged(float Value)
     if (TreeWidget.IsValid())
         for (auto SelectedItem : TreeWidget.Pin()->LightsUnderSelection)
         {
-            SelectedItem->SetTemperature(Value);
+            SelectedItem->SetTemperature(Value * (12000.0f - 1700.0f) + 1700.0f);
         }
 }
 

@@ -37,7 +37,16 @@ public:
     void EndRename(const FText& Text, ETextCommit::Type CommitType);
 
     TSharedPtr<FJsonValue> SaveToJson();
-    bool LoadFromJson(TSharedPtr<FJsonObject> JsonObject);
+    enum ELoadingResult
+    {
+        Success = 0,
+        InvalidType,
+        LightNotFound,
+        EngineError,
+        MultipleErrors
+    };
+
+    ELoadingResult LoadFromJson(TSharedPtr<FJsonObject> JsonObject);
     void ExpandInTree();
 
     void FetchDataFromLight();
@@ -155,9 +164,24 @@ public:
 
     void SearchBarOnChanged(const FText& NewString);
 
-    FReply SaveStateToJSON();
-    FReply LoadStateFromJSON();
+    EActiveTimerReturnType AutoSave(double, float);
+
+    FReply SaveCallBack();
+    FReply SaveAsCallback();
+    void SaveStateToJson(FString Path, bool bUpdatePresetPath = true);
+    FReply LoadCallBack();
+    void LoadStateFromJSON(FString Path, bool bUpdatePresetPath = true);
+
+    void SaveMetaData();
+    void LoadMetaData();
+
+    FText GetPresetFilename() const;
+
     bool bCurrentlyLoading;
+    FString ToolPresetPath;
+    FSlateIcon SaveIcon;
+    FSlateIcon SaveAsIcon;
+    FSlateIcon LoadIcon;
 
     SLightControlTool* CoreToolPtr;
 
@@ -171,5 +195,5 @@ public:
     TArray<FTreeItem*> ListOfLightItems;
 
     TSharedPtr<FActiveTimerHandle> LightVerificationTimer;
-
+    TSharedPtr<FActiveTimerHandle> AutoSaveTimer;
 };

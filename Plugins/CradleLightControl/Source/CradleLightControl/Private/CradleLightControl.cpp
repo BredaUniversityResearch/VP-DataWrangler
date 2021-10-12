@@ -88,13 +88,14 @@ void FCradleLightControlModule::TabShenanigans()
 
 		    Tab->SetContent(
 				    SAssignNew(LightControl, SLightControlTool)
-				    .ToolTab(Tab)
+				    .ToolTab(Tab)				    
 				);
-
 
 		    return Tab;
 			
 		}));
+
+	
 }
 
 #undef LOCTEXT_NAMESPACE
