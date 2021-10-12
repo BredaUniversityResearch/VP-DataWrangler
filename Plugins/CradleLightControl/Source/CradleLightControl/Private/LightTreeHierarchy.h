@@ -47,6 +47,8 @@ public:
     void SetUseTemperature(bool NewState);
     void SetTemperature(float NewValue);
 
+    void SetCastShadows(bool bState);
+
     void AddHorizontal(float Degrees);
     void AddVertical(float Degrees);
     void SetInnerConeAngle(float NewValue);
@@ -95,6 +97,8 @@ public:
     float InnerAngle;
     float OuterAngle;
     bool bLockInnerAngleToOuterAngle;
+
+    bool bCastShadows;
 
     TEnumAsByte<ETreeItemType> Type;
 

@@ -19,7 +19,12 @@ private:
 
     void ClearSlot();
 
+    void OnCastShadowsStateChanged(ECheckBoxState NewState);
+    ECheckBoxState CastShadowsState() const;
+
+    void ConstructDirectionalLightProperties();
     void ConstructSpotLightProperties();
+    void ConstructPointLightProperties();
 
     void OnHorizontalValueChanged(float NormalizedValue);
     FText GetHorizontalValueText() const;

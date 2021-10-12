@@ -593,6 +593,24 @@ void FTreeItem::SetTemperature(float NewValue)
     }
 }
 
+void FTreeItem::SetCastShadows(bool bState)
+{
+    _ASSERT(Type != Folder);
+
+    if (Type != ETreeItemType::SkyLight)
+    {
+        auto Light = Cast<ALight>(ActorPtr);
+        Light->SetCastShadows(bState);
+        bCastShadows = bState;        
+    }
+    else
+    {
+        auto SkyLightPtr = Cast<ASkyLight>(ActorPtr);
+        SkyLightPtr->GetLightComponent()->SetCastShadows(bState);
+        bCastShadows = bState;
+    }
+}
+
 void FTreeItem::AddHorizontal(float Degrees)
 {    
     auto Euler = ActorPtr->GetActorRotation().Euler();

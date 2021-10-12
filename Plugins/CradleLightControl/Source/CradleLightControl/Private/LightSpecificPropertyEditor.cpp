@@ -32,6 +32,14 @@ void SLightSpecificProperties::UpdateToolState()
     {
         ConstructSpotLightProperties();
     }
+    else if (Light->Type == DirectionalLight)
+    {
+        ConstructDirectionalLightProperties();
+    }
+    else if (Light->Type == PointLight || Light->Type == SkyLight)
+    {
+        ConstructPointLightProperties();
+    }
     else
         ClearSlot();
 }
@@ -42,6 +50,145 @@ void SLightSpecificProperties::ClearSlot()
     ToolSlot->SetContent(SNew(SBox));
 }
 
+void SLightSpecificProperties::OnCastShadowsStateChanged(ECheckBoxState NewState)
+{
+    for (auto Light : CoreToolPtr->GetTreeWidget().Pin()->LightsUnderSelection)
+    {
+        Light->SetCastShadows(NewState == ECheckBoxState::Checked);
+    }
+}
+
+ECheckBoxState SLightSpecificProperties::CastShadowsState() const
+{
+    if (CoreToolPtr->IsAMasterLightSelected())
+    {
+        auto TreeWidget = CoreToolPtr->GetTreeWidget();
+        auto MasterLight = TreeWidget.Pin()->SelectionMasterLight;
+
+        auto MasterLightCastShadows = MasterLight->bCastShadows;
+        auto State = MasterLightCastShadows ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
+        for (auto Light : TreeWidget.Pin()->LightsUnderSelection)
+        {
+            if (Light->bCastShadows != MasterLightCastShadows)
+            {
+                State = ECheckBoxState::Undetermined;
+                break;
+            }
+        }
+
+        return State;
+    }
+    return ECheckBoxState::Undetermined;
+}
+
+void SLightSpecificProperties::ConstructDirectionalLightProperties()
+{
+    SVerticalBox::FSlot* HorizontalNameSlot, * HorizontalDegreesSlot, * HorizontalPercentageSlot;
+    SVerticalBox::FSlot* VerticalNameSlot, * VerticalDegreesSlot, * VerticalPercentageSlot;
+    SVerticalBox::FSlot* CastShadowsSlot;
+    SHorizontalBox::FSlot* CastShadowsNameSlot;
+
+    ToolSlot->SetVisibility(EVisibility::Visible);
+    ToolSlot->SetContent(
+        SNew(SVerticalBox)
+            +SVerticalBox::Slot()
+            [
+                SNew(SHorizontalBox)
+                +SHorizontalBox::Slot()
+                .Padding(5.0f)
+                [
+                    SNew(SVerticalBox)
+                    +SVerticalBox::Slot()
+                    .Expose(HorizontalNameSlot)
+                    [
+                        SNew(STextBlock)
+                        .Text(FText::FromString("Horizontal"))
+                    ]
+                    +SVerticalBox::Slot()
+                    .Expose(HorizontalDegreesSlot)
+                    [
+                        SNew(STextBlock)
+                        .Text(this, &SLightSpecificProperties::GetHorizontalValueText)
+                    ]
+                    +SVerticalBox::Slot()
+                    [
+                        SNew(SSlider)
+                        .Orientation(Orient_Vertical)
+                        .OnValueChanged(this, &SLightSpecificProperties::OnHorizontalValueChanged)
+                        .Value(this, &SLightSpecificProperties::GetHorizontalValue)
+                    ]
+                    + SVerticalBox::Slot()
+                    .Expose(HorizontalPercentageSlot)
+                    [
+                        SNew(STextBlock)
+                        .Text(this, &SLightSpecificProperties::GetHorizontalPercentage)
+                    ]
+                ]
+                +SHorizontalBox::Slot()
+                .Padding(5.0f)
+                [
+                    SNew(SVerticalBox)
+                    +SVerticalBox::Slot()
+                    .Expose(VerticalNameSlot)
+                    [
+                        SNew(STextBlock)
+                        .Text(FText::FromString("Vertical"))
+                    ]
+                    +SVerticalBox::Slot()
+                    .Expose(VerticalDegreesSlot)
+                    [
+                        SNew(STextBlock)
+                        .Text(this, &SLightSpecificProperties::GetVerticalValueText)
+                    ]
+                    +SVerticalBox::Slot()
+                    [
+                        SNew(SSlider)
+                        .Orientation(Orient_Vertical)
+                        .OnValueChanged(this, &SLightSpecificProperties::OnVerticalValueChanged)
+                        .Value(this, &SLightSpecificProperties::GetVerticalValue)
+                        .OnMouseCaptureBegin(this, &SLightSpecificProperties::VerticalSliderCaptureBegin)
+                        .OnMouseCaptureEnd(this, &SLightSpecificProperties::VerticalSliderCaptureEnd)
+                    ]
+                    + SVerticalBox::Slot()
+                    .Expose(VerticalPercentageSlot)
+                    [
+                        SNew(STextBlock)
+                        .Text(this, &SLightSpecificProperties::GetVerticalPercentage)
+                    ]
+                ]
+            ]
+            + SVerticalBox::Slot()
+            .Expose(CastShadowsSlot)
+            [
+                SNew(SHorizontalBox)
+                + SHorizontalBox::Slot()
+                .Expose(CastShadowsNameSlot)
+                .Padding(10.0f)
+                [
+                    SNew(STextBlock)
+                    .Text(FText::FromString("Cast Shadows"))
+                ]
+                + SHorizontalBox::Slot()
+                [
+                    SNew(SCheckBox)
+                    .OnCheckStateChanged(this, &SLightSpecificProperties::OnCastShadowsStateChanged)
+                    .IsChecked(this, &SLightSpecificProperties::CastShadowsState)
+                ]
+            ]);
+
+
+    HorizontalNameSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
+    HorizontalDegreesSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
+    HorizontalPercentageSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
+
+    VerticalNameSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
+    VerticalDegreesSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
+    VerticalPercentageSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
+
+    CastShadowsSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
+    CastShadowsNameSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
+}
+
 void SLightSpecificProperties::ConstructSpotLightProperties()
 {
     SVerticalBox::FSlot* HorizontalNameSlot, *HorizontalDegreesSlot, *HorizontalPercentageSlot;
@@ -49,6 +196,7 @@ void SLightSpecificProperties::ConstructSpotLightProperties()
     SVerticalBox::FSlot* OuterAngleNameSlot, *OuterAngleDegreesSlot, *OuterAnglePercentageSlot;
     SVerticalBox::FSlot* InnerAngleNameSlot, *InnerAngleCheckboxSlot, *InnerAngleDegreesSlot, *InnerAnglePercentageSlot;
     SVerticalBox::FSlot* CastShadowsSlot;
+    SHorizontalBox::FSlot* CastShadowsNameSlot;
     ToolSlot->SetVisibility(EVisibility::Visible);
     ToolSlot->SetContent(
         SNew(SVerticalBox)
@@ -191,6 +339,8 @@ void SLightSpecificProperties::ConstructSpotLightProperties()
             [
                 SNew(SHorizontalBox)
                 +SHorizontalBox::Slot()
+                .Expose(CastShadowsNameSlot)
+                .Padding(10.0f)
                 [
                     SNew(STextBlock)
                     .Text(FText::FromString("Cast Shadows"))
@@ -198,6 +348,8 @@ void SLightSpecificProperties::ConstructSpotLightProperties()
                 +SHorizontalBox::Slot()
                 [
                     SNew(SCheckBox)
+                    .OnCheckStateChanged(this, &SLightSpecificProperties::OnCastShadowsStateChanged)
+                    .IsChecked(this, &SLightSpecificProperties::CastShadowsState)
                 ]
             ]
 
@@ -221,6 +373,38 @@ void SLightSpecificProperties::ConstructSpotLightProperties()
     InnerAnglePercentageSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
 
     CastShadowsSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
+    CastShadowsNameSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
+}
+
+void SLightSpecificProperties::ConstructPointLightProperties()
+{
+    SVerticalBox::FSlot* CastShadowsSlot;
+    SHorizontalBox::FSlot* CastShadowsNameSlot;
+    ToolSlot->SetVisibility(EVisibility::Visible);
+    ToolSlot->SetContent(
+        SNew(SVerticalBox)
+        +SVerticalBox::Slot()
+        .Expose(CastShadowsSlot)
+        [
+            SNew(SHorizontalBox)
+            + SHorizontalBox::Slot()
+            .Expose(CastShadowsNameSlot)
+            .Padding(10.0f)
+            [
+                SNew(STextBlock)
+                .Text(FText::FromString("Cast Shadows"))
+            ]
+            + SHorizontalBox::Slot()
+            [
+                SNew(SCheckBox)
+                .OnCheckStateChanged(this, &SLightSpecificProperties::OnCastShadowsStateChanged)
+                .IsChecked(this, &SLightSpecificProperties::CastShadowsState)
+            ]
+        ]);
+        
+
+    CastShadowsSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
+    CastShadowsNameSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
 }
 
 void SLightSpecificProperties::OnHorizontalValueChanged(float NormalizedValue)
