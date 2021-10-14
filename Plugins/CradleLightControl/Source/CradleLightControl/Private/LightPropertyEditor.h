@@ -24,21 +24,27 @@ public:
     void UpdateSaturationGradient(float NewHue);
     const FSlateBrush* GetSaturationGradientBrush() const;
 
+    void EndTransaction();
+
     void OnIntensityValueChanged(float Value);
+    void IntensityTransactionBegin();
     FText GetIntensityValueText() const;
     float GetIntensityValue() const;
     FText GetIntensityPercentage() const;
 
     void OnHueValueChanged(float Value);
+    void HueTransactionBegin();
     FText GetHueValueText() const;
     float GetHueValue() const;
     FText GetHuePercentage() const;
 
     void OnSaturationValueChanged(float Value);
+    void SaturationTransactionBegin();
     FText GetSaturationValueText() const;
     float GetSaturationValue() const;
 
     void OnTemperatureValueChanged(float Value);
+    void TemperatureTransactionBegin();
     bool TemperatureEnabled() const;
     void OnTemperatureCheckboxChecked(ECheckBoxState NewState);
     ECheckBoxState GetTemperatureCheckboxChecked() const;

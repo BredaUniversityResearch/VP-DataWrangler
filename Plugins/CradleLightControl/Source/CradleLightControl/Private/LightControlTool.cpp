@@ -34,6 +34,9 @@ void SLightControlTool::Construct(const FArguments& Args)
 
     LoadResources();
 
+    UndoClient = MakeShared<FLightControlUndoClient>();
+    GEditor->RegisterForUndo(UndoClient.Get());
+
     ToolTab = Args._ToolTab;
        
     //SHorizontalBox::FSlot* SeparatorSlot;
@@ -97,6 +100,7 @@ void SLightControlTool::PreDestroy()
         LightPropertyWidget->PreDestroy();
 
     GWorld->RemoveOnActorSpawnedHandler(ActorSpawnedListenerHandle);
+    GEditor->UnregisterForUndo(UndoClient.Get());
 }
 
 void SLightControlTool::ActorSpawnedCallback(AActor* Actor)
@@ -119,6 +123,11 @@ void SLightControlTool::OnTreeSelectionChanged()
 TWeakPtr<SLightTreeHierarchy> SLightControlTool::GetTreeWidget()
 {
     return TreeWidget;
+}
+
+TWeakPtr<SLightPropertyEditor> SLightControlTool::GetLightPropertyEditor()
+{
+    return LightPropertyWidget;
 }
 
 bool SLightControlTool::OpenFileDialog(FString Title, FString DefaultPath, uint32 Flags, FString FileTypeList, TArray<FString>& OutFilenames)
@@ -552,19 +561,19 @@ bool SLightControlTool::AreMultipleLightsSelected() const
     return TreeWidget != nullptr && TreeWidget->LightsUnderSelection.Num() > 1;
 }
 
-FTreeItem* SLightControlTool::GetMasterLight() const
+ULightTreeItem* SLightControlTool::GetMasterLight() const
 {
     if (!TreeWidget || !TreeWidget->SelectionMasterLight)
     {
         return nullptr;
     }
-    return TreeWidget->SelectionMasterLight.Get();
+    return TreeWidget->SelectionMasterLight;
 }
 
-FTreeItem* SLightControlTool::GetSingleSelectedItem() const
+ULightTreeItem* SLightControlTool::GetSingleSelectedItem() const
 {
     if (IsSingleGroupSelected())
-        return TreeWidget->SelectedItems[0].Get();
+        return TreeWidget->SelectedItems[0];
     else
         return GetMasterLight();
 }
@@ -788,7 +797,7 @@ TSharedRef<SBox> SLightControlTool::GroupControls()
                 ]
                 + SHorizontalBox::Slot()
                 [
-                    SNew(SComboBox<TSharedPtr<FTreeItem>>)
+                    SNew(SComboBox<ULightTreeItem*>)
                     .OptionsSource(&TreeWidget->LightsUnderSelection)
                     .OnGenerateWidget(this, &SLightControlTool::GroupControlDropDownLabel)
                     .OnSelectionChanged(this, &SLightControlTool::GroupControlDropDownSelection)
@@ -821,7 +830,7 @@ TSharedRef<SBox> SLightControlTool::GroupControls()
     return Box.ToSharedRef();
 }
 
-TSharedRef<SWidget> SLightControlTool::GroupControlDropDownLabel(TSharedPtr<FTreeItem> Item)
+TSharedRef<SWidget> SLightControlTool::GroupControlDropDownLabel(ULightTreeItem* Item)
 {
     if (Item->Type == Folder)
     {
@@ -830,7 +839,7 @@ TSharedRef<SWidget> SLightControlTool::GroupControlDropDownLabel(TSharedPtr<FTre
     return SNew(STextBlock).Text(FText::FromString(Item->Name));
 }
 
-void SLightControlTool::GroupControlDropDownSelection(TSharedPtr<FTreeItem> Item, ESelectInfo::Type SelectInfoType)
+void SLightControlTool::GroupControlDropDownSelection(ULightTreeItem* Item, ESelectInfo::Type SelectInfoType)
 {
     TreeWidget->SelectionMasterLight = Item;
 }

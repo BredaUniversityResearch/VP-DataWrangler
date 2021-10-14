@@ -52,10 +52,13 @@ void SLightSpecificProperties::ClearSlot()
 
 void SLightSpecificProperties::OnCastShadowsStateChanged(ECheckBoxState NewState)
 {
+    GEditor->BeginTransaction(FText::FromString(CoreToolPtr->GetMasterLight()->Name + " Cast Shadows"));
     for (auto Light : CoreToolPtr->GetTreeWidget().Pin()->LightsUnderSelection)
     {
+        Light->BeginTransaction();
         Light->SetCastShadows(NewState == ECheckBoxState::Checked);
     }
+    EndTransaction();
 }
 
 ECheckBoxState SLightSpecificProperties::CastShadowsState() const
@@ -116,12 +119,15 @@ void SLightSpecificProperties::ConstructDirectionalLightProperties()
                         .Orientation(Orient_Vertical)
                         .OnValueChanged(this, &SLightSpecificProperties::OnHorizontalValueChanged)
                         .Value(this, &SLightSpecificProperties::GetHorizontalValue)
+                        .OnMouseCaptureBegin(this, &SLightSpecificProperties::BeginHorizontalTransaction)
+                        .OnMouseCaptureEnd(this, &SLightSpecificProperties::EndTransaction)
                     ]
                     + SVerticalBox::Slot()
                     .Expose(HorizontalPercentageSlot)
                     [
                         SNew(STextBlock)
                         .Text(this, &SLightSpecificProperties::GetHorizontalPercentage)
+
                     ]
                 ]
                 +SHorizontalBox::Slot()
@@ -146,8 +152,8 @@ void SLightSpecificProperties::ConstructDirectionalLightProperties()
                         .Orientation(Orient_Vertical)
                         .OnValueChanged(this, &SLightSpecificProperties::OnVerticalValueChanged)
                         .Value(this, &SLightSpecificProperties::GetVerticalValue)
-                        .OnMouseCaptureBegin(this, &SLightSpecificProperties::VerticalSliderCaptureBegin)
-                        .OnMouseCaptureEnd(this, &SLightSpecificProperties::VerticalSliderCaptureEnd)
+                        .OnMouseCaptureBegin(this, &SLightSpecificProperties::BeginVerticalTransaction)
+                        .OnMouseCaptureEnd(this, &SLightSpecificProperties::EndTransaction)
                     ]
                     + SVerticalBox::Slot()
                     .Expose(VerticalPercentageSlot)
@@ -225,6 +231,8 @@ void SLightSpecificProperties::ConstructSpotLightProperties()
                         .Orientation(Orient_Vertical)
                         .OnValueChanged(this, &SLightSpecificProperties::OnHorizontalValueChanged)
                         .Value(this, &SLightSpecificProperties::GetHorizontalValue)
+                        .OnMouseCaptureBegin(this, &SLightSpecificProperties::BeginHorizontalTransaction)
+                        .OnMouseCaptureEnd(this, &SLightSpecificProperties::EndTransaction)
                     ]
                     + SVerticalBox::Slot()
                     .Expose(HorizontalPercentageSlot)
@@ -255,8 +263,8 @@ void SLightSpecificProperties::ConstructSpotLightProperties()
                         .Orientation(Orient_Vertical)
                         .OnValueChanged(this, &SLightSpecificProperties::OnVerticalValueChanged)
                         .Value(this, &SLightSpecificProperties::GetVerticalValue)
-                        .OnMouseCaptureBegin(this, &SLightSpecificProperties::VerticalSliderCaptureBegin)
-                        .OnMouseCaptureEnd(this, &SLightSpecificProperties::VerticalSliderCaptureEnd)
+                        .OnMouseCaptureBegin(this, &SLightSpecificProperties::BeginVerticalTransaction)
+                        .OnMouseCaptureEnd(this, &SLightSpecificProperties::EndTransaction)
                     ]
                     + SVerticalBox::Slot()
                     .Expose(VerticalPercentageSlot)
@@ -287,6 +295,8 @@ void SLightSpecificProperties::ConstructSpotLightProperties()
                         .Orientation(Orient_Vertical)
                         .OnValueChanged(this, &SLightSpecificProperties::OnOuterAngleValueChanged)
                         .Value(this, &SLightSpecificProperties::GetOuterAngleValue)
+                        .OnMouseCaptureBegin(this, &SLightSpecificProperties::BeginOuterAngleTransaction)
+                        .OnMouseCaptureEnd(this, &SLightSpecificProperties::EndTransaction)
                     ]
                     + SVerticalBox::Slot()
                     .Expose(OuterAnglePercentageSlot)
@@ -323,8 +333,10 @@ void SLightSpecificProperties::ConstructSpotLightProperties()
                     [
                         SNew(SSlider)
                         .Orientation(Orient_Vertical)
-                    .OnValueChanged(this, &SLightSpecificProperties::OnInnerAngleValueChanged)
-                    .Value(this, &SLightSpecificProperties::GetInnerAngleValue)
+                        .OnValueChanged(this, &SLightSpecificProperties::OnInnerAngleValueChanged)
+                        .Value(this, &SLightSpecificProperties::GetInnerAngleValue)
+                        .OnMouseCaptureBegin(this, &SLightSpecificProperties::BeginInnerAngleTransaction)
+                        .OnMouseCaptureEnd(this, &SLightSpecificProperties::EndTransaction)
                     ]
                 + SVerticalBox::Slot()
                     .Expose(InnerAnglePercentageSlot)
@@ -407,6 +419,11 @@ void SLightSpecificProperties::ConstructPointLightProperties()
     CastShadowsNameSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
 }
 
+void SLightSpecificProperties::EndTransaction()
+{
+    GEditor->EndTransaction();
+}
+
 void SLightSpecificProperties::OnHorizontalValueChanged(float NormalizedValue)
 {
     auto Light = CoreToolPtr->GetMasterLight();
@@ -414,8 +431,14 @@ void SLightSpecificProperties::OnHorizontalValueChanged(float NormalizedValue)
 
     for (auto SelectedLight : CoreToolPtr->GetTreeWidget().Pin()->LightsUnderSelection)
     {
+        SelectedLight->BeginTransaction();
         SelectedLight->AddHorizontal(Delta);
     }    
+}
+
+void SLightSpecificProperties::BeginHorizontalTransaction()
+{
+    GEditor->BeginTransaction(FText::FromString(CoreToolPtr->GetMasterLight()->Name + " Horizontal Rotation"));
 }
 
 FText SLightSpecificProperties::GetHorizontalValueText() const
@@ -448,33 +471,17 @@ void SLightSpecificProperties::OnVerticalValueChanged(float NormalizedValue)
 
     for (auto SelectedLight : CoreToolPtr->GetTreeWidget().Pin()->LightsUnderSelection)
     {
+        SelectedLight->BeginTransaction();
         SelectedLight->AddVertical(Delta);
     }
 }
 
-void SLightSpecificProperties::VerticalSliderCaptureBegin()
+void SLightSpecificProperties::BeginVerticalTransaction()
 {
-    if (CoreToolPtr->IsAMasterLightSelected())
-    {
-        auto& AffectedLights = CoreToolPtr->GetTreeWidget().Pin()->LightsUnderSelection;
-        for (auto Light : AffectedLights)
-        {
-            Light->bVerticalSliderCapture = true;
-        }
-    }
+    GEditor->BeginTransaction(FText::FromString(CoreToolPtr->GetMasterLight()->Name + " Vertical Rotation"));
+
 }
 
-void SLightSpecificProperties::VerticalSliderCaptureEnd()
-{
-    if (CoreToolPtr->IsAMasterLightSelected())
-    {
-        auto& AffectedLights = CoreToolPtr->GetTreeWidget().Pin()->LightsUnderSelection;
-        for (auto Light : AffectedLights)
-        {
-            Light->bVerticalSliderCapture = false;
-        }
-    }
-}
 
 FText SLightSpecificProperties::GetVerticalValueText() const
 {
@@ -506,18 +513,27 @@ void SLightSpecificProperties::OnInnerAngleValueChanged(float NormalizedValue)
 
     for (auto SelectedLight : CoreToolPtr->GetTreeWidget().Pin()->LightsUnderSelection)
     {
+        SelectedLight->BeginTransaction();
         SelectedLight->SetInnerConeAngle(Angle);
     }
+}
+
+void SLightSpecificProperties::BeginInnerAngleTransaction()
+{
+    GEditor->BeginTransaction(FText::FromString(CoreToolPtr->GetMasterLight()->Name + " Inner Angle"));
 }
 
 void SLightSpecificProperties::OnInnerAngleLockedStateChanged(ECheckBoxState NewState)
 {
     if (CoreToolPtr->GetTreeWidget().IsValid())
     {
+        GEditor->BeginTransaction(FText::FromString(CoreToolPtr->GetMasterLight()->Name + " Inner Angle Lock"));
         for (auto Light : CoreToolPtr->GetTreeWidget().Pin()->LightsUnderSelection)
         {
+            Light->BeginTransaction(false);
             Light->bLockInnerAngleToOuterAngle = NewState == ECheckBoxState::Checked;
         }
+        EndTransaction();
     }
 }
 
@@ -562,7 +578,13 @@ void SLightSpecificProperties::OnOuterAngleValueChanged(float NormalizedValue)
     for (auto SelectedLight : CoreToolPtr->GetTreeWidget().Pin()->LightsUnderSelection)
     {
         SelectedLight->SetOuterConeAngle(Angle);
+        SelectedLight->BeginTransaction();
     }
+}
+
+void SLightSpecificProperties::BeginOuterAngleTransaction()
+{
+    GEditor->BeginTransaction(FText::FromString(CoreToolPtr->GetMasterLight()->Name + " Outer Angle"));
 }
 
 FText SLightSpecificProperties::GetOuterAngleValueText() const

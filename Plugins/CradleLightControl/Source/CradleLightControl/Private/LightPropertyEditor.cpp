@@ -125,6 +125,8 @@ void SLightPropertyEditor::Construct(const FArguments& Args)
                         .Orientation(EOrientation::Orient_Vertical)
                         .Value(this, &SLightPropertyEditor::GetIntensityValue)
                         .OnValueChanged(this, &SLightPropertyEditor::OnIntensityValueChanged)
+                        .OnMouseCaptureBegin(this, &SLightPropertyEditor::IntensityTransactionBegin)
+                        .OnMouseCaptureEnd(this, &SLightPropertyEditor::EndTransaction)
                     ]
                 ]
                 +SVerticalBox::Slot()
@@ -175,6 +177,8 @@ void SLightPropertyEditor::Construct(const FArguments& Args)
                         .Orientation(EOrientation::Orient_Vertical)
                         .Value(this, &SLightPropertyEditor::GetHueValue)
                         .OnValueChanged_Raw(this, &SLightPropertyEditor::OnHueValueChanged)
+                        .OnMouseCaptureBegin(this, &SLightPropertyEditor::HueTransactionBegin)
+                        .OnMouseCaptureEnd(this, &SLightPropertyEditor::EndTransaction)
                     ]
                 ]
                 +SVerticalBox::Slot()
@@ -225,6 +229,8 @@ void SLightPropertyEditor::Construct(const FArguments& Args)
                         .Orientation(EOrientation::Orient_Vertical)
                         .Value_Raw(this, &SLightPropertyEditor::GetSaturationValue)
                         .OnValueChanged_Raw(this, &SLightPropertyEditor::OnSaturationValueChanged)
+                        .OnMouseCaptureBegin(this, &SLightPropertyEditor::SaturationTransactionBegin)
+                        .OnMouseCaptureEnd(this, &SLightPropertyEditor::EndTransaction)
                     ]
                 ]
                 +SVerticalBox::Slot()
@@ -286,6 +292,8 @@ void SLightPropertyEditor::Construct(const FArguments& Args)
                         .OnValueChanged(this, &SLightPropertyEditor::OnTemperatureValueChanged)
                         .Value(this, &SLightPropertyEditor::GetTemperatureValue)
                         .IsEnabled(this, &SLightPropertyEditor::TemperatureEnabled)
+                        .OnMouseCaptureBegin(this, &SLightPropertyEditor::TemperatureTransactionBegin)
+                        .OnMouseCaptureEnd(this, &SLightPropertyEditor::EndTransaction)
                     ]
                 ]
                 +SVerticalBox::Slot()
@@ -413,7 +421,7 @@ void SLightPropertyEditor::UpdateSaturationGradient(float NewHue)
         {
             auto UpdateRegion = FUpdateTextureRegion2D(0, 0, 0, 0, 1, 256);
 
-            auto C = FLinearColor::MakeFromHSV8(StaticCast<uint8>(NewHue * 255.0f), 255, 255).ToFColor(false);
+            auto C = FLinearColor::MakeFromHSV8(StaticCast<uint8>(NewHue / 360.0f * 255.0f), 255, 255).ToFColor(false);
             auto NewGradient = LinearGradient(TArray<FColor>{
                 C,
                     FColor::White
@@ -432,14 +440,30 @@ const FSlateBrush* SLightPropertyEditor::GetSaturationGradientBrush() const
     return DefaultSaturationGradientBrush.Get();
 }
 
+
+void SLightPropertyEditor::EndTransaction()
+{
+    GEditor->EndTransaction();
+}
+
 void SLightPropertyEditor::OnIntensityValueChanged(float Value)
 {
     if (TreeWidget.IsValid())
         for (auto SelectedItem : TreeWidget.Pin()->LightsUnderSelection)
         {
+            SelectedItem->BeginTransaction();
+            SelectedItem->Intensity = 0.0f;
             SelectedItem->SetLightIntensity(Value * 2010.619f);
         }
 }
+
+void SLightPropertyEditor::IntensityTransactionBegin()
+{
+    auto MasterLight = CoreToolPtr->GetMasterLight();
+    if (MasterLight)
+        GEditor->BeginTransaction(FText::FromString(MasterLight->Name + " Intensity"));        
+}
+
 
 FText SLightPropertyEditor::GetIntensityValueText() const
 {
@@ -480,12 +504,23 @@ FText SLightPropertyEditor::GetIntensityPercentage() const
 void SLightPropertyEditor::OnHueValueChanged(float Value)
 {
     if (TreeWidget.IsValid())
-        for (auto SelectedItem : TreeWidget.Pin()->LightsUnderSelection)
-        {
-            SelectedItem->Hue = Value * 360.0f;
-            SelectedItem->UpdateLightColor();
-            UpdateSaturationGradient(Value);
-        }
+    {
+        //GEditor->BeginTransaction(FText::FromString("Hue changed"));
+            for (auto SelectedItem : TreeWidget.Pin()->LightsUnderSelection)
+            {
+                SelectedItem->BeginTransaction();
+                SelectedItem->Hue = Value * 360.0f;
+                SelectedItem->UpdateLightColor();
+                UpdateSaturationGradient(Value * 360.0F);
+            }
+    }
+}
+
+void SLightPropertyEditor::HueTransactionBegin()
+{
+    auto MasterLight = CoreToolPtr->GetMasterLight();
+    if (MasterLight)
+        GEditor->BeginTransaction(FText::FromString(MasterLight->Name + " Hue"));
 }
 
 FText SLightPropertyEditor::GetHueValueText() const
@@ -522,9 +557,17 @@ void SLightPropertyEditor::OnSaturationValueChanged(float Value)
     if (TreeWidget.IsValid())
         for (auto SelectedItem : TreeWidget.Pin()->LightsUnderSelection)
         {
+            SelectedItem->BeginTransaction();
             SelectedItem->Saturation = Value;
             SelectedItem->UpdateLightColor();
         }
+}
+
+void SLightPropertyEditor::SaturationTransactionBegin()
+{
+    auto MasterLight = CoreToolPtr->GetMasterLight();
+    if (MasterLight)
+        GEditor->BeginTransaction(FText::FromString(MasterLight->Name + " Saturation"));
 }
 
 FText SLightPropertyEditor::GetSaturationValueText() const
@@ -551,8 +594,16 @@ void SLightPropertyEditor::OnTemperatureValueChanged(float Value)
     if (TreeWidget.IsValid())
         for (auto SelectedItem : TreeWidget.Pin()->LightsUnderSelection)
         {
+            SelectedItem->BeginTransaction();
             SelectedItem->SetTemperature(Value * (12000.0f - 1700.0f) + 1700.0f);
         }
+}
+
+void SLightPropertyEditor::TemperatureTransactionBegin()
+{
+    auto MasterLight = CoreToolPtr->GetMasterLight();
+    if (MasterLight)
+        GEditor->BeginTransaction(FText::FromString(MasterLight->Name + " Temperature"));
 }
 
 bool SLightPropertyEditor::TemperatureEnabled() const
@@ -568,10 +619,18 @@ bool SLightPropertyEditor::TemperatureEnabled() const
 void SLightPropertyEditor::OnTemperatureCheckboxChecked(ECheckBoxState NewState)
 {
     if (TreeWidget.IsValid())
+    {
+        auto MasterLight = CoreToolPtr->GetMasterLight();
+        if (MasterLight)
+            GEditor->BeginTransaction(FText::FromString(MasterLight->Name + " Use Temperature"));
         for (auto SelectedItem : TreeWidget.Pin()->LightsUnderSelection)
         {
-            SelectedItem->SetUseTemperature(NewState == ECheckBoxState::Checked);            
+            SelectedItem->BeginTransaction();
+            SelectedItem->SetUseTemperature(NewState == ECheckBoxState::Checked);
         }
+
+        GEditor->EndTransaction();
+    }
 }
 
 FText SLightPropertyEditor::GetTemperatureValueText() const

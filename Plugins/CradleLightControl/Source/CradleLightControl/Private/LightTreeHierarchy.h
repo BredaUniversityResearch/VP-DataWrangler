@@ -3,6 +3,21 @@
 #include "Templates/SharedPointer.h"
 #include "Chaos/AABB.h"
 #include "Slate.h"
+#include "Chaos/AABB.h"
+#include "Chaos/AABB.h"
+#include "Chaos/AABB.h"
+#include "Chaos/AABB.h"
+#include "Chaos/AABB.h"
+#include "Chaos/AABB.h"
+#include "Chaos/AABB.h"
+#include "Chaos/AABB.h"
+#include "Chaos/AABB.h"
+#include "Chaos/AABB.h"
+#include "Chaos/AABB.h"
+#include "Chaos/AABB.h"
+
+
+#include "LightTreeHierarchy.generated.h"
 
 UENUM()
 enum ETreeItemType
@@ -15,12 +30,15 @@ enum ETreeItemType
     PointLight,    
     Invalid
 };
-
-struct FTreeItem : public TSharedFromThis<FTreeItem>
+UCLASS()
+class ULightTreeItem : public UObject
 {
+    GENERATED_BODY()
 public:
-    FTreeItem(class SLightTreeHierarchy* InOwningWidget = nullptr, FString InName = "Unnamed",
-        TArray<TSharedPtr<FTreeItem>> InChildren = TArray<TSharedPtr<FTreeItem>>());
+    ULightTreeItem()
+        : ULightTreeItem(nullptr) {}
+    ULightTreeItem(class SLightTreeHierarchy* InOwningWidget, FString InName = "Unnamed",
+        TArray<ULightTreeItem*> InChildren = TArray<ULightTreeItem*>());
 
     ECheckBoxState IsLightEnabled() const;
     void OnCheck(ECheckBoxState NewState);
@@ -30,8 +48,8 @@ public:
 
     void GenerateTableRow();
 
-    static bool VerifyDragDrop(TSharedPtr<FTreeItem> Dragged, TSharedPtr<FTreeItem> Destination);
-    bool HasAsIndirectChild(TSharedPtr<FTreeItem> Item);
+    static bool VerifyDragDrop(ULightTreeItem* Dragged, ULightTreeItem* Destination);
+    bool HasAsIndirectChild(ULightTreeItem* Item);
 
     FReply StartRename(const FGeometry&, const FPointerEvent&);
     void EndRename(const FText& Text, ETextCommit::Type CommitType);
@@ -45,6 +63,9 @@ public:
         EngineError,
         MultipleErrors
     };
+
+    virtual void PostEditUndo(TSharedPtr<ITransactionObjectAnnotation> TransactionAnnotation) override;
+    virtual void PostTransacted(const FTransactionObjectEvent& TransactionEvent) override;
 
     ELoadingResult LoadFromJson(TSharedPtr<FJsonObject> JsonObject);
     void ExpandInTree();
@@ -63,7 +84,7 @@ public:
     void SetInnerConeAngle(float NewValue);
     void SetOuterConeAngle(float NewValue);
 
-    void GetLights(TArray<TSharedPtr<FTreeItem>>& Array);
+    void GetLights(TArray<ULightTreeItem*>& Array);
 
     void UpdateFolderIcon();
 
@@ -71,13 +92,15 @@ public:
 
     int LightCount() const;
 
+    void BeginTransaction(bool bContinueRecursively = true);
+
     TSharedPtr<SCheckBox> StateCheckbox;
     FCheckBoxStyle CheckBoxStyle;
     UPROPERTY()
-        TArray<TSharedPtr<FTreeItem>> Children;
+        TArray<ULightTreeItem*> Children;
 
     UPROPERTY()
-        TSharedPtr<FTreeItem> Parent;
+        ULightTreeItem* Parent;
 
     UPROPERTY()
         FString Name;
@@ -92,22 +115,31 @@ public:
         class ADirectionalLight* DirectionalLight;
         class ASpotLight* SpotLight;
     };
+    UPROPERTY()
+        float Hue;
+    UPROPERTY()
+        float Saturation;
+    UPROPERTY()
+        float Intensity;
 
-    float Hue;
-    float Saturation;
-    float Intensity;
-
-    bool bUseTemperature;
+    UPROPERTY()
+        bool bUseTemperature;
+    UPROPERTY()
     float Temperature;
 
-    float Horizontal;
-    float Vertical;
-    bool bVerticalSliderCapture;
-    float InnerAngle;
-    float OuterAngle;
-    bool bLockInnerAngleToOuterAngle;
+    UPROPERTY()
+        float Horizontal;
+    UPROPERTY()
+        float Vertical;
+    UPROPERTY()
+        float InnerAngle;
+    UPROPERTY()
+        float OuterAngle;
+    UPROPERTY()
+        bool bLockInnerAngleToOuterAngle;
 
-    bool bCastShadows;
+    UPROPERTY()
+        bool bCastShadows;
 
     TEnumAsByte<ETreeItemType> Type;
 
@@ -115,7 +147,7 @@ public:
 
     TSharedPtr<SBox> TableRowBox;
 
-    FTreeItem* MasterLight;
+    ULightTreeItem* MasterLight;
 
     bool bExpanded;
     bool bMatchesSearchString;
@@ -129,8 +161,9 @@ class FTreeDropOperation : public FDragDropOperation
 {
 public:
 
-    TSharedPtr<FTreeItem> DraggedItem;
+    ULightTreeItem* DraggedItem;
 };
+
 
 class SLightTreeHierarchy : public SCompoundWidget
 {
@@ -149,14 +182,14 @@ public:
     void OnActorSpawned(AActor* Actor);
 
 
-    TSharedRef<ITableRow> AddToTree(TSharedPtr<FTreeItem> Item, const TSharedRef<STableViewBase>& OwnerTable);
+    TSharedRef<ITableRow> AddToTree(::ULightTreeItem* Item, const TSharedRef<STableViewBase>& OwnerTable);
 
-    void GetChildren(TSharedPtr<FTreeItem> Item, TArray<TSharedPtr<FTreeItem>>& Children);
-    void SelectionCallback(TSharedPtr<FTreeItem> Item, ESelectInfo::Type SelectType);
+    void GetChildren(::ULightTreeItem* Item, TArray<ULightTreeItem*>& Children);
+    void SelectionCallback(ULightTreeItem* Item, ESelectInfo::Type SelectType);
     FReply AddFolderToTree();
-    void TreeExpansionCallback(TSharedPtr<FTreeItem> Item, bool bExpanded);
+    void TreeExpansionCallback(ULightTreeItem* Item, bool bExpanded);
 
-    TSharedPtr<FTreeItem> AddTreeItem(bool bIsFolder = false);
+    ULightTreeItem* AddTreeItem(bool bIsFolder = false);
 
     EActiveTimerReturnType VerifyLights(double, float);
 
@@ -185,14 +218,17 @@ public:
 
     SLightControlTool* CoreToolPtr;
 
-    TSharedPtr<STreeView<TSharedPtr<FTreeItem>>> Tree;
-    TArray<TSharedPtr<FTreeItem>> TreeRootItems;
+    TSharedPtr<STreeView<ULightTreeItem*>> Tree;
+    UPROPERTY()
+    TArray<ULightTreeItem*> TreeRootItems;
 
-    TArray<TSharedPtr<FTreeItem>> SelectedItems;
-    TArray<TSharedPtr<FTreeItem>> LightsUnderSelection;
-    TSharedPtr<FTreeItem> SelectionMasterLight;
+    TArray<ULightTreeItem*> SelectedItems;
+    TArray<ULightTreeItem*> LightsUnderSelection;
+    ULightTreeItem* SelectionMasterLight;
 
-    TArray<FTreeItem*> ListOfLightItems;
+    UPROPERTY()
+    TArray<ULightTreeItem*> ListOfTreeItems;
+    TArray<ULightTreeItem*> ListOfLightItems;
 
     TSharedPtr<FActiveTimerHandle> LightVerificationTimer;
     TSharedPtr<FActiveTimerHandle> AutoSaveTimer;

@@ -26,19 +26,22 @@ private:
     void ConstructSpotLightProperties();
     void ConstructPointLightProperties();
 
+    void EndTransaction();
+
     void OnHorizontalValueChanged(float NormalizedValue);
+    void BeginHorizontalTransaction();
     FText GetHorizontalValueText() const;
     float GetHorizontalValue() const;
     FText GetHorizontalPercentage() const;
 
     void OnVerticalValueChanged(float NormalizedValue);
-    void VerticalSliderCaptureBegin();
-    void VerticalSliderCaptureEnd();
+    void BeginVerticalTransaction();
     FText GetVerticalValueText() const;
     float GetVerticalValue() const;
     FText GetVerticalPercentage() const;
 
     void OnInnerAngleValueChanged(float NormalizedValue);
+    void BeginInnerAngleTransaction();
     void OnInnerAngleLockedStateChanged(ECheckBoxState NewState);
     ECheckBoxState InnerAngleLockedState() const;
     FText GetInnerAngleValueText() const;
@@ -46,6 +49,7 @@ private:
     FText GetInnerAnglePercentage() const;
 
     void OnOuterAngleValueChanged(float NormalizedValue);
+    void BeginOuterAngleTransaction();
     FText GetOuterAngleValueText() const;
     float GetOuterAngleValue() const;
     FText GetOuterAnglePercentage() const;

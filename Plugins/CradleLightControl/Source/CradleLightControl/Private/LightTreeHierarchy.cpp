@@ -23,7 +23,7 @@
 #include "Chaos/AABB.h"
 
 #pragma region TreeItemStruct
-FTreeItem::FTreeItem(SLightTreeHierarchy* InOwningWidget, FString InName, TArray<TSharedPtr<FTreeItem>> InChildren)
+ULightTreeItem::ULightTreeItem(SLightTreeHierarchy* InOwningWidget, FString InName, TArray<ULightTreeItem*> InChildren)
     : Name(InName)
     , Children(InChildren)
     , OwningWidget(InOwningWidget)
@@ -38,11 +38,11 @@ FTreeItem::FTreeItem(SLightTreeHierarchy* InOwningWidget, FString InName, TArray
     , Vertical(0.0f)
     , InnerAngle(0.0f)
     , OuterAngle(0.0f)
-    , bVerticalSliderCapture(false)
 {
+    SetFlags(GetFlags() | EObjectFlags::RF_Transactional);
 }
 
-ECheckBoxState FTreeItem::IsLightEnabled() const
+ECheckBoxState ULightTreeItem::IsLightEnabled() const
 {
     bool AllOff = true, AllOn = true;
 
@@ -85,7 +85,7 @@ ECheckBoxState FTreeItem::IsLightEnabled() const
     }
 }
 
-void FTreeItem::OnCheck(ECheckBoxState NewState)
+void ULightTreeItem::OnCheck(ECheckBoxState NewState)
 {
     bool B = false;
     if (NewState == ECheckBoxState::Checked)
@@ -116,7 +116,7 @@ void FTreeItem::OnCheck(ECheckBoxState NewState)
     }
 }
 
-void FTreeItem::GenerateTableRow()
+void ULightTreeItem::GenerateTableRow()
 {
     auto IconType = Type;
     if (Type == Folder)
@@ -159,8 +159,8 @@ void FTreeItem::GenerateTableRow()
             .Expose(CheckBoxSlot) // On/Off toggle button 
             [
                 SNew(SCheckBox)
-                .IsChecked_Raw(this, &FTreeItem::IsLightEnabled)
-                .OnCheckStateChanged_Raw(this, &FTreeItem::OnCheck)
+                .IsChecked_UObject(this, &ULightTreeItem::IsLightEnabled)
+                .OnCheckStateChanged_UObject(this, &ULightTreeItem::OnCheck)
                 .Style(&CheckBoxStyle)
             ]
         + SHorizontalBox::Slot() // Name slot
@@ -195,8 +195,8 @@ void FTreeItem::GenerateTableRow()
             .HAlign(HAlign_Right)
             [
                 SAssignNew(StateCheckbox, SCheckBox)
-                .IsChecked(this, &FTreeItem::IsLightEnabled)
-                .OnCheckStateChanged(this, &FTreeItem::OnCheck)
+                .IsChecked_UObject(this, &ULightTreeItem::IsLightEnabled)
+                .OnCheckStateChanged_UObject(this, &ULightTreeItem::OnCheck)
                 .Style(&CheckBoxStyle)
                 .RenderTransform(FSlateRenderTransform(FScale2D(1.1f)))
             ]
@@ -240,7 +240,7 @@ void FTreeItem::GenerateTableRow()
                 {
                     Name = Input.ToString();
                 })
-            .OnTextCommitted(this, &FTreeItem::EndRename));
+            .OnTextCommitted_UObject(this, &ULightTreeItem::EndRename));
             
     }
     else
@@ -251,7 +251,7 @@ void FTreeItem::GenerateTableRow()
             .Font(Font)
             .ShadowColorAndOpacity(FLinearColor::Blue)
             .ShadowOffset(FIntPoint(-1, 1))
-            .OnDoubleClicked(this, &FTreeItem::StartRename));
+            .OnDoubleClicked_UObject(this, &ULightTreeItem::StartRename));
     }
 
     if (bMatchesSearchString)
@@ -260,7 +260,7 @@ void FTreeItem::GenerateTableRow()
         TableRowBox->SetVisibility(EVisibility::Collapsed);
 }
 
-bool FTreeItem::VerifyDragDrop(TSharedPtr<FTreeItem> Dragged, TSharedPtr<FTreeItem> Destination)
+bool ULightTreeItem::VerifyDragDrop(ULightTreeItem* Dragged, ULightTreeItem* Destination)
 {
     // Would result in the child and parent creating a circle
     if (Dragged->Children.Find(Destination) != INDEX_NONE)
@@ -293,7 +293,7 @@ bool FTreeItem::VerifyDragDrop(TSharedPtr<FTreeItem> Dragged, TSharedPtr<FTreeIt
     return true;
 }
 
-bool FTreeItem::HasAsIndirectChild(TSharedPtr<FTreeItem> Item)
+bool ULightTreeItem::HasAsIndirectChild(ULightTreeItem* Item)
 {
     if (Children.Find(Item) != INDEX_NONE)
         return true;
@@ -307,7 +307,7 @@ bool FTreeItem::HasAsIndirectChild(TSharedPtr<FTreeItem> Item)
     return false;
 }
 
-FReply FTreeItem::StartRename(const FGeometry&, const FPointerEvent&)
+FReply ULightTreeItem::StartRename(const FGeometry&, const FPointerEvent&)
 {
     bInRename = true;
     GenerateTableRow();
@@ -315,7 +315,7 @@ FReply FTreeItem::StartRename(const FGeometry&, const FPointerEvent&)
 }
 
 
-void FTreeItem::EndRename(const FText& Text, ETextCommit::Type CommitType)
+void ULightTreeItem::EndRename(const FText& Text, ETextCommit::Type CommitType)
 {
     if (ETextCommit::Type::OnEnter == CommitType)
     {
@@ -327,7 +327,7 @@ void FTreeItem::EndRename(const FText& Text, ETextCommit::Type CommitType)
     GenerateTableRow();
 }
 
-TSharedPtr<FJsonValue> FTreeItem::SaveToJson()
+TSharedPtr<FJsonValue> ULightTreeItem::SaveToJson()
 {
     TSharedPtr<FJsonObject> Item = MakeShared<FJsonObject>();
 
@@ -367,7 +367,26 @@ TSharedPtr<FJsonValue> FTreeItem::SaveToJson()
     return JsonValue;
 }
 
-FTreeItem::ELoadingResult FTreeItem::LoadFromJson(TSharedPtr<FJsonObject> JsonObject)
+void ULightTreeItem::PostEditUndo(TSharedPtr<ITransactionObjectAnnotation> TransactionAnnotation)
+{
+    UObject::PostEditUndo(TransactionAnnotation);
+    OwningWidget->CoreToolPtr->GetLightPropertyEditor().Pin()->UpdateSaturationGradient(Hue);
+    GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Emerald, Name + " Undo yeeeeeet");
+}
+
+void ULightTreeItem::PostTransacted(const FTransactionObjectEvent& TransactionEvent)
+{
+    UObject::PostTransacted(TransactionEvent);
+    if (TransactionEvent.GetEventType() == ETransactionObjectEventType::UndoRedo)
+    {
+        OwningWidget->CoreToolPtr->GetLightPropertyEditor().Pin()->UpdateSaturationGradient(Hue);
+        GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Purple, Name + " Undo yeeeeeet");
+
+    }
+}
+
+
+ULightTreeItem::ELoadingResult ULightTreeItem::LoadFromJson(TSharedPtr<FJsonObject> JsonObject)
 {
     Name = JsonObject->GetStringField("Name");
     Note = JsonObject->GetStringField("Note");
@@ -443,7 +462,7 @@ FTreeItem::ELoadingResult FTreeItem::LoadFromJson(TSharedPtr<FJsonObject> JsonOb
             int ChildType = ChildObject->GetNumberField("Type");
             auto ChildItem = OwningWidget->AddTreeItem(ChildType == 0);
 
-            ChildItem->Parent = SharedThis(this);
+            ChildItem->Parent = this;
 
             auto ChildResult = ChildItem->LoadFromJson(ChildObject);
             if (ChildResult != ELoadingResult::Success)
@@ -464,9 +483,9 @@ FTreeItem::ELoadingResult FTreeItem::LoadFromJson(TSharedPtr<FJsonObject> JsonOb
     return Success;
 }
 
-void FTreeItem::ExpandInTree()
+void ULightTreeItem::ExpandInTree()
 {
-    OwningWidget->Tree->SetItemExpansion(SharedThis(this), bExpanded);
+    OwningWidget->Tree->SetItemExpansion(this, bExpanded);
 
     for (auto Child : Children)
     {
@@ -474,7 +493,7 @@ void FTreeItem::ExpandInTree()
     }
 }
 
-void FTreeItem::FetchDataFromLight()
+void ULightTreeItem::FetchDataFromLight()
 {
     _ASSERT(Type != Folder);
 
@@ -519,6 +538,12 @@ void FTreeItem::FetchDataFromLight()
         auto LightComp = LightPtr->GetLightComponent();
         bUseTemperature = LightComp->bUseTemperature;
         Temperature = LightComp->Temperature;
+
+        bCastShadows = LightComp->CastShadows;
+    }
+    else
+    {
+        bCastShadows = SkyLight->GetLightComponent()->CastShadows;
     }
 
     auto CurrentFwd = FQuat::MakeFromEuler(FVector(0.0f, Vertical, Horizontal)).GetForwardVector();
@@ -526,7 +551,6 @@ void FTreeItem::FetchDataFromLight()
     auto ActorFwd = ActorQuat.GetForwardVector();
 
     if (CurrentFwd.Equals(ActorFwd))
-    //if (1.0f - FVector::DotProduct(CurrentFwd, ActorFwd) > 0.01f)
     {
         auto Euler = ActorQuat.Euler();
         Horizontal = Euler.Z;
@@ -541,13 +565,13 @@ void FTreeItem::FetchDataFromLight()
     }
 }
 
-void FTreeItem::UpdateLightColor()
+void ULightTreeItem::UpdateLightColor()
 {
     auto NewColor = FLinearColor::MakeFromHSV8(StaticCast<uint8>(Hue / 360.0f * 255.0f), StaticCast<uint8>(Saturation * 255.0f), 255);
     UpdateLightColor(NewColor);
 }
 
-void FTreeItem::UpdateLightColor(FLinearColor& Color)
+void ULightTreeItem::UpdateLightColor(FLinearColor& Color)
 {
     if (Type == Folder)
     {
@@ -564,7 +588,7 @@ void FTreeItem::UpdateLightColor(FLinearColor& Color)
     }
 }
 
-void FTreeItem::SetLightIntensity(float NewValue)
+void ULightTreeItem::SetLightIntensity(float NewValue)
 {
     if (Type == ETreeItemType::SkyLight)
     {
@@ -591,7 +615,7 @@ void FTreeItem::SetLightIntensity(float NewValue)
     }
 }
 
-void FTreeItem::SetUseTemperature(bool NewState)
+void ULightTreeItem::SetUseTemperature(bool NewState)
 {
     if (Type != ETreeItemType::SkyLight)
     {
@@ -601,7 +625,7 @@ void FTreeItem::SetUseTemperature(bool NewState)
     }
 }
 
-void FTreeItem::SetTemperature(float NewValue)
+void ULightTreeItem::SetTemperature(float NewValue)
 {
     if (Type != ETreeItemType::SkyLight)
     {
@@ -611,7 +635,7 @@ void FTreeItem::SetTemperature(float NewValue)
     }
 }
 
-void FTreeItem::SetCastShadows(bool bState)
+void ULightTreeItem::SetCastShadows(bool bState)
 {
     _ASSERT(Type != Folder);
 
@@ -629,7 +653,7 @@ void FTreeItem::SetCastShadows(bool bState)
     }
 }
 
-void FTreeItem::AddHorizontal(float Degrees)
+void ULightTreeItem::AddHorizontal(float Degrees)
 {    
     auto Euler = ActorPtr->GetActorRotation().Euler();
     Euler.Z += Degrees;
@@ -641,7 +665,7 @@ void FTreeItem::AddHorizontal(float Degrees)
     Horizontal = FMath::Fmod(Horizontal + 180.0f, 360.0001f) - 180.0f;
 }
 
-void FTreeItem::AddVertical(float Degrees)
+void ULightTreeItem::AddVertical(float Degrees)
 {
     auto ActorRot = ActorPtr->GetActorRotation().Quaternion();
     auto DeltaQuat = FVector::ForwardVector.RotateAngleAxis(Degrees, FVector::RightVector).Rotation().Quaternion();
@@ -652,7 +676,7 @@ void FTreeItem::AddVertical(float Degrees)
     Vertical = FMath::Fmod(Vertical + 180.0f, 360.0001f) - 180.0f;
 }
 
-void FTreeItem::SetInnerConeAngle(float NewValue)
+void ULightTreeItem::SetInnerConeAngle(float NewValue)
 {
     InnerAngle = NewValue;
     if (InnerAngle > OuterAngle)
@@ -665,7 +689,7 @@ void FTreeItem::SetInnerConeAngle(float NewValue)
 }
 
 
-void FTreeItem::SetOuterConeAngle(float NewValue)
+void ULightTreeItem::SetOuterConeAngle(float NewValue)
 {
     SpotLight->SetMobility(EComponentMobility::Movable);
     if (bLockInnerAngleToOuterAngle)
@@ -686,7 +710,7 @@ void FTreeItem::SetOuterConeAngle(float NewValue)
     }
 }
 
-void FTreeItem::GetLights(TArray<TSharedPtr<FTreeItem>>& Array)
+void ULightTreeItem::GetLights(TArray<ULightTreeItem*>& Array)
 {
     if (Type == Folder)
     {
@@ -695,15 +719,15 @@ void FTreeItem::GetLights(TArray<TSharedPtr<FTreeItem>>& Array)
     }
     else
     {
-        Array.Add(SharedThis(this));
+        Array.Add(this);
     }
 }
 
-void FTreeItem::UpdateFolderIcon()
+void ULightTreeItem::UpdateFolderIcon()
 {
     if (Type != Folder)
         return;
-    TArray<TSharedPtr<FTreeItem>> ChildLights;
+    TArray<ULightTreeItem*> ChildLights;
     GetLights(ChildLights);
 
     auto IconType = Type;
@@ -730,7 +754,7 @@ void FTreeItem::UpdateFolderIcon()
         Parent->UpdateFolderIcon();
 }
 
-bool FTreeItem::CheckNameAgainstSearchString(const FString& SearchString)
+bool ULightTreeItem::CheckNameAgainstSearchString(const FString& SearchString)
 {
     bMatchesSearchString = false;
     if (SearchString.Len() == 0)
@@ -750,7 +774,7 @@ bool FTreeItem::CheckNameAgainstSearchString(const FString& SearchString)
     return bMatchesSearchString;
 }
 
-int FTreeItem::LightCount() const
+int ULightTreeItem::LightCount() const
 {
     if (Type != Folder)
     {
@@ -766,13 +790,29 @@ int FTreeItem::LightCount() const
     return LightCount;
 }
 
-FReply FTreeItem::TreeDragDetected(const FGeometry& Geometry, const FPointerEvent& MouseEvent)
+void ULightTreeItem::BeginTransaction(bool bContinueRecursively)
+{
+    Modify(true);
+    if (bContinueRecursively)
+    {
+        if (Type != Folder)
+        {
+            ActorPtr->Modify();
+        }
+        else
+        {
+            Parent->Modify();
+        }
+    }
+}
+
+FReply ULightTreeItem::TreeDragDetected(const FGeometry& Geometry, const FPointerEvent& MouseEvent)
 {
     GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, Name + "Dragggg");
 
 
     TSharedRef<FTreeDropOperation> DragDropOp = MakeShared<FTreeDropOperation>();
-    DragDropOp->DraggedItem = SharedThis(this);
+    DragDropOp->DraggedItem = this;
 
     FReply Reply = FReply::Handled();
 
@@ -781,14 +821,14 @@ FReply FTreeItem::TreeDragDetected(const FGeometry& Geometry, const FPointerEven
     return Reply;
 }
 
-FReply FTreeItem::TreeDropDetected(const FDragDropEvent& DragDropEvent)
+FReply ULightTreeItem::TreeDropDetected(const FDragDropEvent& DragDropEvent)
 {
     auto DragDrop = StaticCastSharedPtr<FTreeDropOperation>(DragDropEvent.GetOperation());
     auto Target = DragDrop->DraggedItem;
     auto Source = Target->Parent;
-    TSharedPtr<FTreeItem> Destination;
+    ULightTreeItem* Destination;
 
-    if (!VerifyDragDrop(Target, SharedThis(this)))
+    if (!VerifyDragDrop(Target, this))
     {
         GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, "Drag drop cancelled");
         auto Reply = FReply::Handled();
@@ -797,10 +837,17 @@ FReply FTreeItem::TreeDropDetected(const FDragDropEvent& DragDropEvent)
         return FReply::Handled();
     }
 
+    GEditor->BeginTransaction(FText::FromString("Light control tree drag and drop"));
+
     if (Type == Folder)
     {
         
-       Destination = SharedThis(this);
+        Destination = this;
+
+        Destination->BeginTransaction();
+        if (Source)
+            Source->BeginTransaction();
+        Target->BeginTransaction();
 
         if (Source)
             Source->Children.Remove(Target);
@@ -822,12 +869,12 @@ FReply FTreeItem::TreeDropDetected(const FDragDropEvent& DragDropEvent)
         Destination->Parent = Parent;
         if (Parent)
         {
-            Parent->Children.Remove(SharedThis(this));
+            Parent->Children.Remove(this);
             Parent->Children.Add(Destination);
         }
         else
         {
-            OwningWidget->TreeRootItems.Remove(SharedThis(this));
+            OwningWidget->TreeRootItems.Remove(this);
             OwningWidget->TreeRootItems.Add(Destination);
         }
 
@@ -837,7 +884,7 @@ FReply FTreeItem::TreeDropDetected(const FDragDropEvent& DragDropEvent)
             OwningWidget->TreeRootItems.Remove(Target);
 
         Destination->Children.Add(Target);
-        Destination->Children.Add(SharedThis(this));
+        Destination->Children.Add(this);
 
         auto PrevParent = Parent;
 
@@ -863,6 +910,7 @@ FReply FTreeItem::TreeDropDetected(const FDragDropEvent& DragDropEvent)
 }
 
 #pragma endregion
+
 
 void SLightTreeHierarchy::Construct(const FArguments& Args)
 {
@@ -985,7 +1033,7 @@ void SLightTreeHierarchy::Construct(const FArguments& Args)
             .VAlign(VAlign_Top)
             .HAlign(HAlign_Fill)
             [
-                SAssignNew(Tree, STreeView<TSharedPtr<FTreeItem>>)
+                SAssignNew(Tree, STreeView<ULightTreeItem*>)
                 .ItemHeight(24.0f)
                 .TreeItemsSource(&TreeRootItems)
                 .OnSelectionChanged(this, &SLightTreeHierarchy::SelectionCallback)
@@ -1068,27 +1116,29 @@ void SLightTreeHierarchy::OnActorSpawned(AActor* Actor)
     }
 }
 
-TSharedRef<ITableRow> SLightTreeHierarchy::AddToTree(TSharedPtr<FTreeItem> Item,
+TSharedRef<ITableRow> SLightTreeHierarchy::AddToTree(ULightTreeItem* ItemPtr,
                                                      const TSharedRef<STableViewBase>& OwnerTable)
 {
     SHorizontalBox::FSlot& CheckBoxSlot = SHorizontalBox::Slot();
     CheckBoxSlot.SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
+
+    auto Item = Cast<ULightTreeItem>(ItemPtr);
 
     if (!Item->Type == Folder || Item->Children.Num() > 0)
     {
         CheckBoxSlot
         [
             SAssignNew(Item->StateCheckbox, SCheckBox)
-                .IsChecked_Raw(Item.Get(), &FTreeItem::IsLightEnabled)
-                .OnCheckStateChanged_Raw(Item.Get(), &FTreeItem::OnCheck)
+                .IsChecked_UObject(Item, &ULightTreeItem::IsLightEnabled)
+                .OnCheckStateChanged_UObject(Item, &ULightTreeItem::OnCheck)
         ];
     }
 
     auto Row =
-        SNew(STableRow<TSharedPtr<FString>>, OwnerTable)
+        SNew(STableRow<ULightTreeItem*>, OwnerTable)
         .Padding(2.0f)
-        .OnDragDetected(Item.Get(), &FTreeItem::TreeDragDetected)
-        .OnDrop_Raw(Item.Get(), &FTreeItem::TreeDropDetected)
+        .OnDragDetected_UObject(Item, &ULightTreeItem::TreeDragDetected)
+        .OnDrop_UObject(Item, &ULightTreeItem::TreeDropDetected)
         .Visibility_Lambda([Item]() {return Item->bMatchesSearchString ? EVisibility::Visible : EVisibility::Collapsed; })
         [
             SAssignNew(Item->TableRowBox, SBox)
@@ -1099,16 +1149,22 @@ TSharedRef<ITableRow> SLightTreeHierarchy::AddToTree(TSharedPtr<FTreeItem> Item,
     return Row;
 }
 
-void SLightTreeHierarchy::GetChildren(TSharedPtr<FTreeItem> Item, TArray<TSharedPtr<FTreeItem>>& Children)
+void SLightTreeHierarchy::GetChildren(ULightTreeItem* Item, TArray<ULightTreeItem*>& Children)
 {
-    Children.Append(Item->Children);
+    Children.Append(Cast<ULightTreeItem>(Item)->Children);
 
 }
 
-void SLightTreeHierarchy::SelectionCallback(TSharedPtr<FTreeItem> Item, ESelectInfo::Type SelectType)
+void SLightTreeHierarchy::SelectionCallback(ULightTreeItem* Item, ESelectInfo::Type SelectType)
 {
+    auto Objects = Tree->GetSelectedItems();
+    SelectedItems.Empty();
 
-    SelectedItems = Tree->GetSelectedItems();
+    for (auto Object : Objects)
+    {
+        SelectedItems.Add(Cast<ULightTreeItem>(Object));
+    }
+
     if (SelectedItems.Num())
     {
         int Index;
@@ -1132,7 +1188,7 @@ void SLightTreeHierarchy::SelectionCallback(TSharedPtr<FTreeItem> Item, ESelectI
 
 FReply SLightTreeHierarchy::AddFolderToTree()
 {
-    TSharedPtr<FTreeItem> NewFolder = AddTreeItem(true);
+    ULightTreeItem* NewFolder = AddTreeItem(true);
     NewFolder->Name = "New Group";
 
     TreeRootItems.Add(NewFolder);
@@ -1142,17 +1198,18 @@ FReply SLightTreeHierarchy::AddFolderToTree()
     return FReply::Handled();
 }
 
-void SLightTreeHierarchy::TreeExpansionCallback(TSharedPtr<FTreeItem> Item, bool bExpanded)
+void SLightTreeHierarchy::TreeExpansionCallback(ULightTreeItem* Item, bool bExpanded)
 {
-    Item->bExpanded = bExpanded;
+    Cast<ULightTreeItem>(Item)->bExpanded = bExpanded;
 }
 
-TSharedPtr<FTreeItem> SLightTreeHierarchy::AddTreeItem(bool bIsFolder)
+ULightTreeItem* SLightTreeHierarchy::AddTreeItem(bool bIsFolder)
 {
-    auto Item = MakeShared<FTreeItem>();
+    auto Item = NewObject<ULightTreeItem>();
     Item->OwningWidget = this;
     Item->Parent = nullptr;
 
+    ListOfTreeItems.Add(Item);
 
     //TreeRootItems.Add(Item);
     if (bIsFolder)
@@ -1160,7 +1217,7 @@ TSharedPtr<FTreeItem> SLightTreeHierarchy::AddTreeItem(bool bIsFolder)
         Item->Type = Folder;
     }
     else // Do this so that only actual lights which might be deleted in the editor are checked for validity
-        ListOfLightItems.Add(&Item.Get());
+        ListOfLightItems.Add(Item);
 
     return Item;
 }
@@ -1170,15 +1227,15 @@ EActiveTimerReturnType SLightTreeHierarchy::VerifyLights(double, float)
     if (bCurrentlyLoading)
         return EActiveTimerReturnType::Continue;
     GEngine->AddOnScreenDebugMessage(-1, 0.5f, FColor::Blue, "Cleaning invalid lights");
-    TArray<FTreeItem*> ToRemove;
+    TArray<ULightTreeItem*> ToRemove;
     for (auto Item : ListOfLightItems)
     {
         if (!Item->ActorPtr || !IsValid(Item->SkyLight))
         {
             if (Item->Parent)
-                Item->Parent->Children.Remove(Item->AsShared());
+                Item->Parent->Children.Remove(Item);
             else
-                TreeRootItems.Remove(Item->AsShared());
+                TreeRootItems.Remove(Item);
 
 
             ToRemove.Add(Item);
@@ -1191,6 +1248,7 @@ EActiveTimerReturnType SLightTreeHierarchy::VerifyLights(double, float)
 
     for (auto Item : ToRemove)
     {
+        ListOfTreeItems.Remove(Item);
         ListOfLightItems.Remove(Item);
     }
 
@@ -1209,7 +1267,7 @@ void SLightTreeHierarchy::UpdateLightList()
     UGameplayStatics::GetAllActorsOfClass(GWorld, APointLight::StaticClass(), Actors);
     for (auto Light : Actors)
     {
-        TSharedPtr<FTreeItem> NewItem = AddTreeItem();
+        ULightTreeItem* NewItem = AddTreeItem();
         NewItem->Type = ETreeItemType::PointLight;
         NewItem->Name = Light->GetName();
         NewItem->PointLight = Cast<APointLight>(Light);
@@ -1223,7 +1281,7 @@ void SLightTreeHierarchy::UpdateLightList()
     UGameplayStatics::GetAllActorsOfClass(GWorld, ASkyLight::StaticClass(), Actors);
     for (auto Light : Actors)
     {
-        TSharedPtr<FTreeItem> NewItem = AddTreeItem();
+        ULightTreeItem* NewItem = AddTreeItem();
         NewItem->Type = ETreeItemType::SkyLight;
         NewItem->Name = Light->GetName();
         NewItem->SkyLight = Cast<ASkyLight>(Light);
@@ -1236,7 +1294,7 @@ void SLightTreeHierarchy::UpdateLightList()
     UGameplayStatics::GetAllActorsOfClass(GWorld, ADirectionalLight::StaticClass(), Actors);
     for (auto Light : Actors)
     {
-        TSharedPtr<FTreeItem> NewItem = AddTreeItem();
+        ULightTreeItem* NewItem = AddTreeItem();
         NewItem->Type = ETreeItemType::DirectionalLight;
         NewItem->Name = Light->GetName();
         NewItem->DirectionalLight = Cast<ADirectionalLight>(Light);
@@ -1249,7 +1307,7 @@ void SLightTreeHierarchy::UpdateLightList()
     UGameplayStatics::GetAllActorsOfClass(GWorld, ASpotLight::StaticClass(), Actors);
     for (auto Light : Actors)
     {
-        TSharedPtr<FTreeItem> NewItem = AddTreeItem();
+        ULightTreeItem* NewItem = AddTreeItem();
         NewItem->Type = ETreeItemType::SpotLight;
         NewItem->Name = Light->GetName();
         NewItem->SpotLight = Cast<ASpotLight>(Light);
@@ -1263,7 +1321,7 @@ void SLightTreeHierarchy::SearchBarOnChanged(const FText& NewString)
 {
     for (auto RootItem : TreeRootItems)
     {
-        RootItem->CheckNameAgainstSearchString(NewString.ToString());
+        Cast<ULightTreeItem>(RootItem)->CheckNameAgainstSearchString(NewString.ToString());
     }
 
     //Tree->RequestTreeRefresh();
@@ -1322,7 +1380,7 @@ void SLightTreeHierarchy::SaveStateToJson(FString Path, bool bUpdatePresetPath)
 
     for (auto TreeItem : TreeRootItems)
     {
-        TreeItemsJSON.Add(TreeItem->SaveToJson());
+        TreeItemsJSON.Add(Cast<ULightTreeItem>(TreeItem)->SaveToJson());
     }
 
     TSharedPtr<FJsonObject> RootObject = MakeShared<FJsonObject>();
@@ -1368,7 +1426,7 @@ void SLightTreeHierarchy::LoadStateFromJSON(FString Path, bool bUpdatePresetPath
         TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(Input);
         FJsonSerializer::Deserialize(JsonReader, JsonRoot);
 
-        auto LoadingResult = FTreeItem::ELoadingResult::Success;
+        auto LoadingResult = ULightTreeItem::ELoadingResult::Success;
         for (auto TreeElement : JsonRoot->GetArrayField("TreeElements"))
         {
             const TSharedPtr<FJsonObject>* TreeElementObjectPtr;
@@ -1379,13 +1437,13 @@ void SLightTreeHierarchy::LoadStateFromJSON(FString Path, bool bUpdatePresetPath
             auto Item = AddTreeItem(Type == 0); // If Type is 0, this element is a folder, so we add it as a folder
             auto Res = Item->LoadFromJson(TreeElementObject);
 
-            if (Res != FTreeItem::ELoadingResult::Success)
+            if (Res != ULightTreeItem::ELoadingResult::Success)
             {
-                if (LoadingResult == FTreeItem::ELoadingResult::Success)
+                if (LoadingResult == ULightTreeItem::ELoadingResult::Success)
                 {
                     LoadingResult = Res;
                 }
-                else LoadingResult = FTreeItem::ELoadingResult::MultipleErrors;
+                else LoadingResult = ULightTreeItem::ELoadingResult::MultipleErrors;
             }
 
             TreeRootItems.Add(Item);
@@ -1394,10 +1452,10 @@ void SLightTreeHierarchy::LoadStateFromJSON(FString Path, bool bUpdatePresetPath
 
         for (auto TreeItem : TreeRootItems)
         {
-            TreeItem->ExpandInTree();
+            Cast<ULightTreeItem>(TreeItem)->ExpandInTree();
         }
 
-        if (LoadingResult == FTreeItem::ELoadingResult::Success)
+        if (LoadingResult == ULightTreeItem::ELoadingResult::Success)
         {
             UE_LOG(LogTemp, Display, TEXT("Light control state loaded successfully"));
         }
@@ -1407,16 +1465,16 @@ void SLightTreeHierarchy::LoadStateFromJSON(FString Path, bool bUpdatePresetPath
 
             switch (LoadingResult)
             {
-            case FTreeItem::LightNotFound:
+            case ULightTreeItem::LightNotFound:
                 ErrorMessage = "At least one light could not be found. Please ensure all lights exist and haven't been renamed since the save.";
                 break;
-            case FTreeItem::EngineError:
+            case ULightTreeItem::EngineError:
                 ErrorMessage = "There was an error with the engine. Please try loading again. If the error persists, restart the engine.";
                 break;
-            case FTreeItem::InvalidType:
+            case ULightTreeItem::InvalidType:
                 ErrorMessage = "The item type that was tried to be loaded was not valid. Please ensure that the item type in the .json file is between 0 and 4.";
                 break;
-            case FTreeItem::MultipleErrors:
+            case ULightTreeItem::MultipleErrors:
                 ErrorMessage = "Multiple errors occurred. See output log for more details.";
                 break;
             }

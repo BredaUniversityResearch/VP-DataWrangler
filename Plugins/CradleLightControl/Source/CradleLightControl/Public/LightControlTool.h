@@ -6,6 +6,7 @@
 #include "LightTreeHierarchy.h"
 #include "LightPropertyEditor.h"
 #include "LightSpecificPropertyEditor.h"
+#include "LightControlUndoClient.h"
 
 
 
@@ -55,11 +56,12 @@ public:
     bool IsAMasterLightSelected() const;
     bool IsSingleGroupSelected() const;
     bool AreMultipleLightsSelected() const;
-    FTreeItem* GetMasterLight() const;
-    FTreeItem* GetSingleSelectedItem() const;
+    ULightTreeItem* GetMasterLight() const;
+    ULightTreeItem* GetSingleSelectedItem() const;
     void ClearSelection();
 
     TWeakPtr<SLightTreeHierarchy> GetTreeWidget();
+    TWeakPtr<SLightPropertyEditor> GetLightPropertyEditor();
 
     bool OpenFileDialog(FString Title, FString DefaultPath, uint32 Flags, FString FileTypeList, TArray<FString>& OutFilenames);
     bool SaveFileDialog(FString Title, FString DefaultPath, uint32 Flags, FString FileTypeList, TArray<FString>& OutFilenames);
@@ -104,8 +106,8 @@ private:
     FText GetItemScale() const;
 
     TSharedRef<SBox> GroupControls();
-    TSharedRef<SWidget> GroupControlDropDownLabel(TSharedPtr<FTreeItem> Item);
-    void GroupControlDropDownSelection(TSharedPtr<FTreeItem> Item, ESelectInfo::Type SelectInfoType);
+    TSharedRef<SWidget> GroupControlDropDownLabel(ULightTreeItem* Item);
+    void GroupControlDropDownSelection(ULightTreeItem* Item, ESelectInfo::Type SelectInfoType);
     FText GroupControlDropDownDefaultLabel() const;
     FText GroupControlLightList() const;
 
@@ -123,6 +125,7 @@ private:
 
 
     TSharedPtr<SDockTab> ToolTab;
+    TSharedPtr<FLightControlUndoClient> UndoClient;
     TSharedPtr<SLightTreeHierarchy> TreeWidget;
     TSharedPtr<SLightPropertyEditor> LightPropertyWidget;
     TSharedPtr<SLightSpecificProperties> LightSpecificWidget;
