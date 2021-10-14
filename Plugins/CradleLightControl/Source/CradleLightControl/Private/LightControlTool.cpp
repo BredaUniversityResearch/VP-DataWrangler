@@ -197,7 +197,7 @@ void SLightControlTool::GenerateIcons()
     Icons[PointLightUndetermined].TintColor = UndeterminedTint;
     
     Icons.Emplace(GeneralLightOn, Icons[PointLightOn]);
-    Icons.Emplace(GeneralLightOff, Icons[PointLightOn]);
+    Icons.Emplace(GeneralLightOff, Icons[PointLightOff]);
     Icons.Emplace(GeneralLightUndetermined, Icons[PointLightUndetermined]);
     
     Icons.Emplace(FolderClosed, *FEditorStyle::GetBrush("ContentBrowser.ListViewFolderIcon.Mask"));
@@ -409,8 +409,13 @@ void SLightControlTool::CommitNewItemName(const FText& Text, ETextCommit::Type C
     if (CommitType == ETextCommit::OnEnter && !Text.IsEmpty())
     {
         auto Item = GetSingleSelectedItem();
+        GEditor->BeginTransaction(FText::FromString(Item->Name + " Rename"));
+        Item->BeginTransaction();
+
         Item->Name = Text.ToString();
         Item->GenerateTableRow();
+
+        GEditor->EndTransaction();
     }
     bItemRenameInProgress = false;
 }
@@ -477,8 +482,14 @@ void SLightControlTool::CommitNewItemNote(const FText& Text, ETextCommit::Type C
 {
     if (CommitType == ETextCommit::OnEnter)
     {
-        GetMasterLight()->Note = Text.ToString();
-        GetMasterLight()->GenerateTableRow();
+        auto Item = GetMasterLight();
+        GEditor->BeginTransaction(FText::FromString(Item->Name + " Note changed"));
+        Item->BeginTransaction();
+
+        Item->Note = Text.ToString();
+        Item->GenerateTableRow();
+
+        GEditor->EndTransaction();
     }
     bItemNoteChangeInProgress = false;
     UpdateExtraNoteBox();

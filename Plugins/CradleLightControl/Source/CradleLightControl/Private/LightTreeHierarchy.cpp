@@ -93,6 +93,8 @@ void ULightTreeItem::OnCheck(ECheckBoxState NewState)
     if (Type != Folder && !IsValid(ActorPtr))
         return;
 
+    GEditor->BeginTransaction(FText::FromString(Name + " State change"));
+    BeginTransaction();
     switch (Type)
     {
     case ETreeItemType::SkyLight:
@@ -114,6 +116,7 @@ void ULightTreeItem::OnCheck(ECheckBoxState NewState)
         }
         break;
     }
+    GEditor->EndTransaction();
 }
 
 void ULightTreeItem::GenerateTableRow()
@@ -377,6 +380,7 @@ void ULightTreeItem::PostTransacted(const FTransactionObjectEvent& TransactionEv
         else
            OwningWidget->Tree->RequestTreeRefresh();
 
+        GenerateTableRow();
     }
 }
 
@@ -785,7 +789,7 @@ int ULightTreeItem::LightCount() const
 
 void ULightTreeItem::BeginTransaction(bool bContinueRecursively)
 {
-    Modify(true);
+    Modify();
     if (bContinueRecursively)
     {
         if (Type != Folder)
