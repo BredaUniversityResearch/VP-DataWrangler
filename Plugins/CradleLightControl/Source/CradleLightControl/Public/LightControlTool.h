@@ -6,7 +6,6 @@
 #include "LightTreeHierarchy.h"
 #include "LightPropertyEditor.h"
 #include "LightSpecificPropertyEditor.h"
-#include "LightControlUndoClient.h"
 
 
 
@@ -125,7 +124,6 @@ private:
 
 
     TSharedPtr<SDockTab> ToolTab;
-    TSharedPtr<FLightControlUndoClient> UndoClient;
     TSharedPtr<SLightTreeHierarchy> TreeWidget;
     TSharedPtr<SLightPropertyEditor> LightPropertyWidget;
     TSharedPtr<SLightSpecificProperties> LightSpecificWidget;

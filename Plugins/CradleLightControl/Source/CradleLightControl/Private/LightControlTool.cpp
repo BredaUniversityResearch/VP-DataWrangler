@@ -34,9 +34,6 @@ void SLightControlTool::Construct(const FArguments& Args)
 
     LoadResources();
 
-    UndoClient = MakeShared<FLightControlUndoClient>();
-    GEditor->RegisterForUndo(UndoClient.Get());
-
     ToolTab = Args._ToolTab;
        
     //SHorizontalBox::FSlot* SeparatorSlot;
@@ -100,7 +97,6 @@ void SLightControlTool::PreDestroy()
         LightPropertyWidget->PreDestroy();
 
     GWorld->RemoveOnActorSpawnedHandler(ActorSpawnedListenerHandle);
-    GEditor->UnregisterForUndo(UndoClient.Get());
 }
 
 void SLightControlTool::ActorSpawnedCallback(AActor* Actor)
