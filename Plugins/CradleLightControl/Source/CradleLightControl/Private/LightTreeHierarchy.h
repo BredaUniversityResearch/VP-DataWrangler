@@ -3,18 +3,6 @@
 #include "Templates/SharedPointer.h"
 #include "Chaos/AABB.h"
 #include "Slate.h"
-#include "Chaos/AABB.h"
-#include "Chaos/AABB.h"
-#include "Chaos/AABB.h"
-#include "Chaos/AABB.h"
-#include "Chaos/AABB.h"
-#include "Chaos/AABB.h"
-#include "Chaos/AABB.h"
-#include "Chaos/AABB.h"
-#include "Chaos/AABB.h"
-#include "Chaos/AABB.h"
-#include "Chaos/AABB.h"
-#include "Chaos/AABB.h"
 
 
 #include "LightTreeHierarchy.generated.h"
@@ -64,7 +52,6 @@ public:
         MultipleErrors
     };
 
-    virtual void PostEditUndo(TSharedPtr<ITransactionObjectAnnotation> TransactionAnnotation) override;
     virtual void PostTransacted(const FTransactionObjectEvent& TransactionEvent) override;
 
     ELoadingResult LoadFromJson(TSharedPtr<FJsonObject> JsonObject);
@@ -105,7 +92,8 @@ public:
     UPROPERTY()
         FString Name;
 
-    FString Note;
+    UPROPERTY()
+        FString Note;
 
     union
     {
@@ -164,6 +152,25 @@ public:
     ULightTreeItem* DraggedItem;
 };
 
+UCLASS()
+class UTreeTransactionalVariables : public UObject
+{
+    GENERATED_BODY()
+public:
+
+    UTreeTransactionalVariables()
+    {
+        SetFlags(GetFlags() | RF_Transactional);
+    }
+
+    void PostTransacted(const FTransactionObjectEvent& TransactionEvent) override;
+
+    TWeakPtr<class SLightTreeHierarchy> Widget;
+
+    UPROPERTY()
+    TArray<ULightTreeItem*> RootItems;
+};
+
 
 class SLightTreeHierarchy : public SCompoundWidget
 {
@@ -180,6 +187,8 @@ public:
     void PreDestroy();
 
     void OnActorSpawned(AActor* Actor);
+
+    void BeginTransaction();
 
 
     TSharedRef<ITableRow> AddToTree(::ULightTreeItem* Item, const TSharedRef<STableViewBase>& OwnerTable);
@@ -219,8 +228,12 @@ public:
     SLightControlTool* CoreToolPtr;
 
     TSharedPtr<STreeView<ULightTreeItem*>> Tree;
+
     UPROPERTY()
-    TArray<ULightTreeItem*> TreeRootItems;
+        UTreeTransactionalVariables* TransactionalVariables;
+
+    //UPROPERTY()
+    //TArray<ULightTreeItem*> TreeRootItems;
 
     TArray<ULightTreeItem*> SelectedItems;
     TArray<ULightTreeItem*> LightsUnderSelection;

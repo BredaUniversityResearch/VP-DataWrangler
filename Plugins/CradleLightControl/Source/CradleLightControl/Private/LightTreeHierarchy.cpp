@@ -367,20 +367,15 @@ TSharedPtr<FJsonValue> ULightTreeItem::SaveToJson()
     return JsonValue;
 }
 
-void ULightTreeItem::PostEditUndo(TSharedPtr<ITransactionObjectAnnotation> TransactionAnnotation)
-{
-    UObject::PostEditUndo(TransactionAnnotation);
-    OwningWidget->CoreToolPtr->GetLightPropertyEditor().Pin()->UpdateSaturationGradient(Hue);
-    GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Emerald, Name + " Undo yeeeeeet");
-}
-
 void ULightTreeItem::PostTransacted(const FTransactionObjectEvent& TransactionEvent)
 {
     UObject::PostTransacted(TransactionEvent);
     if (TransactionEvent.GetEventType() == ETransactionObjectEventType::UndoRedo)
     {
-        OwningWidget->CoreToolPtr->GetLightPropertyEditor().Pin()->UpdateSaturationGradient(Hue);
-        GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Purple, Name + " Undo yeeeeeet");
+        if (Type != Folder)
+            OwningWidget->CoreToolPtr->GetLightPropertyEditor().Pin()->UpdateSaturationGradient(OwningWidget->SelectionMasterLight->Hue);
+        else
+           OwningWidget->Tree->RequestTreeRefresh();
 
     }
 }
@@ -573,18 +568,16 @@ void ULightTreeItem::UpdateLightColor()
 
 void ULightTreeItem::UpdateLightColor(FLinearColor& Color)
 {
-    if (Type == Folder)
-    {
-        // IDK how i am gonna do this crap
-    }
-    else if (Type == ETreeItemType::SkyLight)
+    if (Type == ETreeItemType::SkyLight)
     {
         SkyLight->GetLightComponent()->SetLightColor(Color);
+        SkyLight->GetLightComponent()->UpdateLightSpriteTexture();
     }
     else
     {
         auto LightPtr = Cast<ALight>(PointLight);
         LightPtr->SetLightColor(Color);
+        LightPtr->GetLightComponent()->UpdateLightSpriteTexture();
     }
 }
 
@@ -801,7 +794,8 @@ void ULightTreeItem::BeginTransaction(bool bContinueRecursively)
         }
         else
         {
-            Parent->Modify();
+            if (Parent)
+                Parent->Modify();
         }
     }
 }
@@ -826,7 +820,7 @@ FReply ULightTreeItem::TreeDropDetected(const FDragDropEvent& DragDropEvent)
     auto DragDrop = StaticCastSharedPtr<FTreeDropOperation>(DragDropEvent.GetOperation());
     auto Target = DragDrop->DraggedItem;
     auto Source = Target->Parent;
-    ULightTreeItem* Destination;
+    ULightTreeItem* Destination = nullptr;
 
     if (!VerifyDragDrop(Target, this))
     {
@@ -837,7 +831,19 @@ FReply ULightTreeItem::TreeDropDetected(const FDragDropEvent& DragDropEvent)
         return FReply::Handled();
     }
 
-    GEditor->BeginTransaction(FText::FromString("Light control tree drag and drop"));
+    if (GEditor)
+    {
+        GEditor->BeginTransaction(FText::FromString("Light control tree drag and drop"));
+    }
+
+    // The source folder and the dragged item will always be affected, so always begin transacting them
+    if (Source)
+        Source->BeginTransaction();
+    else
+    {
+        OwningWidget->BeginTransaction();
+    }
+    Target->BeginTransaction();
 
     if (Type == Folder)
     {
@@ -845,14 +851,12 @@ FReply ULightTreeItem::TreeDropDetected(const FDragDropEvent& DragDropEvent)
         Destination = this;
 
         Destination->BeginTransaction();
-        if (Source)
-            Source->BeginTransaction();
-        Target->BeginTransaction();
+        
 
         if (Source)
             Source->Children.Remove(Target);
         else
-            OwningWidget->TreeRootItems.Remove(Target);
+            OwningWidget->TransactionalVariables->RootItems.Remove(Target);
         Destination->Children.Add(Target);
         Target->Parent = Destination;
 
@@ -867,6 +871,15 @@ FReply ULightTreeItem::TreeDropDetected(const FDragDropEvent& DragDropEvent)
         Destination = OwningWidget->AddTreeItem(true);
         Destination->Name = Name + " Group";
         Destination->Parent = Parent;
+
+
+        if (Parent)
+            Parent->BeginTransaction();
+        else
+            OwningWidget->BeginTransaction();
+
+        Destination->BeginTransaction();
+
         if (Parent)
         {
             Parent->Children.Remove(this);
@@ -874,14 +887,14 @@ FReply ULightTreeItem::TreeDropDetected(const FDragDropEvent& DragDropEvent)
         }
         else
         {
-            OwningWidget->TreeRootItems.Remove(this);
-            OwningWidget->TreeRootItems.Add(Destination);
+            OwningWidget->TransactionalVariables->RootItems.Remove(this);
+            OwningWidget->TransactionalVariables->RootItems.Add(Destination);
         }
 
         if (Source)
             Source->Children.Remove(Target);
         else
-            OwningWidget->TreeRootItems.Remove(Target);
+            OwningWidget->TransactionalVariables->RootItems.Remove(Target);
 
         Destination->Children.Add(Target);
         Destination->Children.Add(this);
@@ -901,6 +914,7 @@ FReply ULightTreeItem::TreeDropDetected(const FDragDropEvent& DragDropEvent)
 
     OwningWidget->Tree->RequestTreeRefresh();
 
+    GEditor->EndTransaction();
     Destination->UpdateFolderIcon();
 
     auto Reply = FReply::Handled();
@@ -911,9 +925,20 @@ FReply ULightTreeItem::TreeDropDetected(const FDragDropEvent& DragDropEvent)
 
 #pragma endregion
 
+void UTreeTransactionalVariables::PostTransacted(const FTransactionObjectEvent& TransactionEvent)
+{
+    if (TransactionEvent.GetEventType() == ETransactionObjectEventType::UndoRedo && Widget.IsValid())
+    {
+        Widget.Pin()->Tree->RequestTreeRefresh();
+    }
+}
 
 void SLightTreeHierarchy::Construct(const FArguments& Args)
 {
+    TransactionalVariables = NewObject<UTreeTransactionalVariables>();
+    TransactionalVariables->Widget = SharedThis(this);
+
+
     LightVerificationTimer = RegisterActiveTimer(0.5f, FWidgetActiveTimerDelegate::CreateRaw(this, &SLightTreeHierarchy::VerifyLights));
     AutoSaveTimer = RegisterActiveTimer(300.0f, FWidgetActiveTimerDelegate::CreateRaw(this, &SLightTreeHierarchy::AutoSave)); // once every 5 minutes
 
@@ -924,6 +949,7 @@ void SLightTreeHierarchy::Construct(const FArguments& Args)
     FSlateFontInfo Font24(FCoreStyle::GetDefaultFont(), 20);
 
     CoreToolPtr = Args._CoreToolPtr;
+
 
     UpdateLightList();
 
@@ -1035,7 +1061,7 @@ void SLightTreeHierarchy::Construct(const FArguments& Args)
             [
                 SAssignNew(Tree, STreeView<ULightTreeItem*>)
                 .ItemHeight(24.0f)
-                .TreeItemsSource(&TreeRootItems)
+                .TreeItemsSource(&TransactionalVariables->RootItems)
                 .OnSelectionChanged(this, &SLightTreeHierarchy::SelectionCallback)
                 .OnGenerateRow(this, &SLightTreeHierarchy::AddToTree)
                 .OnGetChildren(this, &SLightTreeHierarchy::GetChildren)
@@ -1110,10 +1136,15 @@ void SLightTreeHierarchy::OnActorSpawned(AActor* Actor)
         }
         NewItem->FetchDataFromLight();
 
-        TreeRootItems.Add(NewItem);
+        TransactionalVariables->RootItems.Add(NewItem);
 
         Tree->RequestTreeRefresh();
     }
+}
+
+void SLightTreeHierarchy::BeginTransaction()
+{
+    TransactionalVariables->Modify();
 }
 
 TSharedRef<ITableRow> SLightTreeHierarchy::AddToTree(ULightTreeItem* ItemPtr,
@@ -1191,7 +1222,7 @@ FReply SLightTreeHierarchy::AddFolderToTree()
     ULightTreeItem* NewFolder = AddTreeItem(true);
     NewFolder->Name = "New Group";
 
-    TreeRootItems.Add(NewFolder);
+    TransactionalVariables->RootItems.Add(NewFolder);
 
     Tree->RequestTreeRefresh();
 
@@ -1235,7 +1266,7 @@ EActiveTimerReturnType SLightTreeHierarchy::VerifyLights(double, float)
             if (Item->Parent)
                 Item->Parent->Children.Remove(Item);
             else
-                TreeRootItems.Remove(Item);
+                TransactionalVariables->RootItems.Remove(Item);
 
 
             ToRemove.Add(Item);
@@ -1273,7 +1304,7 @@ void SLightTreeHierarchy::UpdateLightList()
         NewItem->PointLight = Cast<APointLight>(Light);
         NewItem->FetchDataFromLight();
 
-        TreeRootItems.Add(NewItem);
+        TransactionalVariables->RootItems.Add(NewItem);
 
     }
 
@@ -1287,7 +1318,7 @@ void SLightTreeHierarchy::UpdateLightList()
         NewItem->SkyLight = Cast<ASkyLight>(Light);
         NewItem->FetchDataFromLight();
 
-        TreeRootItems.Add(NewItem);
+        TransactionalVariables->RootItems.Add(NewItem);
     }
 
     // Fetch Directional Lights
@@ -1300,7 +1331,7 @@ void SLightTreeHierarchy::UpdateLightList()
         NewItem->DirectionalLight = Cast<ADirectionalLight>(Light);
         NewItem->FetchDataFromLight();
 
-        TreeRootItems.Add(NewItem);
+        TransactionalVariables->RootItems.Add(NewItem);
     }
 
     // Fetch Spot Lights
@@ -1313,13 +1344,13 @@ void SLightTreeHierarchy::UpdateLightList()
         NewItem->SpotLight = Cast<ASpotLight>(Light);
         NewItem->FetchDataFromLight();
 
-        TreeRootItems.Add(NewItem);
+        TransactionalVariables->RootItems.Add(NewItem);
     }
 }
 
 void SLightTreeHierarchy::SearchBarOnChanged(const FText& NewString)
 {
-    for (auto RootItem : TreeRootItems)
+    for (auto RootItem : TransactionalVariables->RootItems)
     {
         Cast<ULightTreeItem>(RootItem)->CheckNameAgainstSearchString(NewString.ToString());
     }
@@ -1378,7 +1409,7 @@ void SLightTreeHierarchy::SaveStateToJson(FString Path, bool bUpdatePresetPath)
 {
     TArray<TSharedPtr<FJsonValue>> TreeItemsJSON;
 
-    for (auto TreeItem : TreeRootItems)
+    for (auto TreeItem : TransactionalVariables->RootItems)
     {
         TreeItemsJSON.Add(Cast<ULightTreeItem>(TreeItem)->SaveToJson());
     }
@@ -1420,7 +1451,7 @@ void SLightTreeHierarchy::LoadStateFromJSON(FString Path, bool bUpdatePresetPath
         if (bUpdatePresetPath)
             ToolPresetPath = Path;
         UE_LOG(LogTemp, Display, TEXT("Beginning light control tool state loading from %s"), *Path);
-        TreeRootItems.Empty();
+        TransactionalVariables->RootItems.Empty();
         ListOfLightItems.Empty();
         TSharedPtr<FJsonObject> JsonRoot;
         TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(Input);
@@ -1446,11 +1477,11 @@ void SLightTreeHierarchy::LoadStateFromJSON(FString Path, bool bUpdatePresetPath
                 else LoadingResult = ULightTreeItem::ELoadingResult::MultipleErrors;
             }
 
-            TreeRootItems.Add(Item);
+            TransactionalVariables->RootItems.Add(Item);
         }
         Tree->RequestTreeRefresh();
 
-        for (auto TreeItem : TreeRootItems)
+        for (auto TreeItem : TransactionalVariables->RootItems)
         {
             Cast<ULightTreeItem>(TreeItem)->ExpandInTree();
         }
