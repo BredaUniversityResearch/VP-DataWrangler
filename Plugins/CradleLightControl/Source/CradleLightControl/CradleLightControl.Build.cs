@@ -48,7 +48,10 @@ public class CradleLightControl : ModuleRules
 				"AppFramework",
 				"Json",
 				"EditorStyle",
-				"DesktopPlatform"
+				"DesktopPlatform",
+                "DMXProtocol",
+                "DMXProtocolEditor",
+                "DMXRuntime",
 
 				// ... add private dependencies that you statically link with here ...	
 			}

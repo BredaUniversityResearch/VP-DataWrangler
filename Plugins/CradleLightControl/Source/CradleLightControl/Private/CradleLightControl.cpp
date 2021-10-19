@@ -22,14 +22,11 @@ void FCradleLightControlModule::StartupModule()
 
 	auto& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
 
-	TabShenanigans();
 	CommandList = MakeShareable(new FUICommandList);
 	TSharedRef<FExtender> MenuExtender(new FExtender());
 	MenuExtender->AddMenuExtension("EditMain", EExtensionHook::After, CommandList, FMenuExtensionDelegate::CreateLambda(
 	[](FMenuBuilder& MenuBuilder)
 	{
-			GEngine->AddOnScreenDebugMessage(-1, 300.0f, FColor::Black, "Menu Extension lel");
-
 			//auto CommandInfo = MakeShareable(new FUICommandInfo());
 			//MenuBuilder.AddMenuEntry(CommandInfo);
 	}));
@@ -39,19 +36,19 @@ void FCradleLightControlModule::StartupModule()
 	ToolbarExtender->AddToolBarExtension("Settings", EExtensionHook::After, CommandList, FToolBarExtensionDelegate::CreateLambda(
 		[this](FToolBarBuilder& MenuBuilder)
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 300.0f, FColor::Black, "Toolbar Extension lel");
-
 			//auto Action = MakeShared<FUIAction>();
 			//TSharedPtr<FUIAction> Action = MakeShareable(new FUIAction);
 			FUIAction Action;
 			Action.ExecuteAction = FExecuteAction::CreateLambda([this]()
 				{
+					RegisterTabSpawner();
 
-					FGlobalTabmanager::Get()->InvokeTab(FTabId("LightControl"));
-				   
+					FGlobalTabmanager::Get()->TryInvokeTab(FTabId("LightControl"));
 
+
+					FGlobalTabmanager::Get()->UnregisterNomadTabSpawner("LightControl");
 				});
-			MenuBuilder.AddToolBarButton(Action);
+			MenuBuilder.AddToolBarButton(Action, NAME_None, FText::FromString("Cradle Light Control"));
 		}));
 
 
@@ -74,7 +71,7 @@ void FCradleLightControlModule::ShutdownModule()
 	// we call this function before unloading the module.
 }
 
-void FCradleLightControlModule::TabShenanigans()
+void FCradleLightControlModule::RegisterTabSpawner()
 {
 	FGlobalTabmanager::Get()->RegisterNomadTabSpawner("LightControl", FOnSpawnTab::CreateLambda([this](const FSpawnTabArgs& Args)
 		{
@@ -84,6 +81,7 @@ void FCradleLightControlModule::TabShenanigans()
 				.OnTabClosed_Lambda([this](TSharedRef<SDockTab>)
 					{
 						LightControl->PreDestroy();
+						LightControl.Reset();
 					});
 
 		    Tab->SetContent(

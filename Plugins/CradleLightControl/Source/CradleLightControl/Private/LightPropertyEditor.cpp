@@ -449,7 +449,7 @@ void SLightPropertyEditor::EndTransaction()
 void SLightPropertyEditor::OnIntensityValueChanged(float Value)
 {
     if (TreeWidget.IsValid())
-        for (auto SelectedItem : TreeWidget.Pin()->LightsUnderSelection)
+        for (auto SelectedItem : TreeWidget.Pin()->TransactionalVariables->LightsUnderSelection)
         {
             SelectedItem->BeginTransaction();
             SelectedItem->Intensity = 0.0f;
@@ -470,7 +470,7 @@ FText SLightPropertyEditor::GetIntensityValueText() const
     FString Res = "0";
     if (TreeWidget.IsValid() && CoreToolPtr->IsAMasterLightSelected())
     {
-        auto Light = TreeWidget.Pin()->SelectionMasterLight;
+        auto Light = TreeWidget.Pin()->TransactionalVariables->SelectionMasterLight;
         if (Light->Type == ETreeItemType::PointLight ||
             Light->Type == ETreeItemType::SpotLight)
         {
@@ -486,7 +486,7 @@ float SLightPropertyEditor::GetIntensityValue() const
 {
     if (TreeWidget.IsValid() && CoreToolPtr->IsAMasterLightSelected())
     {
-        return TreeWidget.Pin()->SelectionMasterLight->Intensity / 2010.619f;
+        return TreeWidget.Pin()->TransactionalVariables->SelectionMasterLight->Intensity / 2010.619f;
     }
     return 0;
 }
@@ -496,7 +496,7 @@ FText SLightPropertyEditor::GetIntensityPercentage() const
     FString Res = "0%";
     if (TreeWidget.IsValid() && CoreToolPtr->IsAMasterLightSelected())
     {
-        Res = FString::FormatAsNumber(TreeWidget.Pin()->SelectionMasterLight->Intensity / 20.10619f) + "%";
+        Res = FString::FormatAsNumber(TreeWidget.Pin()->TransactionalVariables->SelectionMasterLight->Intensity / 20.10619f) + "%";
     }
     return FText::FromString(Res);
 }
@@ -506,7 +506,7 @@ void SLightPropertyEditor::OnHueValueChanged(float Value)
     if (TreeWidget.IsValid())
     {
         //GEditor->BeginTransaction(FText::FromString("Hue changed"));
-            for (auto SelectedItem : TreeWidget.Pin()->LightsUnderSelection)
+            for (auto SelectedItem : TreeWidget.Pin()->TransactionalVariables->LightsUnderSelection)
             {
                 SelectedItem->BeginTransaction();
                 SelectedItem->Hue = Value * 360.0f;
@@ -528,7 +528,7 @@ FText SLightPropertyEditor::GetHueValueText() const
     FString Res = "0";
     if (TreeWidget.IsValid() && CoreToolPtr->IsAMasterLightSelected())
     {
-        Res = FString::FormatAsNumber(TreeWidget.Pin()->SelectionMasterLight->Hue);
+        Res = FString::FormatAsNumber(TreeWidget.Pin()->TransactionalVariables->SelectionMasterLight->Hue);
     }
     return FText::FromString(Res);
 }
@@ -537,7 +537,7 @@ float SLightPropertyEditor::GetHueValue() const
 {
     if (TreeWidget.IsValid() && CoreToolPtr->IsAMasterLightSelected())
     {
-        return TreeWidget.Pin()->SelectionMasterLight->Hue / 360.0f;
+        return TreeWidget.Pin()->TransactionalVariables->SelectionMasterLight->Hue / 360.0f;
     }
     return 0;
 }
@@ -547,7 +547,7 @@ FText SLightPropertyEditor::GetHuePercentage() const
     FString Res = "0%";
     if (TreeWidget.IsValid() && CoreToolPtr->IsAMasterLightSelected())
     {
-        Res = FString::FormatAsNumber(TreeWidget.Pin()->SelectionMasterLight->Hue / 3.6f) + "%";
+        Res = FString::FormatAsNumber(TreeWidget.Pin()->TransactionalVariables->SelectionMasterLight->Hue / 3.6f) + "%";
     }
     return FText::FromString(Res);
 }
@@ -555,7 +555,7 @@ FText SLightPropertyEditor::GetHuePercentage() const
 void SLightPropertyEditor::OnSaturationValueChanged(float Value)
 {
     if (TreeWidget.IsValid())
-        for (auto SelectedItem : TreeWidget.Pin()->LightsUnderSelection)
+        for (auto SelectedItem : TreeWidget.Pin()->TransactionalVariables->LightsUnderSelection)
         {
             SelectedItem->BeginTransaction();
             SelectedItem->Saturation = Value;
@@ -575,7 +575,7 @@ FText SLightPropertyEditor::GetSaturationValueText() const
     FString Res = "0%";
     if (TreeWidget.IsValid() && CoreToolPtr->IsAMasterLightSelected())
     {
-        Res = FString::FormatAsNumber(TreeWidget.Pin()->SelectionMasterLight->Saturation * 100.0f) + "%";
+        Res = FString::FormatAsNumber(TreeWidget.Pin()->TransactionalVariables->SelectionMasterLight->Saturation * 100.0f) + "%";
     }
     return FText::FromString(Res);
 }
@@ -584,7 +584,7 @@ float SLightPropertyEditor::GetSaturationValue() const
 {
     if (TreeWidget.IsValid() && CoreToolPtr->IsAMasterLightSelected())
     {
-        return TreeWidget.Pin()->SelectionMasterLight->Saturation;
+        return TreeWidget.Pin()->TransactionalVariables->SelectionMasterLight->Saturation;
     }
     return 0.0f;
 }
@@ -592,7 +592,7 @@ float SLightPropertyEditor::GetSaturationValue() const
 void SLightPropertyEditor::OnTemperatureValueChanged(float Value)
 {
     if (TreeWidget.IsValid())
-        for (auto SelectedItem : TreeWidget.Pin()->LightsUnderSelection)
+        for (auto SelectedItem : TreeWidget.Pin()->TransactionalVariables->LightsUnderSelection)
         {
             SelectedItem->BeginTransaction();
             SelectedItem->SetTemperature(Value * (12000.0f - 1700.0f) + 1700.0f);
@@ -610,7 +610,7 @@ bool SLightPropertyEditor::TemperatureEnabled() const
 {
     if (TreeWidget.IsValid())
     {
-        auto MasterLight = TreeWidget.Pin()->SelectionMasterLight;
+        auto MasterLight = TreeWidget.Pin()->TransactionalVariables->SelectionMasterLight;
         return MasterLight && MasterLight->Type != ETreeItemType::SkyLight;
     }
     return false;
@@ -623,7 +623,7 @@ void SLightPropertyEditor::OnTemperatureCheckboxChecked(ECheckBoxState NewState)
         auto MasterLight = CoreToolPtr->GetMasterLight();
         if (MasterLight)
             GEditor->BeginTransaction(FText::FromString(MasterLight->Name + " Use Temperature"));
-        for (auto SelectedItem : TreeWidget.Pin()->LightsUnderSelection)
+        for (auto SelectedItem : TreeWidget.Pin()->TransactionalVariables->LightsUnderSelection)
         {
             SelectedItem->BeginTransaction();
             SelectedItem->SetUseTemperature(NewState == ECheckBoxState::Checked);
@@ -638,7 +638,7 @@ FText SLightPropertyEditor::GetTemperatureValueText() const
     FString Res = "0";
     if (TreeWidget.IsValid() && CoreToolPtr->IsAMasterLightSelected())
     {
-        Res = FString::FormatAsNumber(TreeWidget.Pin()->SelectionMasterLight->Temperature) + " Kelvin";
+        Res = FString::FormatAsNumber(TreeWidget.Pin()->TransactionalVariables->SelectionMasterLight->Temperature) + " Kelvin";
     }
     return FText::FromString(Res);
 }
@@ -648,7 +648,7 @@ ECheckBoxState SLightPropertyEditor::GetTemperatureCheckboxChecked() const
     ECheckBoxState State = ECheckBoxState::Unchecked;
     if (TreeWidget.IsValid() && CoreToolPtr->IsAMasterLightSelected())
     {
-        State = TreeWidget.Pin()->SelectionMasterLight->bUseTemperature ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
+        State = TreeWidget.Pin()->TransactionalVariables->SelectionMasterLight->bUseTemperature ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
     }
     return State;
 }
@@ -657,7 +657,7 @@ float SLightPropertyEditor::GetTemperatureValue() const
 {
     if (TreeWidget.IsValid() && CoreToolPtr->IsAMasterLightSelected())
     {
-        return (TreeWidget.Pin()->SelectionMasterLight->Temperature - 1700.0f) / (12000.0f - 1700.0f);
+        return (TreeWidget.Pin()->TransactionalVariables->SelectionMasterLight->Temperature - 1700.0f) / (12000.0f - 1700.0f);
     }
     return 0;
 }
@@ -667,7 +667,7 @@ FText SLightPropertyEditor::GetTemperaturePercentage() const
     FString Res = "0%";
     if (TreeWidget.IsValid() && CoreToolPtr->IsAMasterLightSelected())
     {
-        auto Norm = (TreeWidget.Pin()->SelectionMasterLight->Temperature - 1700.0f) / (12000.0f - 1700.0f);
+        auto Norm = (TreeWidget.Pin()->TransactionalVariables->SelectionMasterLight->Temperature - 1700.0f) / (12000.0f - 1700.0f);
         Res = FString::FormatAsNumber(Norm * 100.0f) + "%";
     }
     return FText::FromString(Res);

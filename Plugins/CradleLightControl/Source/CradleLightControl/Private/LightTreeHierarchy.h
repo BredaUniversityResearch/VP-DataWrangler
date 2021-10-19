@@ -18,6 +18,17 @@ enum ETreeItemType
     PointLight,    
     Invalid
 };
+
+//USTRUCT()
+//struct FDMXProperties
+//{
+//    GENERATED_BODY()
+//
+//    int StartingChannel;
+//    
+//
+//};
+
 UCLASS()
 class ULightTreeItem : public UObject
 {
@@ -56,6 +67,7 @@ public:
 
     ELoadingResult LoadFromJson(TSharedPtr<FJsonObject> JsonObject);
     void ExpandInTree();
+    FReply RemoveFromTree();
 
     void FetchDataFromLight();
     void UpdateLightColor();
@@ -169,8 +181,36 @@ public:
 
     UPROPERTY()
     TArray<ULightTreeItem*> RootItems;
+
+
+    UPROPERTY()
+        TArray<ULightTreeItem*> ListOfTreeItems;
+
+
+    UPROPERTY()
+    TArray<ULightTreeItem*> SelectedItems;
+
+    UPROPERTY()
+        TArray<ULightTreeItem*> LightsUnderSelection;
+    UPROPERTY()
+        ULightTreeItem* SelectionMasterLight;
+
+    UPROPERTY()
+        TArray<ULightTreeItem*> ListOfLightItems;
 };
 
+USTRUCT()
+struct FTreeTransactionVarialblesHandle
+{
+    GENERATED_BODY()
+public:
+    UTreeTransactionalVariables* operator->() const { return Ptr; }
+    UTreeTransactionalVariables* operator*() const { return Ptr; }
+
+    
+    UPROPERTY()
+        UTreeTransactionalVariables* Ptr;
+};
 
 class SLightTreeHierarchy : public SCompoundWidget
 {
@@ -229,19 +269,11 @@ public:
 
     TSharedPtr<STreeView<ULightTreeItem*>> Tree;
 
-    UPROPERTY()
-        UTreeTransactionalVariables* TransactionalVariables;
+    UTreeTransactionalVariables* TransactionalVariables;
 
     //UPROPERTY()
     //TArray<ULightTreeItem*> TreeRootItems;
 
-    TArray<ULightTreeItem*> SelectedItems;
-    TArray<ULightTreeItem*> LightsUnderSelection;
-    ULightTreeItem* SelectionMasterLight;
-
-    UPROPERTY()
-    TArray<ULightTreeItem*> ListOfTreeItems;
-    TArray<ULightTreeItem*> ListOfLightItems;
 
     TSharedPtr<FActiveTimerHandle> LightVerificationTimer;
     TSharedPtr<FActiveTimerHandle> AutoSaveTimer;

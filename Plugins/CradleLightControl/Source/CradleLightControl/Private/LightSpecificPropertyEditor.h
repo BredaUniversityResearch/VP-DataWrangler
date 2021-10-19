@@ -2,6 +2,8 @@
 
 #include "Slate.h"
 
+#include "LightControlDMX.h"
+
 class SLightSpecificProperties : public SCompoundWidget
 {
 public:
@@ -56,6 +58,8 @@ private:
 
 
     SLightControlTool* CoreToolPtr;
+
+    TSharedPtr<SLightControlDMX> PortSelectorTest;
 
     TSharedPtr<SBox> ToolSlot;
 

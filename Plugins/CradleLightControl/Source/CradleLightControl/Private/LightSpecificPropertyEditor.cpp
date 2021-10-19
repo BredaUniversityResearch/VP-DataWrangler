@@ -46,14 +46,19 @@ void SLightSpecificProperties::UpdateToolState()
 
 void SLightSpecificProperties::ClearSlot()
 {
-    ToolSlot->SetVisibility(EVisibility::Hidden);
-    ToolSlot->SetContent(SNew(SBox));
+    //ToolSlot->SetVisibility(EVisibility::Hidden);
+
+    ToolSlot->SetContent(
+        //SNew(SBox)
+        SAssignNew(PortSelectorTest, SLightControlDMX)
+        .CoreToolPtr(CoreToolPtr)
+    );
 }
 
 void SLightSpecificProperties::OnCastShadowsStateChanged(ECheckBoxState NewState)
 {
     GEditor->BeginTransaction(FText::FromString(CoreToolPtr->GetMasterLight()->Name + " Cast Shadows"));
-    for (auto Light : CoreToolPtr->GetTreeWidget().Pin()->LightsUnderSelection)
+    for (auto Light : CoreToolPtr->GetTreeWidget().Pin()->TransactionalVariables->LightsUnderSelection)
     {
         Light->BeginTransaction();
         Light->SetCastShadows(NewState == ECheckBoxState::Checked);
@@ -66,11 +71,11 @@ ECheckBoxState SLightSpecificProperties::CastShadowsState() const
     if (CoreToolPtr->IsAMasterLightSelected())
     {
         auto TreeWidget = CoreToolPtr->GetTreeWidget();
-        auto MasterLight = TreeWidget.Pin()->SelectionMasterLight;
+        auto MasterLight = TreeWidget.Pin()->TransactionalVariables->SelectionMasterLight;
 
         auto MasterLightCastShadows = MasterLight->bCastShadows;
         auto State = MasterLightCastShadows ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
-        for (auto Light : TreeWidget.Pin()->LightsUnderSelection)
+        for (auto Light : TreeWidget.Pin()->TransactionalVariables->LightsUnderSelection)
         {
             if (Light->bCastShadows != MasterLightCastShadows)
             {
@@ -429,7 +434,7 @@ void SLightSpecificProperties::OnHorizontalValueChanged(float NormalizedValue)
     auto Light = CoreToolPtr->GetMasterLight();
     auto Delta = ((NormalizedValue - 0.5f) * 360.0f) - Light->Horizontal;
 
-    for (auto SelectedLight : CoreToolPtr->GetTreeWidget().Pin()->LightsUnderSelection)
+    for (auto SelectedLight : CoreToolPtr->GetTreeWidget().Pin()->TransactionalVariables->LightsUnderSelection)
     {
         SelectedLight->BeginTransaction();
         SelectedLight->AddHorizontal(Delta);
@@ -469,7 +474,7 @@ void SLightSpecificProperties::OnVerticalValueChanged(float NormalizedValue)
     auto Light = CoreToolPtr->GetMasterLight();
     auto Delta = ((NormalizedValue - 0.5f) * 360.0f) - Light->Vertical;
 
-    for (auto SelectedLight : CoreToolPtr->GetTreeWidget().Pin()->LightsUnderSelection)
+    for (auto SelectedLight : CoreToolPtr->GetTreeWidget().Pin()->TransactionalVariables->LightsUnderSelection)
     {
         SelectedLight->BeginTransaction();
         SelectedLight->AddVertical(Delta);
@@ -511,7 +516,7 @@ void SLightSpecificProperties::OnInnerAngleValueChanged(float NormalizedValue)
     auto Light = CoreToolPtr->GetMasterLight();
     auto Angle = NormalizedValue * 80.0f;
 
-    for (auto SelectedLight : CoreToolPtr->GetTreeWidget().Pin()->LightsUnderSelection)
+    for (auto SelectedLight : CoreToolPtr->GetTreeWidget().Pin()->TransactionalVariables->LightsUnderSelection)
     {
         SelectedLight->BeginTransaction();
         SelectedLight->SetInnerConeAngle(Angle);
@@ -528,7 +533,7 @@ void SLightSpecificProperties::OnInnerAngleLockedStateChanged(ECheckBoxState New
     if (CoreToolPtr->GetTreeWidget().IsValid())
     {
         GEditor->BeginTransaction(FText::FromString(CoreToolPtr->GetMasterLight()->Name + " Inner Angle Lock"));
-        for (auto Light : CoreToolPtr->GetTreeWidget().Pin()->LightsUnderSelection)
+        for (auto Light : CoreToolPtr->GetTreeWidget().Pin()->TransactionalVariables->LightsUnderSelection)
         {
             Light->BeginTransaction(false);
             Light->bLockInnerAngleToOuterAngle = NewState == ECheckBoxState::Checked;
@@ -575,7 +580,7 @@ void SLightSpecificProperties::OnOuterAngleValueChanged(float NormalizedValue)
 {
     auto Light = CoreToolPtr->GetMasterLight();
     auto Angle = NormalizedValue * 80.0f;
-    for (auto SelectedLight : CoreToolPtr->GetTreeWidget().Pin()->LightsUnderSelection)
+    for (auto SelectedLight : CoreToolPtr->GetTreeWidget().Pin()->TransactionalVariables->LightsUnderSelection)
     {
         SelectedLight->SetOuterConeAngle(Angle);
         SelectedLight->BeginTransaction();

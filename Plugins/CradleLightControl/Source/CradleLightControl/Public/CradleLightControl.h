@@ -16,7 +16,7 @@ public:
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
 
-	void TabShenanigans();
+	void RegisterTabSpawner();
 
 	TSharedPtr<FUICommandList> CommandList;
 

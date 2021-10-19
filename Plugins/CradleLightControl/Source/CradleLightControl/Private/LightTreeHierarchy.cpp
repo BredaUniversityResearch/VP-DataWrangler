@@ -186,12 +186,21 @@ void ULightTreeItem::GenerateTableRow()
     else
     {
         SHorizontalBox::FSlot* FolderImageSlot;
+        SHorizontalBox::FSlot* CloseButtonSlot;
         TableRowBox->SetContent(
             SNew(SHorizontalBox)
             +SHorizontalBox::Slot() // Name slot
             .VAlign(VAlign_Center)
             [
                 SAssignNew(RowNameBox, SBox)
+            ]
+            +SHorizontalBox::Slot()
+            .Expose(CloseButtonSlot)
+            .HAlign(HAlign_Right)
+            [
+                SNew(SButton)
+                .Text(FText::FromString("Delete"))
+                .OnClicked_UObject(this, &ULightTreeItem::RemoveFromTree)
             ]
             +SHorizontalBox::Slot() // On/Off toggle button
             .Expose(CheckBoxSlot)
@@ -226,6 +235,7 @@ void ULightTreeItem::GenerateTableRow()
         UpdateFolderIcon();
 
         FolderImageSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
+        CloseButtonSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
     }
     CheckBoxSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
 
@@ -376,7 +386,7 @@ void ULightTreeItem::PostTransacted(const FTransactionObjectEvent& TransactionEv
     if (TransactionEvent.GetEventType() == ETransactionObjectEventType::UndoRedo)
     {
         if (Type != Folder)
-            OwningWidget->CoreToolPtr->GetLightPropertyEditor().Pin()->UpdateSaturationGradient(OwningWidget->SelectionMasterLight->Hue);
+            OwningWidget->CoreToolPtr->GetLightPropertyEditor().Pin()->UpdateSaturationGradient(OwningWidget->TransactionalVariables->SelectionMasterLight->Hue);
         else
            OwningWidget->Tree->RequestTreeRefresh();
 
@@ -490,6 +500,39 @@ void ULightTreeItem::ExpandInTree()
     {
         Child->ExpandInTree();
     }
+}
+
+FReply ULightTreeItem::RemoveFromTree()
+{
+    GEditor->BeginTransaction(FText::FromString("Delete Light control folder"));
+    BeginTransaction();
+    if (Parent)
+    {
+        Parent->BeginTransaction();
+        for (auto Child : Children)
+        {
+            Child->BeginTransaction();
+            Child->Parent = Parent;
+            Parent->Children.Add(Child);
+
+        }
+        Parent->Children.Remove(this);
+    }
+    else
+    {
+        OwningWidget->BeginTransaction();
+        for (auto Child : Children)
+        {
+            Child->BeginTransaction();
+            Child->Parent = nullptr;
+            OwningWidget->TransactionalVariables->RootItems.Add(Child);
+        }
+        OwningWidget->TransactionalVariables->RootItems.Remove(this);
+    }
+    Children.Empty();
+    OwningWidget->Tree->RequestTreeRefresh();
+
+    return FReply::Handled();
 }
 
 void ULightTreeItem::FetchDataFromLight()
@@ -941,10 +984,11 @@ void SLightTreeHierarchy::Construct(const FArguments& Args)
 {
     TransactionalVariables = NewObject<UTreeTransactionalVariables>();
     TransactionalVariables->Widget = SharedThis(this);
+    TransactionalVariables->AddToRoot();
 
 
     LightVerificationTimer = RegisterActiveTimer(0.5f, FWidgetActiveTimerDelegate::CreateRaw(this, &SLightTreeHierarchy::VerifyLights));
-    AutoSaveTimer = RegisterActiveTimer(300.0f, FWidgetActiveTimerDelegate::CreateRaw(this, &SLightTreeHierarchy::AutoSave)); // once every 5 minutes
+    AutoSaveTimer = RegisterActiveTimer(30.0f, FWidgetActiveTimerDelegate::CreateRaw(this, &SLightTreeHierarchy::AutoSave)); // once every 5 minutes
 
     SaveIcon = FSlateIconFinder::FindIcon("AssetEditor.SaveAsset");
     SaveAsIcon = FSlateIconFinder::FindIcon("AssetEditor.SaveAssetAs");
@@ -1097,10 +1141,11 @@ void SLightTreeHierarchy::Construct(const FArguments& Args)
 
 void SLightTreeHierarchy::PreDestroy()
 {
-    UnRegisterActiveTimer(LightVerificationTimer.ToSharedRef());
-    UnRegisterActiveTimer(AutoSaveTimer.ToSharedRef());
     AutoSave(0.0, 0.0f);
     SaveMetaData();
+    UnRegisterActiveTimer(LightVerificationTimer.ToSharedRef());
+    UnRegisterActiveTimer(AutoSaveTimer.ToSharedRef());
+    TransactionalVariables->RemoveFromRoot();
 }
 
 void SLightTreeHierarchy::OnActorSpawned(AActor* Actor)
@@ -1193,6 +1238,9 @@ void SLightTreeHierarchy::GetChildren(ULightTreeItem* Item, TArray<ULightTreeIte
 void SLightTreeHierarchy::SelectionCallback(ULightTreeItem* Item, ESelectInfo::Type SelectType)
 {
     auto Objects = Tree->GetSelectedItems();
+    auto SelectedItems = TransactionalVariables->SelectedItems;
+    auto LightsUnderSelection = TransactionalVariables->LightsUnderSelection;
+    auto SelectionMasterLight = TransactionalVariables->SelectionMasterLight;
     SelectedItems.Empty();
 
     for (auto Object : Objects)
@@ -1244,7 +1292,7 @@ ULightTreeItem* SLightTreeHierarchy::AddTreeItem(bool bIsFolder)
     Item->OwningWidget = this;
     Item->Parent = nullptr;
 
-    ListOfTreeItems.Add(Item);
+    TransactionalVariables->ListOfTreeItems.Add(Item);
 
     //TreeRootItems.Add(Item);
     if (bIsFolder)
@@ -1252,7 +1300,7 @@ ULightTreeItem* SLightTreeHierarchy::AddTreeItem(bool bIsFolder)
         Item->Type = Folder;
     }
     else // Do this so that only actual lights which might be deleted in the editor are checked for validity
-        ListOfLightItems.Add(Item);
+        TransactionalVariables->ListOfLightItems.Add(Item);
 
     return Item;
 }
@@ -1263,7 +1311,7 @@ EActiveTimerReturnType SLightTreeHierarchy::VerifyLights(double, float)
         return EActiveTimerReturnType::Continue;
     GEngine->AddOnScreenDebugMessage(-1, 0.5f, FColor::Blue, "Cleaning invalid lights");
     TArray<ULightTreeItem*> ToRemove;
-    for (auto Item : ListOfLightItems)
+    for (auto Item : TransactionalVariables->ListOfLightItems)
     {
         if (!Item->ActorPtr || !IsValid(Item->SkyLight))
         {
@@ -1283,8 +1331,8 @@ EActiveTimerReturnType SLightTreeHierarchy::VerifyLights(double, float)
 
     for (auto Item : ToRemove)
     {
-        ListOfTreeItems.Remove(Item);
-        ListOfLightItems.Remove(Item);
+        TransactionalVariables->ListOfTreeItems.Remove(Item);
+        TransactionalVariables->ListOfLightItems.Remove(Item);
     }
 
     if (ToRemove.Num())
@@ -1413,11 +1461,13 @@ void SLightTreeHierarchy::SaveStateToJson(FString Path, bool bUpdatePresetPath)
 {
     TArray<TSharedPtr<FJsonValue>> TreeItemsJSON;
 
-    for (auto TreeItem : TransactionalVariables->RootItems)
+    if (IsValid(TransactionalVariables))
     {
-        TreeItemsJSON.Add(Cast<ULightTreeItem>(TreeItem)->SaveToJson());
+        for (auto TreeItem : TransactionalVariables->RootItems)
+        {
+            TreeItemsJSON.Add(TreeItem->SaveToJson());
+        }
     }
-
     TSharedPtr<FJsonObject> RootObject = MakeShared<FJsonObject>();
 
     RootObject->SetArrayField("TreeElements", TreeItemsJSON);
@@ -1456,7 +1506,8 @@ void SLightTreeHierarchy::LoadStateFromJSON(FString Path, bool bUpdatePresetPath
             ToolPresetPath = Path;
         UE_LOG(LogTemp, Display, TEXT("Beginning light control tool state loading from %s"), *Path);
         TransactionalVariables->RootItems.Empty();
-        ListOfLightItems.Empty();
+        TransactionalVariables->ListOfTreeItems.Empty();
+        TransactionalVariables->ListOfLightItems.Empty();
         TSharedPtr<FJsonObject> JsonRoot;
         TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(Input);
         FJsonSerializer::Deserialize(JsonReader, JsonRoot);

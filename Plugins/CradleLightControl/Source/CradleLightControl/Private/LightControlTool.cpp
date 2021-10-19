@@ -108,7 +108,7 @@ void SLightControlTool::OnTreeSelectionChanged()
 {
     if (IsAMasterLightSelected())
     {
-        LightPropertyWidget->UpdateSaturationGradient(TreeWidget->SelectionMasterLight->Hue);
+        LightPropertyWidget->UpdateSaturationGradient(TreeWidget->TransactionalVariables->SelectionMasterLight->Hue);
         UpdateExtraLightDetailBox();
         UpdateLightHeader();
         LightSpecificWidget->UpdateToolState();
@@ -165,7 +165,10 @@ FSlateBrush& SLightControlTool::GetIcon(EIconType Icon)
 void SLightControlTool::LoadResources()
 {
     GenerateIcons();
+    
 }
+
+//#include ""
 
 void SLightControlTool::GenerateIcons()
 {
@@ -237,13 +240,13 @@ void SLightControlTool::UpdateLightHeader()
         TEnumAsByte<ETreeItemType> IconType;
         if (IsSingleGroupSelected())
         {
-            IconType = TreeWidget->SelectedItems[0]->Type;
+            IconType = TreeWidget->TransactionalVariables->SelectedItems[0]->Type;
         }
         else
         {
-            IconType = TreeWidget->SelectionMasterLight->Type;                        
+            IconType = TreeWidget->TransactionalVariables->SelectionMasterLight->Type;
         }
-        for (auto Light : TreeWidget->LightsUnderSelection)
+        for (auto Light : TreeWidget->TransactionalVariables->LightsUnderSelection)
         {
             if (IconType != Light->Type)
             {
@@ -323,7 +326,7 @@ void SLightControlTool::OnLightHeaderCheckStateChanged(ECheckBoxState NewState)
 {
     if (IsAMasterLightSelected())
     {
-        for (auto Light : TreeWidget->LightsUnderSelection)
+        for (auto Light : TreeWidget->TransactionalVariables->LightsUnderSelection)
         {
             Light->OnCheck(NewState); // Use the callback used by the tree to modify the state
         }
@@ -335,19 +338,19 @@ ECheckBoxState SLightControlTool::GetLightHeaderCheckState() const
 {
     if (IsAMasterLightSelected())
     {
-        return TreeWidget->SelectionMasterLight->IsLightEnabled();
+        return TreeWidget->TransactionalVariables->SelectionMasterLight->IsLightEnabled();
     }
     return ECheckBoxState::Undetermined;
 }
 
 FText SLightControlTool::LightHeaderExtraLightsText() const
 {
-    if (TreeWidget->SelectedItems.Num() > 1)
+    if (TreeWidget->TransactionalVariables->SelectedItems.Num() > 1)
     {
         int GroupCount = 0;
         int LightCount = 0;
         int TotalLightCount = 0;
-        for (auto SelectedItem : TreeWidget->SelectedItems)
+        for (auto SelectedItem : TreeWidget->TransactionalVariables->SelectedItems)
         {
             if (SelectedItem->Type == Folder)
             {
@@ -559,28 +562,28 @@ bool SLightControlTool::IsAMasterLightSelected() const
 bool SLightControlTool::IsSingleGroupSelected() const
 {
     return TreeWidget && // Tree view exists
-        TreeWidget->SelectedItems.Num() == 1 && // There is a single item selected
-        TreeWidget->SelectedItems[0]->Type == Folder; // The selected item is a group
+        TreeWidget->TransactionalVariables->SelectedItems.Num() == 1 && // There is a single item selected
+        TreeWidget->TransactionalVariables->SelectedItems[0]->Type == Folder; // The selected item is a group
 }
 
 bool SLightControlTool::AreMultipleLightsSelected() const
 {
-    return TreeWidget != nullptr && TreeWidget->LightsUnderSelection.Num() > 1;
+    return TreeWidget != nullptr && TreeWidget->TransactionalVariables->LightsUnderSelection.Num() > 1;
 }
 
 ULightTreeItem* SLightControlTool::GetMasterLight() const
 {
-    if (!TreeWidget || !TreeWidget->SelectionMasterLight)
+    if (!TreeWidget || !TreeWidget->TransactionalVariables->SelectionMasterLight)
     {
         return nullptr;
     }
-    return TreeWidget->SelectionMasterLight;
+    return TreeWidget->TransactionalVariables->SelectionMasterLight;
 }
 
 ULightTreeItem* SLightControlTool::GetSingleSelectedItem() const
 {
     if (IsSingleGroupSelected())
-        return TreeWidget->SelectedItems[0];
+        return TreeWidget->TransactionalVariables->SelectedItems[0];
     else
         return GetMasterLight();
 }
@@ -589,10 +592,10 @@ void SLightControlTool::ClearSelection()
 {
     if (TreeWidget)
     {
-        TreeWidget->SelectedItems.Empty();
+        TreeWidget->TransactionalVariables->SelectedItems.Empty();
         TreeWidget->Tree->ClearSelection();
-        TreeWidget->SelectionMasterLight = nullptr;
-        TreeWidget->LightsUnderSelection.Empty();
+        TreeWidget->TransactionalVariables->SelectionMasterLight = nullptr;
+        TreeWidget->TransactionalVariables->LightsUnderSelection.Empty();
     }
     UpdateLightHeader();
     UpdateExtraLightDetailBox();
@@ -726,7 +729,7 @@ FReply SLightControlTool::SelectItemInScene()
     if (IsAMasterLightSelected())
     {
         GEditor->SelectNone(true, true);
-        GEditor->SelectActor(TreeWidget->SelectionMasterLight->ActorPtr, true, true, false, true);        
+        GEditor->SelectActor(TreeWidget->TransactionalVariables->SelectionMasterLight->ActorPtr, true, true, false, true);
     }
 
     return FReply::Handled();
@@ -735,21 +738,21 @@ FReply SLightControlTool::SelectItemInScene()
 FReply SLightControlTool::SelectItemParent()
 {
     GEditor->SelectNone(true, true);
-    GEditor->SelectActor(TreeWidget->SelectionMasterLight->ActorPtr->GetAttachParentActor(), true, true, false, true);
+    GEditor->SelectActor(TreeWidget->TransactionalVariables->SelectionMasterLight->ActorPtr->GetAttachParentActor(), true, true, false, true);
 
     return FReply::Handled();
 }
 
 bool SLightControlTool::SelectItemParentButtonEnable() const
 {
-    return IsAMasterLightSelected() && TreeWidget->SelectionMasterLight->ActorPtr->GetAttachParentActor();
+    return IsAMasterLightSelected() && TreeWidget->TransactionalVariables->SelectionMasterLight->ActorPtr->GetAttachParentActor();
 }
 
 FText SLightControlTool::GetItemParentName() const
 {
-    if (IsAMasterLightSelected() && TreeWidget->SelectionMasterLight->ActorPtr->GetAttachParentActor())
+    if (IsAMasterLightSelected() && TreeWidget->TransactionalVariables->SelectionMasterLight->ActorPtr->GetAttachParentActor())
     {
-        return FText::FromString(TreeWidget->SelectionMasterLight->ActorPtr->GetAttachParentActor()->GetName());
+        return FText::FromString(TreeWidget->TransactionalVariables->SelectionMasterLight->ActorPtr->GetAttachParentActor()->GetName());
     }
     return FText::FromString("None");
 }
@@ -758,7 +761,7 @@ FText SLightControlTool::GetItemPosition() const
 {
     if (IsAMasterLightSelected())
     {
-        return FText::FromString(TreeWidget->SelectionMasterLight->ActorPtr->GetActorLocation().ToString());
+        return FText::FromString(TreeWidget->TransactionalVariables->SelectionMasterLight->ActorPtr->GetActorLocation().ToString());
     }
     return FText::FromString("");
 }
@@ -767,7 +770,7 @@ FText SLightControlTool::GetItemRotation() const
 {
     if (IsAMasterLightSelected())
     {
-        return FText::FromString(TreeWidget->SelectionMasterLight->ActorPtr->GetActorRotation().ToString());
+        return FText::FromString(TreeWidget->TransactionalVariables->SelectionMasterLight->ActorPtr->GetActorRotation().ToString());
     }
     return FText::FromString("");
 }
@@ -776,7 +779,7 @@ FText SLightControlTool::GetItemScale() const
 {
     if (IsAMasterLightSelected())
     {
-        return FText::FromString(TreeWidget->SelectionMasterLight->ActorPtr->GetActorScale().ToString());
+        return FText::FromString(TreeWidget->TransactionalVariables->SelectionMasterLight->ActorPtr->GetActorScale().ToString());
     }
     return FText::FromString("");
 }
@@ -805,10 +808,10 @@ TSharedRef<SBox> SLightControlTool::GroupControls()
                 + SHorizontalBox::Slot()
                 [
                     SNew(SComboBox<ULightTreeItem*>)
-                    .OptionsSource(&TreeWidget->LightsUnderSelection)
+                    .OptionsSource(&TreeWidget->TransactionalVariables->LightsUnderSelection)
                     .OnGenerateWidget(this, &SLightControlTool::GroupControlDropDownLabel)
                     .OnSelectionChanged(this, &SLightControlTool::GroupControlDropDownSelection)
-                    .InitiallySelectedItem(TreeWidget->SelectionMasterLight)[
+                    .InitiallySelectedItem(TreeWidget->TransactionalVariables->SelectionMasterLight)[
                         SNew(STextBlock).Text(this, &SLightControlTool::GroupControlDropDownDefaultLabel)
                     ]
                 ]
@@ -848,26 +851,26 @@ TSharedRef<SWidget> SLightControlTool::GroupControlDropDownLabel(ULightTreeItem*
 
 void SLightControlTool::GroupControlDropDownSelection(ULightTreeItem* Item, ESelectInfo::Type SelectInfoType)
 {
-    TreeWidget->SelectionMasterLight = Item;
+    TreeWidget->TransactionalVariables->SelectionMasterLight = Item;
 }
 
 FText SLightControlTool::GroupControlDropDownDefaultLabel() const
 {
-    if (TreeWidget->SelectionMasterLight)
+    if (TreeWidget->TransactionalVariables->SelectionMasterLight)
     {
-        return FText::FromString(TreeWidget->SelectionMasterLight->Name);
+        return FText::FromString(TreeWidget->TransactionalVariables->SelectionMasterLight->Name);
     }
     return FText::FromString("");
 }
 
 FText SLightControlTool::GroupControlLightList() const
 {
-    FString LightList = TreeWidget->LightsUnderSelection[0]->Name;
+    FString LightList = TreeWidget->TransactionalVariables->LightsUnderSelection[0]->Name;
 
-    for (size_t i = 1; i < TreeWidget->LightsUnderSelection.Num(); i++)
+    for (size_t i = 1; i < TreeWidget->TransactionalVariables->LightsUnderSelection.Num(); i++)
     {
         LightList += ", ";
-        LightList += TreeWidget->LightsUnderSelection[i]->Name;
+        LightList += TreeWidget->TransactionalVariables->LightsUnderSelection[i]->Name;
     }
 
     return FText::FromString(LightList);
