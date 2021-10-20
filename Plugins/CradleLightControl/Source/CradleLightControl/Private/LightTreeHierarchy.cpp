@@ -20,9 +20,28 @@
 
 #include "LightControlTool.h"
 #include "Chaos/AABB.h"
-#include "Chaos/AABB.h"
+#include "IO/DMXOutputPort.h"
 
 #pragma region TreeItemStruct
+
+void FLightDMXNotifyHook::NotifyPostChange(const FPropertyChangedEvent& PropertyChangedEvent, FProperty* PropertyThatChanged)
+{
+    //GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Orange, "Nihuyase");
+
+    if (PropertiesRef->Conversion)
+    {
+        PropertiesRef->DataConverter = NewObject<ULightDataToDMXConversion>(PropertiesRef->Owner, PropertiesRef->Conversion);
+    }
+
+    if (PropertiesRef->DataConverter)
+        PropertiesRef->DataConverter->StartingChannel = PropertiesRef->StartingChannel;
+}
+
+void ULightDataToDMXConversion::SetChannel(int32 InChannel, uint8 InValue)
+{
+    Channels.FindOrAdd(InChannel + StartingChannel - 1) = InValue;
+}
+
 ULightTreeItem::ULightTreeItem(SLightTreeHierarchy* InOwningWidget, FString InName, TArray<ULightTreeItem*> InChildren)
     : Name(InName)
     , Children(InChildren)
@@ -40,6 +59,8 @@ ULightTreeItem::ULightTreeItem(SLightTreeHierarchy* InOwningWidget, FString InNa
     , OuterAngle(0.0f)
 {
     SetFlags(GetFlags() | EObjectFlags::RF_Transactional);
+    DMXProperties.Owner = this;
+    DMXProperties.StartingChannel = 1;
 }
 
 ECheckBoxState ULightTreeItem::IsLightEnabled() const
@@ -94,28 +115,9 @@ void ULightTreeItem::OnCheck(ECheckBoxState NewState)
         return;
 
     GEditor->BeginTransaction(FText::FromString(Name + " State change"));
-    BeginTransaction();
-    switch (Type)
-    {
-    case ETreeItemType::SkyLight:
-        SkyLight->GetLightComponent()->SetVisibility(B);
-        break;
-    case ETreeItemType::SpotLight:
-        SpotLight->GetLightComponent()->SetVisibility(B);
-        break;
-    case ETreeItemType::DirectionalLight:
-        DirectionalLight->GetLightComponent()->SetVisibility(B);
-        break;
-    case ETreeItemType::PointLight:
-        PointLight->GetLightComponent()->SetVisibility(B);
-        break;
-    case ETreeItemType::Folder:
-        for (auto& Child : Children)
-        {
-            Child->OnCheck(NewState);
-        }
-        break;
-    }
+
+    SetEnabled(B);
+
     GEditor->EndTransaction();
 }
 
@@ -447,7 +449,7 @@ ULightTreeItem::ELoadingResult ULightTreeItem::LoadFromJson(TSharedPtr<FJsonObje
 
         auto State = JsonObject->GetBoolField("State");
 
-        OnCheck(State == 0 ? ECheckBoxState::Unchecked : ECheckBoxState::Checked);
+        SetEnabled(State);
 
         SetLightIntensity(JsonObject->GetNumberField("Intensity"));
         Hue = JsonObject->GetNumberField("Hue");
@@ -529,6 +531,7 @@ FReply ULightTreeItem::RemoveFromTree()
         }
         OwningWidget->TransactionalVariables->RootItems.Remove(this);
     }
+    GEditor->EndTransaction();
     Children.Empty();
     OwningWidget->Tree->RequestTreeRefresh();
 
@@ -605,6 +608,7 @@ void ULightTreeItem::FetchDataFromLight()
         InnerAngle = SpotLight->SpotLightComponent->InnerConeAngle;
         OuterAngle = SpotLight->SpotLightComponent->OuterConeAngle;
     }
+    UpdateDMX();
 }
 
 void ULightTreeItem::UpdateLightColor()
@@ -625,6 +629,34 @@ void ULightTreeItem::UpdateLightColor(FLinearColor& Color)
         auto LightPtr = Cast<ALight>(PointLight);
         LightPtr->SetLightColor(Color);
         LightPtr->GetLightComponent()->UpdateLightSpriteTexture();
+    }
+    UpdateDMX();
+}
+
+void ULightTreeItem::SetEnabled(bool bNewState)
+{
+    bIsEnabled = bNewState;
+    BeginTransaction();
+    switch (Type)
+    {
+    case ETreeItemType::SkyLight:
+        SkyLight->GetLightComponent()->SetVisibility(bNewState);
+        break;
+    case ETreeItemType::SpotLight:
+        SpotLight->GetLightComponent()->SetVisibility(bNewState);
+        break;
+    case ETreeItemType::DirectionalLight:
+        DirectionalLight->GetLightComponent()->SetVisibility(bNewState);
+        break;
+    case ETreeItemType::PointLight:
+        PointLight->GetLightComponent()->SetVisibility(bNewState);
+        break;
+    case ETreeItemType::Folder:
+        for (auto& Child : Children)
+        {
+            Child->SetEnabled(bNewState);
+        }
+        break;
     }
 }
 
@@ -653,6 +685,7 @@ void ULightTreeItem::SetLightIntensity(float NewValue)
 
         }
     }
+    UpdateDMX();
 }
 
 void ULightTreeItem::SetUseTemperature(bool NewState)
@@ -663,6 +696,8 @@ void ULightTreeItem::SetUseTemperature(bool NewState)
         auto LightPtr = Cast<ALight>(ActorPtr);
         LightPtr->GetLightComponent()->SetUseTemperature(NewState);                
     }
+    UpdateDMX();
+
 }
 
 void ULightTreeItem::SetTemperature(float NewValue)
@@ -673,6 +708,7 @@ void ULightTreeItem::SetTemperature(float NewValue)
         auto LightPtr = Cast<ALight>(ActorPtr);
         LightPtr->GetLightComponent()->SetTemperature(Temperature);
     }
+    UpdateDMX();
 }
 
 void ULightTreeItem::SetCastShadows(bool bState)
@@ -693,6 +729,20 @@ void ULightTreeItem::SetCastShadows(bool bState)
     }
 }
 
+void ULightTreeItem::UpdateDMX()
+{
+    if (DMXProperties.bUseDmx && DMXProperties.OutputPort && DMXProperties.DataConverter)
+    {
+        DMXProperties.DataConverter->Channels.Empty();
+        DMXProperties.DataConverter->Convert(this);
+
+        //auto& Channels = DMXProperties.Channels;
+        //auto Start = DMXProperties.StartingChannel;
+
+        DMXProperties.OutputPort->SendDMX(1, DMXProperties.DataConverter->Channels);
+    }
+}
+
 void ULightTreeItem::AddHorizontal(float Degrees)
 {    
     auto Euler = ActorPtr->GetActorRotation().Euler();
@@ -703,6 +753,7 @@ void ULightTreeItem::AddHorizontal(float Degrees)
 
     Horizontal += Degrees;
     Horizontal = FMath::Fmod(Horizontal + 180.0f, 360.0001f) - 180.0f;
+    UpdateDMX();
 }
 
 void ULightTreeItem::AddVertical(float Degrees)
@@ -714,6 +765,7 @@ void ULightTreeItem::AddVertical(float Degrees)
 
     Vertical += Degrees;
     Vertical = FMath::Fmod(Vertical + 180.0f, 360.0001f) - 180.0f;
+    UpdateDMX();
 }
 
 void ULightTreeItem::SetInnerConeAngle(float NewValue)
@@ -1238,9 +1290,9 @@ void SLightTreeHierarchy::GetChildren(ULightTreeItem* Item, TArray<ULightTreeIte
 void SLightTreeHierarchy::SelectionCallback(ULightTreeItem* Item, ESelectInfo::Type SelectType)
 {
     auto Objects = Tree->GetSelectedItems();
-    auto SelectedItems = TransactionalVariables->SelectedItems;
-    auto LightsUnderSelection = TransactionalVariables->LightsUnderSelection;
-    auto SelectionMasterLight = TransactionalVariables->SelectionMasterLight;
+    auto& SelectedItems = TransactionalVariables->SelectedItems;
+    auto& LightsUnderSelection = TransactionalVariables->LightsUnderSelection;
+    auto& SelectionMasterLight = TransactionalVariables->SelectionMasterLight;
     SelectedItems.Empty();
 
     for (auto Object : Objects)
@@ -1260,6 +1312,7 @@ void SLightTreeHierarchy::SelectionCallback(ULightTreeItem* Item, ESelectInfo::T
         {
             if (SelectionMasterLight == nullptr || !LightsUnderSelection.Find(SelectionMasterLight, Index))
             {
+                //GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, "Selection");
                 SelectionMasterLight = LightsUnderSelection[0];
             }
         }

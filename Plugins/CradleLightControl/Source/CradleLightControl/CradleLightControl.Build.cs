@@ -10,7 +10,9 @@ public class CradleLightControl : ModuleRules
 		
 		PublicIncludePaths.AddRange(
 			new string[] {
-				"Editor/Blutility/Classes/"
+				"Editor/Blutility/Classes/",
+                "Editor/PropertyEditor/Private/"
+
 				// ... add public include paths required here ...
 			}
 			);
@@ -18,7 +20,8 @@ public class CradleLightControl : ModuleRules
 		
 		PrivateIncludePaths.AddRange(
 			new string[] {
-				"Editor/Blutility/Classes/"
+				"Editor/Blutility/Classes/",
+				"Editor/PropertyEditor/Private/"
 				// ... add other private include paths required here ...
 			}
 			);
@@ -52,6 +55,8 @@ public class CradleLightControl : ModuleRules
                 "DMXProtocol",
                 "DMXProtocolEditor",
                 "DMXRuntime",
+				"PropertyEditor",
+				"DetailCustomizations"
 
 				// ... add private dependencies that you statically link with here ...	
 			}

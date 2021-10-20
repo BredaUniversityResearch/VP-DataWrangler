@@ -326,10 +326,13 @@ void SLightControlTool::OnLightHeaderCheckStateChanged(ECheckBoxState NewState)
 {
     if (IsAMasterLightSelected())
     {
+        GEditor->BeginTransaction(FText::FromString(GetMasterLight()->Name + " State Changed"));
         for (auto Light : TreeWidget->TransactionalVariables->LightsUnderSelection)
         {
-            Light->OnCheck(NewState); // Use the callback used by the tree to modify the state
+
+            Light->SetEnabled(NewState == ECheckBoxState::Checked); // Use the callback used by the tree to modify the state
         }
+        GEditor->EndTransaction();
     }
 }
 
@@ -852,6 +855,7 @@ TSharedRef<SWidget> SLightControlTool::GroupControlDropDownLabel(ULightTreeItem*
 void SLightControlTool::GroupControlDropDownSelection(ULightTreeItem* Item, ESelectInfo::Type SelectInfoType)
 {
     TreeWidget->TransactionalVariables->SelectionMasterLight = Item;
+    LightSpecificWidget->UpdateToolState();
 }
 
 FText SLightControlTool::GroupControlDropDownDefaultLabel() const

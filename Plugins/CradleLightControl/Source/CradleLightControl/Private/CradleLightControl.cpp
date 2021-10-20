@@ -46,7 +46,7 @@ void FCradleLightControlModule::StartupModule()
 					FGlobalTabmanager::Get()->TryInvokeTab(FTabId("LightControl"));
 
 
-					FGlobalTabmanager::Get()->UnregisterNomadTabSpawner("LightControl");
+					
 				});
 			MenuBuilder.AddToolBarButton(Action, NAME_None, FText::FromString("Cradle Light Control"));
 		}));
@@ -80,6 +80,7 @@ void FCradleLightControlModule::RegisterTabSpawner()
 				.TabRole(ETabRole::NomadTab)
 				.OnTabClosed_Lambda([this](TSharedRef<SDockTab>)
 					{
+						FGlobalTabmanager::Get()->UnregisterNomadTabSpawner("LightControl");
 						LightControl->PreDestroy();
 						LightControl.Reset();
 					});

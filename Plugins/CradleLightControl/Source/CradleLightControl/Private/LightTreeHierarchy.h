@@ -3,6 +3,7 @@
 #include "Templates/SharedPointer.h"
 #include "Chaos/AABB.h"
 #include "Slate.h"
+#include "DMXProtocolCommon.h"
 
 
 #include "LightTreeHierarchy.generated.h"
@@ -19,17 +20,63 @@ enum ETreeItemType
     Invalid
 };
 
-//USTRUCT()
-//struct FDMXProperties
-//{
-//    GENERATED_BODY()
-//
-//    int StartingChannel;
-//    
-//
-//};
+class FLightDMXNotifyHook : public FNotifyHook
+{
+public:
+    FLightDMXNotifyHook(){};
+    FLightDMXNotifyHook(struct FLightDMXProperties* InPropertiesRef)
+        : PropertiesRef (InPropertiesRef)
+    { }
+    virtual void NotifyPostChange(const FPropertyChangedEvent& PropertyChangedEvent, FProperty* PropertyThatChanged) override;
 
-UCLASS()
+    FLightDMXProperties* PropertiesRef;
+};
+
+UCLASS(Blueprintable)
+class ULightDataToDMXConversion : public UObject
+{
+
+    GENERATED_BODY()
+public:
+    ULightDataToDMXConversion() {};
+
+    UFUNCTION(BlueprintImplementableEvent)
+        void Convert(class ULightTreeItem* TreeItem);
+
+    UFUNCTION(BlueprintCallable)
+        void SetChannel(int32 InChannel, uint8 InValue);
+
+    UPROPERTY()
+        TMap<int32, uint8> Channels;
+
+    int StartingChannel;
+
+    UPROPERTY(BlueprintReadWrite)
+        FString Shitter;
+};
+
+USTRUCT()
+struct FLightDMXProperties
+{
+    GENERATED_BODY()
+    FDMXOutputPortSharedPtr OutputPort;
+
+    UPROPERTY(EditAnywhere)
+    bool bUseDmx;
+    UPROPERTY(EditAnywhere)
+    TSubclassOf<ULightDataToDMXConversion> Conversion;
+
+    UPROPERTY()
+    ULightDataToDMXConversion* DataConverter;
+
+    UPROPERTY(EditAnywhere)
+        int StartingChannel;
+
+    UPROPERTY()
+        ULightTreeItem* Owner;
+};
+
+UCLASS(BlueprintType)
 class ULightTreeItem : public UObject
 {
     GENERATED_BODY()
@@ -72,11 +119,15 @@ public:
     void FetchDataFromLight();
     void UpdateLightColor();
     void UpdateLightColor(FLinearColor& Color);
+
+    void SetEnabled(bool bNewState);
     void SetLightIntensity(float NewValue);
     void SetUseTemperature(bool NewState);
     void SetTemperature(float NewValue);
 
     void SetCastShadows(bool bState);
+
+    void UpdateDMX();
 
     void AddHorizontal(float Degrees);
     void AddVertical(float Degrees);
@@ -115,31 +166,37 @@ public:
         class ADirectionalLight* DirectionalLight;
         class ASpotLight* SpotLight;
     };
-    UPROPERTY()
+
+    UPROPERTY(BlueprintReadOnly)
+        bool bIsEnabled;
+    UPROPERTY(BlueprintReadOnly)
         float Hue;
-    UPROPERTY()
+    UPROPERTY(BlueprintReadOnly)
         float Saturation;
-    UPROPERTY()
+    UPROPERTY(BlueprintReadOnly)
         float Intensity;
 
-    UPROPERTY()
+    UPROPERTY(BlueprintReadOnly)
         bool bUseTemperature;
-    UPROPERTY()
+    UPROPERTY(BlueprintReadOnly)
     float Temperature;
 
-    UPROPERTY()
+    UPROPERTY(BlueprintReadOnly)
         float Horizontal;
-    UPROPERTY()
+    UPROPERTY(BlueprintReadOnly)
         float Vertical;
-    UPROPERTY()
+    UPROPERTY(BlueprintReadOnly)
         float InnerAngle;
-    UPROPERTY()
+    UPROPERTY(BlueprintReadOnly)
         float OuterAngle;
     UPROPERTY()
         bool bLockInnerAngleToOuterAngle;
 
     UPROPERTY()
         bool bCastShadows;
+
+    UPROPERTY()
+        FLightDMXProperties DMXProperties;
 
     TEnumAsByte<ETreeItemType> Type;
 

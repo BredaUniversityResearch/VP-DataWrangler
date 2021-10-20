@@ -46,12 +46,12 @@ void SLightSpecificProperties::UpdateToolState()
 
 void SLightSpecificProperties::ClearSlot()
 {
-    //ToolSlot->SetVisibility(EVisibility::Hidden);
+    ToolSlot->SetVisibility(EVisibility::Hidden);
 
     ToolSlot->SetContent(
-        //SNew(SBox)
-        SAssignNew(PortSelectorTest, SLightControlDMX)
-        .CoreToolPtr(CoreToolPtr)
+        SNew(SBox)
+        //SAssignNew(PortSelectorTest, SLightControlDMX)
+        //.CoreToolPtr(CoreToolPtr)
     );
 }
 
@@ -207,6 +207,7 @@ void SLightSpecificProperties::ConstructSpotLightProperties()
     SVerticalBox::FSlot* OuterAngleNameSlot, *OuterAngleDegreesSlot, *OuterAnglePercentageSlot;
     SVerticalBox::FSlot* InnerAngleNameSlot, *InnerAngleCheckboxSlot, *InnerAngleDegreesSlot, *InnerAnglePercentageSlot;
     SVerticalBox::FSlot* CastShadowsSlot;
+    SVerticalBox::FSlot* DMXSlot;
     SHorizontalBox::FSlot* CastShadowsNameSlot;
     ToolSlot->SetVisibility(EVisibility::Visible);
     ToolSlot->SetContent(
@@ -369,6 +370,12 @@ void SLightSpecificProperties::ConstructSpotLightProperties()
                     .IsChecked(this, &SLightSpecificProperties::CastShadowsState)
                 ]
             ]
+            +SVerticalBox::Slot()
+            .Expose(DMXSlot)
+            [
+                SNew(SLightControlDMX)
+                .CoreToolPtr(CoreToolPtr)
+            ]
 
     );
 
@@ -389,6 +396,7 @@ void SLightSpecificProperties::ConstructSpotLightProperties()
     InnerAngleCheckboxSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
     InnerAnglePercentageSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
 
+    DMXSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
     CastShadowsSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
     CastShadowsNameSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
 }
