@@ -31,19 +31,6 @@ public:
 
     FLightDMXProperties* PropertiesRef;
 };
-//
-//USTRUCT(BlueprintType)
-//struct FNormalizedLightData
-//{
-//    bool bEnabled;
-//    float Intensity;
-//    float Hue;
-//    float Saturation;
-//    bool bUseTemperature;
-//    float Temperature;
-//    float Horizontal;
-//    float Vertical;
-//};
 
 UCLASS(Blueprintable)
 class ULightDataToDMXConversion : public UObject

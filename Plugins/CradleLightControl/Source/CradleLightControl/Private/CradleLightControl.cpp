@@ -41,12 +41,13 @@ void FCradleLightControlModule::StartupModule()
 			FUIAction Action;
 			Action.ExecuteAction = FExecuteAction::CreateLambda([this]()
 				{
-					RegisterTabSpawner();
-
-					FGlobalTabmanager::Get()->TryInvokeTab(FTabId("LightControl"));
-
-
-					
+                    if (!DockTab)
+                    {
+					    RegisterTabSpawner();
+					    FGlobalTabmanager::Get()->TryInvokeTab(FTabId("LightControl"));                        
+                    }
+					else
+					    DockTab->DrawAttention();
 				});
 			MenuBuilder.AddToolBarButton(Action, NAME_None, FText::FromString("Cradle Light Control"));
 		}));
@@ -73,9 +74,9 @@ void FCradleLightControlModule::ShutdownModule()
 
 void FCradleLightControlModule::RegisterTabSpawner()
 {
-	FGlobalTabmanager::Get()->RegisterNomadTabSpawner("LightControl", FOnSpawnTab::CreateLambda([this](const FSpawnTabArgs& Args)
+	auto v = FGlobalTabmanager::Get()->RegisterNomadTabSpawner("LightControl", FOnSpawnTab::CreateLambda([this](const FSpawnTabArgs& Args)
 		{
-			auto Tab = SNew(SDockTab)
+			DockTab = SNew(SDockTab)
 				.Label(FText::FromString("Light control tab"))
 				.TabRole(ETabRole::NomadTab)
 				.OnTabClosed_Lambda([this](TSharedRef<SDockTab>)
@@ -85,16 +86,14 @@ void FCradleLightControlModule::RegisterTabSpawner()
 						LightControl.Reset();
 					});
 
-		    Tab->SetContent(
+			DockTab->SetContent(
 				    SAssignNew(LightControl, SLightControlTool)
-				    .ToolTab(Tab)				    
+				    .ToolTab(DockTab)
 				);
 
-		    return Tab;
+		    return DockTab.ToSharedRef();
 			
-		}));
-
-	
+		}));	
 }
 
 #undef LOCTEXT_NAMESPACE
