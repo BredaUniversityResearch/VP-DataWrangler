@@ -56,7 +56,8 @@ public class CradleLightControl : ModuleRules
                 "DMXProtocolEditor",
                 "DMXRuntime",
 				"PropertyEditor",
-				"DetailCustomizations"
+				"DetailCustomizations",
+				"AssetTools"
 
 				// ... add private dependencies that you statically link with here ...	
 			}

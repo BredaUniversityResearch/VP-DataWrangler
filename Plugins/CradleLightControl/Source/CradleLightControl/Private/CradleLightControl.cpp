@@ -3,8 +3,11 @@
 #include "CradleLightControl.h"
 
 #include "CentralLightController.h"
+#include "AssetToolsModule.h"
 #include "LevelEditor.h"
 #include "LightControlTool.h"
+#include "../DMX/Public/DMXConfigAsset.h"
+#include "../DMX/Public/DMXController.h"
 
 
 // Test code for a plugin, mainly trying to get an editor window which can be customized using the Slate Framework
@@ -21,41 +24,55 @@ void FCradleLightControlModule::StartupModule()
 	PropertyModule.NotifyCustomizationModuleChanged();
 
 	auto& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
+	auto& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
+
+
 
 	CommandList = MakeShareable(new FUICommandList);
-	TSharedRef<FExtender> MenuExtender(new FExtender());
-	MenuExtender->AddMenuExtension("EditMain", EExtensionHook::After, CommandList, FMenuExtensionDelegate::CreateLambda(
-	[](FMenuBuilder& MenuBuilder)
-	{
-			//auto CommandInfo = MakeShareable(new FUICommandInfo());
-			//MenuBuilder.AddMenuEntry(CommandInfo);
-	}));
+	// Keeping it here in the scenario that we want to add a button in one of the menus
+	//TSharedRef<FExtender> MenuExtender(new FExtender());
+	//MenuExtender->AddMenuExtension("EditMain", EExtensionHook::After, CommandList, FMenuExtensionDelegate::CreateLambda(
+	//[](FMenuBuilder& MenuBuilder)
+	//{
+	//		//auto CommandInfo = MakeShareable(new FUICommandInfo());
+	//		//MenuBuilder.AddMenuEntry(CommandInfo);
+	//}));
+	//LevelEditorModule.GetMenuExtensibilityManager()->AddExtender(MenuExtender);
+	//auto AssetCategory = AssetTools.RegisterAdvancedAssetCategory("CustomCategory", FText::FromString("Custom Category"));
+	auto Action = MakeShared<FDMXConfigAssetAction>();
+	//Action.
+	
+	//AssetToolsModule.Get().
+	AssetTools.RegisterAssetTypeActions(Action);
 
-
+	// Create an extension to the toolbar (the one above the viewport in the level editor)
 	TSharedRef<FExtender> ToolbarExtender(new FExtender());
 	ToolbarExtender->AddToolBarExtension("Settings", EExtensionHook::After, CommandList, FToolBarExtensionDelegate::CreateLambda(
 		[this](FToolBarBuilder& MenuBuilder)
 		{
-			//auto Action = MakeShared<FUIAction>();
-			//TSharedPtr<FUIAction> Action = MakeShareable(new FUIAction);
 			FUIAction Action;
 			Action.ExecuteAction = FExecuteAction::CreateLambda([this]()
 				{
-                    if (!DockTab)
+				    // I could not find a guaranteed, engine provided way to ensure that the button can spawn the tab multiple times
+				    // while also not allowing for the tab to be spawned multiple times simultaneously
+				    // So we only try to spawn the tab if one doesn't already exist, otherwise we just draw the user's attention to the existing one
+                    if (!LightTab)
                     {
 					    RegisterTabSpawner();
 					    FGlobalTabmanager::Get()->TryInvokeTab(FTabId("LightControl"));                        
                     }
 					else
-					    DockTab->DrawAttention();
+					    LightTab->DrawAttention();
+
+                    if (!DMXTab)
+                    {
+						RegisterDMXTabSpawner();
+						FGlobalTabmanager::Get()->TryInvokeTab(FTabId("DMXControl"));
+
+                    }
 				});
 			MenuBuilder.AddToolBarButton(Action, NAME_None, FText::FromString("Cradle Light Control"));
 		}));
-
-
-
-	LevelEditorModule.GetMenuExtensibilityManager()->AddExtender(MenuExtender);
-
 
     LevelEditorModule.GetToolBarExtensibilityManager()->AddExtender(ToolbarExtender);
 
@@ -74,9 +91,9 @@ void FCradleLightControlModule::ShutdownModule()
 
 void FCradleLightControlModule::RegisterTabSpawner()
 {
-	auto v = FGlobalTabmanager::Get()->RegisterNomadTabSpawner("LightControl", FOnSpawnTab::CreateLambda([this](const FSpawnTabArgs& Args)
+	FGlobalTabmanager::Get()->RegisterNomadTabSpawner("LightControl", FOnSpawnTab::CreateLambda([this](const FSpawnTabArgs& Args)
 		{
-			DockTab = SNew(SDockTab)
+			LightTab = SNew(SDockTab)
 				.Label(FText::FromString("Light control tab"))
 				.TabRole(ETabRole::NomadTab)
 				.OnTabClosed_Lambda([this](TSharedRef<SDockTab>)
@@ -84,17 +101,46 @@ void FCradleLightControlModule::RegisterTabSpawner()
 						FGlobalTabmanager::Get()->UnregisterNomadTabSpawner("LightControl");
 						LightControl->PreDestroy();
 						LightControl.Reset();
+						LightTab.Reset();
 					});
 
-			DockTab->SetContent(
+			LightTab->SetContent(				    
 				    SAssignNew(LightControl, SLightControlTool)
-				    .ToolTab(DockTab)
+				    .ToolTab(LightTab)
 				);
 
-		    return DockTab.ToSharedRef();
+		    return LightTab.ToSharedRef();
 			
-		}));	
+		}));
 }
+
+void FCradleLightControlModule::RegisterDMXTabSpawner()
+{
+
+	FGlobalTabmanager::Get()->RegisterNomadTabSpawner("DMXControl", FOnSpawnTab::CreateLambda([this](const FSpawnTabArgs& Args)
+		{
+			DMXTab = SNew(SDockTab)
+				.Label(FText::FromString("DMX control tab"))
+				.TabRole(ETabRole::NomadTab)
+				.OnTabClosed_Lambda([this](TSharedRef<SDockTab>)
+					{
+						FGlobalTabmanager::Get()->UnregisterNomadTabSpawner("DMXControl");
+						//DMXControl->PreDestroy();
+						DMXControl.Reset();
+						DMXTab.Reset();
+					});
+
+			DMXTab->SetContent(
+				SAssignNew(DMXControl, SDMXController)
+				//.ToolTab(DMXTab)
+			);
+
+			return DMXTab.ToSharedRef();
+
+		}));
+
+}
+
 
 #undef LOCTEXT_NAMESPACE
 	

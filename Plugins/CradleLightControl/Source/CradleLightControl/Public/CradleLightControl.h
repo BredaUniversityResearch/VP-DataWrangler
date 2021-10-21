@@ -17,12 +17,15 @@ public:
 	virtual void ShutdownModule() override;
 
 	void RegisterTabSpawner();
+	void RegisterDMXTabSpawner();
 
 	TSharedPtr<FUICommandList> CommandList;
 
-	TSharedPtr<SDockTab> DockTab;
+	TSharedPtr<SDockTab> LightTab;
+	TSharedPtr<SDockTab> DMXTab;
 
 	TSharedPtr<SLightControlTool> LightControl;
+	TSharedPtr<class SDMXController> DMXControl;
 
 
 private:
