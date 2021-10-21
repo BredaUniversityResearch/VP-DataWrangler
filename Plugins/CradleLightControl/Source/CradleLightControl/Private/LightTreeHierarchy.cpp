@@ -658,6 +658,7 @@ void ULightTreeItem::SetEnabled(bool bNewState)
         }
         break;
     }
+    UpdateDMX();
 }
 
 void ULightTreeItem::SetLightIntensity(float NewValue)
@@ -734,6 +735,7 @@ void ULightTreeItem::UpdateDMX()
     if (DMXProperties.bUseDmx && DMXProperties.OutputPort && DMXProperties.DataConverter)
     {
         DMXProperties.DataConverter->Channels.Empty();
+        DMXProperties.DataConverter->StartingChannel = DMXProperties.StartingChannel;
         DMXProperties.DataConverter->Convert(this);
 
         //auto& Channels = DMXProperties.Channels;
