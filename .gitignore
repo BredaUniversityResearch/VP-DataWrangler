@@ -72,3 +72,15 @@ Plugins/*/Intermediate/*
 
 # Cache files for the editor to use
 DerivedDataCache/*
+
+*.pdb
+*.modules
+*.target
+
+Plugins/CradleLightControl/Content/LightControlMeta.json
+
+Plugins/CradleLightControl/Content/LightsAutoSave.json
+
+Plugins/CradleLightControl/Content/MetaData.json
+
+Plugins/CradleLightControl/Content/VirtualLightMetaData.json

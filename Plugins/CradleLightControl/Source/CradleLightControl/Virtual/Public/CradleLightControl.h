@@ -7,6 +7,14 @@
 #include "LightControlTool.h"
 
 #include "IDetailCustomization.h"
+#include "Chaos/AABB.h"
+#include "Chaos/AABB.h"
+#include "Chaos/AABB.h"
+#include "Chaos/AABB.h"
+#include "Chaos/AABB.h"
+#include "Chaos/AABB.h"
+#include "Chaos/AABB.h"
+#include "Chaos/AABB.h"
 
 class FCradleLightControlModule : public IModuleInterface
 {
@@ -16,8 +24,16 @@ public:
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
 
+
+	static bool OpenFileDialog(FString Title, void*
+                        NativeWindowHandle, FString DefaultPath, uint32 Flags, FString FileTypeList, TArray<FString>& OutFilenames);
+	static bool SaveFileDialog(FString Title, void*
+                        NativeWindowHandle, FString DefaultPath, uint32 Flags, FString FileTypeList, TArray<FString>& OutFilenames);
+
 	void RegisterTabSpawner();
 	void RegisterDMXTabSpawner();
+
+
 
 	TSharedPtr<FUICommandList> CommandList;
 

@@ -2,13 +2,14 @@
 
 #include "CradleLightControl.h"
 
-#include "CentralLightController.h"
 #include "AssetToolsModule.h"
 #include "LevelEditor.h"
 #include "LightControlTool.h"
-#include "../DMX/Public/DMXConfigAsset.h"
-#include "../DMX/Public/DMXController.h"
+#include "DMXConfigAsset.h"
+#include "DMXController.h"
 
+#include "DesktopPlatformModule.h"
+#include "IDesktopPlatform.h"
 
 // Test code for a plugin, mainly trying to get an editor window which can be customized using the Slate Framework
 // Don't mind the extra debug-y prints and text pieces
@@ -89,6 +90,21 @@ void FCradleLightControlModule::ShutdownModule()
 	// we call this function before unloading the module.
 }
 
+
+bool FCradleLightControlModule::OpenFileDialog(FString Title, void* NativeWindowHandle, FString DefaultPath, uint32 Flags,
+	FString FileTypeList, TArray<FString>& OutFilenames)
+{
+	IDesktopPlatform* Platform = FDesktopPlatformModule::Get();
+	return Platform->OpenFileDialog(NativeWindowHandle, Title, DefaultPath, "", FileTypeList, Flags, OutFilenames);
+}
+
+bool FCradleLightControlModule::SaveFileDialog(FString Title, void* NativeWindowHandle, FString DefaultPath, uint32 Flags,
+                                               FString FileTypeList, TArray<FString>& OutFilenames)
+{
+	IDesktopPlatform* Platform = FDesktopPlatformModule::Get();
+	return Platform->SaveFileDialog(NativeWindowHandle, Title, DefaultPath, "", FileTypeList, Flags, OutFilenames);
+}
+
 void FCradleLightControlModule::RegisterTabSpawner()
 {
 	FGlobalTabmanager::Get()->RegisterNomadTabSpawner("LightControl", FOnSpawnTab::CreateLambda([this](const FSpawnTabArgs& Args)
@@ -107,6 +123,8 @@ void FCradleLightControlModule::RegisterTabSpawner()
 			LightTab->SetContent(				    
 				    SAssignNew(LightControl, SLightControlTool)
 				    .ToolTab(LightTab)
+					.OpenFileDialogDelegate(FFileDialogDelegate::CreateStatic(&FCradleLightControlModule::OpenFileDialog))
+					.SaveFileDialogDelegate(FFileDialogDelegate::CreateStatic(&FCradleLightControlModule::SaveFileDialog))
 				);
 
 		    return LightTab.ToSharedRef();

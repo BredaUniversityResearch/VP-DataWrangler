@@ -2,7 +2,7 @@
 
 
 
-#include "DMXConfigAsset.h"
+#include "../Public/DMXConfigAsset.h"
 
 FText FDMXConfigAssetAction::GetName() const
 {

@@ -25,6 +25,8 @@ private:
     void AddItem();
 
     TSharedPtr<SListView<UDMXLight*>> DMXList;
+    TSharedPtr<SBox> DMXConfigBox;
+    TSharedPtr<SBox> LightPropertiesBox;
 
     TArray<UDMXLight*> Items;
     TArray<UDMXLight*> SelectedItems;

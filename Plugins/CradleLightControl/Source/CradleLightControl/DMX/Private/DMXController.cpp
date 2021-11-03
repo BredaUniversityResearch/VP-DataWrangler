@@ -26,11 +26,11 @@ void SDMXController::Construct(const FArguments& Args)
                 .Text(FText::FromString("Add DMX light"))
                 .OnClicked(this, &SDMXController::OnAddDMXLightButtonClicked)
             ]
-        ]
+        ]/*
         +SSplitter::Slot()
             [
                 FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditorModule")
-            ]
+            ]*/
     ];
 }
 

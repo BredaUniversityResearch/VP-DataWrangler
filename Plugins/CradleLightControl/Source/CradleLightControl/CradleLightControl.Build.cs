@@ -4,16 +4,22 @@ using UnrealBuildTool;
 
 public class CradleLightControl : ModuleRules
 {
+    string SourceCodeDir()
+    {
+        return PluginDirectory + "/Source/CradleLightControl/";
+
+    }
 	public CradleLightControl(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
-		
-		PublicIncludePaths.AddRange(
+
+        PublicIncludePaths.AddRange(
 			new string[] {
 				"Editor/Blutility/Classes/",
-                "Editor/PropertyEditor/Private/"
-
-				// ... add public include paths required here ...
+				"/Source/CradleLightControl/Virtual/Public",
+				"/Source/CradleLightControl/DMX/Public",
+				//"../Virtual/Public"
+                // ... add public include paths required here ...
 			}
 			);
 				
@@ -21,7 +27,8 @@ public class CradleLightControl : ModuleRules
 		PrivateIncludePaths.AddRange(
 			new string[] {
 				"Editor/Blutility/Classes/",
-				"Editor/PropertyEditor/Private/"
+				SourceCodeDir() + "Virtual/Public",
+				SourceCodeDir() + "DMX/Public",
 				// ... add other private include paths required here ...
 			}
 			);

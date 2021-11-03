@@ -1,11 +1,16 @@
 #include "LightSpecificPropertyEditor.h"
 #include "LightControlTool.h"
 
+#include "ToolData.h"
+#include "Itemhandle.h"
+#include "BaseLight.h"
+
 #include "Engine/SpotLight.h"
 
 void SLightSpecificProperties::Construct(const FArguments& Args)
 {
-    CoreToolPtr = Args._CoreToolPtr;
+    _ASSERT(Args._ToolData);
+    ToolData = Args._ToolData;
 
     ChildSlot
     [
@@ -20,13 +25,13 @@ void SLightSpecificProperties::Construct(const FArguments& Args)
 
 void SLightSpecificProperties::UpdateToolState()
 {
-    if (!CoreToolPtr->IsAMasterLightSelected())
+    if (!ToolData->IsAMasterLightSelected())
     {
         ClearSlot();
         return;
     }
 
-    auto Light = CoreToolPtr->GetMasterLight();
+    auto Light = ToolData->GetMasterLight();
 
     if (Light->Type == SpotLight)
     {
@@ -57,27 +62,26 @@ void SLightSpecificProperties::ClearSlot()
 
 void SLightSpecificProperties::OnCastShadowsStateChanged(ECheckBoxState NewState)
 {
-    GEditor->BeginTransaction(FText::FromString(CoreToolPtr->GetMasterLight()->Name + " Cast Shadows"));
-    for (auto Light : CoreToolPtr->GetTreeWidget().Pin()->TransactionalVariables->LightsUnderSelection)
+    GEditor->BeginTransaction(FText::FromString(ToolData->GetMasterLight()->Name + " Cast Shadows"));
+    for (auto Light : ToolData->LightsUnderSelection)
     {
         Light->BeginTransaction();
-        Light->SetCastShadows(NewState == ECheckBoxState::Checked);
+        Light->Item->SetCastShadows(NewState == ECheckBoxState::Checked);
     }
     EndTransaction();
 }
 
 ECheckBoxState SLightSpecificProperties::CastShadowsState() const
 {
-    if (CoreToolPtr->IsAMasterLightSelected())
+    if (ToolData->IsAMasterLightSelected())
     {
-        auto TreeWidget = CoreToolPtr->GetTreeWidget();
-        auto MasterLight = TreeWidget.Pin()->TransactionalVariables->SelectionMasterLight;
+        auto MasterLight = ToolData->GetMasterLight();
 
-        auto MasterLightCastShadows = MasterLight->bCastShadows;
+        auto MasterLightCastShadows = MasterLight->Item->GetCastShadows();
         auto State = MasterLightCastShadows ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
-        for (auto Light : TreeWidget.Pin()->TransactionalVariables->LightsUnderSelection)
+        for (auto Light : ToolData->LightsUnderSelection)
         {
-            if (Light->bCastShadows != MasterLightCastShadows)
+            if (Light->Item->GetCastShadows() != MasterLightCastShadows)
             {
                 State = ECheckBoxState::Undetermined;
                 break;
@@ -207,7 +211,7 @@ void SLightSpecificProperties::ConstructSpotLightProperties()
     SVerticalBox::FSlot* OuterAngleNameSlot, *OuterAngleDegreesSlot, *OuterAnglePercentageSlot;
     SVerticalBox::FSlot* InnerAngleNameSlot, *InnerAngleCheckboxSlot, *InnerAngleDegreesSlot, *InnerAnglePercentageSlot;
     SVerticalBox::FSlot* CastShadowsSlot;
-    SVerticalBox::FSlot* DMXSlot;
+    //SVerticalBox::FSlot* DMXSlot;
     SHorizontalBox::FSlot* CastShadowsNameSlot;
     ToolSlot->SetVisibility(EVisibility::Visible);
     ToolSlot->SetContent(
@@ -370,12 +374,12 @@ void SLightSpecificProperties::ConstructSpotLightProperties()
                     .IsChecked(this, &SLightSpecificProperties::CastShadowsState)
                 ]
             ]
-            +SVerticalBox::Slot()
-            .Expose(DMXSlot)
-            [
-                SNew(SLightControlDMX)
-                .CoreToolPtr(CoreToolPtr)
-            ]
+            //+SVerticalBox::Slot()
+            //.Expose(DMXSlot)
+            //[
+            //    SNew(SLightControlDMX)
+            //    //.CoreToolPtr(CoreToolPtr)
+            //]
 
     );
 
@@ -396,7 +400,7 @@ void SLightSpecificProperties::ConstructSpotLightProperties()
     InnerAngleCheckboxSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
     InnerAnglePercentageSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
 
-    DMXSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
+    //DMXSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
     CastShadowsSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
     CastShadowsNameSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
 }
@@ -439,112 +443,108 @@ void SLightSpecificProperties::EndTransaction()
 
 void SLightSpecificProperties::OnHorizontalValueChanged(float NormalizedValue)
 {
-    auto Light = CoreToolPtr->GetMasterLight();
-    auto Delta = ((NormalizedValue - 0.5f) * 360.0f) - Light->Horizontal;
+    auto Light = ToolData->GetMasterLight();
+    auto Delta = ((NormalizedValue - 0.5f) * 360.0f) - Light->Item->Horizontal;
 
-    for (auto SelectedLight : CoreToolPtr->GetTreeWidget().Pin()->TransactionalVariables->LightsUnderSelection)
+    for (auto SelectedLight : ToolData->LightsUnderSelection)
     {
         SelectedLight->BeginTransaction();
-        SelectedLight->AddHorizontal(Delta);
+        SelectedLight->Item->AddHorizontal(Delta);
     }    
 }
 
 void SLightSpecificProperties::BeginHorizontalTransaction()
 {
-    GEditor->BeginTransaction(FText::FromString(CoreToolPtr->GetMasterLight()->Name + " Horizontal Rotation"));
+    GEditor->BeginTransaction(FText::FromString(ToolData->GetMasterLight()->Name + " Horizontal Rotation"));
 }
 
 FText SLightSpecificProperties::GetHorizontalValueText() const
 {
-    auto Light = CoreToolPtr->GetMasterLight();
+    auto Light = ToolData->GetMasterLight();
 
-    return FText::FromString(FString::Printf(TEXT("%.0f"), Light->Horizontal));
+    return FText::FromString(FString::Printf(TEXT("%.0f"), Light->Item->Horizontal));
 }
 
 float SLightSpecificProperties::GetHorizontalValue() const
 {
-    auto Light = CoreToolPtr->GetMasterLight();
+    auto Light = ToolData->GetMasterLight();
 
-    return Light->Horizontal / 360.0f + 0.5f;
+    return Light->Item->Horizontal / 360.0f + 0.5f;
 }
 
 FText SLightSpecificProperties::GetHorizontalPercentage() const
 {
-    auto Light = CoreToolPtr->GetMasterLight();
+    auto Light = ToolData->GetMasterLight();
 
-    auto Euler = Light->SpotLight->GetActorRotation().Euler();
-
-    return FText::FromString(FString::FormatAsNumber(Light->Horizontal / 3.6f + 50.0f) + "%");
+    return FText::FromString(FString::FormatAsNumber(Light->Item->Horizontal / 3.6f + 50.0f) + "%");
 }
 
 void SLightSpecificProperties::OnVerticalValueChanged(float NormalizedValue)
 {
-    auto Light = CoreToolPtr->GetMasterLight();
-    auto Delta = ((NormalizedValue - 0.5f) * 360.0f) - Light->Vertical;
+    auto Light = ToolData->GetMasterLight();
+    auto Delta = ((NormalizedValue - 0.5f) * 360.0f) - Light->Item->Vertical;
 
-    for (auto SelectedLight : CoreToolPtr->GetTreeWidget().Pin()->TransactionalVariables->LightsUnderSelection)
+    for (auto SelectedLight : ToolData->LightsUnderSelection)
     {
         SelectedLight->BeginTransaction();
-        SelectedLight->AddVertical(Delta);
+        SelectedLight->Item->AddVertical(Delta);
     }
 }
 
 void SLightSpecificProperties::BeginVerticalTransaction()
 {
-    GEditor->BeginTransaction(FText::FromString(CoreToolPtr->GetMasterLight()->Name + " Vertical Rotation"));
+    GEditor->BeginTransaction(FText::FromString(ToolData->GetMasterLight()->Name + " Vertical Rotation"));
 
 }
 
 
 FText SLightSpecificProperties::GetVerticalValueText() const
 {
-    auto Light = CoreToolPtr->GetMasterLight();
+    auto Light = ToolData->GetMasterLight();
 
-    return FText::FromString(FString::Printf(TEXT("%.0f"), Light->Vertical));
+    return FText::FromString(FString::Printf(TEXT("%.0f"), Light->Item->Vertical));
 }
 
 float SLightSpecificProperties::GetVerticalValue() const
 {
-    auto Light = CoreToolPtr->GetMasterLight();
+    auto Light = ToolData->GetMasterLight();
 
-    return Light->Vertical / 360.0f + 0.5f;
+    return Light->Item->Vertical / 360.0f + 0.5f;
 }
 
 FText SLightSpecificProperties::GetVerticalPercentage() const
 {
-    auto Light = CoreToolPtr->GetMasterLight();
+    auto Light = ToolData->GetMasterLight();
 
-    auto Euler = Light->SpotLight->GetActorRotation().Euler();
-
-    return FText::FromString(FString::FormatAsNumber(Light->Vertical / 3.6f + 50.0f) + "%");
+    return FText::FromString(FString::FormatAsNumber(Light->Item->Vertical / 3.6f + 50.0f) + "%");
 }
 
 void SLightSpecificProperties::OnInnerAngleValueChanged(float NormalizedValue)
 {
-    auto Light = CoreToolPtr->GetMasterLight();
+    auto Light = ToolData->GetMasterLight();
     auto Angle = NormalizedValue * 80.0f;
 
-    for (auto SelectedLight : CoreToolPtr->GetTreeWidget().Pin()->TransactionalVariables->LightsUnderSelection)
+    for (auto SelectedLight : ToolData->LightsUnderSelection)
     {
         SelectedLight->BeginTransaction();
-        SelectedLight->SetInnerConeAngle(Angle);
+        SelectedLight->Item->SetInnerConeAngle(Angle);
     }
 }
 
 void SLightSpecificProperties::BeginInnerAngleTransaction()
 {
-    GEditor->BeginTransaction(FText::FromString(CoreToolPtr->GetMasterLight()->Name + " Inner Angle"));
+    GEditor->BeginTransaction(FText::FromString(ToolData->GetMasterLight()->Name + " Inner Angle"));
 }
 
 void SLightSpecificProperties::OnInnerAngleLockedStateChanged(ECheckBoxState NewState)
 {
-    if (CoreToolPtr->GetTreeWidget().IsValid())
+    if (ToolData)
     {
-        GEditor->BeginTransaction(FText::FromString(CoreToolPtr->GetMasterLight()->Name + " Inner Angle Lock"));
-        for (auto Light : CoreToolPtr->GetTreeWidget().Pin()->TransactionalVariables->LightsUnderSelection)
+        GEditor->BeginTransaction(FText::FromString(ToolData->GetMasterLight()->Name + " Inner Angle Lock"));
+        for (auto Light : ToolData->LightsUnderSelection)
         {
-            Light->BeginTransaction(false);
-            Light->bLockInnerAngleToOuterAngle = NewState == ECheckBoxState::Checked;
+            Light->BeginTransaction(true);
+            Light->Item->bLockInnerAngleToOuterAngle = NewState == ECheckBoxState::Checked;
         }
         EndTransaction();
     }
@@ -552,73 +552,70 @@ void SLightSpecificProperties::OnInnerAngleLockedStateChanged(ECheckBoxState New
 
 ECheckBoxState SLightSpecificProperties::InnerAngleLockedState() const
 {
-    auto Light = CoreToolPtr->GetMasterLight();
+    auto Light = ToolData->GetMasterLight();
     if (Light)
     {
-        return Light->bLockInnerAngleToOuterAngle ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
+        return Light->Item->bLockInnerAngleToOuterAngle ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
     }
     return ECheckBoxState::Undetermined;
 }
 
 FText SLightSpecificProperties::GetInnerAngleValueText() const
 {
-    auto Light = CoreToolPtr->GetMasterLight();
+    auto Light = ToolData->GetMasterLight();
 
-    return FText::FromString(FString::Printf(TEXT("%.0f"), Light->InnerAngle));
+    return FText::FromString(FString::Printf(TEXT("%.0f"), Light->Item->InnerAngle));
 }
 
 float SLightSpecificProperties::GetInnerAngleValue() const
 {
-    auto Light = CoreToolPtr->GetMasterLight();
+    auto Light = ToolData->GetMasterLight();
 
-    return Light->InnerAngle / 80.0f;
+    return Light->Item->InnerAngle / 80.0f;
 }
 
 FText SLightSpecificProperties::GetInnerAnglePercentage() const
 {
-    auto Light = CoreToolPtr->GetMasterLight();
+    auto Light = ToolData->GetMasterLight();
 
-    auto Euler = Light->SpotLight->GetActorRotation().Euler();
-
-    return FText::FromString(FString::FormatAsNumber(Light->InnerAngle / 0.8f) + "%");
+    return FText::FromString(FString::FormatAsNumber(Light->Item->InnerAngle / 0.8f) + "%");
 }
 
 
 void SLightSpecificProperties::OnOuterAngleValueChanged(float NormalizedValue)
 {
-    auto Light = CoreToolPtr->GetMasterLight();
+    auto Light = ToolData->GetMasterLight();
     auto Angle = NormalizedValue * 80.0f;
-    for (auto SelectedLight : CoreToolPtr->GetTreeWidget().Pin()->TransactionalVariables->LightsUnderSelection)
+    for (auto SelectedLight : ToolData->LightsUnderSelection)
     {
-        SelectedLight->SetOuterConeAngle(Angle);
+        SelectedLight->Item->SetOuterConeAngle(Angle);
         SelectedLight->BeginTransaction();
     }
 }
 
 void SLightSpecificProperties::BeginOuterAngleTransaction()
 {
-    GEditor->BeginTransaction(FText::FromString(CoreToolPtr->GetMasterLight()->Name + " Outer Angle"));
+    GEditor->BeginTransaction(FText::FromString(ToolData->GetMasterLight()->Name + " Outer Angle"));
 }
 
 FText SLightSpecificProperties::GetOuterAngleValueText() const
 {
-    auto Light = CoreToolPtr->GetMasterLight();
+    auto Light = ToolData->GetMasterLight();
 
-    return FText::FromString(FString::Printf(TEXT("%.0f"), Light->OuterAngle));
+    return FText::FromString(FString::Printf(TEXT("%.0f"), Light->Item->OuterAngle));
 }
 
 float SLightSpecificProperties::GetOuterAngleValue() const
 {
-    auto Light = CoreToolPtr->GetMasterLight();
+    auto Light = ToolData->GetMasterLight();
 
-    return Light->OuterAngle / 80.0f;
+    return Light->Item->OuterAngle / 80.0f;
 }
 
 FText SLightSpecificProperties::GetOuterAnglePercentage() const
 {
-    auto Light = CoreToolPtr->GetMasterLight();
+    auto Light = ToolData->GetMasterLight();
 
-    auto Euler = Light->SpotLight->GetActorRotation().Euler();
 
-    return FText::FromString(FString::FormatAsNumber(Light->OuterAngle / 0.8f) + "%");
+    return FText::FromString(FString::FormatAsNumber(Light->Item->OuterAngle / 0.8f) + "%");
 }

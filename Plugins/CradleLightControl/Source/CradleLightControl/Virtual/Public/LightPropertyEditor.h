@@ -2,12 +2,14 @@
 
 #include "Slate.h"
 
+class UToolData;
+
 class SLightPropertyEditor : public SCompoundWidget
 {
 public:
     SLATE_BEGIN_ARGS(SLightPropertyEditor) {}
 
-    SLATE_ARGUMENT(class SLightControlTool*, CoreToolPtr)
+    SLATE_ARGUMENT(class UToolData*, ToolData)
 
     SLATE_END_ARGS();
 
@@ -18,7 +20,6 @@ public:
 
     void Construct(const FArguments& Args);
     void PreDestroy();
-    void FinishInit();
 
     void GenerateTextures();
     void UpdateSaturationGradient(float NewHue);
@@ -52,8 +53,8 @@ public:
     float GetTemperatureValue() const;
     FText GetTemperaturePercentage() const;
 
-    class SLightControlTool* CoreToolPtr;
-    TWeakPtr<class SLightTreeHierarchy> TreeWidget;
+    //class SLightControlTool* CoreToolPtr;
+    UToolData* ToolData;
 
 
     TSharedPtr<FSlateImageBrush> IntensityGradientBrush;
