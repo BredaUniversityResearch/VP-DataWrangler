@@ -1,9 +1,9 @@
-#include "ItemHeader.h"
+#include "LightItemHeader.h"
 
 #include "ToolData.h"
 #include "ItemHandle.h"
 #include "BaseLight.h"
-void SItemHeader::Construct(const FArguments& Args)
+void SLightItemHeader::Construct(const FArguments& Args)
 {
     check(Args._ToolData);
     ToolData = Args._ToolData;
@@ -17,7 +17,7 @@ void SItemHeader::Construct(const FArguments& Args)
 
 }
 
-void SItemHeader::Update()
+void SLightItemHeader::Update()
 {
     if (ToolData->IsAMasterLightSelected() || ToolData->IsSingleGroupSelected())
     {
@@ -68,8 +68,8 @@ void SItemHeader::Update()
             [
                 SNew(SCheckBox)
                 .Style(&LightHeaderCheckboxStyle)
-            .OnCheckStateChanged(this, &SItemHeader::OnLightHeaderCheckStateChanged)
-            .IsChecked(this, &SItemHeader::GetLightHeaderCheckState)
+            .OnCheckStateChanged(this, &SLightItemHeader::OnLightHeaderCheckStateChanged)
+            .IsChecked(this, &SLightItemHeader::GetLightHeaderCheckState)
             .RenderTransform(FSlateRenderTransform(1.2f))
             ]
             ]
@@ -84,7 +84,7 @@ void SItemHeader::Update()
             .Padding(0.0f, 5.0f, 0.0f, 0.0f)
             [
                 SNew(STextBlock)
-                .Text(this, &SItemHeader::LightHeaderExtraLightsText)
+                .Text(this, &SLightItemHeader::LightHeaderExtraLightsText)
             .Visibility(ToolData->IsSingleGroupSelected()
                 || ToolData->MultipleLightsInSelection() ?
                 EVisibility::Visible : EVisibility::Collapsed)
@@ -108,7 +108,7 @@ void SItemHeader::Update()
 }
 
 
-void SItemHeader::OnLightHeaderCheckStateChanged(ECheckBoxState NewState)
+void SLightItemHeader::OnLightHeaderCheckStateChanged(ECheckBoxState NewState)
 {
     if (ToolData->IsAMasterLightSelected())
     {
@@ -122,7 +122,7 @@ void SItemHeader::OnLightHeaderCheckStateChanged(ECheckBoxState NewState)
 }
 
 
-ECheckBoxState SItemHeader::GetLightHeaderCheckState() const
+ECheckBoxState SLightItemHeader::GetLightHeaderCheckState() const
 {
     if (ToolData->IsAMasterLightSelected())
     {
@@ -131,7 +131,7 @@ ECheckBoxState SItemHeader::GetLightHeaderCheckState() const
     return ECheckBoxState::Undetermined;
 }
 
-FText SItemHeader::LightHeaderExtraLightsText() const
+FText SLightItemHeader::LightHeaderExtraLightsText() const
 {
     if (ToolData->MultipleItemsSelected())
     {
@@ -156,7 +156,7 @@ FText SItemHeader::LightHeaderExtraLightsText() const
     return FText::FromString("");
 }
 
-void SItemHeader::UpdateItemNameBox()
+void SLightItemHeader::UpdateItemNameBox()
 {
     auto Item = ToolData->GetSingleSelectedItem();
     if (Item)
@@ -165,8 +165,8 @@ void SItemHeader::UpdateItemNameBox()
         {
             LightHeaderNameBox->SetContent(
                 SNew(SEditableText)
-                .Text(this, &SItemHeader::ItemNameText)
-                .OnTextCommitted(this, &SItemHeader::CommitNewItemName)
+                .Text(this, &SLightItemHeader::ItemNameText)
+                .OnTextCommitted(this, &SLightItemHeader::CommitNewItemName)
                 .SelectAllTextWhenFocused(true)
                 .Font(FSlateFontInfo(FCoreStyle::GetDefaultFont(), 18))
             );
@@ -175,22 +175,22 @@ void SItemHeader::UpdateItemNameBox()
         {
             LightHeaderNameBox->SetContent(
                 SNew(STextBlock)
-                .Text(this, &SItemHeader::ItemNameText)
-                .OnDoubleClicked(this, &SItemHeader::StartItemNameChange)
+                .Text(this, &SLightItemHeader::ItemNameText)
+                .OnDoubleClicked(this, &SLightItemHeader::StartItemNameChange)
                 .Font(FSlateFontInfo(FCoreStyle::GetDefaultFont(), 18))
             );
         }
     }
 }
 
-FReply SItemHeader::StartItemNameChange(const FGeometry&, const FPointerEvent&)
+FReply SLightItemHeader::StartItemNameChange(const FGeometry&, const FPointerEvent&)
 {
     bItemRenameInProgress = true;
     UpdateItemNameBox();
     return FReply::Handled();
 }
 
-FText SItemHeader::ItemNameText() const
+FText SLightItemHeader::ItemNameText() const
 {
     if (ToolData->IsSingleGroupSelected())
     {
@@ -200,7 +200,7 @@ FText SItemHeader::ItemNameText() const
     return FText::FromString(ToolData->GetMasterLight()->Name);
 }
 
-void SItemHeader::CommitNewItemName(const FText& Text, ETextCommit::Type CommitType)
+void SLightItemHeader::CommitNewItemName(const FText& Text, ETextCommit::Type CommitType)
 {
     if (CommitType == ETextCommit::OnEnter && !Text.IsEmpty())
     {
@@ -216,7 +216,7 @@ void SItemHeader::CommitNewItemName(const FText& Text, ETextCommit::Type CommitT
     bItemRenameInProgress = false;
 }
 
-void SItemHeader::UpdateExtraNoteBox()
+void SLightItemHeader::UpdateExtraNoteBox()
 {
     ExtraNoteBox->SetVisibility(EVisibility::Visible);
     if (ToolData->IsSingleGroupSelected())
@@ -233,23 +233,23 @@ void SItemHeader::UpdateExtraNoteBox()
             ExtraNoteBox->SetContent(
                 SNew(STextBlock)
                 .Text(FText::FromString("+ Add note"))
-                .OnDoubleClicked(this, &SItemHeader::StartItemNoteChange)
+                .OnDoubleClicked(this, &SLightItemHeader::StartItemNoteChange)
             );
         }
         else if (bItemNoteChangeInProgress)
         {
             ExtraNoteBox->SetContent(
                 SNew(SEditableText)
-                .Text(this, &SItemHeader::ItemNoteText)
-                .OnTextCommitted(this, &SItemHeader::CommitNewItemNote)
+                .Text(this, &SLightItemHeader::ItemNoteText)
+                .OnTextCommitted(this, &SLightItemHeader::CommitNewItemNote)
             );
         }
         else
         {
             ExtraNoteBox->SetContent(
                 SNew(STextBlock)
-                .Text(this, &SItemHeader::ItemNoteText)
-                .OnDoubleClicked(this, &SItemHeader::StartItemNoteChange)
+                .Text(this, &SLightItemHeader::ItemNoteText)
+                .OnDoubleClicked(this, &SLightItemHeader::StartItemNoteChange)
             );
         }
     }
@@ -257,14 +257,14 @@ void SItemHeader::UpdateExtraNoteBox()
         ExtraNoteBox->SetVisibility(EVisibility::Collapsed);
 }
 
-FReply SItemHeader::StartItemNoteChange(const FGeometry&, const FPointerEvent&)
+FReply SLightItemHeader::StartItemNoteChange(const FGeometry&, const FPointerEvent&)
 {
     bItemNoteChangeInProgress = true;
     UpdateExtraNoteBox();
     return FReply::Handled();
 }
 
-FText SItemHeader::ItemNoteText() const
+FText SLightItemHeader::ItemNoteText() const
 {
     auto Item = ToolData->GetMasterLight();
     if (Item->Note.IsEmpty())
@@ -274,7 +274,7 @@ FText SItemHeader::ItemNoteText() const
     return FText::FromString(ToolData->GetMasterLight()->Note);
 }
 
-void SItemHeader::CommitNewItemNote(const FText& Text, ETextCommit::Type CommitType)
+void SLightItemHeader::CommitNewItemNote(const FText& Text, ETextCommit::Type CommitType)
 {
     if (CommitType == ETextCommit::OnEnter)
     {

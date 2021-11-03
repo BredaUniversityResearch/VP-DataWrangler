@@ -6,7 +6,7 @@
 #include "LightTreeHierarchy.h"
 #include "LightPropertyEditor.h"
 #include "LightSpecificPropertyEditor.h"
-#include "ItemHeader.h"
+#include "LightItemHeader.h"
 
 
 class UToolData;
@@ -88,7 +88,7 @@ private:
     TSharedPtr<SLightTreeHierarchy> TreeWidget;
     TSharedPtr<SLightPropertyEditor> LightPropertyWidget;
     TSharedPtr<SLightSpecificProperties> LightSpecificWidget;
-    TSharedPtr<SItemHeader> ItemHeader;
+    TSharedPtr<SLightItemHeader> ItemHeader;
     UToolData* ToolData;
     TSharedPtr<FActiveTimerHandle> DataAutoSaveTimer;
 

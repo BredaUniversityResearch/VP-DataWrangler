@@ -58,7 +58,6 @@ void SLightControlTool::Construct(const FArguments& Args)
     ToolData->DataName = "VirtualLight";
     ToolData->ItemClass = UVirtualLight::StaticClass();
     ToolData->CoreToolPtr = this;
-
     ToolData->OpenFileDialog = FLightJsonFileDialogDelegate::CreateRaw(this, &SLightControlTool::OpenFileDialog);
     ToolData->SaveFileDialog = FLightJsonFileDialogDelegate::CreateRaw(this, &SLightControlTool::SaveFileDialog);
 
@@ -93,8 +92,10 @@ void SLightControlTool::Construct(const FArguments& Args)
         [
             SAssignNew(TreeWidget, SLightTreeHierarchy)
             .ToolData(ToolData)
-        .DataUpdateDelegate(FUpdateItemDataDelegate::CreateStatic(&SLightControlTool::UpdateItemData))
-        .SelectionChangedDelegate(FTreeSelectionChangedDelegate::CreateRaw(this, &SLightControlTool::OnTreeSelectionChanged))
+            .DataVerificationDelegate(FItemDataVerificationDelegate::CreateRaw(this, &SLightControlTool::VerifyTreeData))
+            .DataVerificationInterval(2.0f)
+            .DataUpdateDelegate(FUpdateItemDataDelegate::CreateStatic(&SLightControlTool::UpdateItemData))
+            .SelectionChangedDelegate(FTreeSelectionChangedDelegate::CreateRaw(this, &SLightControlTool::OnTreeSelectionChanged))
             ]
             + SSplitter::Slot()
             [
@@ -379,7 +380,7 @@ SVerticalBox::FSlot& SLightControlTool::LightHeader()
     Slot
     .HAlign(HAlign_Fill)
         [
-            SAssignNew(ItemHeader, SItemHeader)
+            SAssignNew(ItemHeader, SLightItemHeader)
             .ToolData(ToolData)
         ];
 

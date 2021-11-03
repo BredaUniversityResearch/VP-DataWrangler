@@ -2,10 +2,10 @@
 #include "Slate.h"
 
 class UToolData;
-class SItemHeader : public SCompoundWidget
+class SLightItemHeader : public SCompoundWidget
 {
 public:
-    SLATE_BEGIN_ARGS(SItemHeader) {}
+    SLATE_BEGIN_ARGS(SLightItemHeader) {}
 
     SLATE_ARGUMENT(UToolData*, ToolData)
 
