@@ -20,19 +20,19 @@ public:
         , OuterAngle(0.0f) {};
 
     bool IsEnabled() const { return bIsEnabled; };
-    float GetIntensity() const { return Intensity; }
 
-    float GetHue() const { return Hue; };
-    float GetSaturation() const { return Saturation; };
-    bool GetUseTemperature() const { return bUseTemperature; };
-    float GetTemperature() const { return Temperature; };
+    virtual float GetIntensityNormalized() const { return Intensity; }
+    virtual float GetHue() const { return Hue; };
+    virtual float GetSaturation() const { return Saturation; };
+    virtual bool GetUseTemperature() const { return bUseTemperature; };
+    virtual float GetTemperatureNormalized() const { return Temperature; };
 
     virtual bool GetCastShadows() const { return false; };
 
-    float GetHorizontal() const { return Horizontal; };
-    float GetVertical() const { return Vertical; };
-    float GetInnerConeAngle() const { return InnerAngle; };
-    float GetOuterConeAngle() const { return OuterAngle; };
+    virtual float GetHorizontalNormalized() const { return Horizontal; };
+    virtual float GetVerticalNormalized() const { return Vertical; };
+    virtual float GetInnerConeAngle() const { return InnerAngle; };
+    virtual float GetOuterConeAngle() const { return OuterAngle; };
 
     virtual void SetEnabled(bool bNewState);
     virtual void SetLightIntensity(float NormalizedValue);
@@ -43,8 +43,8 @@ public:
 
     virtual void SetCastShadows(bool bState);
 
-    virtual void AddHorizontal(float Degrees);
-    virtual void AddVertical(float Degrees);
+    virtual void AddHorizontal(float NormalizedDegrees);
+    virtual void AddVertical(float NormalizedDegrees);
     virtual void SetInnerConeAngle(float NewValue);
     virtual void SetOuterConeAngle(float NewValue);
 
@@ -56,15 +56,18 @@ public:
 
     FLinearColor GetRGBColor() const;
 
+
+
+
     UPROPERTY(BlueprintReadOnly)
         bool bIsEnabled;
+
+    UPROPERTY(BlueprintReadOnly)
+        float Intensity;
     UPROPERTY(BlueprintReadOnly)
         float Hue;
     UPROPERTY(BlueprintReadOnly)
         float Saturation;
-    UPROPERTY(BlueprintReadOnly)
-        float Intensity;
-
     UPROPERTY(BlueprintReadOnly)
         bool bUseTemperature;
     UPROPERTY(BlueprintReadOnly)

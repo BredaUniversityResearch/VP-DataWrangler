@@ -1,36 +1,35 @@
 #pragma once
 
-#include "ItemHandle.h"
 #include "Slate.h"
-#include "Templates/SharedPointer.h"
+
+
 #include "LightTreeHierarchy.h"
 #include "LightPropertyEditor.h"
 #include "LightSpecificPropertyEditor.h"
 #include "LightItemHeader.h"
 
-
-class UToolData;
-
-class SLightControlTool : public SCompoundWidget
+class UDMXLight;
+class SDMXControlTool : public SCompoundWidget
 {
+
 public:
 
-    SLATE_BEGIN_ARGS(SLightControlTool) {}
+    SLATE_BEGIN_ARGS(SDMXControlTool) {}
 
     SLATE_ARGUMENT(TSharedPtr<SDockTab>, ToolTab);
 
     SLATE_END_ARGS()
 
-    void Construct(const FArguments& Args);
+        void Construct(const FArguments& Args);
 
-    ~SLightControlTool();
+    ~SDMXControlTool();
 
     void PreDestroy();
-    
-    void ActorSpawnedCallback(AActor* Actor);
+
     void OnTreeSelectionChanged();
+
     void UpdateExtraLightDetailBox();
-    
+
     void ClearSelection();
 
     TWeakPtr<SLightTreeHierarchy> GetTreeWidget();
@@ -39,32 +38,16 @@ public:
     FString OpenFileDialog(FString Title, FString StartingPath);
     FString SaveFileDialog(FString Title, FString StartingPath);
 
-    //FSlateBrush& GetIcon(EIconType Icon);
-
-    void UpdateLightList();
-
-
-    static void UpdateItemData(UItemHandle* ItemHandle);
-    void VerifyTreeData();
 
 private:
 
     void LoadResources();
 
     SVerticalBox::FSlot& LightHeader();
-     
+
+    FReply AddLightButtonCallback();
 
     SVerticalBox::FSlot& LightPropertyEditor();
-
-
-    TSharedRef<SBox> LightTransformViewer();
-    FReply SelectItemInScene();
-    FReply SelectItemParent();
-    bool SelectItemParentButtonEnable() const;
-    FText GetItemParentName() const;
-    FText GetItemPosition() const;
-    FText GetItemRotation() const;
-    FText GetItemScale() const;
 
     TSharedRef<SBox> GroupControls();
     TSharedRef<SWidget> GroupControlDropDownLabel(UItemHandle* Item);
@@ -73,6 +56,17 @@ private:
     FText GroupControlLightList() const;
 
     SHorizontalBox::FSlot& LightSpecificPropertyEditor();
+
+    TSharedRef<SBox> DMXChannelProperties();
+
+    void OnPortSelected();
+    ECheckBoxState UseDMXCheckboxState() const;
+    void UseDMXCheckboxStateChanged(ECheckBoxState NewState);
+    FString DMXConfigObjectPath() const;
+    void OnSetDMXConfigAsset(const FAssetData& AssetData);
+    TOptional<int> StartingChannelBoxGetValue() const;
+    void StartingChannelBoxValueCommitted(int Value, ETextCommit::Type CommitType);
+
 
     UToolData* ToolData;
 
@@ -85,6 +79,9 @@ private:
     TSharedPtr<SLightItemHeader> ItemHeader;
     TSharedPtr<FActiveTimerHandle> DataAutoSaveTimer;
 
+    TSharedPtr<SDMXPortSelector> DMXPortSelector;
+
     FDelegateHandle ActorSpawnedListenerHandle;
+
 
 };

@@ -3,29 +3,49 @@
 
 #include "DMXConfigAsset.h"
 
+#include "BaseLight.h"
+#include "IO/DMXOutputPort.h"
+
 #include "DMXLight.generated.h"
 
+
 UCLASS(BlueprintType)
-class UDMXLight : public UObject
+class UDMXLight : public UBaseLight
 {
 public:
     GENERATED_BODY()
     UDMXLight()
-        : Name("New DMX Light")
+        : StartingChannel(1)
+        , bDMXEnabled(true)
+        , Config(nullptr)
     {};
 
+    virtual float GetHorizontalNormalized() const override;
+    virtual float GetVerticalNormalized() const override;
+
+    virtual void SetEnabled(bool bNewState) override;
+
+    virtual void SetLightIntensity(float NormalizedValue) override;
+    virtual void SetHue(float NewValue) override;
+    virtual void SetSaturation(float NewValue) override;
+
+    virtual void AddHorizontal(float NormalizedDegrees) override;
+    virtual void AddVertical(float NormalizedDegrees) override;
+
+    virtual FPlatformTypes::uint8 LoadFromJson(TSharedPtr<FJsonObject> JsonObject) override;
+    virtual TSharedPtr<FJsonObject> SaveAsJson() const override;
+
+    void UpdateDMXChannels();
+
     UPROPERTY(EditAnywhere)
-        FString Name;
+        uint32 StartingChannel;
+
+    UPROPERTY(EditAnywhere)
+        bool bDMXEnabled;
 
     UPROPERTY(EditAnywhere)
         UDMXConfigAsset* Config;
 
-    UPROPERTY(BlueprintReadOnly)
-        float Horizontal;
-
-    UPROPERTY(BlueprintReadOnly)
-        float Vertical;
-
+    TSharedPtr<FDMXOutputPort, ESPMode::ThreadSafe> OutputPort;
     
-
 };

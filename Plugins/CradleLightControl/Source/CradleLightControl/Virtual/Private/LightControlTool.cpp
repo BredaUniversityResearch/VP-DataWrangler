@@ -27,7 +27,7 @@
 #include "ItemHandle.h"
 #include "BaseLight.h"
 
-
+#include "CradleLightControl.h"
 #include "DesktopPlatform/Public/IDesktopPlatform.h"
 
 #include "VirtualLight.h"
@@ -46,20 +46,15 @@ void SLightControlTool::Construct(const FArguments& Args)
 
     ToolTab = Args._ToolTab;
 
-    check(Args._OpenFileDialogDelegate.IsBound());
-    check(Args._SaveFileDialogDelegate.IsBound());
-
-    OpenFileDialogDelegate = Args._OpenFileDialogDelegate;
-    SaveFileDialogDelegate = Args._SaveFileDialogDelegate;
-
-    //SHorizontalBox::FSlot* SeparatorSlot;
-
     ToolData = NewObject<UToolData>();
     ToolData->DataName = "VirtualLight";
     ToolData->ItemClass = UVirtualLight::StaticClass();
-    ToolData->CoreToolPtr = this;
     ToolData->OpenFileDialog = FLightJsonFileDialogDelegate::CreateRaw(this, &SLightControlTool::OpenFileDialog);
     ToolData->SaveFileDialog = FLightJsonFileDialogDelegate::CreateRaw(this, &SLightControlTool::SaveFileDialog);
+    ToolData->MasterLightTransactedDelegate = FOnMasterLightTransactedDelegate::CreateLambda([this](UItemHandle* ItemHandle)
+        {
+            LightPropertyWidget->UpdateSaturationGradient(ItemHandle->Item->GetHue());
+        });
 
     ToolData->LoadMetaData();
 
@@ -92,6 +87,7 @@ void SLightControlTool::Construct(const FArguments& Args)
         [
             SAssignNew(TreeWidget, SLightTreeHierarchy)
             .ToolData(ToolData)
+            .Name("Virtual Lights")
             .DataVerificationDelegate(FItemDataVerificationDelegate::CreateRaw(this, &SLightControlTool::VerifyTreeData))
             .DataVerificationInterval(2.0f)
             .DataUpdateDelegate(FUpdateItemDataDelegate::CreateStatic(&SLightControlTool::UpdateItemData))
@@ -169,10 +165,9 @@ TWeakPtr<SLightPropertyEditor> SLightControlTool::GetLightPropertyEditor()
 
 FString SLightControlTool::OpenFileDialog(FString Title, FString StartingPath)
 {
-    check(OpenFileDialogDelegate.IsBound());
 
     TArray<FString> Res;
-    if (OpenFileDialogDelegate.Execute(Title, ToolTab->GetParentWindow()->GetNativeWindow()->GetOSWindowHandle(),
+    if (FCradleLightControlModule::OpenFileDialog(Title, ToolTab->GetParentWindow()->GetNativeWindow()->GetOSWindowHandle(),
         StartingPath, EFileDialogFlags::None, "JSON Data Table|*.json", Res))
     {
         return Res[0];
@@ -182,9 +177,8 @@ FString SLightControlTool::OpenFileDialog(FString Title, FString StartingPath)
 
 FString SLightControlTool::SaveFileDialog(FString Title, FString StartingPath)
 {
-    check(SaveFileDialogDelegate.IsBound());
     TArray<FString> Res;
-    if (SaveFileDialogDelegate.Execute(Title, ToolTab->GetParentWindow()->GetNativeWindow()->GetOSWindowHandle(),
+    if (FCradleLightControlModule::SaveFileDialog(Title, ToolTab->GetParentWindow()->GetNativeWindow()->GetOSWindowHandle(),
         StartingPath, EFileDialogFlags::None, "JSON Data Table|*.json", Res))
     {
         return Res[0];

@@ -13,6 +13,35 @@
 #include "Components/SkyLightComponent.h"
 #include "Kismet/GameplayStatics.h"
 
+float UVirtualLight::GetIntensityNormalized() const
+{
+    if (Handle->Type == ETreeItemType::SpotLight ||
+        Handle->Type == ETreeItemType::PointLight)
+    {
+        return Intensity / 2010.619f;        
+    }
+    return 0.0f;
+}
+
+float UVirtualLight::GetTemperatureNormalized() const
+{
+    if (Handle->Type != ETreeItemType::SkyLight)
+    {
+        return (Temperature - 1700.0f) / (12000.0f - 1700.0f);
+    }
+    return 0.0f;
+}
+
+float UVirtualLight::GetHorizontalNormalized() const
+{
+    return Horizontal / 360.0f + 0.5f;
+}
+
+float UVirtualLight::GetVerticalNormalized() const
+{
+    return Vertical / 360.0f + 0.5f;
+}
+
 void UVirtualLight::SetEnabled(bool bNewState)
 {
     UBaseLight::SetEnabled(bNewState);
@@ -172,8 +201,9 @@ void UVirtualLight::BeginTransaction()
     ActorPtr->Modify();
 }
 
-void UVirtualLight::AddHorizontal(float Degrees)
+void UVirtualLight::AddHorizontal(float NormalizedDegrees)
 {
+    auto Degrees = NormalizedDegrees * 360.0f;
     auto Euler = ActorPtr->GetActorRotation().Euler();
     Euler.Z += Degrees;
     auto Rotator = FRotator::MakeFromEuler(Euler).GetNormalized();
@@ -184,8 +214,9 @@ void UVirtualLight::AddHorizontal(float Degrees)
     Horizontal = FMath::Fmod(Horizontal + 180.0f, 360.0001f) - 180.0f;
 }
 
-void UVirtualLight::AddVertical(float Degrees)
+void UVirtualLight::AddVertical(float NormalizedDegrees)
 {
+    auto Degrees = NormalizedDegrees * 360.0f;
     auto ActorRot = ActorPtr->GetActorRotation().Quaternion();
     auto DeltaQuat = FVector::ForwardVector.RotateAngleAxis(Degrees, FVector::RightVector).Rotation().Quaternion();
 

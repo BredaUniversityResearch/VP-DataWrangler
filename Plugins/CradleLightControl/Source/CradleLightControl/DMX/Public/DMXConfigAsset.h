@@ -3,6 +3,10 @@
 #include "AssetTypeActions_Base.h"
 
 #include "CoreMinimal.h"
+
+
+#include "Chaos/AABB.h"
+#include "Chaos/AABB.h"
 #include "UObject/NoExportTypes.h"
 
 #include "DMXConfigAsset.generated.h"
@@ -11,6 +15,32 @@ USTRUCT(BlueprintType)
 struct CRADLELIGHTCONTROL_API FDMXChannel
 {
     GENERATED_BODY()
+
+    FDMXChannel()
+	    : MinValue(0.0f)
+		, MaxValue(100.0f)
+		, MinDMXValue(0)
+		, MaxDMXValue(255)
+		, bEnabled(true)
+		, Channel(1) {}
+
+
+    //UFUNCTION(BlueprintCallable)
+    float NormalizedToValue(float Normalized);
+
+    //UFUNCTION(BlueprintCallable)
+    uint8 NormalizedToDMX(float Normalized);
+
+    //UFUNCTION(BlueprintCallable)
+    float NormalizeValue(float Value);
+
+    uint8 ValueToDMX(float Value);
+
+    void SetChannel(TMap<int32, uint8>& Channels, float Value, int32 StartingChannel);
+
+    float GetValueRange() const;
+    uint8 GetDMXValueRange() const;
+
     UPROPERTY(EditAnywhere)
         bool bEnabled;
 
@@ -18,17 +48,15 @@ struct CRADLELIGHTCONTROL_API FDMXChannel
         int32 Channel;
 
     UPROPERTY(EditAnywhere)
-        uint8 MinimumDMXValue;
+        uint8 MinDMXValue;
     UPROPERTY(EditAnywhere)
-        uint8 MaximumDMXValue;
+        uint8 MaxDMXValue;
 
     UPROPERTY(EditAnywhere)
-        int32 MinSliderValue;
+        float MinValue;
     UPROPERTY(EditAnywhere)
-        int32 MaxSliderValue;
-
-    UPROPERTY(EditAnywhere)
-    class UDMXConfigAsset* Test;
+        float MaxValue;
+    
     
 };
 
@@ -60,6 +88,30 @@ class CRADLELIGHTCONTROL_API UDMXConfigAsset : public UObject
     GENERATED_BODY()
 
 public:
+
+    void SetChannels(class UDMXLight* DMXLight, TMap<int32, uint8>& Channels);
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-        FDMXChannel Horizontal;
+        FDMXChannel OnOffChannel;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+        FDMXChannel HorizontalChannel;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+        FDMXChannel VerticalChannel;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+        FDMXChannel RedChannel;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+        FDMXChannel GreenChannel;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+        FDMXChannel BlueChannel;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+        FDMXChannel IntensityChannel;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+		TArray<FConstDMXChannel> ConstantChannels;
 };

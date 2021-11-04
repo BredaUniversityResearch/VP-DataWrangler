@@ -381,7 +381,7 @@ void UToolData::AutoSave()
         auto ThisPlugin = IPluginManager::Get().FindPlugin("CradleLightControl");
         auto Content = ThisPlugin->GetContentDir();
 
-        SaveStateToJson(Content + "/LightsAutoSave.json", false);
+        SaveStateToJson(Content + "/" + DataName + "AutoSave.json", false);
     }
     else
         SaveStateToJson(ToolPresetPath, false);
@@ -424,7 +424,7 @@ void UToolData::LoadMetaData()
         }
         else
         {
-            LoadStateFromJSON(Content + "/" + "LightsAutoSave" + ".json", false);
+            LoadStateFromJSON(Content + "/" + DataName + "AutoSave" + ".json", false);
         }
     }
     else

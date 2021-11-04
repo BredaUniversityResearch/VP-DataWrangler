@@ -38,8 +38,8 @@ void UBaseLight::PostTransacted(const FTransactionObjectEvent& TransactionEvent)
     if (TransactionEvent.GetEventType() == ETransactionObjectEventType::UndoRedo)
     {
         auto MasterLight = Handle->ToolData->GetMasterLight();
-        if (MasterLight)
-            Handle->ToolData->CoreToolPtr->GetLightPropertyEditor().Pin()->UpdateSaturationGradient(MasterLight->Item->Hue);
+        if (MasterLight == Handle)
+            Handle->ToolData->MasterLightTransactedDelegate.ExecuteIfBound(MasterLight);
             
     }
 }
@@ -59,7 +59,7 @@ void UBaseLight::SetEnabled(bool bNewState)
 
 void UBaseLight::SetLightIntensity(float NormalizedValue)
 {
-    SetLightIntensity(NormalizedValue);
+    Intensity = NormalizedValue;
 }
 
 void UBaseLight::SetHue(float NewValue)
@@ -89,14 +89,14 @@ void UBaseLight::SetCastShadows(bool bState)
 
 }
 
-void UBaseLight::AddHorizontal(float Degrees)
+void UBaseLight::AddHorizontal(float NormalizedDegrees)
 {
-    Horizontal += Degrees;
+    Horizontal += NormalizedDegrees;
 }
 
-void UBaseLight::AddVertical(float Degrees)
+void UBaseLight::AddVertical(float NormalizedDegrees)
 {
-    Vertical += Degrees;
+    Vertical += NormalizedDegrees;
 }
 
 void UBaseLight::SetInnerConeAngle(float NewValue)

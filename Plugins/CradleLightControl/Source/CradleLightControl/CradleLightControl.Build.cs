@@ -38,6 +38,9 @@ public class CradleLightControl : ModuleRules
 			new string[]
 			{
 				"Core",
+                "DMXProtocol",
+                "DMXProtocolEditor",
+                "DMXRuntime"
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);

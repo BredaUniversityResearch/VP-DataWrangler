@@ -484,7 +484,7 @@ float SLightPropertyEditor::GetIntensityValue() const
 {
     if (ToolData->IsAMasterLightSelected())
     {
-        return ToolData->SelectionMasterLight->Item->Intensity / 2010.619f;
+        return ToolData->SelectionMasterLight->Item->GetIntensityNormalized();
     }
     return 0;
 }
@@ -494,7 +494,7 @@ FText SLightPropertyEditor::GetIntensityPercentage() const
     FString Res = "0%";
     if (ToolData->IsAMasterLightSelected())
     {
-        Res = FString::FormatAsNumber(ToolData->SelectionMasterLight->Item->Intensity / 20.10619f) + "%";
+        Res = FString::FormatAsNumber(ToolData->SelectionMasterLight->Item->GetIntensityNormalized() * 100.0f) + "%";
     }
     return FText::FromString(Res);
 }
@@ -642,7 +642,7 @@ float SLightPropertyEditor::GetTemperatureValue() const
 {
     if (ToolData->IsAMasterLightSelected())
     {
-        return (ToolData->SelectionMasterLight->Item->Temperature - 1700.0f) / (12000.0f - 1700.0f);
+        return ToolData->SelectionMasterLight->Item->GetTemperatureNormalized();
     }
     return 0;
 }
@@ -652,7 +652,7 @@ FText SLightPropertyEditor::GetTemperaturePercentage() const
     FString Res = "0%";
     if (ToolData->IsAMasterLightSelected())
     {
-        auto Norm = (ToolData->SelectionMasterLight->Item->Temperature - 1700.0f) / (12000.0f - 1700.0f);
+        auto Norm = ToolData->SelectionMasterLight->Item->GetTemperatureNormalized();
         Res = FString::FormatAsNumber(Norm * 100.0f) + "%";
     }
     return FText::FromString(Res);

@@ -138,9 +138,13 @@ class SLightTreeHierarchy : public SCompoundWidget
 public:
 
 
-    SLATE_BEGIN_ARGS(SLightTreeHierarchy){}
+    SLATE_BEGIN_ARGS(SLightTreeHierarchy)
+        : _Name("Unnamed tree view")
+    {}
 
     SLATE_ARGUMENT(class UToolData*, ToolData)
+
+    SLATE_ARGUMENT(FString, Name)
 
     SLATE_ARGUMENT(FUpdateItemDataDelegate, DataUpdateDelegate)
 
@@ -180,6 +184,8 @@ public:
     FSlateIcon SaveIcon;
     FSlateIcon SaveAsIcon;
     FSlateIcon LoadIcon;
+
+    FText HeaderText;
 
 
     TSharedPtr<STreeView<UItemHandle*>> Tree;

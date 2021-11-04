@@ -392,13 +392,8 @@ TSharedPtr<FJsonValue> UItemHandle::SaveToJson()
 {
     TSharedPtr<FJsonObject> JsonItem = MakeShared<FJsonObject>();
 
-    auto Enabled = StateCheckbox->GetCheckedState();
 
-    int ItemState = 0;// Unchecked
-    if (Enabled == ECheckBoxState::Undetermined)
-        ItemState = 1;
-    else if (Enabled == ECheckBoxState::Checked)
-        ItemState = 2;
+    int ItemState = Item->bIsEnabled;
 
     JsonItem->SetStringField("Name", Name);
     JsonItem->SetStringField("Note", Note);

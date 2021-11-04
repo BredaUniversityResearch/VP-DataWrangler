@@ -41,7 +41,7 @@ public:
 	TSharedPtr<SDockTab> DMXTab;
 
 	TSharedPtr<SLightControlTool> LightControl;
-	TSharedPtr<class SDMXController> DMXControl;
+	TSharedPtr<class SDMXControlTool> DMXControl;
 
 
 private:

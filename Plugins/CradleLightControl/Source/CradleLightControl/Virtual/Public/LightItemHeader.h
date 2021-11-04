@@ -1,4 +1,4 @@
-
+#pragma once
 #include "Slate.h"
 
 class UToolData;

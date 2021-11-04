@@ -444,7 +444,7 @@ void SLightSpecificProperties::EndTransaction()
 void SLightSpecificProperties::OnHorizontalValueChanged(float NormalizedValue)
 {
     auto Light = ToolData->GetMasterLight();
-    auto Delta = ((NormalizedValue - 0.5f) * 360.0f) - Light->Item->Horizontal;
+    auto Delta = NormalizedValue - Light->Item->GetHorizontalNormalized();
 
     for (auto SelectedLight : ToolData->LightsUnderSelection)
     {
@@ -469,21 +469,21 @@ float SLightSpecificProperties::GetHorizontalValue() const
 {
     auto Light = ToolData->GetMasterLight();
 
-    return Light->Item->Horizontal / 360.0f + 0.5f;
+    return Light->Item->GetHorizontalNormalized();
 }
 
 FText SLightSpecificProperties::GetHorizontalPercentage() const
 {
     auto Light = ToolData->GetMasterLight();
 
-    return FText::FromString(FString::FormatAsNumber(Light->Item->Horizontal / 3.6f + 50.0f) + "%");
+    return FText::FromString(FString::FormatAsNumber(Light->Item->GetHorizontalNormalized() * 100.0f) + "%");
 }
 
 void SLightSpecificProperties::OnVerticalValueChanged(float NormalizedValue)
 {
     auto Light = ToolData->GetMasterLight();
-    auto Delta = ((NormalizedValue - 0.5f) * 360.0f) - Light->Item->Vertical;
-
+    auto Delta = NormalizedValue - Light->Item->GetVerticalNormalized();
+    UE_LOG(LogTemp, Warning, TEXT("%f - %f = %f"), NormalizedValue, Light->Item->GetVerticalNormalized(), Delta);
     for (auto SelectedLight : ToolData->LightsUnderSelection)
     {
         SelectedLight->BeginTransaction();
@@ -509,14 +509,14 @@ float SLightSpecificProperties::GetVerticalValue() const
 {
     auto Light = ToolData->GetMasterLight();
 
-    return Light->Item->Vertical / 360.0f + 0.5f;
+    return Light->Item->GetVerticalNormalized();
 }
 
 FText SLightSpecificProperties::GetVerticalPercentage() const
 {
     auto Light = ToolData->GetMasterLight();
 
-    return FText::FromString(FString::FormatAsNumber(Light->Item->Vertical / 3.6f + 50.0f) + "%");
+    return FText::FromString(FString::FormatAsNumber(Light->Item->GetVerticalNormalized() * 100.0f) + "%");
 }
 
 void SLightSpecificProperties::OnInnerAngleValueChanged(float NormalizedValue)

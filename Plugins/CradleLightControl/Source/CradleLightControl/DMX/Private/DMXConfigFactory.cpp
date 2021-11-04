@@ -14,9 +14,9 @@ UObject* UDMXConfigFactory::FactoryCreateNew(UClass* InClass, UObject* InParent,
 {
     auto Asset = NewObject<UDMXConfigAsset>(InParent, InClass, InName, Flags);
 
-    Asset->Horizontal.Channel = 228;
-    Asset->Horizontal.MaximumDMXValue = 255;
-    Asset->Horizontal.MinimumDMXValue = 0;
+    Asset->HorizontalChannel.Channel = 0;
+    Asset->HorizontalChannel.MaxDMXValue = 255;
+    Asset->HorizontalChannel.MinDMXValue = 0;
 
 
     return Asset;

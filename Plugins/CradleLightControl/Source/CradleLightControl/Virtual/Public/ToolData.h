@@ -32,7 +32,7 @@ DECLARE_DELEGATE(FClearSelectionDelegate);
 DECLARE_DELEGATE_RetVal_TwoParams(FString, FLightJsonFileDialogDelegate, FString /*Title*/, FString /*StartDir*/);
 DECLARE_DELEGATE(FOnTreeStructureChangedDelegate);
 DECLARE_DELEGATE_TwoParams(FItemExpansionChangedDelegate, UItemHandle*, bool);
-
+DECLARE_DELEGATE_OneParam(FOnMasterLightTransactedDelegate, UItemHandle*);
 
 UCLASS()
 class UToolData : public UObject
@@ -81,9 +81,6 @@ public:
 
     bool bCurrentlyLoading;
     FString ToolPresetPath;
-
-
-    class SLightControlTool* CoreToolPtr;
     
     FClearSelectionDelegate ClearSelectionDelegate;
     FLightJsonFileDialogDelegate SaveFileDialog;
@@ -91,6 +88,7 @@ public:
 
     FOnTreeStructureChangedDelegate TreeStructureChangedDelegate;
     FItemExpansionChangedDelegate ItemExpansionChangedDelegate;
+    FOnMasterLightTransactedDelegate MasterLightTransactedDelegate;
 
     FTimerHandle AutoSaveTimer;
     //TSharedPtr<FActiveTimerHandle> AutoSaveTimer;

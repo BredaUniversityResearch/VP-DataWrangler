@@ -14,6 +14,12 @@ public:
     UVirtualLight()
         : UBaseLight() {};
 
+    float GetIntensityNormalized() const override;
+    float GetTemperatureNormalized() const override;
+
+    virtual float GetHorizontalNormalized() const override;
+    virtual float GetVerticalNormalized() const override;
+
     virtual void SetEnabled(bool bNewState) override;
     virtual void SetLightIntensity(float NormalizedValue) override;
     virtual void SetHue(float NewValue) override;
@@ -23,8 +29,9 @@ public:
 
     virtual void SetCastShadows(bool bState) override;
 
-    virtual void AddHorizontal(float Degrees) override;
-    virtual void AddVertical(float Degrees) override;
+
+    virtual void AddHorizontal(float NormalizedDegrees) override;
+    virtual void AddVertical(float NormalizedDegrees) override;
     virtual void SetInnerConeAngle(float NewValue) override;
     virtual void SetOuterConeAngle(float NewValue) override;
 

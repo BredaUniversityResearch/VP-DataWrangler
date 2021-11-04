@@ -266,6 +266,7 @@ void SLightTreeHierarchy::Construct(const FArguments& Args)
     DataUpdateDelegate = Args._DataUpdateDelegate;
     DataVerificationDelegate = Args._DataVerificationDelegate;
     SelectionChangedDelegate = Args._SelectionChangedDelegate;
+    HeaderText = FText::FromString(Args._Name);
 
     ToolData->ItemExpansionChangedDelegate = FItemExpansionChangedDelegate::CreateLambda([this](UItemHandle* Item, bool bState)
         {
@@ -313,7 +314,7 @@ void SLightTreeHierarchy::Construct(const FArguments& Args)
             .AutoHeight()
             [
                 SNew(STextBlock)
-                .Text(FText::FromString("Scene Lights"))
+                .Text(HeaderText)
                 .Font(Font24)
             ]
             +SVerticalBox::Slot()

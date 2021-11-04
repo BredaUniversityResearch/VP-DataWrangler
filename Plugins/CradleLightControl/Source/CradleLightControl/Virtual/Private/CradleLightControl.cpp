@@ -6,7 +6,7 @@
 #include "LevelEditor.h"
 #include "LightControlTool.h"
 #include "DMXConfigAsset.h"
-#include "DMXController.h"
+#include "DMXControlTool.h"
 
 #include "DesktopPlatformModule.h"
 #include "IDesktopPlatform.h"
@@ -123,8 +123,6 @@ void FCradleLightControlModule::RegisterTabSpawner()
 			LightTab->SetContent(				    
 				    SAssignNew(LightControl, SLightControlTool)
 				    .ToolTab(LightTab)
-					.OpenFileDialogDelegate(FFileDialogDelegate::CreateStatic(&FCradleLightControlModule::OpenFileDialog))
-					.SaveFileDialogDelegate(FFileDialogDelegate::CreateStatic(&FCradleLightControlModule::SaveFileDialog))
 				);
 
 		    return LightTab.ToSharedRef();
@@ -149,8 +147,8 @@ void FCradleLightControlModule::RegisterDMXTabSpawner()
 					});
 
 			DMXTab->SetContent(
-				SAssignNew(DMXControl, SDMXController)
-				//.ToolTab(DMXTab)
+				SAssignNew(DMXControl, SDMXControlTool)
+				.ToolTab(DMXTab)
 			);
 
 			return DMXTab.ToSharedRef();
