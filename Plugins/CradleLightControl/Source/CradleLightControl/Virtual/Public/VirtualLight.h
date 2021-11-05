@@ -1,6 +1,8 @@
 #pragma once
 
 #include "BaseLight.h"
+#include "Chaos/AABB.h"
+#include "Chaos/AABB.h"
 
 #include "VirtualLight.generated.h"
 
@@ -37,7 +39,7 @@ public:
 
     virtual bool GetCastShadows() const override;
 
-    virtual TSharedPtr<FJsonObject> SaveAsJson() const override;
+    virtual TSharedPtr<FJsonObject> SaveAsJson() override;
     virtual FPlatformTypes::uint8 LoadFromJson(TSharedPtr<FJsonObject> JsonObject) override;
 
     virtual void BeginTransaction() override;

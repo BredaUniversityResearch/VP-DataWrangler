@@ -433,20 +433,17 @@ FString SDMXControlTool::DMXConfigObjectPath() const
     FString ObjectPath = "";
     if (MasterDMX->Config)
     {
-        FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-        TArray<FAssetData> AssetData;
-        FAssetData AData;
-        auto Res = AssetRegistryModule.Get().GetAssetsByClass(MasterDMX->Config->GetClass()->GetFName(), AssetData);
-        ObjectPath = AssetData[0].ObjectPath.ToString();
-        check(Res)
+        ObjectPath = MasterDMX->Config->GetAssetPath();
     }
     return ObjectPath;
 }
 
 void SDMXControlTool::OnSetDMXConfigAsset(const FAssetData& AssetData)
 {
+    
     auto MasterDMX = Cast<UDMXLight>(ToolData->GetMasterLight()->Item);
     MasterDMX->Config = Cast<UDMXConfigAsset>(AssetData.GetAsset());
+    MasterDMX->Config->AssetName = AssetData.AssetName;
     //MasterDMX->Config
 }
 

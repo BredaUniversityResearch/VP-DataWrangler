@@ -89,6 +89,7 @@ class CRADLELIGHTCONTROL_API UDMXConfigAsset : public UObject
 
 public:
 
+    FString GetAssetPath();
     void SetChannels(class UDMXLight* DMXLight, TMap<int32, uint8>& Channels);
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -114,4 +115,6 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
 		TArray<FConstDMXChannel> ConstantChannels;
+
+    FName AssetName;
 };

@@ -5,6 +5,7 @@
 #include "../Public/DMXConfigAsset.h"
 
 #include "DMXLight.h"
+#include "AssetRegistry/AssetRegistryModule.h"
 
 float FDMXChannel::NormalizedToValue(float Normalized)
 {
@@ -94,4 +95,22 @@ void UDMXConfigAsset::SetChannels(UDMXLight* DMXLight, TMap<int32, uint8>& Chann
 
     OnOffChannel.SetChannel(Channels, DMXLight->bIsEnabled ? 1.0f : 0.0f, DMXLight->StartingChannel);
 
+}
+
+FString UDMXConfigAsset::GetAssetPath()
+{
+    FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+    TArray<FAssetData> AssetData;
+    auto Res = AssetRegistryModule.Get().GetAssetsByClass(GetClass()->GetFName(), AssetData);
+    check(Res)
+    auto TargetAsset = AssetData.FindByPredicate([this](const FAssetData& Asset)
+        {
+            
+            return Asset.AssetName == AssetName;
+        });
+    if (TargetAsset)
+    {
+		return TargetAsset->ObjectPath.ToString();	    
+    }
+    return "";
 }

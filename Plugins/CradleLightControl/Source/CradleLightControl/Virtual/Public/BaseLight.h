@@ -1,4 +1,6 @@
 #pragma once
+#include "Chaos/AABB.h"
+#include "Chaos/AABB.h"
 
 
 #include "BaseLight.generated.h"
@@ -48,7 +50,7 @@ public:
     virtual void SetInnerConeAngle(float NewValue);
     virtual void SetOuterConeAngle(float NewValue);
 
-    virtual TSharedPtr<FJsonObject> SaveAsJson() const;
+    virtual TSharedPtr<FJsonObject> SaveAsJson();
     virtual FPlatformTypes::uint8 LoadFromJson(TSharedPtr<FJsonObject> JsonObject);
 
     virtual void BeginTransaction();

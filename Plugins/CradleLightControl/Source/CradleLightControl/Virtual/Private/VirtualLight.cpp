@@ -1,6 +1,8 @@
 #include "VirtualLight.h"
 
 #include "ItemHandle.h"
+#include "Chaos/AABB.h"
+#include "Chaos/AABB.h"
 
 #include "Engine/Light.h"
 #include "Engine/SpotLight.h"
@@ -267,7 +269,7 @@ bool UVirtualLight::GetCastShadows() const
     return bCastShadows;
 }
 
-TSharedPtr<FJsonObject> UVirtualLight::SaveAsJson() const
+TSharedPtr<FJsonObject> UVirtualLight::SaveAsJson()
 {
     auto JsonObject = Super::SaveAsJson();
     JsonObject->SetStringField("RelatedLightName", ActorPtr->GetName());

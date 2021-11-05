@@ -10,6 +10,8 @@
 #include "Engine/PointLight.h"
 
 #include "ItemHandle.h"
+#include "Chaos/AABB.h"
+#include "Chaos/AABB.h"
 
 
 uint8 UBaseLight::LoadFromJson(TSharedPtr<FJsonObject> JsonObject)
@@ -24,6 +26,11 @@ uint8 UBaseLight::LoadFromJson(TSharedPtr<FJsonObject> JsonObject)
     SetSaturation(JsonObject->GetNumberField("Saturation"));
     SetUseTemperature(JsonObject->GetBoolField("UseTemperature"));
     SetTemperature(JsonObject->GetNumberField("Temperature"));
+    Vertical = 0.0f;
+    Horizontal = 0.0f;
+
+    AddHorizontal(JsonObject->GetNumberField("Horizontal"));
+    AddVertical(JsonObject->GetNumberField("Vertical"));
 
     return UItemHandle::ELoadingResult::Success;
 }
@@ -109,7 +116,7 @@ void UBaseLight::SetOuterConeAngle(float NewValue)
     OuterAngle = NewValue;
 }
 
-TSharedPtr<FJsonObject> UBaseLight::SaveAsJson() const
+TSharedPtr<FJsonObject> UBaseLight::SaveAsJson()
 {
     TSharedPtr<FJsonObject> JsonItem = MakeShared<FJsonObject>();
 
@@ -119,6 +126,8 @@ TSharedPtr<FJsonObject> UBaseLight::SaveAsJson() const
     JsonItem->SetNumberField("Saturation", Saturation);
     JsonItem->SetBoolField("UseTemperature", bUseTemperature);
     JsonItem->SetNumberField("Temperature", Temperature);
+    JsonItem->SetNumberField("Horizontal", Horizontal);
+    JsonItem->SetNumberField("Vertical", Vertical);
     
 
     TSharedPtr<FJsonValue> JsonValue = MakeShared<FJsonValueObject>(JsonItem);

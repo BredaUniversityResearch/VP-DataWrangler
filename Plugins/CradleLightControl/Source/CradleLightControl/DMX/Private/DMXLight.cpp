@@ -83,22 +83,33 @@ FPlatformTypes::uint8 UDMXLight::LoadFromJson(TSharedPtr<FJsonObject> JsonObject
     else
         Config = nullptr;
 
+    auto Res = Super::LoadFromJson(JsonObject);
 
-	return Super::LoadFromJson(JsonObject);
+
+    return Res;
 }
 
-TSharedPtr<FJsonObject> UDMXLight::SaveAsJson() const
+TSharedPtr<FJsonObject> UDMXLight::SaveAsJson()
 {
+
+
+    Vertical = Config->VerticalChannel.NormalizeValue(Vertical);
+    Horizontal = Config->HorizontalChannel.NormalizeValue(Horizontal);
+
     auto JsonObject = Super::SaveAsJson();
+
+    Vertical = Config->VerticalChannel.NormalizedToValue(Vertical);
+    Horizontal = Config->HorizontalChannel.NormalizedToValue(Horizontal);
 
     FString ObjectPath = "";
 
     if (Config)
     {
-        FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+        /*FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
         TArray<FAssetData> AssetData;
         AssetRegistryModule.Get().GetAssetsByClass(Config->GetClass()->GetFName(), AssetData);
-        ObjectPath = AssetData[0].ObjectPath.ToString();
+        ObjectPath = AssetData[0].ObjectPath.ToString();*/
+        ObjectPath = Config->GetAssetPath();
     }
 
     JsonObject->SetStringField("OutputPortGUID", OutputPort.IsValid() ? OutputPort->GetPortGuid().ToString() : "");
