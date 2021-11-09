@@ -71,8 +71,10 @@ void UVirtualLight::SetLightIntensity(float NormalizedValue)
 
     if (Handle->Type == ETreeItemType::SkyLight)
     {
+        return;
         auto LightComp = SkyLight->GetLightComponent();
         LightComp->Intensity = NormalizedValue;
+        //Intensity = NormalizedValue;
     }
     else
     {
@@ -93,6 +95,37 @@ void UVirtualLight::SetLightIntensity(float NormalizedValue)
 
         }
     }
+}
+
+void UVirtualLight::SetLightIntensityRaw(float Value)
+{
+    Intensity = Value;
+    if (Handle->Type == ETreeItemType::SkyLight)
+    {
+        return;
+        auto LightComp = SkyLight->GetLightComponent();
+        //LightComp->Intensity = NormalizedValue;
+    }
+    else
+    {
+        auto ValLumen = Value;
+        if (Handle->Type == ETreeItemType::PointLight)
+        {
+            auto PointLightComp = Cast<UPointLightComponent>(PointLight->GetLightComponent());
+            PointLightComp->SetIntensityUnits(ELightUnits::Lumens);
+            PointLightComp->SetIntensity(ValLumen);
+            Intensity = ValLumen;
+        }
+        else if (Handle->Type == ETreeItemType::SpotLight)
+        {
+            auto SpotLightComp = Cast<USpotLightComponent>(SpotLight->GetLightComponent());
+            SpotLightComp->SetIntensityUnits(ELightUnits::Lumens);
+            SpotLightComp->SetIntensity(ValLumen);
+            Intensity = ValLumen;
+
+        }
+    }
+
 }
 
 void UVirtualLight::SetHue(float NewValue)
@@ -133,6 +166,16 @@ void UVirtualLight::SetTemperature(float NormalizedValue)
         LightPtr->GetLightComponent()->SetTemperature(Temperature);
     }
 
+}
+
+void UVirtualLight::SetTemperatureRaw(float Value)
+{
+    if (Handle->Type != ETreeItemType::SkyLight)
+    {
+        Temperature = Value;
+        auto LightPtr = Cast<ALight>(ActorPtr);
+        LightPtr->GetLightComponent()->SetTemperature(Temperature);
+    }
 }
 
 void UVirtualLight::SetCastShadows(bool bState)

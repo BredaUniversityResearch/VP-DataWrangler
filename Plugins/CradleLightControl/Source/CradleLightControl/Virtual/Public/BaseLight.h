@@ -19,7 +19,10 @@ public:
         , Horizontal(0.0f)
         , Vertical(0.0f)
         , InnerAngle(0.0f)
-        , OuterAngle(0.0f) {};
+        , OuterAngle(0.0f)
+    {
+        SetFlags(GetFlags() | RF_Transactional);
+    };
 
     bool IsEnabled() const { return bIsEnabled; };
 
@@ -38,10 +41,13 @@ public:
 
     virtual void SetEnabled(bool bNewState);
     virtual void SetLightIntensity(float NormalizedValue);
+    virtual void SetLightIntensityRaw(float Value);
     virtual void SetHue(float NewValue);
     virtual void SetSaturation(float NewValue);
     virtual void SetUseTemperature(bool NewState);
     virtual void SetTemperature(float NormalizedValue);
+    virtual void SetTemperatureRaw(float Value);
+
 
     virtual void SetCastShadows(bool bState);
 

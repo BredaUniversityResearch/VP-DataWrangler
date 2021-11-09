@@ -27,31 +27,6 @@
 
 #pragma region TreeItemStruct
 
-void FLightDMXNotifyHook::NotifyPostChange(const FPropertyChangedEvent& PropertyChangedEvent, FProperty* PropertyThatChanged)
-{
-    //GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Orange, "Nihuyase");
-
-    if (PropertiesRef->Conversion)
-    {
-        PropertiesRef->DataConverter = NewObject<ULightDataToDMXConversion>(PropertiesRef->Owner, PropertiesRef->Conversion);
-    }
-
-    if (PropertiesRef->DataConverter)
-        PropertiesRef->DataConverter->StartingChannel = PropertiesRef->StartingChannel;
-}
-
-void ULightDataToDMXConversion::SetChannel(int32 InChannel, uint8 InValue)
-{
-    Channels.FindOrAdd(InChannel + StartingChannel - 1) = InValue;
-}
-
-ULightTreeItem::ULightTreeItem(SLightTreeHierarchy* InOwningWidget, FString InName, TArray<ULightTreeItem*> InChildren)
-    : ActorPtr(nullptr)
-{
-    SetFlags(GetFlags() | EObjectFlags::RF_Transactional);
-    DMXProperties.Owner = this;
-    DMXProperties.StartingChannel = 1;
-}
 //
 //ECheckBoxState ULightTreeItem::IsLightEnabled() const
 //{

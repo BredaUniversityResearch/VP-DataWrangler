@@ -92,7 +92,7 @@ FReply UItemHandle::TreeDropDetected(const FDragDropEvent& DragDropEvent)
         ToolData->BeginTransaction();
     }
     Target->BeginTransaction(false);
-
+    BeginTransaction(false);
     if (Type == Folder)
     {
 

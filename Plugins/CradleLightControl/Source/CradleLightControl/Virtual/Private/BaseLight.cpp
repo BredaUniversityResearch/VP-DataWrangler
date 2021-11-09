@@ -21,11 +21,11 @@ uint8 UBaseLight::LoadFromJson(TSharedPtr<FJsonObject> JsonObject)
 
     SetEnabled(State);
 
-    SetLightIntensity(JsonObject->GetNumberField("Intensity"));
+    SetLightIntensityRaw(JsonObject->GetNumberField("Intensity"));
     SetHue(JsonObject->GetNumberField("Hue"));
     SetSaturation(JsonObject->GetNumberField("Saturation"));
     SetUseTemperature(JsonObject->GetBoolField("UseTemperature"));
-    SetTemperature(JsonObject->GetNumberField("Temperature"));
+    SetTemperatureRaw(JsonObject->GetNumberField("Temperature"));
     Vertical = 0.0f;
     Horizontal = 0.0f;
 
@@ -69,6 +69,11 @@ void UBaseLight::SetLightIntensity(float NormalizedValue)
     Intensity = NormalizedValue;
 }
 
+void UBaseLight::SetLightIntensityRaw(float Value)
+{
+    Intensity = Value;
+}
+
 void UBaseLight::SetHue(float NewValue)
 {
     Hue = NewValue;
@@ -89,6 +94,11 @@ void UBaseLight::SetUseTemperature(bool NewState)
 void UBaseLight::SetTemperature(float NormalizedValue)
 {
     Temperature = NormalizedValue;
+}
+
+void UBaseLight::SetTemperatureRaw(float Value)
+{
+    Temperature = Value;
 }
 
 void UBaseLight::SetCastShadows(bool bState)

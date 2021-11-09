@@ -121,6 +121,15 @@ TSharedPtr<FJsonObject> UDMXLight::SaveAsJson()
     return JsonObject;
 }
 
+void UDMXLight::PostTransacted(const FTransactionObjectEvent& TransactionEvent)
+{
+	Super::PostTransacted(TransactionEvent);
+	if (TransactionEvent.GetEventType() == ETransactionObjectEventType::UndoRedo)
+	{
+        UpdateDMXChannels();
+	}
+}
+
 void UDMXLight::UpdateDMXChannels()
 {
     if (OutputPort && bDMXEnabled && Config)

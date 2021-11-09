@@ -24,10 +24,12 @@ public:
 
     virtual void SetEnabled(bool bNewState) override;
     virtual void SetLightIntensity(float NormalizedValue) override;
+    virtual void SetLightIntensityRaw(float Value) override;
     virtual void SetHue(float NewValue) override;
     virtual void SetSaturation(float NewValue) override;
     virtual void SetUseTemperature(bool NewState) override;
     virtual void SetTemperature(float NormalizedValue) override;
+    virtual void SetTemperatureRaw(float Value) override;
 
     virtual void SetCastShadows(bool bState) override;
 

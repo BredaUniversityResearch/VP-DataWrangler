@@ -483,7 +483,6 @@ void SLightSpecificProperties::OnVerticalValueChanged(float NormalizedValue)
 {
     auto Light = ToolData->GetMasterLight();
     auto Delta = NormalizedValue - Light->Item->GetVerticalNormalized();
-    UE_LOG(LogTemp, Warning, TEXT("%f - %f = %f"), NormalizedValue, Light->Item->GetVerticalNormalized(), Delta);
     for (auto SelectedLight : ToolData->LightsUnderSelection)
     {
         SelectedLight->BeginTransaction();

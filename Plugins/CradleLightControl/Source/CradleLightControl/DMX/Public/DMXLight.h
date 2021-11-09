@@ -37,6 +37,8 @@ public:
     virtual FPlatformTypes::uint8 LoadFromJson(TSharedPtr<FJsonObject> JsonObject) override;
     virtual TSharedPtr<FJsonObject> SaveAsJson() override;
 
+    virtual void PostTransacted(const FTransactionObjectEvent& TransactionEvent) override;
+
     void UpdateDMXChannels();
 
     UPROPERTY(EditAnywhere)

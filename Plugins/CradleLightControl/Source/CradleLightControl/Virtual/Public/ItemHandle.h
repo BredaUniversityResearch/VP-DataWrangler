@@ -39,7 +39,9 @@ public:
         , Item(nullptr)
         , bExpanded(false)
         , bMatchesSearchString(true)
-    {};
+    {
+        SetFlags(GetFlags() | RF_Transactional);
+    };
 
     // Used for checkboxes because checkboxes have 3 states
     ECheckBoxState IsLightEnabled() const;

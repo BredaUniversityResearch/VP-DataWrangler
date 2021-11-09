@@ -13,12 +13,7 @@ UDMXConfigFactory::UDMXConfigFactory()
 UObject* UDMXConfigFactory::FactoryCreateNew(UClass* InClass, UObject* InParent, FName InName, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn)
 {
     auto Asset = NewObject<UDMXConfigAsset>(InParent, InClass, InName, Flags);
-
-    Asset->HorizontalChannel.Channel = 0;
-    Asset->HorizontalChannel.MaxDMXValue = 255;
-    Asset->HorizontalChannel.MinDMXValue = 0;
-
-
+    
     return Asset;
 }
 //

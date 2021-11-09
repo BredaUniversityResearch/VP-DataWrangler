@@ -337,6 +337,7 @@ TSharedRef<SBox> SDMXControlTool::DMXChannelProperties()
             [
                 SNew(SVerticalBox)
                 +SVerticalBox::Slot()
+				.AutoHeight()
                 [
                     SAssignNew(DMXPortSelector, SDMXPortSelector)
                     .Mode(EDMXPortSelectorMode::SelectFromAvailableInputsAndOutputs)
@@ -404,12 +405,16 @@ TSharedRef<SBox> SDMXControlTool::DMXChannelProperties()
 
 void SDMXControlTool::OnPortSelected()
 {
+
     auto MasterDMX = Cast<UDMXLight>(ToolData->GetMasterLight()->Item);
     auto OutputPort = DMXPortSelector->GetSelectedOutputPort();
     if (OutputPort)
     {
+		GEditor->BeginTransaction(FText::FromString(MasterDMX->Handle->Name + "DMX port changed"));
+		MasterDMX->BeginTransaction();
         MasterDMX->OutputPort = OutputPort;
         MasterDMX->UpdateDMXChannels();
+        GEditor->EndTransaction();
     }
 }
 
@@ -422,8 +427,12 @@ ECheckBoxState SDMXControlTool::UseDMXCheckboxState() const
 void SDMXControlTool::UseDMXCheckboxStateChanged(ECheckBoxState NewState)
 {
     auto MasterDMX = Cast<UDMXLight>(ToolData->GetMasterLight()->Item);
+
+    GEditor->BeginTransaction(FText::FromString(MasterDMX->Handle->Name + "DMX usage changed"));
+    MasterDMX->BeginTransaction();
     MasterDMX->bDMXEnabled = NewState == ECheckBoxState::Checked;
     MasterDMX->UpdateDMXChannels();
+    GEditor->EndTransaction();
 }
 
 FString SDMXControlTool::DMXConfigObjectPath() const
@@ -440,9 +449,10 @@ FString SDMXControlTool::DMXConfigObjectPath() const
 
 void SDMXControlTool::OnSetDMXConfigAsset(const FAssetData& AssetData)
 {
-    
     auto MasterDMX = Cast<UDMXLight>(ToolData->GetMasterLight()->Item);
-    MasterDMX->Config = Cast<UDMXConfigAsset>(AssetData.GetAsset());
+    GEditor->BeginTransaction(FText::FromString(MasterDMX->Handle->Name + "DMX config changed"));
+    MasterDMX->BeginTransaction();
+    MasterDMX->Config = DuplicateObject(Cast<UDMXConfigAsset>(AssetData.GetAsset()), MasterDMX);
     MasterDMX->Config->AssetName = AssetData.AssetName;
     //MasterDMX->Config
 }
@@ -455,11 +465,14 @@ TOptional<int> SDMXControlTool::StartingChannelBoxGetValue() const
 
 void SDMXControlTool::StartingChannelBoxValueCommitted(int Value, ETextCommit::Type CommitType)
 {
-    if (CommitType == ETextCommit::OnEnter)
+    if (CommitType == ETextCommit::OnEnter || CommitType == ETextCommit::Default)
     {
         auto MasterDMX = Cast<UDMXLight>(ToolData->GetMasterLight()->Item);
+        GEditor->BeginTransaction(FText::FromString(MasterDMX->Handle->Name + "DMX starting channel changed"));
+        MasterDMX->BeginTransaction();
         MasterDMX->StartingChannel = Value;
         MasterDMX->UpdateDMXChannels();
+        GEditor->EndTransaction();
     }
 }
 

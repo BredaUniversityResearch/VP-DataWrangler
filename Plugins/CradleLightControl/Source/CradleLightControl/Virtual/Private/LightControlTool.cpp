@@ -132,6 +132,8 @@ void SLightControlTool::PreDestroy()
     if (LightPropertyWidget)
         LightPropertyWidget->PreDestroy();
 
+    ToolData->AutoSave();
+
     GWorld->RemoveOnActorSpawnedHandler(ActorSpawnedListenerHandle);
     UnRegisterActiveTimer(DataAutoSaveTimer.ToSharedRef());
 }
