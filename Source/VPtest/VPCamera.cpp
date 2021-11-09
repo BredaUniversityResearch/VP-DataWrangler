@@ -123,7 +123,7 @@ void AVPCamera::UpdateVirtualTransform()
     if (VPSingleton)
     {
 		// TODO: The room transform needs to be exposed via a UI element at a later date, rather than having it hard-coded here
-		VPSingleton->RoomCorrection.SetRotation(FQuat::MakeFromEuler(FVector(0.0f, 0.0f, 90.0f)));
+		VPSingleton->RoomCorrection.SetRotation(FQuat::MakeFromEuler(FVector(0.0f, 0.0f, 0.0f)));
 		RoomTransform = VPSingleton->RoomCorrection.Inverse();
     }
 
