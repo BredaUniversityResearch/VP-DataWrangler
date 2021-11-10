@@ -21,6 +21,11 @@ public:
     void Construct(const FArguments& Args);
     void PreDestroy();
 
+
+    FReply OnGelPaletteButtonClicked();
+    void OnGelSelectionChanged(const FLinearColor& NewHSVColor);
+
+
     void GenerateTextures();
     void UpdateSaturationGradient(float NewHue);
     const FSlateBrush* GetSaturationGradientBrush() const;

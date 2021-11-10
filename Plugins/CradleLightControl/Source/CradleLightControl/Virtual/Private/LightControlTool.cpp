@@ -30,6 +30,8 @@
 #include "CradleLightControl.h"
 #include "DesktopPlatform/Public/IDesktopPlatform.h"
 
+#include "GelPaletteWidget.h"
+
 #include "VirtualLight.h"
 
 void SLightControlTool::Construct(const FArguments& Args)
@@ -108,6 +110,7 @@ void SLightControlTool::Construct(const FArguments& Args)
                     SNew(SVerticalBox)                
                     + LightHeader()
                     + LightPropertyEditor()
+					
                 ]
             ]
         ]
@@ -402,20 +405,20 @@ SVerticalBox::FSlot& SLightControlTool::LightPropertyEditor()
         [
             SNew(SHorizontalBox)
             + SHorizontalBox::Slot() // General light properties + extra light properties or group controls
-        [
-            SNew(SVerticalBox)
-            + SVerticalBox::Slot()
             [
-                SAssignNew(LightPropertyWidget, SLightPropertyEditor)
-                .ToolData(ToolData)
+                SNew(SVerticalBox)
+                + SVerticalBox::Slot()
+                [
+                    SAssignNew(LightPropertyWidget, SLightPropertyEditor)
+                    .ToolData(ToolData)
+                ]
+                + SVerticalBox::Slot()
+                .Expose(ExtraLightBoxSlot)
+                [
+                    SAssignNew(ExtraLightDetailBox, SBox)
+                    .Padding(FMargin(0.0f, 5.0f, 0.0f, 0.0f))                
+                ]
             ]
-            + SVerticalBox::Slot()
-            .Expose(ExtraLightBoxSlot)
-            [
-                SAssignNew(ExtraLightDetailBox, SBox)
-                .Padding(FMargin(0.0f, 5.0f, 0.0f, 0.0f))                
-            ]
-        ]
         + LightSpecificPropertyEditor()
     ];
 

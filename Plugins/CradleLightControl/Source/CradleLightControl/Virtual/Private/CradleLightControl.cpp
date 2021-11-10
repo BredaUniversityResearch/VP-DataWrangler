@@ -105,6 +105,46 @@ bool FCradleLightControlModule::SaveFileDialog(FString Title, void* NativeWindow
 	return Platform->SaveFileDialog(NativeWindowHandle, Title, DefaultPath, "", FileTypeList, Flags, OutFilenames);
 }
 
+void FCradleLightControlModule::OpenGelPalette(FGelPaletteSelectionCallback SelectionCallback)
+{
+	if (!GelPalette)
+	{
+		GelPalette = SNew(SGelPaletteWidget);
+	}
+	
+	if (!GelPaletteWindow)
+	{
+
+		GelPaletteWindow = SNew(SWindow)
+			.ClientSize(FVector2D(640.0f, 480.0f))
+			.Title(FText::FromString("Light Gel Palette"))
+			.CreateTitleBar(true)
+			[
+				GelPalette->AsShared()
+			];
+		GelPaletteWindow = FSlateApplication::Get().AddWindow(GelPaletteWindow.ToSharedRef());
+			//.IsPopupWindow(true)
+			
+
+
+		//GelPaletteWindow->ShowWindow();
+	}
+
+	if (!GelPaletteWindow->IsActive())
+	{
+		GelPalette->SelectionCallback = SelectionCallback;
+		GelPaletteWindow->ShowWindow();		
+	}
+	else
+	{
+		GelPalette->SelectionCallback = SelectionCallback;
+		GelPaletteWindow->FlashWindow();
+		//GelPaletteWindow->DrawAttention()
+	}
+
+	
+}
+
 void FCradleLightControlModule::RegisterTabSpawner()
 {
 	FGlobalTabmanager::Get()->RegisterNomadTabSpawner("LightControl", FOnSpawnTab::CreateLambda([this](const FSpawnTabArgs& Args)
@@ -123,6 +163,7 @@ void FCradleLightControlModule::RegisterTabSpawner()
 			LightTab->SetContent(				    
 				    SAssignNew(LightControl, SLightControlTool)
 				    .ToolTab(LightTab)
+					
 				);
 
 		    return LightTab.ToSharedRef();

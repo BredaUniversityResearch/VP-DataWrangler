@@ -1,6 +1,8 @@
 #include "LightPropertyEditor.h"
 #include "LightControlTool.h"
 
+#include "CradleLightControl.h"
+
 #include "ToolData.h"
 #include "ItemHandle.h"
 #include "BaseLight.h"
@@ -84,229 +86,241 @@ void SLightPropertyEditor::Construct(const FArguments& Args)
     SVerticalBox::FSlot* SaturationNameSlot, *SaturationValueSlot, *SaturationPercentageSlot;
     SVerticalBox::FSlot* TemperatureNameSlot, * TemperatureCheckboxSlot, *TemperatureValueSlot, *TemperaturePercentageSlot;
 
+    SVerticalBox::FSlot* PaletteButtonSlot;
 
     ChildSlot
     [
-        SNew(SHorizontalBox)
-        +SHorizontalBox::Slot() // Intensity slider
-        .VAlign(VAlign_Fill)
+        SNew(SVerticalBox)
+        + SVerticalBox::Slot()
+        .Expose(PaletteButtonSlot)
         [
-            SNew(SBorder)
+            SNew(SButton)
+            .Text(FText::FromString("Gel Palette"))
+			.OnClicked(this, &SLightPropertyEditor::OnGelPaletteButtonClicked)
+        ]
+        +SVerticalBox::Slot()
+        [
+            SNew(SHorizontalBox)
+            +SHorizontalBox::Slot() // Intensity slider
             .VAlign(VAlign_Fill)
-            .HAlign(HAlign_Fill)
-            .ColorAndOpacity(FLinearColor::Gray)
             [
-                SNew(SVerticalBox)
-                +SVerticalBox::Slot()
-                .Expose(IntensityNameSlot)
+                SNew(SBorder)
+                .VAlign(VAlign_Fill)
+                .HAlign(HAlign_Fill)
+                .ColorAndOpacity(FLinearColor::Gray)
                 [
-                    SNew(STextBlock)
-                    .Text(FText::FromString("Intensity"))
-                ]
-                +SVerticalBox::Slot()
-                .Expose(IntensityValueSlot)
-                [
-                    SNew(STextBlock)
-                    .Text(this, &SLightPropertyEditor::GetIntensityValueText)
-                ]
-                +SVerticalBox::Slot()
-                [
-                    SNew(SHorizontalBox)
-                    + SHorizontalBox::Slot()
-                    .Padding(3.0f, 0.0f)
-                    .HAlign(HAlign_Right)
+                    SNew(SVerticalBox)
+                    +SVerticalBox::Slot()
+                    .Expose(IntensityNameSlot)
                     [
-                        SNew(SBorder)
+                        SNew(STextBlock)
+                        .Text(FText::FromString("Intensity"))
+                    ]
+                    +SVerticalBox::Slot()
+                    .Expose(IntensityValueSlot)
+                    [
+                        SNew(STextBlock)
+                        .Text(this, &SLightPropertyEditor::GetIntensityValueText)
+                    ]
+                    +SVerticalBox::Slot()
+                    [
+                        SNew(SHorizontalBox)
+                        + SHorizontalBox::Slot()
+                        .Padding(3.0f, 0.0f)
+                        .HAlign(HAlign_Right)
                         [
-                            SNew(SImage)
-                            .Image(IntensityGradientBrush.Get())
+                            SNew(SBorder)
+                            [
+                                SNew(SImage)
+                                .Image(IntensityGradientBrush.Get())
+                            ]
+                        ]
+                        +SHorizontalBox::Slot()
+                        .Padding(3.0f, 0.0f)
+                        .HAlign(HAlign_Left)
+                        [
+                            SNew(SSlider)
+                            .Orientation(EOrientation::Orient_Vertical)
+                            .Value(this, &SLightPropertyEditor::GetIntensityValue)
+                            .OnValueChanged(this, &SLightPropertyEditor::OnIntensityValueChanged)
+                            .OnMouseCaptureBegin(this, &SLightPropertyEditor::IntensityTransactionBegin)
+                            .OnMouseCaptureEnd(this, &SLightPropertyEditor::EndTransaction)
                         ]
                     ]
-                    +SHorizontalBox::Slot()
-                    .Padding(3.0f, 0.0f)
-                    .HAlign(HAlign_Left)
+                    +SVerticalBox::Slot()
+                    .Expose(IntensityPercentageSlot)
                     [
-                        SNew(SSlider)
-                        .Orientation(EOrientation::Orient_Vertical)
-                        .Value(this, &SLightPropertyEditor::GetIntensityValue)
-                        .OnValueChanged(this, &SLightPropertyEditor::OnIntensityValueChanged)
-                        .OnMouseCaptureBegin(this, &SLightPropertyEditor::IntensityTransactionBegin)
-                        .OnMouseCaptureEnd(this, &SLightPropertyEditor::EndTransaction)
+                        SNew(STextBlock)
+                        .Justification(ETextJustify::Center)
+                        .Text(this, &SLightPropertyEditor::GetIntensityPercentage)
                     ]
-                ]
-                +SVerticalBox::Slot()
-                .Expose(IntensityPercentageSlot)
-                [
-                    SNew(STextBlock)
-                    .Justification(ETextJustify::Center)
-                    .Text(this, &SLightPropertyEditor::GetIntensityPercentage)
                 ]
             ]
-        ]
-        + SHorizontalBox::Slot()
-            .VAlign(VAlign_Fill)
-        [
-            SNew(SBorder)
-            .VAlign(VAlign_Fill)
-            .HAlign(HAlign_Fill)
-            .ColorAndOpacity(FLinearColor::Gray)
+            + SHorizontalBox::Slot()
+                .VAlign(VAlign_Fill)
             [
-                SNew(SVerticalBox)
-                +SVerticalBox::Slot()
-                .Expose(HueNameSlot)
+                SNew(SBorder)
+                .VAlign(VAlign_Fill)
+                .HAlign(HAlign_Fill)
+                .ColorAndOpacity(FLinearColor::Gray)
                 [
-                    SNew(STextBlock)
-                    .Justification(ETextJustify::Center)
-                    .Text(FText::FromString("Hue"))
-                ]
-                +SVerticalBox::Slot()
-                .Expose(HueValueSlot)
-                [
-                    SNew(STextBlock)
-                    .Justification(ETextJustify::Center)
-                    .Text(this, &SLightPropertyEditor::GetHueValueText)
-                ]
-                +SVerticalBox::Slot()
-                [
-                    SNew(SHorizontalBox)
-                    + SHorizontalBox::Slot()
-                    .HAlign(HAlign_Right)
+                    SNew(SVerticalBox)
+                    +SVerticalBox::Slot()
+                    .Expose(HueNameSlot)
                     [
-                        SNew(SImage)
-                        .Image(HSVGradientBrush.Get())
+                        SNew(STextBlock)
+                        .Justification(ETextJustify::Center)
+                        .Text(FText::FromString("Hue"))
                     ]
-                    +SHorizontalBox::Slot()
-                    .HAlign(HAlign_Left)
+                    +SVerticalBox::Slot()
+                    .Expose(HueValueSlot)
                     [
-                        SNew(SSlider)
-                        .Orientation(EOrientation::Orient_Vertical)
-                        .Value(this, &SLightPropertyEditor::GetHueValue)
-                        .OnValueChanged_Raw(this, &SLightPropertyEditor::OnHueValueChanged)
-                        .OnMouseCaptureBegin(this, &SLightPropertyEditor::HueTransactionBegin)
-                        .OnMouseCaptureEnd(this, &SLightPropertyEditor::EndTransaction)
+                        SNew(STextBlock)
+                        .Justification(ETextJustify::Center)
+                        .Text(this, &SLightPropertyEditor::GetHueValueText)
                     ]
-                ]
-                +SVerticalBox::Slot()
-                .Expose(HuePercentageSlot)
-                [
-                    SNew(STextBlock)
-                    .Justification(ETextJustify::Center)
-                    .Text(this, &SLightPropertyEditor::GetHuePercentage)
+                    +SVerticalBox::Slot()
+                    [
+                        SNew(SHorizontalBox)
+                        + SHorizontalBox::Slot()
+                        .HAlign(HAlign_Right)
+                        [
+                            SNew(SImage)
+                            .Image(HSVGradientBrush.Get())
+                        ]
+                        +SHorizontalBox::Slot()
+                        .HAlign(HAlign_Left)
+                        [
+                            SNew(SSlider)
+                            .Orientation(EOrientation::Orient_Vertical)
+                            .Value(this, &SLightPropertyEditor::GetHueValue)
+                            .OnValueChanged_Raw(this, &SLightPropertyEditor::OnHueValueChanged)
+                            .OnMouseCaptureBegin(this, &SLightPropertyEditor::HueTransactionBegin)
+                            .OnMouseCaptureEnd(this, &SLightPropertyEditor::EndTransaction)
+                        ]
+                    ]
+                    +SVerticalBox::Slot()
+                    .Expose(HuePercentageSlot)
+                    [
+                        SNew(STextBlock)
+                        .Justification(ETextJustify::Center)
+                        .Text(this, &SLightPropertyEditor::GetHuePercentage)
+                    ]
                 ]
             ]
-        ]
-        + SHorizontalBox::Slot()
-            .VAlign(VAlign_Fill)
-        [
-            SNew(SBorder)
-            .VAlign(VAlign_Fill)
-            .HAlign(HAlign_Fill)
-            .ColorAndOpacity(FLinearColor::Gray)
+            + SHorizontalBox::Slot()
+                .VAlign(VAlign_Fill)
             [
-                SNew(SVerticalBox)
-                +SVerticalBox::Slot()
-                .Expose(SaturationNameSlot)
+                SNew(SBorder)
+                .VAlign(VAlign_Fill)
+                .HAlign(HAlign_Fill)
+                .ColorAndOpacity(FLinearColor::Gray)
                 [
-                    SNew(STextBlock)
-                    .Justification(ETextJustify::Center)
-            .Text(FText::FromString("Saturation"))
-                ]
-                +SVerticalBox::Slot()
-                .Expose(SaturationValueSlot)
-                [
-                    SNew(STextBlock)
-                    .Justification(ETextJustify::Center)
-                    .Text(this, &SLightPropertyEditor::GetSaturationValueText)
-                ]
-                +SVerticalBox::Slot()
-                [
-                    SNew(SHorizontalBox)
-                    + SHorizontalBox::Slot()
-                    .HAlign(HAlign_Right)
+                    SNew(SVerticalBox)
+                    +SVerticalBox::Slot()
+                    .Expose(SaturationNameSlot)
                     [
-                        SNew(SImage)
-                        .Image_Raw(this, &SLightPropertyEditor::GetSaturationGradientBrush)
+                        SNew(STextBlock)
+                        .Justification(ETextJustify::Center)
+                .Text(FText::FromString("Saturation"))
                     ]
-                    +SHorizontalBox::Slot()
-                    .HAlign(HAlign_Left)
+                    +SVerticalBox::Slot()
+                    .Expose(SaturationValueSlot)
                     [
-                        SNew(SSlider)
-                        .Orientation(EOrientation::Orient_Vertical)
-                        .Value_Raw(this, &SLightPropertyEditor::GetSaturationValue)
-                        .OnValueChanged_Raw(this, &SLightPropertyEditor::OnSaturationValueChanged)
-                        .OnMouseCaptureBegin(this, &SLightPropertyEditor::SaturationTransactionBegin)
-                        .OnMouseCaptureEnd(this, &SLightPropertyEditor::EndTransaction)
+                        SNew(STextBlock)
+                        .Justification(ETextJustify::Center)
+                        .Text(this, &SLightPropertyEditor::GetSaturationValueText)
                     ]
-                ]
-                +SVerticalBox::Slot()
-                .Expose(SaturationPercentageSlot)
-                [
-                    SNew(STextBlock)
-                    .Justification(ETextJustify::Center)
-                    .Text(this, &SLightPropertyEditor::GetSaturationValueText) // The content is the same as the value text
+                    +SVerticalBox::Slot()
+                    [
+                        SNew(SHorizontalBox)
+                        + SHorizontalBox::Slot()
+                        .HAlign(HAlign_Right)
+                        [
+                            SNew(SImage)
+                            .Image_Raw(this, &SLightPropertyEditor::GetSaturationGradientBrush)
+                        ]
+                        +SHorizontalBox::Slot()
+                        .HAlign(HAlign_Left)
+                        [
+                            SNew(SSlider)
+                            .Orientation(EOrientation::Orient_Vertical)
+                            .Value_Raw(this, &SLightPropertyEditor::GetSaturationValue)
+                            .OnValueChanged_Raw(this, &SLightPropertyEditor::OnSaturationValueChanged)
+                            .OnMouseCaptureBegin(this, &SLightPropertyEditor::SaturationTransactionBegin)
+                            .OnMouseCaptureEnd(this, &SLightPropertyEditor::EndTransaction)
+                        ]
+                    ]
+                    +SVerticalBox::Slot()
+                    .Expose(SaturationPercentageSlot)
+                    [
+                        SNew(STextBlock)
+                        .Justification(ETextJustify::Center)
+                        .Text(this, &SLightPropertyEditor::GetSaturationValueText) // The content is the same as the value text
+                    ]
                 ]
             ]
-        ]
-        + SHorizontalBox::Slot()
-            .VAlign(VAlign_Fill)
-        [
-            SNew(SBorder)
-            .VAlign(VAlign_Fill)
-            .HAlign(HAlign_Fill)
-            .ColorAndOpacity(FLinearColor::Gray)
+            + SHorizontalBox::Slot()
+                .VAlign(VAlign_Fill)
             [
-                SNew(SVerticalBox)
-                +SVerticalBox::Slot()
-                .Expose(TemperatureNameSlot)
+                SNew(SBorder)
+                .VAlign(VAlign_Fill)
+                .HAlign(HAlign_Fill)
+                .ColorAndOpacity(FLinearColor::Gray)
                 [
-                    SNew(STextBlock)
-                    .Text(FText::FromString("Temperature"))
-                    .Justification(ETextJustify::Center)
-                ]
-                +SVerticalBox::Slot()
-                .HAlign(HAlign_Center)
-                .Expose(TemperatureCheckboxSlot)
-                [
-                    SNew(SCheckBox)
-                    .ToolTipText(FText::FromString("Should the temperature be taken into account?"))
-                    .OnCheckStateChanged(this, &SLightPropertyEditor::OnTemperatureCheckboxChecked)
-                    .IsChecked(this, &SLightPropertyEditor::GetTemperatureCheckboxChecked)
-                    .IsEnabled(this, &SLightPropertyEditor::TemperatureEnabled)
-                ]
-                +SVerticalBox::Slot()
-                .Expose(TemperatureValueSlot)
-                [
-                    SNew(STextBlock)
-                    .Text(this, &SLightPropertyEditor::GetTemperatureValueText)
-                    .Justification(ETextJustify::Center)
-                ]
-                +SVerticalBox::Slot()
-                [
-                    SNew(SHorizontalBox)
-                    + SHorizontalBox::Slot()
-                    .HAlign(HAlign_Right)
+                    SNew(SVerticalBox)
+                    +SVerticalBox::Slot()
+                    .Expose(TemperatureNameSlot)
                     [
-                        SNew(SImage)
-                        .Image(TemperatureGradientBrush.Get())
+                        SNew(STextBlock)
+                        .Text(FText::FromString("Temperature"))
+                        .Justification(ETextJustify::Center)
                     ]
-                    +SHorizontalBox::Slot()
-                    .HAlign(HAlign_Left)
+                    +SVerticalBox::Slot()
+                    .HAlign(HAlign_Center)
+                    .Expose(TemperatureCheckboxSlot)
                     [
-                        SNew(SSlider)
-                        .Orientation(EOrientation::Orient_Vertical)
-                        .OnValueChanged(this, &SLightPropertyEditor::OnTemperatureValueChanged)
-                        .Value(this, &SLightPropertyEditor::GetTemperatureValue)
+                        SNew(SCheckBox)
+                        .ToolTipText(FText::FromString("Should the temperature be taken into account?"))
+                        .OnCheckStateChanged(this, &SLightPropertyEditor::OnTemperatureCheckboxChecked)
+                        .IsChecked(this, &SLightPropertyEditor::GetTemperatureCheckboxChecked)
                         .IsEnabled(this, &SLightPropertyEditor::TemperatureEnabled)
-                        .OnMouseCaptureBegin(this, &SLightPropertyEditor::TemperatureTransactionBegin)
-                        .OnMouseCaptureEnd(this, &SLightPropertyEditor::EndTransaction)
                     ]
-                ]
-                +SVerticalBox::Slot()
-                .Expose(TemperaturePercentageSlot)
-                [
-                    SNew(STextBlock)
-                    .Justification(ETextJustify::Center)
-                    .Text(this, &SLightPropertyEditor::GetTemperaturePercentage)
+                    +SVerticalBox::Slot()
+                    .Expose(TemperatureValueSlot)
+                    [
+                        SNew(STextBlock)
+                        .Text(this, &SLightPropertyEditor::GetTemperatureValueText)
+                        .Justification(ETextJustify::Center)
+                    ]
+                    +SVerticalBox::Slot()
+                    [
+                        SNew(SHorizontalBox)
+                        + SHorizontalBox::Slot()
+                        .HAlign(HAlign_Right)
+                        [
+                            SNew(SImage)
+                            .Image(TemperatureGradientBrush.Get())
+                        ]
+                        +SHorizontalBox::Slot()
+                        .HAlign(HAlign_Left)
+                        [
+                            SNew(SSlider)
+                            .Orientation(EOrientation::Orient_Vertical)
+                            .OnValueChanged(this, &SLightPropertyEditor::OnTemperatureValueChanged)
+                            .Value(this, &SLightPropertyEditor::GetTemperatureValue)
+                            .IsEnabled(this, &SLightPropertyEditor::TemperatureEnabled)
+                            .OnMouseCaptureBegin(this, &SLightPropertyEditor::TemperatureTransactionBegin)
+                            .OnMouseCaptureEnd(this, &SLightPropertyEditor::EndTransaction)
+                        ]
+                    ]
+                    +SVerticalBox::Slot()
+                    .Expose(TemperaturePercentageSlot)
+                    [
+                        SNew(STextBlock)
+                        .Justification(ETextJustify::Center)
+                        .Text(this, &SLightPropertyEditor::GetTemperaturePercentage)
+                    ]
                 ]
             ]
         ]
@@ -329,6 +343,8 @@ void SLightPropertyEditor::Construct(const FArguments& Args)
     TemperatureValueSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
     TemperaturePercentageSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
 
+    PaletteButtonSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
+
 }
 
 void SLightPropertyEditor::PreDestroy()
@@ -343,6 +359,28 @@ void SLightPropertyEditor::PreDestroy()
     SaturationGradientTexture->RemoveFromRoot();
     TemperatureGradientTexture->ConditionalBeginDestroy();
     TemperatureGradientTexture->RemoveFromRoot();
+}
+
+FReply SLightPropertyEditor::OnGelPaletteButtonClicked()
+{
+    auto& ThisModule = FModuleManager::LoadModuleChecked<FCradleLightControlModule>("CradleLightControl");
+
+    ThisModule.OpenGelPalette(FGelPaletteSelectionCallback::CreateRaw(this, &SLightPropertyEditor::OnGelSelectionChanged));
+
+    return FReply::Handled();
+}
+
+void SLightPropertyEditor::OnGelSelectionChanged(const FLinearColor& NewHSVColor)
+{
+    GEditor->BeginTransaction(FText::FromString("Light gel selected"));
+	for (auto& LightHandle : ToolData->GetSelectedLights())
+	{
+        LightHandle->Item->BeginTransaction();
+        LightHandle->Item->SetHue(NewHSVColor.R);
+        LightHandle->Item->SetSaturation(NewHSVColor.G);
+        LightHandle->Item->SetLightIntensity(NewHSVColor.B);
+	}
+    GEditor->EndTransaction();
 }
 
 void SLightPropertyEditor::GenerateTextures()

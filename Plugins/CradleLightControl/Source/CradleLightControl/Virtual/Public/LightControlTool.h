@@ -56,7 +56,6 @@ private:
 
     SVerticalBox::FSlot& LightPropertyEditor();
 
-
     TSharedRef<SBox> LightTransformViewer();
     FReply SelectItemInScene();
     FReply SelectItemParent();

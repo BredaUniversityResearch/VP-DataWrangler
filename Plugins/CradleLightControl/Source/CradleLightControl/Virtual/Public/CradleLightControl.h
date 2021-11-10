@@ -6,14 +6,9 @@
 #include "Modules/ModuleManager.h"
 #include "LightControlTool.h"
 
+#include "GelPaletteWidget.h"
+
 #include "IDetailCustomization.h"
-#include "Chaos/AABB.h"
-#include "Chaos/AABB.h"
-#include "Chaos/AABB.h"
-#include "Chaos/AABB.h"
-#include "Chaos/AABB.h"
-#include "Chaos/AABB.h"
-#include "Chaos/AABB.h"
 #include "Chaos/AABB.h"
 
 class FCradleLightControlModule : public IModuleInterface
@@ -30,6 +25,8 @@ public:
 	static bool SaveFileDialog(FString Title, void*
                         NativeWindowHandle, FString DefaultPath, uint32 Flags, FString FileTypeList, TArray<FString>& OutFilenames);
 
+	void OpenGelPalette(FGelPaletteSelectionCallback SelectionCallback);
+
 	void RegisterTabSpawner();
 	void RegisterDMXTabSpawner();
 
@@ -42,6 +39,9 @@ public:
 
 	TSharedPtr<SLightControlTool> LightControl;
 	TSharedPtr<class SDMXControlTool> DMXControl;
+
+	TSharedPtr<SGelPaletteWidget> GelPalette;
+	TSharedPtr<SWindow> GelPaletteWindow;
 
 
 private:
