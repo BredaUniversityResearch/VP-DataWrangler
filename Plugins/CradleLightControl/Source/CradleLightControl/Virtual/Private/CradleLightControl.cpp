@@ -77,14 +77,25 @@ void FCradleLightControlModule::StartupModule()
 
     LevelEditorModule.GetToolBarExtensibilityManager()->AddExtender(ToolbarExtender);
 
+	FCoreDelegates::OnEnginePreExit.AddLambda([this]()
+		{
+			if (LightControl)
+				LightControl->PreDestroy();
+			if (DMXControl)
+				DMXControl->PreDestroy();
+		});
+
 }
 
 void FCradleLightControlModule::ShutdownModule()
 {
-	auto& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
+	//if (LightControl)
+	//	LightControl->PreDestroy();
+	//
+	//if (DMXControl)
+	//	DMXControl->PreDestroy();
 
-	PropertyModule.UnregisterCustomClassLayout("LightControlTool");
-	PropertyModule.NotifyCustomizationModuleChanged();
+
 
 	// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
 	// we call this function before unloading the module.
@@ -130,7 +141,7 @@ void FCradleLightControlModule::OpenGelPalette(FGelPaletteSelectionCallback Sele
 		//GelPaletteWindow->ShowWindow();
 	}
 
-	if (!GelPaletteWindow->IsActive())
+	if (!GelPaletteWindow->IsVisible())
 	{
 		GelPalette->SelectionCallback = SelectionCallback;
 		GelPaletteWindow->ShowWindow();		

@@ -95,6 +95,13 @@ void SDMXControlTool::Construct(const FArguments& Args)
         ];
 
     AddLightButtonSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
+
+    //FCoreDelegates::OnEnginePreExit.AddLambda([this]()
+    //    {
+    //        ToolData->AutoSave();
+    //        ToolData->BeginDestroy();
+    //        ToolData->FinishDestroy();
+    //    });
 }
 
 SDMXControlTool::~SDMXControlTool()
@@ -104,6 +111,9 @@ SDMXControlTool::~SDMXControlTool()
 
 void SDMXControlTool::PreDestroy()
 {
+    ToolData->AutoSave();
+    //ToolData->ConditionalBeginDestroy();
+    //ToolData->ConditionalFinishDestroy();
     if (TreeWidget)
         TreeWidget->PreDestroy();
     if (LightPropertyWidget)

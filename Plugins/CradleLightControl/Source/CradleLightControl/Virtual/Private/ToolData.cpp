@@ -25,7 +25,7 @@ UToolData::UToolData()
 
 UToolData::~UToolData()
 {
-    AutoSave();
+    //AutoSave();
 }
 
 void UToolData::GenerateIcons()
