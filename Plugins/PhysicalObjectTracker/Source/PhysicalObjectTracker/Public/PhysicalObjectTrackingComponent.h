@@ -17,9 +17,7 @@ private:
 	void DebugCheckIfTrackingTargetExists() const;
 
 	UPROPERTY(EditAnywhere)
-	int32 m_CurrentTargetDeviceId{-1};
+	int32 CurrentTargetDeviceId{-1};
 	UPROPERTY(EditAnywhere)
-		UPhysicalObjectTrackingReferencePoint* m_Reference{nullptr};
-	UPROPERTY(EditAnywhere)
-		FRotator m_RotationalOffset {};
+	UPhysicalObjectTrackingReferencePoint* Reference{nullptr};
 };

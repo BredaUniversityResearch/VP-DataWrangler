@@ -12,14 +12,6 @@ class UBaseLight : public UObject
 
 public:
     UBaseLight()
-        : Intensity(0.0f)
-        , Temperature(0.0f)
-        , Hue(0.0f)
-        , Saturation(0.0f)
-        , Horizontal(0.0f)
-        , Vertical(0.0f)
-        , InnerAngle(0.0f)
-        , OuterAngle(0.0f)
     {
         SetFlags(GetFlags() | RF_Transactional);
     };
@@ -68,29 +60,29 @@ public:
 
 
     UPROPERTY(BlueprintReadOnly)
-        bool bIsEnabled;
+        bool bIsEnabled{ false };
 
     UPROPERTY(BlueprintReadOnly)
-        float Intensity;
+        float Intensity{ 0.0f };
     UPROPERTY(BlueprintReadOnly)
-        float Hue;
+        float Hue{ 0.0f };
     UPROPERTY(BlueprintReadOnly)
-        float Saturation;
+        float Saturation{ 0.0f };
     UPROPERTY(BlueprintReadOnly)
-        bool bUseTemperature;
+        bool bUseTemperature{ 0.0f };
     UPROPERTY(BlueprintReadOnly)
-        float Temperature;
+        float Temperature{ 0.0f };
 
     UPROPERTY(BlueprintReadOnly)
-        float Horizontal;
+        float Horizontal{ 0.0f };
     UPROPERTY(BlueprintReadOnly)
-        float Vertical;
+        float Vertical{ 0.0f };
     UPROPERTY(BlueprintReadOnly)
-        float InnerAngle;
+        float InnerAngle{ 0.0f };
     UPROPERTY(BlueprintReadOnly)
-        float OuterAngle;
+        float OuterAngle{ 0.0f };
     UPROPERTY()
-        bool bLockInnerAngleToOuterAngle;
+        bool bLockInnerAngleToOuterAngle{ false };
 
     // Not UPROPERTY to avoid circular reference with what is essentially shared pointers
     class UItemHandle* Handle;

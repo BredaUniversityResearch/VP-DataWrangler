@@ -35,6 +35,10 @@
 		{
 			"Name": "DMXFixtures",
 			"Enabled": true
+		},
+		{
+			"Name": "PhysicalObjectTracker",
+			"Enabled": true
 		}
 	],
 	"TargetPlatforms": [

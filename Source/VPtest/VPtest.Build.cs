@@ -7,17 +7,6 @@ public class VPtest : ModuleRules
 {
     public VPtest(ReadOnlyTargetRules Target) : base(Target)
     {
-        var CommonIncludePaths = new[]
-        {
-            "SteamVR/Public",
-            "SteamVR/Classes",
-            "SteamVRInput/Public",
-            "SteamVRInput/Classes",
-            "Editor/Blutility/Classes",
-        };
-
-
-
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
         PublicDependencyModuleNames.AddRange(new string[]
@@ -34,10 +23,6 @@ public class VPtest : ModuleRules
                 "UMG"
             });
 
-        PublicIncludePaths.AddRange(CommonIncludePaths);
-
-
-        PrivateIncludePaths.AddRange(CommonIncludePaths);
 
         PrivateDependencyModuleNames.AddRange(new string[] {  });
 
