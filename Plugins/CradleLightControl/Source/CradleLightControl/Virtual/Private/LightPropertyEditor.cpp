@@ -77,6 +77,8 @@ void SLightPropertyEditor::Construct(const FArguments& Args)
 {
     _ASSERT(Args._ToolData);
     ToolData = Args._ToolData;
+    bDisplayIntensityInPercentage = Args._DisplayIntensityInPercentage;
+    bDisplayTemperatureInPercentage = Args._DisplayTemperatureInPercentage;
 
     GenerateTextures();
 
@@ -120,7 +122,7 @@ void SLightPropertyEditor::Construct(const FArguments& Args)
                     .Expose(IntensityValueSlot)
                     [
                         SNew(STextBlock)
-                        .Text(this, &SLightPropertyEditor::GetIntensityValueText)
+                        .Text(this, bDisplayIntensityInPercentage ? &SLightPropertyEditor::GetIntensityPercentage : &SLightPropertyEditor::GetIntensityValueText)
                     ]
                     +SVerticalBox::Slot()
                     [
@@ -290,7 +292,7 @@ void SLightPropertyEditor::Construct(const FArguments& Args)
                     .Expose(TemperatureValueSlot)
                     [
                         SNew(STextBlock)
-                        .Text(this, &SLightPropertyEditor::GetTemperatureValueText)
+                        .Text(this, bDisplayTemperatureInPercentage ? &SLightPropertyEditor::GetTemperaturePercentage : &SLightPropertyEditor::GetTemperatureValueText)
                         .Justification(ETextJustify::Center)
                     ]
                     +SVerticalBox::Slot()
@@ -397,8 +399,8 @@ void SLightPropertyEditor::GenerateTextures()
 
 
         TArray<FColor> IntensityGradientPixels = LinearGradient(TArray<FColor>{
-            FColor::Black,
-                FColor::White
+                FColor::White,
+            FColor::Black
         });
 
         TArray<FColor> HSVGradientPixels = LinearGradient(TArray<FColor>{

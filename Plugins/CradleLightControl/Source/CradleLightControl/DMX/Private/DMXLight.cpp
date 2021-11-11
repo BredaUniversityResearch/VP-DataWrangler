@@ -79,6 +79,7 @@ FPlatformTypes::uint8 UDMXLight::LoadFromJson(TSharedPtr<FJsonObject> JsonObject
             UE_LOG(LogTemp, Warning, TEXT("Could not load DMX Config asset with object path: %s"), *ConfigObjectPath);
 
     	Config = Cast<UDMXConfigAsset>(AssetData.GetAsset());
+        Config->AssetName = AssetData.AssetName;
     }
     else
         Config = nullptr;

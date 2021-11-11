@@ -121,13 +121,6 @@ void SLightControlTool::Construct(const FArguments& Args)
     {
         UpdateLightList();
     }
-
-    //FCoreDelegates::OnEnginePreExit.AddLambda([this]()
-    //    {
-    //        ToolData->AutoSave();
-    //        ToolData->BeginDestroy();
-    //        ToolData->FinishDestroy();
-    //    });
 }
 
 SLightControlTool::~SLightControlTool()
@@ -138,9 +131,6 @@ SLightControlTool::~SLightControlTool()
 void SLightControlTool::PreDestroy()
 {
     ToolData->AutoSave();
-    
-    //ToolData->ConditionalBeginDestroy();
-    //ToolData->ConditionalFinishDestroy();
     if (TreeWidget)
         TreeWidget->PreDestroy();
     if (LightPropertyWidget)

@@ -7,9 +7,16 @@ class UToolData;
 class SLightPropertyEditor : public SCompoundWidget
 {
 public:
-    SLATE_BEGIN_ARGS(SLightPropertyEditor) {}
+    SLATE_BEGIN_ARGS(SLightPropertyEditor)
+	    : _DisplayTemperatureInPercentage(false)
+		, _DisplayIntensityInPercentage(false)
+	{}
 
     SLATE_ARGUMENT(class UToolData*, ToolData)
+
+    SLATE_ARGUMENT(bool, DisplayIntensityInPercentage)
+
+    SLATE_ARGUMENT(bool, DisplayTemperatureInPercentage)
 
     SLATE_END_ARGS();
 
@@ -67,6 +74,11 @@ public:
     TSharedPtr<FSlateImageBrush> DefaultSaturationGradientBrush;
     TSharedPtr<FSlateImageBrush> SaturationGradientBrush;
     TSharedPtr<FSlateImageBrush> TemperatureGradientBrush;
+
+    bool bDisplayIntensityInPercentage;
+
+    bool bDisplayTemperatureInPercentage;
+
 
     UPROPERTY()
         UTexture2D* IntensityGradientTexture;

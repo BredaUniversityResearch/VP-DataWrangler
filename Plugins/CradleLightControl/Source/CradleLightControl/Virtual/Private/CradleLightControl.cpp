@@ -89,11 +89,7 @@ void FCradleLightControlModule::StartupModule()
 
 void FCradleLightControlModule::ShutdownModule()
 {
-	//if (LightControl)
-	//	LightControl->PreDestroy();
-	//
-	//if (DMXControl)
-	//	DMXControl->PreDestroy();
+	
 
 
 
