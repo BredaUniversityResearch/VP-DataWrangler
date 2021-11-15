@@ -34,6 +34,8 @@ DECLARE_DELEGATE(FOnTreeStructureChangedDelegate);
 DECLARE_DELEGATE_TwoParams(FItemExpansionChangedDelegate, UItemHandle*, bool);
 DECLARE_DELEGATE_OneParam(FOnMasterLightTransactedDelegate, UItemHandle*);
 
+DECLARE_DELEGATE_OneParam(FMetaDataExtension, TSharedPtr<FJsonObject> /*RootJsonObject*/)
+
 UCLASS()
 class UToolData : public UObject
 {
@@ -74,6 +76,8 @@ public:
 
     void AutoSave();
 
+    TSharedPtr<FJsonObject> OpenMetaDataJson();
+
     void SaveMetaData();
     void LoadMetaData();
 
@@ -81,6 +85,9 @@ public:
 
     bool bCurrentlyLoading;
     FString ToolPresetPath;
+
+    FMetaDataExtension MetaDataSaveExtension;
+    FMetaDataExtension MetaDataLoadExtension;
     
     FClearSelectionDelegate ClearSelectionDelegate;
     FLightJsonFileDialogDelegate SaveFileDialog;

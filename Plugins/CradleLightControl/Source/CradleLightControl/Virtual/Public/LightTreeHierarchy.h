@@ -46,7 +46,7 @@ public:
 
     TSharedRef<ITableRow> AddToTree(::UItemHandle* Item, const TSharedRef<STableViewBase>& OwnerTable);
 
-    void GetChildren(::UItemHandle* Item, TArray<UItemHandle*>& Children);
+    void GetTreeItemChildren(::UItemHandle* Item, TArray<UItemHandle*>& Children);
     void SelectionCallback(UItemHandle* Item, ESelectInfo::Type SelectType);
     FReply AddFolderToTree();
     void TreeExpansionCallback(UItemHandle* Item, bool bExpanded);

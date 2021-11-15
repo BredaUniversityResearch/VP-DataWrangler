@@ -24,6 +24,8 @@
 
 #include "ToolData.h"
 #include "VirtualLight.h"
+#include "Chaos/AABB.h"
+#include "Chaos/AABB.h"
 
 #pragma region TreeItemStruct
 
@@ -369,7 +371,7 @@ void SLightTreeHierarchy::Construct(const FArguments& Args)
                 .TreeItemsSource(&ToolData->RootItems)
                 .OnSelectionChanged(this, &SLightTreeHierarchy::SelectionCallback)
                 .OnGenerateRow(this, &SLightTreeHierarchy::AddToTree)
-                .OnGetChildren(this, &SLightTreeHierarchy::GetChildren)
+                .OnGetChildren(this, &SLightTreeHierarchy::GetTreeItemChildren)
                 .OnExpansionChanged(this, &SLightTreeHierarchy::TreeExpansionCallback)
                 
             ]
@@ -482,7 +484,7 @@ TSharedRef<ITableRow> SLightTreeHierarchy::AddToTree(UItemHandle* ItemPtr,
     return Row;
 }
 
-void SLightTreeHierarchy::GetChildren(UItemHandle* Item, TArray<UItemHandle*>& Children)
+void SLightTreeHierarchy::GetTreeItemChildren(UItemHandle* Item, TArray<UItemHandle*>& Children)
 {
     Children.Append(Item->Children);
 }

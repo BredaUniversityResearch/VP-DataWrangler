@@ -132,7 +132,7 @@ void FCradleLightControlModule::OpenGelPalette(FGelPaletteSelectionCallback Sele
 		GelPaletteWindow = FSlateApplication::Get().AddWindow(GelPaletteWindow.ToSharedRef());
 			//.IsPopupWindow(true)
 			
-
+		GelPalette->Window = GelPaletteWindow;
 
 		//GelPaletteWindow->ShowWindow();
 	}
@@ -150,6 +150,11 @@ void FCradleLightControlModule::OpenGelPalette(FGelPaletteSelectionCallback Sele
 	}
 
 	
+}
+
+void FCradleLightControlModule::CloseGelPalette()
+{
+	GelPaletteWindow->HideWindow();
 }
 
 void FCradleLightControlModule::RegisterTabSpawner()

@@ -49,10 +49,10 @@ struct CRADLELIGHTCONTROL_API FDMXLinearChannel
 
     FDMXLinearChannel()
 	    : FDMXChannel()
-		, MinValue(0.0f)
-		, MaxValue(1.0f)
 		, MinDMXValue(0)
 		, MaxDMXValue(255)
+		, MinValue(0.0f)
+		, MaxValue(1.0f)
 		
 		//, bEnabled(true)
 		//, Channel(1)

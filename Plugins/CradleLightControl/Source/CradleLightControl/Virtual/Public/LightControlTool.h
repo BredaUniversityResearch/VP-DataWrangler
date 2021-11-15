@@ -53,6 +53,8 @@ private:
 
     SVerticalBox::FSlot& LightHeader();
      
+    void MetaDataSaveExtension(TSharedPtr<FJsonObject> RootJson);
+    void MetaDataLoadExtension(TSharedPtr<FJsonObject> RootJson);
 
     SVerticalBox::FSlot& LightPropertyEditor();
 
@@ -85,5 +87,7 @@ private:
     TSharedPtr<FActiveTimerHandle> DataAutoSaveTimer;
 
     FDelegateHandle ActorSpawnedListenerHandle;
+    FDelegateHandle OnWorldChangedDelegateHandle;
+    FDelegateHandle OnWorldCleanupStartedDelegate;
 
 };

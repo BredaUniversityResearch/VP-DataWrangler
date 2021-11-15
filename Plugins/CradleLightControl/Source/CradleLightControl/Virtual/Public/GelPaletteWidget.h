@@ -8,6 +8,8 @@ class SGelPaletteWidget : public SCompoundWidget
 {
 	SLATE_BEGIN_ARGS(SGelPaletteWidget) {}
 
+	
+
 	SLATE_END_ARGS()
 
 	void Construct(const FArguments& Args);
@@ -17,16 +19,11 @@ class SGelPaletteWidget : public SCompoundWidget
 	TSharedRef<ITableRow> GenerateTile(TSharedPtr<FColor> Item, const TSharedRef<STableViewBase>& Table);
 	void OnSelectionMade(TSharedPtr<FColor> SelectedItem, ESelectInfo::Type SelectionType);
 
-	struct Item
-	{
-		FColor Color;
-		float Hue;
-		float Saturation;
-	};
-
+	void OnItemDoubleClicked(TSharedPtr<FColor> SelectedItem);
+	
 	TSharedPtr<FSlateColorBrush> WhiteBrush;
 
 	TArray<TSharedPtr<FColor>> Items;
 	FGelPaletteSelectionCallback SelectionCallback;
-
+	TSharedPtr<SWindow> Window;
 };

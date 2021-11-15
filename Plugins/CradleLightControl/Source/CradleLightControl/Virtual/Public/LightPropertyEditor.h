@@ -8,8 +8,8 @@ class SLightPropertyEditor : public SCompoundWidget
 {
 public:
     SLATE_BEGIN_ARGS(SLightPropertyEditor)
-	    : _DisplayTemperatureInPercentage(false)
-		, _DisplayIntensityInPercentage(false)
+		: _DisplayIntensityInPercentage(false)
+	    , _DisplayTemperatureInPercentage(false)
 	{}
 
     SLATE_ARGUMENT(class UToolData*, ToolData)

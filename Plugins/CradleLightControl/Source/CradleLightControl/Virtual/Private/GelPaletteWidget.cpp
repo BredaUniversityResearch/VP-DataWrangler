@@ -20,6 +20,7 @@ void SGelPaletteWidget::Construct(const FArguments& Args)
 			.SelectionMode(ESelectionMode::Single)
 			.OnGenerateTile(this, &SGelPaletteWidget::GenerateTile)
 			.OnSelectionChanged(this, &SGelPaletteWidget::OnSelectionMade)
+			.OnMouseButtonDoubleClick(this, &SGelPaletteWidget::OnItemDoubleClicked)
 	];
 }
 
@@ -91,5 +92,16 @@ void SGelPaletteWidget::OnSelectionMade(TSharedPtr<FColor> SelectedItem, ESelect
 	{
 		SelectionCallback.ExecuteIfBound(SelectedItem->ReinterpretAsLinear().LinearRGBToHSV());		
 	}
+}
+
+void SGelPaletteWidget::OnItemDoubleClicked(TSharedPtr<FColor> SelectedItem)
+{
+	SelectionCallback.ExecuteIfBound(SelectedItem->ReinterpretAsLinear().LinearRGBToHSV());
+
+	if (Window)
+	{
+		Window->HideWindow();
+	}
+
 }
 

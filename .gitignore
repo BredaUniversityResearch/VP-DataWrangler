@@ -84,3 +84,5 @@ Plugins/CradleLightControl/Content/LightsAutoSave.json
 Plugins/CradleLightControl/Content/MetaData.json
 
 Plugins/CradleLightControl/Content/VirtualLightMetaData.json
+
+Config/steamvr_ue_editor_app.json

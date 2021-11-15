@@ -26,6 +26,7 @@ public:
                         NativeWindowHandle, FString DefaultPath, uint32 Flags, FString FileTypeList, TArray<FString>& OutFilenames);
 
 	void OpenGelPalette(FGelPaletteSelectionCallback SelectionCallback);
+	void CloseGelPalette();
 
 	void RegisterTabSpawner();
 	void RegisterDMXTabSpawner();

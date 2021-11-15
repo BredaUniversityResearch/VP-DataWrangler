@@ -389,6 +389,24 @@ void UToolData::AutoSave()
     SaveMetaData();
 }
 
+TSharedPtr<FJsonObject> UToolData::OpenMetaDataJson()
+{
+    auto ThisPlugin = IPluginManager::Get().FindPlugin("CradleLightControl");
+    auto Content = ThisPlugin->GetContentDir();
+    FString Input;
+    if (FFileHelper::LoadFileToString(Input, *(Content + "/" + DataName + "MetaData.json")))
+    {
+        TSharedPtr<FJsonObject> JsonRoot;
+        TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(Input);
+        FJsonSerializer::Deserialize(JsonReader, JsonRoot);
+
+        return JsonRoot;
+    }
+
+    return nullptr;
+
+}
+
 void UToolData::SaveMetaData()
 {
     UE_LOG(LogTemp, Display, TEXT("Saving light control meta data."));
@@ -398,6 +416,9 @@ void UToolData::SaveMetaData()
     TSharedPtr<FJsonObject> RootObject = MakeShared<FJsonObject>();
 
     RootObject->SetStringField("LastUsedPreset", ToolPresetPath);
+
+    MetaDataSaveExtension.ExecuteIfBound(RootObject);
+
     FString Output;
     TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&Output);
     FJsonSerializer::Serialize(RootObject.ToSharedRef(), Writer);
@@ -407,23 +428,21 @@ void UToolData::SaveMetaData()
 
 void UToolData::LoadMetaData()
 {
-    auto ThisPlugin = IPluginManager::Get().FindPlugin("CradleLightControl");
-    auto Content = ThisPlugin->GetContentDir();
-    FString Input;
-    if (FFileHelper::LoadFileToString(Input, *(Content + "/" + DataName + "MetaData.json")))
-    {
-        UE_LOG(LogTemp, Display, TEXT("Loading light control meta data."));
-        TSharedPtr<FJsonObject> JsonRoot;
-        TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(Input);
-        FJsonSerializer::Deserialize(JsonReader, JsonRoot);
 
+    UE_LOG(LogTemp, Display, TEXT("Loading light control meta data."));
+    auto JsonRoot = OpenMetaDataJson();
+    if (JsonRoot)
+    {
         ToolPresetPath = JsonRoot->GetStringField("LastUsedPreset");
+        MetaDataLoadExtension.ExecuteIfBound(JsonRoot);
         if (!ToolPresetPath.IsEmpty())
         {
             LoadStateFromJSON(ToolPresetPath, false);
         }
         else
         {
+            auto ThisPlugin = IPluginManager::Get().FindPlugin("CradleLightControl");
+            auto Content = ThisPlugin->GetContentDir();
             LoadStateFromJSON(Content + "/" + DataName + "AutoSave" + ".json", false);
         }
     }

@@ -58,6 +58,9 @@ void SLightControlTool::Construct(const FArguments& Args)
             LightPropertyWidget->UpdateSaturationGradient(ItemHandle->Item->GetHue());
         });
 
+    ToolData->MetaDataSaveExtension = FMetaDataExtension::CreateRaw(this, &SLightControlTool::MetaDataSaveExtension);
+    ToolData->MetaDataLoadExtension = FMetaDataExtension::CreateRaw(this, &SLightControlTool::MetaDataLoadExtension);
+    
     ToolData->LoadMetaData();
 
     DataAutoSaveTimer = RegisterActiveTimer(300.0f, FWidgetActiveTimerDelegate::CreateLambda([this](double, float)
@@ -121,6 +124,33 @@ void SLightControlTool::Construct(const FArguments& Args)
     {
         UpdateLightList();
     }
+
+    OnWorldCleanupStartedDelegate = FWorldDelegates::OnWorldCleanup.AddLambda([this](UWorld*, bool, bool)
+        {
+			UE_LOG(LogTemp, Warning, TEXT("Cleanup Test crap idk"))
+            ToolData->bCurrentlyLoading = true;
+        });
+
+    FEditorDelegates::OnMapOpened.AddLambda([this](const FString&, bool)
+    {
+	    
+    /*OnWorldChangedDelegateHandle = FWorldDelegates::OnPostWorldInitialization.AddLambda([this](UWorld*, const UWorld::InitializationValues&)
+        {*/
+            UE_LOG(LogTemp, Warning, TEXT("Loading Test crap idk"))
+
+            ClearSelection();
+			// Load the metadata for the current world
+            ToolData->LoadMetaData();
+            
+			// If there is no concrete file associated with the current world, generate the data from scratch.
+			// This way we avoid the tool using invalid data 
+            if (ToolData->ToolPresetPath.IsEmpty())
+            {
+                UpdateLightList();
+            }
+
+            ToolData->bCurrentlyLoading = false;
+        });
 }
 
 SLightControlTool::~SLightControlTool()
@@ -136,7 +166,8 @@ void SLightControlTool::PreDestroy()
     if (LightPropertyWidget)
         LightPropertyWidget->PreDestroy();
 
-
+    FWorldDelegates::OnPostWorldInitialization.Remove(OnWorldChangedDelegateHandle);
+    FWorldDelegates::OnWorldCleanup.Remove(OnWorldCleanupStartedDelegate);
     GWorld->RemoveOnActorSpawnedHandler(ActorSpawnedListenerHandle);
     UnRegisterActiveTimer(DataAutoSaveTimer.ToSharedRef());
 }
@@ -387,6 +418,38 @@ SVerticalBox::FSlot& SLightControlTool::LightHeader()
 
     return Slot;
 
+}
+
+void SLightControlTool::MetaDataSaveExtension(TSharedPtr<FJsonObject> RootJson)
+{
+	if (GWorld)
+	{
+        auto OpenedJson = ToolData->OpenMetaDataJson();
+        if (OpenedJson)
+            *RootJson = *OpenedJson; // Replace whatever was done by the default saving with the current file state
+        else
+            *RootJson = FJsonObject();
+
+        auto MapName = GWorld->GetMapName();
+
+        RootJson->SetStringField(MapName, ToolData->ToolPresetPath);
+		
+	}
+
+
+}
+
+void SLightControlTool::MetaDataLoadExtension(TSharedPtr<FJsonObject> RootJson)
+{
+	if (GWorld)
+	{
+        auto MapName = GWorld->GetMapName();
+
+        if (RootJson->HasField(MapName))
+        {
+            ToolData->ToolPresetPath = RootJson->GetStringField(MapName);	        
+        }
+	}
 }
 
 
