@@ -37,10 +37,19 @@ void FPhysicalObjectTrackerEditor::StartupModule()
 				m_ShakeDetectTask = MakeUnique<FDetectTrackerShakeTask>();
 				m_ShakeDetectTask->OnTaskFinished = FShakeTaskFinished::CreateLambda([TargetComponent, this](uint32 SelectedControllerId)
 					{
-						TargetComponent->CurrentTargetDeviceId = SelectedControllerId;
-						m_ShakeProcessNotification->SetText(LOCTEXT("DeviceSelectionSuccess", "Device selected successfully!"));
-						m_ShakeProcessNotification->Fadeout();
-						m_ShakeProcessNotification->SetCompletionState(SNotificationItem::CS_Success);
+						if (m_ShakeDetectTask->IsFailed())
+						{
+							m_ShakeProcessNotification->SetText(m_ShakeDetectTask->GetFailureReason());
+							m_ShakeProcessNotification->SetExpireDuration(60.0f);
+							m_ShakeProcessNotification->SetCompletionState(SNotificationItem::CS_Fail);
+						}
+						else
+						{
+							TargetComponent->CurrentTargetDeviceId = SelectedControllerId;
+							m_ShakeProcessNotification->SetText(LOCTEXT("DeviceSelectionSuccess", "Device selected successfully!"));
+							m_ShakeProcessNotification->Fadeout();
+							m_ShakeProcessNotification->SetCompletionState(SNotificationItem::CS_Success);							
+						}
 					});
 			}
 			else
