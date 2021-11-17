@@ -6,9 +6,14 @@
 #include "SteamVRFunctionLibrary.h"
 #include "SteamVRInputDeviceFunctionLibrary.h"
 
+#include "PhysicalObjectTrackerEditor/Public/PhysicalObjectTrackerEditor.h"
+
 UPhysicalObjectTrackingComponent::UPhysicalObjectTrackingComponent(const FObjectInitializer& ObjectInitializer)
 {
 	PrimaryComponentTick.bCanEverTick = true;
+
+	bTickInEditor = true;
+	bAutoActivate = true;
 }
 
 void UPhysicalObjectTrackingComponent::BeginPlay()
@@ -46,7 +51,9 @@ void UPhysicalObjectTrackingComponent::TickComponent(float DeltaTime, ELevelTick
 		{
 			trackerFromReference = FTransform(trackedOrientation, trackedPosition);
 		}
-		SetRelativeTransform(trackerFromReference);
+
+		GetOwner()->SetActorTransform(trackerFromReference);
+		//SetRelativeTransform(trackerFromReference);
 	}
 	else
 	{
@@ -54,6 +61,16 @@ void UPhysicalObjectTrackingComponent::TickComponent(float DeltaTime, ELevelTick
 		UE_LOG(LogPhysicalObjectTracker, Warning, TEXT("Failed to acquire TrackedDevicePosition for device id %i"), CurrentTargetDeviceId);
 	}
 
+}
+
+void UPhysicalObjectTrackingComponent::SelectTracker()
+{
+	auto& TrackerEditorModule = FModuleManager::Get().GetModuleChecked<FPhysicalObjectTracker>("PhysicalObjectTracker");
+	TrackerEditorModule.DeviceDetectionEvent.Broadcast(this);
+	/*TrackerEditorModule.StartShakeDetectionTask(FOnTrackerFound::CreateLambda([this](uint32_t TrackerId)
+	{
+		CurrentTargetDeviceId = TrackerId;
+	}));*/
 }
 
 void UPhysicalObjectTrackingComponent::DebugCheckIfTrackingTargetExists() const

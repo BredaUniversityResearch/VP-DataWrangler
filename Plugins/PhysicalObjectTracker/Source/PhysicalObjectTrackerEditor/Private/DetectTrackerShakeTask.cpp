@@ -46,6 +46,8 @@ void FDetectTrackerShakeTask::Tick(float DeltaTime)
 				if (trackerHistory.GetMaxDistanceFromFirstSample() * 2.0f < trackerHistory.GetTotalDistanceTraveled() && trackerHistory.GetTotalDistanceTraveled() > 60.0f)
 				{
 					SelectedController = controllerId;
+					OnTaskFinished.ExecuteIfBound(SelectedController);
+					OnTaskFinished.Unbind();
 					m_IsComplete = true;
 					return;
 				}

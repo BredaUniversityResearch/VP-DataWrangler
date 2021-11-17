@@ -6,26 +6,14 @@
 #include "Engine/SpotLight.h"
 #include "Engine/DirectionalLight.h"
 
-#include "Components/LightComponent.h"
-#include "Components/SkyLightComponent.h"
-#include "Components/PointLightComponent.h"
-#include "Components/SpotLightComponent.h"
-
 #include "Widgets/Layout/SScaleBox.h"
 
 #include "Styling/SlateIconFinder.h"
-#include "ClassIconFinder.h"
-
-#include "Interfaces/IPluginManager.h"
 
 #include "LightControlTool.h"
-#include "Chaos/AABB.h"
-#include "IO/DMXOutputPort.h"
 
 #include "ToolData.h"
 #include "VirtualLight.h"
-#include "Chaos/AABB.h"
-#include "Chaos/AABB.h"
 
 #pragma region TreeItemStruct
 

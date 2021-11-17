@@ -2,6 +2,7 @@
 #include "TickableEditorObject.h"
 #include "TrackerTransformHistory.h"
 #include "Containers/RingBuffer.h"
+#include "PhysicalObjectTrackerEditor.h"
 
 struct FTrackerTransform
 {
@@ -10,7 +11,6 @@ public:
 
 	const FVector Position;
 };
-
 class FDetectTrackerShakeTask : public FTickableEditorObject
 {
 	static constexpr int SampleCountPerSecond = 20;
@@ -24,9 +24,11 @@ public:
 	FText GetFailureReason() const;
 
 	int32 SelectedController = -1;
+	FShakeTaskFinished OnTaskFinished;
 private:
 	bool m_IsComplete = false;
 	TMap<int32, FTrackerTransformHistory> m_TrackerHistory{};
 	float m_DeltaTimeAccumulator{ 0.0f };
+
 };
 

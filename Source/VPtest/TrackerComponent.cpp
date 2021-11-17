@@ -51,7 +51,7 @@ void UTrackerComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 		{
 			while (LocationBuffer.Num() > 2)
 			{
-				GEditor->AddOnScreenDebugMessage(-1, 0.9f, FColor::Cyan, FString::Printf(TEXT("%f"), FVector::Distance(Loc, TrackerLocation)));
+				//GEditor->AddOnScreenDebugMessage(-1, 0.9f, FColor::Cyan, FString::Printf(TEXT("%f"), FVector::Distance(Loc, TrackerLocation)));
 
 				LocationBuffer.RemoveAt(0);
 			}
@@ -64,7 +64,7 @@ void UTrackerComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAct
 		}
 
 		Sum /= LocationBuffer.Num();
-		GEditor->AddOnScreenDebugMessage(-1, 0.9f, FColor::Cyan, FString::Printf(TEXT("%f"), FVector::Distance(Sum, TrackerLocation)));
+		//GEditor->AddOnScreenDebugMessage(-1, 0.9f, FColor::Cyan, FString::Printf(TEXT("%f"), FVector::Distance(Sum, TrackerLocation)));
 
 
 		TrackerLocation = Sum;
