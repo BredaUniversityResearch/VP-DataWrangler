@@ -10,20 +10,33 @@ class PHYSICALOBJECTTRACKER_API UPhysicalObjectTrackingComponent: public USceneC
 	GENERATED_BODY()
 public:
 	explicit UPhysicalObjectTrackingComponent(const FObjectInitializer& ObjectInitializer);
-
+	void OnRegister() override;
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+	void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+	
 
 	UFUNCTION(CallInEditor)
 	void SelectTracker();
 
-	UPROPERTY(EditAnywhere)
+	UFUNCTION(CallInEditor)
+		void RefreshDeviceId();
+
+	UPROPERTY(Transient)
 	int32 CurrentTargetDeviceId{-1};
+
+	UPROPERTY(EditAnywhere, meta=(DeviceSerialId))
+	FString SerialId;
 
 private:
 	void DebugCheckIfTrackingTargetExists() const;
 	UPROPERTY(EditAnywhere)
 	UPhysicalObjectTrackingReferencePoint* Reference{nullptr};
 
-	
+	UPROPERTY(Transient)
+	float DeltaTimeAccumulator;
+
+	UPROPERTY()
+	float TimeoutLimit {1.0f};
 };

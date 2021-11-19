@@ -38,6 +38,10 @@ public:
     FString OpenFileDialog(FString Title, FString StartingPath);
     FString SaveFileDialog(FString Title, FString StartingPath);
 
+    UToolData* GetToolData() const;
+
+    TSharedRef<SDockTab> Show();
+    void Hide();
 
 private:
 

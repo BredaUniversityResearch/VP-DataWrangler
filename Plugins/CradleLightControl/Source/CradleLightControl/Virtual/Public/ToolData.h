@@ -36,7 +36,7 @@ DECLARE_DELEGATE_OneParam(FOnMasterLightTransactedDelegate, UItemHandle*);
 
 DECLARE_DELEGATE_OneParam(FMetaDataExtension, TSharedPtr<FJsonObject> /*RootJsonObject*/)
 
-UCLASS()
+UCLASS(BlueprintType)
 class UToolData : public UObject
 {
     GENERATED_BODY()

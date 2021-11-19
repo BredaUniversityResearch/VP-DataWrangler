@@ -92,15 +92,19 @@ FPlatformTypes::uint8 UDMXLight::LoadFromJson(TSharedPtr<FJsonObject> JsonObject
 
 TSharedPtr<FJsonObject> UDMXLight::SaveAsJson()
 {
-
-
-    Vertical = Config->VerticalChannel.NormalizeValue(Vertical);
-    Horizontal = Config->HorizontalChannel.NormalizeValue(Horizontal);
+	if (Config)
+	{
+        Vertical = Config->VerticalChannel.NormalizeValue(Vertical);
+        Horizontal = Config->HorizontalChannel.NormalizeValue(Horizontal);
+	}
 
     auto JsonObject = Super::SaveAsJson();
 
-    Vertical = Config->VerticalChannel.NormalizedToValue(Vertical);
-    Horizontal = Config->HorizontalChannel.NormalizedToValue(Horizontal);
+	if (Config)
+	{
+        Vertical = Config->VerticalChannel.NormalizedToValue(Vertical);
+        Horizontal = Config->HorizontalChannel.NormalizedToValue(Horizontal);		
+	}
 
     FString ObjectPath = "";
 

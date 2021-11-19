@@ -14,6 +14,14 @@ UPhysicalObjectTrackingComponent::UPhysicalObjectTrackingComponent(const FObject
 
 	bTickInEditor = true;
 	bAutoActivate = true;
+
+}
+
+void UPhysicalObjectTrackingComponent::OnRegister()
+{
+	Super::OnRegister();
+	RefreshDeviceId();
+
 }
 
 void UPhysicalObjectTrackingComponent::BeginPlay()
@@ -32,6 +40,15 @@ void UPhysicalObjectTrackingComponent::TickComponent(float DeltaTime, ELevelTick
 	FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, Tick, ThisTickFunction);
+
+	if (CurrentTargetDeviceId == -1)
+	{		
+		DeltaTimeAccumulator += DeltaTime;
+		if (DeltaTimeAccumulator < TimeoutLimit)
+		{
+			RefreshDeviceId();
+		}
+	}
 
 	FVector trackedPosition;
 	FQuat trackedOrientation;
@@ -63,14 +80,32 @@ void UPhysicalObjectTrackingComponent::TickComponent(float DeltaTime, ELevelTick
 
 }
 
+void UPhysicalObjectTrackingComponent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+
+	if (PropertyChangedEvent.MemberProperty->HasMetaData("DeviceSerialId"))
+	{
+		RefreshDeviceId();
+		if (CurrentTargetDeviceId == -1)
+		{
+			DeltaTimeAccumulator = 0.0f;
+		}
+		
+	}
+}
+
 void UPhysicalObjectTrackingComponent::SelectTracker()
 {
 	auto& TrackerEditorModule = FModuleManager::Get().GetModuleChecked<FPhysicalObjectTracker>("PhysicalObjectTracker");
 	TrackerEditorModule.DeviceDetectionEvent.Broadcast(this);
-	/*TrackerEditorModule.StartShakeDetectionTask(FOnTrackerFound::CreateLambda([this](uint32_t TrackerId)
-	{
-		CurrentTargetDeviceId = TrackerId;
-	}));*/
+	
+}
+
+void UPhysicalObjectTrackingComponent::RefreshDeviceId()
+{
+	CurrentTargetDeviceId = FPhysicalObjectTracker::GetDeviceIdFromSerialId(SerialId);
+
 }
 
 void UPhysicalObjectTrackingComponent::DebugCheckIfTrackingTargetExists() const

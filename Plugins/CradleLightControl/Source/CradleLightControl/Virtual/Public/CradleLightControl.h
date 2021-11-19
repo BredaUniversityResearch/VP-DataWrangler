@@ -38,7 +38,7 @@ public:
 	TSharedPtr<SDockTab> LightTab;
 	TSharedPtr<SDockTab> DMXTab;
 
-	TSharedPtr<SLightControlTool> LightControl;
+	TSharedPtr<SLightControlTool> VirtualLightControl;
 	TSharedPtr<class SDMXControlTool> DMXControl;
 
 	TSharedPtr<SGelPaletteWidget> GelPalette;

@@ -46,6 +46,9 @@ void FCradleLightControlModule::StartupModule()
 	//AssetToolsModule.Get().
 	AssetTools.RegisterAssetTypeActions(Action);
 
+	VirtualLightControl = SNew(SLightControlTool);
+	DMXControl = SNew(SDMXControlTool);
+
 	// Create an extension to the toolbar (the one above the viewport in the level editor)
 	TSharedRef<FExtender> ToolbarExtender(new FExtender());
 	ToolbarExtender->AddToolBarExtension("Settings", EExtensionHook::After, CommandList, FToolBarExtensionDelegate::CreateLambda(
@@ -60,7 +63,7 @@ void FCradleLightControlModule::StartupModule()
                     if (!LightTab)
                     {
 					    RegisterTabSpawner();
-					    FGlobalTabmanager::Get()->TryInvokeTab(FTabId("LightControl"));                        
+					    FGlobalTabmanager::Get()->TryInvokeTab(FTabId("VirtualLightControl"));                        
                     }
 					else
 					    LightTab->DrawAttention();
@@ -79,22 +82,27 @@ void FCradleLightControlModule::StartupModule()
 
 	FCoreDelegates::OnEnginePreExit.AddLambda([this]()
 		{
-			if (LightControl)
-				LightControl->PreDestroy();
+			if (VirtualLightControl)
+				VirtualLightControl->PreDestroy();
 			if (DMXControl)
 				DMXControl->PreDestroy();
+
+			VirtualLightControl.Reset();
+			DMXControl.Reset();
 		});
 
 }
 
 void FCradleLightControlModule::ShutdownModule()
 {
-	
-
-
-
 	// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
 	// we call this function before unloading the module.
+	if (VirtualLightControl)
+		VirtualLightControl->PreDestroy();
+
+	if (DMXControl)
+		DMXControl->PreDestroy();
+
 }
 
 
@@ -159,26 +167,27 @@ void FCradleLightControlModule::CloseGelPalette()
 
 void FCradleLightControlModule::RegisterTabSpawner()
 {
-	FGlobalTabmanager::Get()->RegisterNomadTabSpawner("LightControl", FOnSpawnTab::CreateLambda([this](const FSpawnTabArgs& Args)
+	FGlobalTabmanager::Get()->RegisterNomadTabSpawner("VirtualLightControl", FOnSpawnTab::CreateLambda([this](const FSpawnTabArgs& Args)
 		{
-			LightTab = SNew(SDockTab)
+			/*LightTab = SNew(SDockTab)
 				.Label(FText::FromString("Light control tab"))
 				.TabRole(ETabRole::NomadTab)
 				.OnTabClosed_Lambda([this](TSharedRef<SDockTab>)
 					{
-						FGlobalTabmanager::Get()->UnregisterNomadTabSpawner("LightControl");
-						LightControl->PreDestroy();
-						LightControl.Reset();
+						return;
+						FGlobalTabmanager::Get()->UnregisterNomadTabSpawner("VirtualLightControl");
+						VirtualLightControl->PreDestroy();
+						VirtualLightControl.Reset();
 						LightTab.Reset();
 					});
 
 			LightTab->SetContent(				    
-				    SAssignNew(LightControl, SLightControlTool)
+				    SAssignNew(VirtualLightControl, SLightControlTool)
 				    .ToolTab(LightTab)
 					
-				);
+				);*/
 
-		    return LightTab.ToSharedRef();
+		    return VirtualLightControl->Show();
 			
 		}));
 }
@@ -188,23 +197,23 @@ void FCradleLightControlModule::RegisterDMXTabSpawner()
 
 	FGlobalTabmanager::Get()->RegisterNomadTabSpawner("DMXControl", FOnSpawnTab::CreateLambda([this](const FSpawnTabArgs& Args)
 		{
-			DMXTab = SNew(SDockTab)
-				.Label(FText::FromString("DMX control tab"))
-				.TabRole(ETabRole::NomadTab)
-				.OnTabClosed_Lambda([this](TSharedRef<SDockTab>)
-					{
-						FGlobalTabmanager::Get()->UnregisterNomadTabSpawner("DMXControl");
-						//DMXControl->PreDestroy();
-						DMXControl.Reset();
-						DMXTab.Reset();
-					});
+			//DMXTab = SNew(SDockTab)
+			//	.Label(FText::FromString("DMX control tab"))
+			//	.TabRole(ETabRole::NomadTab)
+			//	.OnTabClosed_Lambda([this](TSharedRef<SDockTab>)
+			//		{
+			//			FGlobalTabmanager::Get()->UnregisterNomadTabSpawner("DMXControl");
+			//			//DMXControl->PreDestroy();
+			//			DMXControl.Reset();
+			//			DMXTab.Reset();
+			//		});
 
-			DMXTab->SetContent(
-				SAssignNew(DMXControl, SDMXControlTool)
-				.ToolTab(DMXTab)
-			);
+			//DMXTab->SetContent(
+			//	SAssignNew(DMXControl, SDMXControlTool)
+			//	.ToolTab(DMXTab)
+			//);
 
-			return DMXTab.ToSharedRef();
+			return DMXControl->Show();
 
 		}));
 

@@ -7,6 +7,10 @@
 #include "LightPropertyEditor.h"
 #include "LightSpecificPropertyEditor.h"
 #include "LightItemHeader.h"
+#include "Chaos/AABB.h"
+#include "Chaos/AABB.h"
+#include "Chaos/AABB.h"
+#include "Chaos/AABB.h"
 
 
 class UToolData;
@@ -46,6 +50,12 @@ public:
 
     static void UpdateItemData(UItemHandle* ItemHandle);
     void VerifyTreeData();
+
+    UToolData* GetToolData() const;
+
+    TSharedRef<SDockTab> Show();
+    void Hide();
+
 
 private:
 

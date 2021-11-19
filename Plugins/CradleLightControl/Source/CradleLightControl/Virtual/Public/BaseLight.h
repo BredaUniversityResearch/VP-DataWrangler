@@ -5,7 +5,7 @@
 
 #include "BaseLight.generated.h"
 
-UCLASS()
+UCLASS(BlueprintType)
 class UBaseLight : public UObject
 {
     GENERATED_BODY()

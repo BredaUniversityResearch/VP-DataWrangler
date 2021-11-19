@@ -36,13 +36,7 @@
 
 void SLightControlTool::Construct(const FArguments& Args)
 {
-    if (GWorld)
-    {
-        auto ActorSpawnedDelegate = FOnActorSpawned::FDelegate::CreateRaw(this, &SLightControlTool::ActorSpawnedCallback);
-        ActorSpawnedListenerHandle = GWorld->AddOnActorSpawnedHandler(ActorSpawnedDelegate);
-    }
-    else
-        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, "Could not set actor spawned callback");
+    
 
     LoadResources();
 
@@ -71,8 +65,6 @@ void SLightControlTool::Construct(const FArguments& Args)
         }));
 
     ToolData->AddToRoot();
-
-    GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Emerald, "Light control tool constructed");
 
     SSplitter::FSlot* SplitterSlot;
     ChildSlot
@@ -127,7 +119,6 @@ void SLightControlTool::Construct(const FArguments& Args)
 
     OnWorldCleanupStartedDelegate = FWorldDelegates::OnWorldCleanup.AddLambda([this](UWorld*, bool, bool)
         {
-			UE_LOG(LogTemp, Warning, TEXT("Cleanup Test crap idk"))
             ToolData->bCurrentlyLoading = true;
         });
 
@@ -136,8 +127,6 @@ void SLightControlTool::Construct(const FArguments& Args)
 	    
     /*OnWorldChangedDelegateHandle = FWorldDelegates::OnPostWorldInitialization.AddLambda([this](UWorld*, const UWorld::InitializationValues&)
         {*/
-            UE_LOG(LogTemp, Warning, TEXT("Loading Test crap idk"))
-
             ClearSelection();
 			// Load the metadata for the current world
             ToolData->LoadMetaData();
@@ -393,6 +382,45 @@ void SLightControlTool::VerifyTreeData()
     {
         TreeWidget->Tree->RequestTreeRefresh();
     }
+}
+
+UToolData* SLightControlTool::GetToolData() const
+{
+	return ToolData;
+}
+
+TSharedRef<SDockTab> SLightControlTool::Show()
+{
+    if (!ToolTab)
+    {
+        ToolTab = SNew(SDockTab)
+            .Label(FText::FromString("Virtual Light Control"))
+            .TabRole(ETabRole::NomadTab)
+            .OnTabClosed_Lambda([this](TSharedRef<SDockTab>)
+                {
+                    FGlobalTabmanager::Get()->UnregisterNomadTabSpawner("LightControl");
+                    ToolTab.Reset();
+                })
+    	[
+            SharedThis(this)
+        ];
+    }
+    else
+        ToolTab->FlashTab();
+
+    if (ActorSpawnedListenerHandle.IsValid() && GWorld)
+    {
+        auto ActorSpawnedDelegate = FOnActorSpawned::FDelegate::CreateRaw(this, &SLightControlTool::ActorSpawnedCallback);
+        ActorSpawnedListenerHandle = GWorld->AddOnActorSpawnedHandler(ActorSpawnedDelegate);
+    }
+    else
+        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, "Could not set actor spawned callback");
+
+    return ToolTab.ToSharedRef();
+}
+
+void SLightControlTool::Hide()
+{
 }
 
 

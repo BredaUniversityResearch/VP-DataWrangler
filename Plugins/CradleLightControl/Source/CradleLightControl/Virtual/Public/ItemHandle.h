@@ -26,7 +26,7 @@ public:
     class UItemHandle* DraggedItem;
 };
 
-UCLASS()
+UCLASS(BlueprintType)
 class UItemHandle : public UObject
 {
     GENERATED_BODY()

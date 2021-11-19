@@ -27,7 +27,7 @@ void FDetectTrackerShakeTask::Tick(float DeltaTime)
 		TArray<int32> controllerIds;
 		USteamVRFunctionLibrary::GetValidTrackedDeviceIds(ESteamVRTrackedDeviceType::Controller, controllerIds);
 		TArray<int32>  otherIds;
-		USteamVRFunctionLibrary::GetValidTrackedDeviceIds(ESteamVRTrackedDeviceType::Other, controllerIds);
+		USteamVRFunctionLibrary::GetValidTrackedDeviceIds(ESteamVRTrackedDeviceType::Other, otherIds);
 		controllerIds.Append(MoveTemp(otherIds));
 
 		if (controllerIds.Num() == 0)

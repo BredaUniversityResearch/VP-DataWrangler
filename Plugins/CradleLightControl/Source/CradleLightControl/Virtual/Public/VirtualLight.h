@@ -6,7 +6,7 @@
 
 #include "VirtualLight.generated.h"
 
-UCLASS()
+UCLASS(BlueprintType)
 class UVirtualLight : public UBaseLight
 {
     GENERATED_BODY()

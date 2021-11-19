@@ -22,6 +22,8 @@
 #include "VirtualLight.h"
 #include "Engine/AssetManager.h"
 
+#define LOCTEXT_NAMESPACE "SDMXControlTool"
+
 void SDMXControlTool::Construct(const FArguments& Args)
 {
     ToolTab = Args._ToolTab;
@@ -46,7 +48,6 @@ void SDMXControlTool::Construct(const FArguments& Args)
 
     ToolData->AddToRoot();
 
-    GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Emerald, "Light control tool constructed");
 
     SVerticalBox::FSlot* AddLightButtonSlot;
 
@@ -158,6 +159,33 @@ FString SDMXControlTool::SaveFileDialog(FString Title, FString StartingPath)
         return Res[0];
     }
     return "";
+}
+
+UToolData* SDMXControlTool::GetToolData() const
+{
+    return ToolData;
+}
+
+TSharedRef<SDockTab> SDMXControlTool::Show()
+{
+    if (!ToolTab)
+    {
+        ToolTab = SNew(SDockTab)
+            .TabRole(NomadTab)
+            .Label(LOCTEXT("DMXControlLabel", "DMX Light Control"))
+            .OnTabClosed_Lambda([this](TSharedRef<SDockTab>)
+                {
+                    FGlobalTabmanager::Get()->UnregisterNomadTabSpawner("DMXControl");
+                    ToolTab.Reset();
+                })
+            [
+                SharedThis(this)
+            ];
+    }
+    else
+        ToolTab->FlashTab();
+
+    return ToolTab.ToSharedRef();
 }
 
 void SDMXControlTool::LoadResources()

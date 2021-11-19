@@ -17,6 +17,7 @@ public:
 
 
 private:
+	void OnDeviceDetectionStarted(class UPhysicalObjectTrackingComponent* TargetTrackingComponent);
 
 	void StopDeviceSelection();
 
