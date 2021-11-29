@@ -122,9 +122,17 @@ void SLightControlTool::Construct(const FArguments& Args)
             ToolData->bCurrentlyLoading = true;
         });
 
+    FWorldDelegates::OnWorldCleanup.AddLambda([this](UWorld*, bool, bool)
+        {
+            if (ActorSpawnedListenerHandle.IsValid())
+            {
+                GWorld->RemoveOnActorSpawnedHandler(ActorSpawnedListenerHandle);
+                ActorSpawnedListenerHandle.Reset();
+            }
+        });
+
     FEditorDelegates::OnMapOpened.AddLambda([this](const FString&, bool)
     {
-	    
     /*OnWorldChangedDelegateHandle = FWorldDelegates::OnPostWorldInitialization.AddLambda([this](UWorld*, const UWorld::InitializationValues&)
         {*/
             ClearSelection();
@@ -137,6 +145,15 @@ void SLightControlTool::Construct(const FArguments& Args)
             {
                 UpdateLightList();
             }
+
+            // TODO: This must be done even without the tool tab being spawned, so ideally on an event that signals the end of the initialization of the level
+            if (!ActorSpawnedListenerHandle.IsValid() && GWorld)
+            {
+                auto ActorSpawnedDelegate = FOnActorSpawned::FDelegate::CreateRaw(this, &SLightControlTool::ActorSpawnedCallback);
+                ActorSpawnedListenerHandle = GWorld->AddOnActorSpawnedHandler(ActorSpawnedDelegate);
+            }
+            else
+                GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, "Could not set actor spawned callback");
 
             ToolData->bCurrentlyLoading = false;
         });
@@ -408,13 +425,7 @@ TSharedRef<SDockTab> SLightControlTool::Show()
     else
         ToolTab->FlashTab();
 
-    if (ActorSpawnedListenerHandle.IsValid() && GWorld)
-    {
-        auto ActorSpawnedDelegate = FOnActorSpawned::FDelegate::CreateRaw(this, &SLightControlTool::ActorSpawnedCallback);
-        ActorSpawnedListenerHandle = GWorld->AddOnActorSpawnedHandler(ActorSpawnedDelegate);
-    }
-    else
-        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, "Could not set actor spawned callback");
+    
 
     return ToolTab.ToSharedRef();
 }
