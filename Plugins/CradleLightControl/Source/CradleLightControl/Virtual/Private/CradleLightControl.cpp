@@ -91,6 +91,11 @@ void FCradleLightControlModule::StartupModule()
 			DMXControl.Reset();
 		});
 
+	// Ensure that slate throttling is disabled
+	// If it is enabled, interacting with any slate widgets will freeze the main viewport
+	// until the interaction is finished. This makes editing light properties more cumbersome if not disabled.
+	IConsoleManager::Get().FindConsoleVariable(TEXT("Slate.bAllowThrottling"))->Set(false);
+
 }
 
 void FCradleLightControlModule::ShutdownModule()
