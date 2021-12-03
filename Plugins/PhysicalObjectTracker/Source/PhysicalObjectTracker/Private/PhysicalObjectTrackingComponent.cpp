@@ -21,7 +21,6 @@ void UPhysicalObjectTrackingComponent::OnRegister()
 {
 	Super::OnRegister();
 	RefreshDeviceId();
-
 }
 
 void UPhysicalObjectTrackingComponent::BeginPlay()
@@ -59,10 +58,8 @@ void UPhysicalObjectTrackingComponent::TickComponent(float DeltaTime, ELevelTick
 		{
 			FQuat orientation = trackedOrientation * Reference->GetNeutralRotationInverse();
 			FVector position = trackedPosition - Reference->GetNeutralOffset();
+			position += Reference->GetWorldOffset();
 			trackerFromReference = FTransform(orientation, position);
-			GEngine->AddOnScreenDebugMessage(123544, 0.0f, FColor::Cyan, FString::Printf(TEXT("%f %f %f | %f %f %f"), 
-				trackedOrientation.Rotator().Pitch, trackedOrientation.Rotator().Yaw, trackedOrientation.Rotator().Roll,
-				trackerFromReference.Rotator().Pitch, trackerFromReference.Rotator().Yaw, trackerFromReference.Rotator().Roll));
 		}
 		else
 		{

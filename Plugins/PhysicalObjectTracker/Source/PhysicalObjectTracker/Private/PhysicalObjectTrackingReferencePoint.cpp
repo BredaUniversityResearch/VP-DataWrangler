@@ -6,16 +6,21 @@ void UPhysicalObjectTrackingReferencePoint::SetNeutralTransform(const FQuat& Neu
 	const FVector& NeutralPosition)
 {
 	ensure(!IsRunningGame());
-	m_NeutralOffset = NeutralPosition;
-	m_NeutralRotationInverse = NeutralRotation.Inverse();
+	NeutralOffset = NeutralPosition;
+	NeutralRotationInverse = NeutralRotation.Inverse();
 }
 
 const FQuat& UPhysicalObjectTrackingReferencePoint::GetNeutralRotationInverse() const
 {
-	return m_NeutralRotationInverse;
+	return NeutralRotationInverse;
 }
 
 const FVector& UPhysicalObjectTrackingReferencePoint::GetNeutralOffset() const
 {
-	return m_NeutralOffset;
+	return NeutralOffset;
+}
+
+const FVector& UPhysicalObjectTrackingReferencePoint::GetWorldOffset() const
+{
+	return WorldOriginOffset;
 }
