@@ -17,8 +17,8 @@
 	"Modules": [
 		{
 			"Name": "CradleLightControl",
-			"Type": "Editor",
-			"LoadingPhase": "Default"
+			"Type": "Runtime",
+			"LoadingPhase": "PreDefault"
 		}
 	],
 	"Plugins": [

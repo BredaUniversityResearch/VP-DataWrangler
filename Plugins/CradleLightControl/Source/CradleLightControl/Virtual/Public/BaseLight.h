@@ -39,22 +39,35 @@ public:
     virtual float GetInnerConeAngle() const { return InnerAngle; };
     virtual float GetOuterConeAngle() const { return OuterAngle; };
 
+    UFUNCTION(BlueprintCallable)
     virtual void SetEnabled(bool bNewState);
-    virtual void SetLightIntensity(float NormalizedValue);
-    virtual void SetLightIntensityRaw(float Value);
-    virtual void SetHue(float NewValue);
-    virtual void SetSaturation(float NewValue);
-    virtual void SetUseTemperature(bool NewState);
-    virtual void SetTemperature(float NormalizedValue);
-    virtual void SetTemperatureRaw(float Value);
+    UFUNCTION(BlueprintCallable)
+        virtual void SetLightIntensity(float NormalizedValue);
+    UFUNCTION(BlueprintCallable)
+        virtual void SetLightIntensityRaw(float Value);
+    UFUNCTION(BlueprintCallable)
+        virtual void SetHue(float NewValue);
+    UFUNCTION(BlueprintCallable)
+        virtual void SetSaturation(float NewValue);
+    UFUNCTION(BlueprintCallable)
+        virtual void SetUseTemperature(bool NewState);
+    UFUNCTION(BlueprintCallable)
+        virtual void SetTemperature(float NormalizedValue);
+    UFUNCTION(BlueprintCallable)
+        virtual void SetTemperatureRaw(float Value);
 
 
-    virtual void SetCastShadows(bool bState);
+    UFUNCTION(BlueprintCallable)
+        virtual void SetCastShadows(bool bState);
 
-    virtual void AddHorizontal(float NormalizedDegrees);
-    virtual void AddVertical(float NormalizedDegrees);
-    virtual void SetInnerConeAngle(float NewValue);
-    virtual void SetOuterConeAngle(float NewValue);
+    UFUNCTION(BlueprintCallable)
+        virtual void AddHorizontal(float NormalizedDegrees);
+    UFUNCTION(BlueprintCallable)
+        virtual void AddVertical(float NormalizedDegrees);
+    UFUNCTION(BlueprintCallable)
+        virtual void SetInnerConeAngle(float NewValue);
+    UFUNCTION(BlueprintCallable)
+        virtual void SetOuterConeAngle(float NewValue);
 
     virtual TSharedPtr<FJsonObject> SaveAsJson();
     virtual FPlatformTypes::uint8 LoadFromJson(TSharedPtr<FJsonObject> JsonObject);

@@ -4,6 +4,7 @@
 
 #include "ToolData.generated.h"
 
+class UBaseLight;
 class UItemHandle;
 
 UENUM()
@@ -45,6 +46,10 @@ public:
     UToolData();
 
     ~UToolData();
+
+    UFUNCTION(BlueprintPure)
+    UBaseLight* GetLightByName(FString Name);
+
 
     void GenerateIcons();
     FCheckBoxStyle MakeCheckboxStyleForType(uint8 IconType);

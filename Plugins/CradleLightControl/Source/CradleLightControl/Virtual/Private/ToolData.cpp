@@ -28,6 +28,25 @@ UToolData::~UToolData()
     //AutoSave();
 }
 
+UBaseLight* UToolData::GetLightByName(FString Name)
+{
+	for (auto& LightItem : ListOfLightItems)
+	{
+		if (LightItem->Name == Name)
+		{
+            return LightItem->Item;
+		}
+	}
+
+	if (GEngine)
+	{
+        GEngine->AddOnScreenDebugMessage(-1, 0.5f, FColor::Cyan, FString::Printf(TEXT("Could not find item with name \"%s\""), *Name));
+	}
+
+    return nullptr;
+}
+
+
 void UToolData::GenerateIcons()
 {
     FLinearColor OffTint(0.2f, 0.2f, 0.2f, 0.5f);
