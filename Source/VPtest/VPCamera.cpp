@@ -28,12 +28,12 @@ AVPCamera::AVPCamera()
 
 	FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, false);
 
-	SpringArmComponent->AttachToComponent(RootComponent, AttachmentRules);
-	SpringArmComponent->bDrawDebugLagMarkers = true;
-	SpringArmComponent->CameraLagSpeed = 5.0f;
-	SpringArmComponent->CameraLagMaxDistance = 5.0f;
-	SpringArmComponent->bEnableCameraLag = true;
-	SpringArmComponent->TargetArmLength = 0.0f;
+		/*SpringArmComponent->AttachToComponent(RootComponent, AttachmentRules);
+		SpringArmComponent->bDrawDebugLagMarkers = true;
+		SpringArmComponent->CameraLagSpeed = 5.0f;
+		SpringArmComponent->CameraLagMaxDistance = 5.0f;
+		SpringArmComponent->bEnableCameraLag = true;
+		SpringArmComponent->TargetArmLength = 0.0f;*/
 
 
 }

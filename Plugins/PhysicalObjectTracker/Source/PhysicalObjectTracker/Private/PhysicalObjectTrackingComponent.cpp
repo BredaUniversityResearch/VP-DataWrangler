@@ -6,8 +6,6 @@
 #include "SteamVRFunctionLibrary.h"
 #include "SteamVRInputDeviceFunctionLibrary.h"
 
-#include "PhysicalObjectTrackerEditor/Public/PhysicalObjectTrackerEditor.h"
-
 UPhysicalObjectTrackingComponent::UPhysicalObjectTrackingComponent(const FObjectInitializer& ObjectInitializer)
 {
 	PrimaryComponentTick.bCanEverTick = true;
@@ -49,6 +47,8 @@ void UPhysicalObjectTrackingComponent::TickComponent(float DeltaTime, ELevelTick
 		}
 	}
 
+	FMatrix deviceToWorldSpace = FRotationMatrix::Make(FQuat(FVector::YAxisVector, FMath::DegreesToRadians(90))) * FScaleMatrix::Make(FVector(1.0f, -1.0f, -1.0f));
+
 	FVector trackedPosition;
 	FQuat trackedOrientation;
 	if (FPhysicalObjectTrackingUtility::GetTrackedDevicePositionAndRotation(CurrentTargetDeviceId, trackedPosition, trackedOrientation))
@@ -57,7 +57,8 @@ void UPhysicalObjectTrackingComponent::TickComponent(float DeltaTime, ELevelTick
 		if (TrackingSpaceReference != nullptr)
 		{
 			FQuat orientation = trackedOrientation * TrackingSpaceReference->GetNeutralRotationInverse();
-			FVector position = trackedPosition - TrackingSpaceReference->GetNeutralOffset();
+			FVector devicePosition = TrackingSpaceReference->GetNeutralRotationInverse() * (trackedPosition - TrackingSpaceReference->GetNeutralOffset());
+			FVector4 position = deviceToWorldSpace.TransformPosition(devicePosition);
 			trackerFromReference = FTransform(orientation, position);
 		}
 		else
@@ -76,7 +77,7 @@ void UPhysicalObjectTrackingComponent::TickComponent(float DeltaTime, ELevelTick
 	else
 	{
 		DebugCheckIfTrackingTargetExists();
-		UE_LOG(LogPhysicalObjectTracker, Warning, TEXT("Failed to acquire TrackedDevicePosition for device id %i"), CurrentTargetDeviceId);
+		//UE_LOG(LogPhysicalObjectTracker, Warning, TEXT("Failed to acquire TrackedDevicePosition for device id %i"), CurrentTargetDeviceId);
 	}
 
 }
@@ -85,7 +86,8 @@ void UPhysicalObjectTrackingComponent::PostEditChangeProperty(FPropertyChangedEv
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 
-	if (PropertyChangedEvent.MemberProperty->HasMetaData("DeviceSerialId"))
+	if (PropertyChangedEvent.MemberProperty != nullptr && 
+		PropertyChangedEvent.MemberProperty->HasMetaData("DeviceSerialId"))
 	{
 		RefreshDeviceId();
 		if (CurrentTargetDeviceId == -1)
