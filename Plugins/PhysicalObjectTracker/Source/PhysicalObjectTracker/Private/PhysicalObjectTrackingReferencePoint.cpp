@@ -19,8 +19,3 @@ const FVector& UPhysicalObjectTrackingReferencePoint::GetNeutralOffset() const
 {
 	return NeutralOffset;
 }
-
-const FVector& UPhysicalObjectTrackingReferencePoint::GetWorldOffset() const
-{
-	return WorldOriginOffset;
-}

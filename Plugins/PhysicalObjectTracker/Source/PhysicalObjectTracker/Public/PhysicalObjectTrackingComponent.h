@@ -21,9 +21,9 @@ public:
 	void SelectTracker();
 
 	UFUNCTION(CallInEditor)
-		void RefreshDeviceId();
+	void RefreshDeviceId();
 
-	UPROPERTY(Transient)
+	UPROPERTY(Transient, VisibleAnywhere)
 	int32 CurrentTargetDeviceId{-1};
 
 	UPROPERTY(EditAnywhere, meta=(DeviceSerialId))
@@ -32,7 +32,9 @@ public:
 private:
 	void DebugCheckIfTrackingTargetExists() const;
 	UPROPERTY(EditAnywhere)
-	UPhysicalObjectTrackingReferencePoint* Reference{nullptr};
+	UPhysicalObjectTrackingReferencePoint* TrackingSpaceReference{nullptr};
+	UPROPERTY(EditInstanceOnly)
+	AActor* WorldReferencePoint{nullptr};
 
 	UPROPERTY(Transient)
 	float DeltaTimeAccumulator;

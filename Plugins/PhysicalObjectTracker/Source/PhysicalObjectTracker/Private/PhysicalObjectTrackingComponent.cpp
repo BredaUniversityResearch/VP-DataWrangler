@@ -26,7 +26,7 @@ void UPhysicalObjectTrackingComponent::OnRegister()
 void UPhysicalObjectTrackingComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	if (Reference == nullptr)
+	if (TrackingSpaceReference == nullptr)
 	{
 		GEngine->AddOnScreenDebugMessage(1, 30.0f, FColor::Red, 
 			FString::Format(TEXT("PhysicalObjectTrackingComponent does not have a reference referenced on object \"{0}\""), 
@@ -54,16 +54,20 @@ void UPhysicalObjectTrackingComponent::TickComponent(float DeltaTime, ELevelTick
 	if (FPhysicalObjectTrackingUtility::GetTrackedDevicePositionAndRotation(CurrentTargetDeviceId, trackedPosition, trackedOrientation))
 	{
 		FTransform trackerFromReference;
-		if (Reference != nullptr)
+		if (TrackingSpaceReference != nullptr)
 		{
-			FQuat orientation = trackedOrientation * Reference->GetNeutralRotationInverse();
-			FVector position = trackedPosition - Reference->GetNeutralOffset();
-			position += Reference->GetWorldOffset();
+			FQuat orientation = trackedOrientation * TrackingSpaceReference->GetNeutralRotationInverse();
+			FVector position = trackedPosition - TrackingSpaceReference->GetNeutralOffset();
 			trackerFromReference = FTransform(orientation, position);
 		}
 		else
 		{
 			trackerFromReference = FTransform(trackedOrientation, trackedPosition);
+		}
+
+		if (WorldReferencePoint != nullptr)
+		{
+			trackerFromReference.SetLocation(trackerFromReference.GetLocation() + WorldReferencePoint->GetActorTransform().GetLocation());
 		}
 
 		GetOwner()->SetActorTransform(trackerFromReference);

@@ -11,14 +11,11 @@ public:
 
 	const FQuat& GetNeutralRotationInverse() const;
 	const FVector& GetNeutralOffset() const;
-	const FVector& GetWorldOffset() const;
 
 private:
 	UPROPERTY(VisibleAnywhere)
 	FQuat NeutralRotationInverse;
 	UPROPERTY(VisibleAnywhere)
 	FVector NeutralOffset;
-	UPROPERTY(EditAnywhere)
-	FVector WorldOriginOffset;
 };
 

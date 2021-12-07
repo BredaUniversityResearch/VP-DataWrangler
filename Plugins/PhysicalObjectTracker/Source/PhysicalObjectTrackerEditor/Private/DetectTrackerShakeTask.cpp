@@ -33,6 +33,7 @@ void FDetectTrackerShakeTask::Tick(float DeltaTime)
 		if (controllerIds.Num() == 0)
 		{
 			m_IsComplete = true;
+			OnTaskFinished.ExecuteIfBound(-1);
 			return;
 		}
 

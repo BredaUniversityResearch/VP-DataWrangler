@@ -1,6 +1,14 @@
 #include "PhysicalObjectTrackingUtility.h"
 
+#include "IXRTrackingSystem.h"
 #include "SteamVRFunctionLibrary.h"
+
+namespace {
+	FString GetTrackerSerialNo(int32 DeviceId)
+	{
+		GEngine->XRSystem->GetTrackedDevicePropertySerialNumber(DeviceId);
+	}
+}
 
 bool FPhysicalObjectTrackingUtility::GetTrackedDevicePositionAndRotation(int32 SteamVRDeviceId, FVector& Position, FQuat& Orientation)
 {
