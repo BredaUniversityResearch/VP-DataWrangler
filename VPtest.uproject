@@ -43,6 +43,10 @@
 		{
 			"Name": "CradleLightControl",
 			"Enabled": false
+		},
+		{
+			"Name": "BlackMagicCameraControl",
+			"Enabled": true
 		}
 	],
 	"TargetPlatforms": [
