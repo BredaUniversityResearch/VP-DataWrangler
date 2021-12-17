@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "BlackmagicCameraControlService.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(LogBlackMagicCameraControl, Log, All);
+DECLARE_LOG_CATEGORY_EXTERN(LogBlackmagicCameraControl, Log, All);
 
 class FBlackmagicCameraControl : public IModuleInterface
 {
@@ -14,5 +14,4 @@ public:
 
 private:
 	TUniquePtr<FBlackmagicCameraControlService> ControlService;
-
 };

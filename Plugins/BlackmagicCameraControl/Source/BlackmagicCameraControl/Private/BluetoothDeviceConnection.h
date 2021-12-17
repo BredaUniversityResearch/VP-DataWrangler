@@ -2,13 +2,14 @@
 #include "WinRT.h"
 #include "BluetoothService.h"
 
+class IBMCCDataReceivedHandler;
 using namespace winrt::Windows::Devices::Bluetooth;
 using namespace GenericAttributeProfile;
 
 class FBluetoothDeviceConnection
 {
 public:
-	FBluetoothDeviceConnection(BluetoothDeviceHandle DeviceHandle, const BluetoothLEDevice& Device, 
+	FBluetoothDeviceConnection(BMCCDeviceHandle DeviceHandle, IBMCCDataReceivedHandler* CallbackService, const BluetoothLEDevice& Device, 
 	                           const GattDeviceService& DeviceInformationService, const GattDeviceService& BlackMagicService);
 
 	bool IsValid() const;
@@ -23,7 +24,7 @@ public:
 
 	void SetupBlackMagicServiceCharacteristics();
 
-	const BluetoothDeviceHandle m_DeviceHandle;
+	const BMCCDeviceHandle m_DeviceHandle;
 	BluetoothLEDevice m_Device;
 	GattDeviceService m_DeviceInformationService;
 	GattCharacteristic m_DeviceInformation_CameraManufacturer;
@@ -31,4 +32,6 @@ public:
 	GattDeviceService m_BlackMagicService;
 	GattCharacteristic m_BlackMagicService_OutgoingCameraControl;
 	GattCharacteristic m_BlackMagicService_IncomingCameraControl;
+
+	IBMCCDataReceivedHandler* m_DataReceivedHandler;
 };

@@ -30,7 +30,7 @@ void AsyncWrapper<TClassType, TResultType>::operator()(winrt::Windows::Foundatio
 	}
 	else
 	{
-		UE_LOG(LogBlackMagicCameraControl, Warning, TEXT("Async operation failed"));
+		UE_LOG(LogBlackmagicCameraControl, Warning, TEXT("Async operation failed"));
 	}
 }
 

@@ -2,7 +2,7 @@
 
 #define LOCTEXT_NAMESPACE "BlackMagicCameraControl"
 
-DEFINE_LOG_CATEGORY(LogBlackMagicCameraControl);
+DEFINE_LOG_CATEGORY(LogBlackmagicCameraControl);
 
 void FBlackmagicCameraControl::StartupModule()
 {

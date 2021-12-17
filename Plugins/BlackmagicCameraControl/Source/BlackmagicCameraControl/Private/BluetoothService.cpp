@@ -25,7 +25,7 @@ public:
 class FBluetoothService::FBluetoothWorker
 {
 public:
-	FBluetoothWorker();
+	FBluetoothWorker(IBMCCDataReceivedHandler* TargetDataReceivedHandler);
 	~FBluetoothWorker();
 
 	void OnDeviceAdded(const DeviceWatcher& Watcher, const DeviceInformation& DeviceInfo);
@@ -33,13 +33,14 @@ public:
 	void OnDeviceUpdated(const DeviceWatcher& Watcher, const DeviceInformationUpdate& DeviceInfo);
 
 	void TryConnectToDevice(const winrt::hstring& DeviceId);
-	FBluetoothDeviceConnection* FindDeviceByHandle(BluetoothDeviceHandle Target);
+	FBluetoothDeviceConnection* FindDeviceByHandle(BMCCDeviceHandle Target);
 
 	static void BackgroundService(FBluetoothWorker& Target);
 
+	IBMCCDataReceivedHandler* TargetDataReceivedHandler;
 	TArray<TUniquePtr<FBluetoothDeviceConnection>> ActiveConnections{};
 
-	BluetoothDeviceHandle m_LastUsedHandle{ 0 };
+	BMCCDeviceHandle m_LastUsedHandle{ 0 };
 	DeviceWatcher BLEDeviceWatcher;
 	winrt::event_token BLEDeviceWatcher_Added;
 	winrt::event_token BLEDeviceWatcher_Removed;
@@ -73,8 +74,9 @@ uint32 FBluetoothWorkerRunnable::Run()
 	return 0;
 }
 
-FBluetoothService::FBluetoothWorker::FBluetoothWorker()
-	: BLEDeviceWatcher(DeviceInformation::CreateWatcher(
+FBluetoothService::FBluetoothWorker::FBluetoothWorker(IBMCCDataReceivedHandler* TargetDataReceivedHandler)
+	: TargetDataReceivedHandler(TargetDataReceivedHandler)
+	, BLEDeviceWatcher(DeviceInformation::CreateWatcher(
 		BluetoothLEDevice::GetDeviceSelectorFromPairingState(true),
 		{}, DeviceInformationKind::Device))
 	, UpdateThreadRunnable(this)
@@ -100,27 +102,27 @@ FBluetoothService::FBluetoothWorker::~FBluetoothWorker()
 
 void FBluetoothService::FBluetoothWorker::OnDeviceAdded(const DeviceWatcher&, const DeviceInformation& DeviceInfo)
 {
-	UE_LOG(LogBlackMagicCameraControl, Display, TEXT("OnDeviceAdded: %s"), DeviceInfo.Id().c_str());
-	UE_LOG(LogBlackMagicCameraControl, Display, TEXT("\tName: %s"), DeviceInfo.Name().c_str());
+	UE_LOG(LogBlackmagicCameraControl, Display, TEXT("OnDeviceAdded: %s"), DeviceInfo.Id().c_str());
+	UE_LOG(LogBlackmagicCameraControl, Display, TEXT("\tName: %s"), DeviceInfo.Name().c_str());
 
 	TryConnectToDevice(DeviceInfo.Id());
 }
 
 void FBluetoothService::FBluetoothWorker::OnDeviceRemoved(const DeviceWatcher&, const DeviceInformationUpdate& DeviceInfo)
 {
-	UE_LOG(LogBlackMagicCameraControl, Display, TEXT("Device disconnected : %s"), DeviceInfo.Id().c_str());
+	UE_LOG(LogBlackmagicCameraControl, Display, TEXT("Device disconnected : %s"), DeviceInfo.Id().c_str());
 	for (const auto& connectedDevice : ActiveConnections)
 	{
 		if (connectedDevice->m_Device.DeviceId() == DeviceInfo.Id())
 		{
-			UE_LOG(LogBlackMagicCameraControl, Display, TEXT("\tRemoved active device"), DeviceInfo.Id().c_str());
+			UE_LOG(LogBlackmagicCameraControl, Display, TEXT("\tRemoved active device"), DeviceInfo.Id().c_str());
 		}
 	}
 }
 
 void FBluetoothService::FBluetoothWorker::OnDeviceUpdated(const DeviceWatcher&,	const DeviceInformationUpdate& DeviceInfo)
 {
-	UE_LOG(LogBlackMagicCameraControl, Verbose, TEXT("\tRemoved active device"), DeviceInfo.Id().c_str());
+	UE_LOG(LogBlackmagicCameraControl, Verbose, TEXT("\tRemoved active device"), DeviceInfo.Id().c_str());
 }
 
 void FBluetoothService::FBluetoothWorker::TryConnectToDevice(const winrt::hstring& DeviceId)
@@ -149,15 +151,15 @@ void FBluetoothService::FBluetoothWorker::TryConnectToDevice(const winrt::hstrin
 			}
 			if (foundRequiredServices == 2)
 			{
-				TUniquePtr<FBluetoothDeviceConnection> deviceConnection = MakeUnique<FBluetoothDeviceConnection>(++m_LastUsedHandle, connectedDeviceOp.GetResults(), deviceInformationService, blackMagicService);
+				TUniquePtr<FBluetoothDeviceConnection> deviceConnection = MakeUnique<FBluetoothDeviceConnection>(++m_LastUsedHandle, TargetDataReceivedHandler, connectedDeviceOp.GetResults(), deviceInformationService, blackMagicService);
 				if (deviceConnection->IsValid())
 				{
-					UE_LOG(LogBlackMagicCameraControl, Display, TEXT("Created new active connection for device %s"), connectedDevice.DeviceId().c_str());
+					UE_LOG(LogBlackmagicCameraControl, Display, TEXT("Created new active connection for device %s"), connectedDevice.DeviceId().c_str());
 					ActiveConnections.Emplace(MoveTemp(deviceConnection));
 				}
 				else
 				{
-					UE_LOG(LogBlackMagicCameraControl, Warning, TEXT("Tried to create new connection for device, but was not valid. %s"), connectedDevice.DeviceId().c_str());
+					UE_LOG(LogBlackmagicCameraControl, Warning, TEXT("Tried to create new connection for device, but was not valid. %s"), connectedDevice.DeviceId().c_str());
 
 					{
 						FScopeLock lock(&ReconnectQueueLock);
@@ -168,7 +170,7 @@ void FBluetoothService::FBluetoothWorker::TryConnectToDevice(const winrt::hstrin
 		});
 }
 
-FBluetoothDeviceConnection* FBluetoothService::FBluetoothWorker::FindDeviceByHandle(BluetoothDeviceHandle Target)
+FBluetoothDeviceConnection* FBluetoothService::FBluetoothWorker::FindDeviceByHandle(BMCCDeviceHandle Target)
 {
 	for (const auto& it : ActiveConnections)
 	{
@@ -180,14 +182,14 @@ FBluetoothDeviceConnection* FBluetoothService::FBluetoothWorker::FindDeviceByHan
 	return nullptr;
 }
 
-FBluetoothService::FBluetoothService()
-	: Worker(MakeUnique<FBluetoothWorker>())
+FBluetoothService::FBluetoothService(IBMCCDataReceivedHandler* DataReceivedHandler)
 {
+	Worker = MakeUnique<FBluetoothWorker>(DataReceivedHandler);
 }
 
 FBluetoothService::~FBluetoothService() = default;
 
-void FBluetoothService::QueryManufacturer(BluetoothDeviceHandle Target)
+void FBluetoothService::QueryManufacturer(BMCCDeviceHandle Target)
 {
 	FBluetoothDeviceConnection* connection = Worker->FindDeviceByHandle(Target);
 	if (connection != nullptr)
@@ -196,11 +198,11 @@ void FBluetoothService::QueryManufacturer(BluetoothDeviceHandle Target)
 	}
 	else
 	{
-		UE_LOG(LogBlackMagicCameraControl, Error, TEXT("Failed to get camera manufacturer, device handle not found"));
+		UE_LOG(LogBlackmagicCameraControl, Error, TEXT("Failed to get camera manufacturer, device handle not found"));
 	}
 }
 
-void FBluetoothService::QueryCameraModel(BluetoothDeviceHandle Target)
+void FBluetoothService::QueryCameraModel(BMCCDeviceHandle Target)
 {
 	FBluetoothDeviceConnection* connection = Worker->FindDeviceByHandle(Target);
 	if (connection != nullptr)
@@ -209,11 +211,11 @@ void FBluetoothService::QueryCameraModel(BluetoothDeviceHandle Target)
 	}
 	else
 	{
-		UE_LOG(LogBlackMagicCameraControl, Error, TEXT("Failed to get camera model, device handle not found"));
+		UE_LOG(LogBlackmagicCameraControl, Error, TEXT("Failed to get camera model, device handle not found"));
 	}
 }
 
-void FBluetoothService::QueryCameraSettings(BluetoothDeviceHandle Target)
+void FBluetoothService::QueryCameraSettings(BMCCDeviceHandle Target)
 {
 	FBluetoothDeviceConnection* connection = Worker->FindDeviceByHandle(Target);
 	if (connection != nullptr)
@@ -222,6 +224,6 @@ void FBluetoothService::QueryCameraSettings(BluetoothDeviceHandle Target)
 	}
 	else
 	{
-		UE_LOG(LogBlackMagicCameraControl, Error, TEXT("Failed to get camera settings, device handle not found"));
+		UE_LOG(LogBlackmagicCameraControl, Error, TEXT("Failed to get camera settings, device handle not found"));
 	}
 }
