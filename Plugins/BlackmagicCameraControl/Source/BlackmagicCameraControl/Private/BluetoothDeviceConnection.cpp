@@ -4,7 +4,6 @@
 #include "BlackMagicBluetoothGUID.h"
 #include "BMCCCommandHeader.h"
 #include "BMCCCommandMeta.h"
-#include "BMCCMedia_TransportMode.h"
 
 using namespace winrt::Windows::Storage::Streams;
 using namespace winrt::Windows::Foundation;
@@ -141,7 +140,7 @@ void FBluetoothDeviceConnection::OnReceivedIncomingCameraControl(const IBuffer& 
 	int bytesProcessed = 0;
 	const PacketHeader* packet = reinterpret_cast<const PacketHeader*>(InputData.data());
 	bytesProcessed += sizeof(PacketHeader);
-	while (bytesProcessed + sizeof(BMCCCommandHeader) < packet->PacketSize)
+	while (InputData.Length() - bytesProcessed >= packet->PacketSize)
 	{
 		const BMCCCommandHeader* command = reinterpret_cast<const BMCCCommandHeader*>(InputData.data() + bytesProcessed);
 		bytesProcessed += sizeof(BMCCCommandHeader);

@@ -2,10 +2,12 @@
 #include "BMCCCallbackHandler.h"
 
 #include "BMCCBattery_Info.h"
+#include "BMCCMedia_TransportMode.h"
 
 #include "BMCCDispatcher.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBatteryStatusReceived, const FBMCCBattery_Info&, Payload);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMediaTransportModeReceived, const FBMCCMedia_TransportMode&, Payload);
 
 UCLASS(BlueprintType)
 class BLACKMAGICCAMERACONTROL_API UBMCCDispatcher
@@ -14,8 +16,11 @@ class BLACKMAGICCAMERACONTROL_API UBMCCDispatcher
 {
 	GENERATED_BODY()
 public:
-	virtual void OnBatteryStatus(const FBMCCBattery_Info& a_BatteryInfo) override;
+	virtual void OnBatteryStatus(const FBMCCBattery_Info& BatteryInfo) override;
+	virtual void OnMediaTransportMode(const FBMCCMedia_TransportMode& TransportMode) override;
 
 	UPROPERTY(BlueprintAssignable)
 	FOnBatteryStatusReceived BatteryStatusReceived;
+	UPROPERTY(BlueprintAssignable)
+	FOnMediaTransportModeReceived MediaTransportModeReceived;
 };

@@ -35,6 +35,16 @@ void FBMCCService::Tick(float DeltaTime)
 	dtAccumulator += DeltaTime;
 	if (dtAccumulator > 1.0f)
 	{
+		BroadcastCommand(FBMCCLens_Focus{});
+		BroadcastCommand(FBMCCLens_TriggerAutoFocus{});
+		BroadcastCommand(FBMCCLens_ApertureFStop{});
+		BroadcastCommand(FBMCCLens_ApertureNormalized{});
+		BroadcastCommand(FBMCCLens_ApertureOrdinal{});
+		BroadcastCommand(FBMCCLens_TriggerInstantAutoAperture{});
+		BroadcastCommand(FBMCCLens_OpticalImageStabilization{});
+		BroadcastCommand(FBMCCLens_SetAbsoluteZoomMm{});
+		BroadcastCommand(FBMCCLens_SetAbsoluteZoomNormalized{});
+		BroadcastCommand(FBMCCLens_SetContinuousZoom{});
 		BroadcastCommand(FBMCCBattery_Info{});
 		dtAccumulator = 0.0f;
 	}

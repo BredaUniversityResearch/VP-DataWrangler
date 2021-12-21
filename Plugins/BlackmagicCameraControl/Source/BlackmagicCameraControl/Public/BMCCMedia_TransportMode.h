@@ -1,7 +1,17 @@
 #pragma once
 
-struct BMCCMedia_TransportMode
+#include "BMCCCommandPayload.h"
+#include "BMCCCommandIdentifier.h"
+
+#include "BMCCMedia_TransportMode.generated.h"
+
+USTRUCT(BlueprintType)
+struct FBMCCMedia_TransportMode: public FBMCCCommandPayloadBase
 {
+	GENERATED_BODY()
+
+	static constexpr FBMCCCommandIdentifier Identifier = FBMCCCommandIdentifier(10, 0);
+
 	enum class EMode : uint8_t
 	{
 		Preview = 0,
@@ -27,4 +37,4 @@ struct BMCCMedia_TransportMode
 	EFlags Flags{ 0 };
 	EStorageTarget TargetStorageMedium{ EStorageTarget::CFast };
 };
-static_assert(sizeof(BMCCMedia_TransportMode) == 4, "Transport mode command is expected to be 4 bytes");
+static_assert(sizeof(FBMCCMedia_TransportMode) == 4, "Transport mode command is expected to be 4 bytes");

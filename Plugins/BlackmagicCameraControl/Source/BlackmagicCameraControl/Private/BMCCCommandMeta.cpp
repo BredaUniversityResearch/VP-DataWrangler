@@ -1,6 +1,10 @@
 #include "BMCCCommandMeta.h"
 
 #include "BMCCBattery_Info.h"
+#include "BMCCLens.h"
+#include "BMCCMedia_TransportMode.h"
+
+#include "BlackmagicCameraControl.h"
 
 namespace
 {
@@ -8,16 +12,35 @@ namespace
 	void DispatchWrapperImpl(const TArray<IBMCCCallbackHandler*>& Listeners, const TArrayView<uint8>& SerializedDataView)
 	{
 		ensureMsgf(SerializedDataView.Num() == sizeof(TCommandType), TEXT("Could not deserialize message. Data size mismatch. Got %i expected %i"), SerializedDataView.Num(), sizeof(TCommandType));
-		const TCommandType* data = reinterpret_cast<const TCommandType*>(SerializedDataView.GetData());
-		for (IBMCCCallbackHandler* handler : Listeners)
+		if (TDispatchFunction != nullptr)
 		{
-			(handler->*TDispatchFunction)(*data);
+			const TCommandType* data = reinterpret_cast<const TCommandType*>(SerializedDataView.GetData());
+			for (IBMCCCallbackHandler* handler : Listeners)
+			{
+				(handler->*TDispatchFunction)(*data);
+			}
+		}
+		else 
+		{
+			UE_LOG(LogBlackmagicCameraControl, Error, TEXT("Deserialize and Dispatch got message that has nullptr dispatch. This should not happen I think"));
 		}
 	}
 };
 
 const FBMCCCommandMeta FBMCCCommandMeta::m_AllMeta[] = {
-	Create<FBMCCBattery_Info, &IBMCCCallbackHandler::OnBatteryStatus>()
+	Create<FBMCCLens_Focus, &IBMCCCallbackHandler::OnLensFocus>(),
+	Create<FBMCCLens_TriggerAutoFocus, nullptr>(),
+	Create<FBMCCLens_ApertureFStop, &IBMCCCallbackHandler::OnLensApertureFStop>(),
+	Create<FBMCCLens_ApertureNormalized, &IBMCCCallbackHandler::OnLensApertureNormalized>(),
+	Create<FBMCCLens_ApertureOrdinal, &IBMCCCallbackHandler::OnLensApertureOrdinal>(),
+	Create<FBMCCLens_TriggerInstantAutoAperture, nullptr>(),
+	Create<FBMCCLens_OpticalImageStabilization, &IBMCCCallbackHandler::OnLensOpticalImageStabilization>(),
+	Create<FBMCCLens_SetAbsoluteZoomMm, &IBMCCCallbackHandler::OnLensAbsoluteZoomMm>(),
+	Create<FBMCCLens_SetAbsoluteZoomNormalized, &IBMCCCallbackHandler::OnLensAbsoluteZoomNormalized>(),
+	Create<FBMCCLens_SetContinuousZoom, &IBMCCCallbackHandler::OnLensContinuousZoom>(),
+
+	Create<FBMCCBattery_Info, &IBMCCCallbackHandler::OnBatteryStatus>(),
+	Create<FBMCCMedia_TransportMode, &IBMCCCallbackHandler::OnMediaTransportMode>()
 };
 
 template<typename TCommandType, void(IBMCCCallbackHandler::* TDispatchFunction)(const TCommandType&)>

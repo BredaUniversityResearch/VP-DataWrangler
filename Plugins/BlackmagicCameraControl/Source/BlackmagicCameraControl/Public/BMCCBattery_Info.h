@@ -2,6 +2,8 @@
 #include "BMCCCommandPayload.h"
 #include "BMCCCommandIdentifier.h"
 
+#include "BMCCBattery_Info.generated.h"
+
 USTRUCT(BlueprintType)
 struct FBMCCBattery_Info: public FBMCCCommandPayloadBase
 {

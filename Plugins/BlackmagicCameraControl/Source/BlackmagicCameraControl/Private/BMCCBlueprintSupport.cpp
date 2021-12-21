@@ -18,3 +18,8 @@ UBMCCDispatcher* UBMCCBlueprintSupport::GetBlackmagicCameraControlDispatcher()
 		return nullptr;
 	}
 }
+
+float UBMCCBlueprintSupport::Conv_Fixed16ToFloat(FBMCCFixed16 Value)
+{
+	return Value.AsFloat();
+}
