@@ -2,6 +2,8 @@
 
 #include "BMCCDeviceHandle.h"
 
+struct FBMCCCommandPayloadBase;
+struct FBMCCCommandIdentifier;
 class IBMCCDataReceivedHandler;
 struct BMCCCommandHeader;
 
@@ -15,7 +17,8 @@ public:
 	
 	void QueryManufacturer(BMCCDeviceHandle Target);
 	void QueryCameraModel(BMCCDeviceHandle Target);
-	void QueryCameraSettings(BMCCDeviceHandle Target);
+
+	void SendToCamera(BMCCDeviceHandle Target, const FBMCCCommandIdentifier& CommandId, const FBMCCCommandPayloadBase& Command);
 
 private:
 	TUniquePtr<FBluetoothWorker> Worker;

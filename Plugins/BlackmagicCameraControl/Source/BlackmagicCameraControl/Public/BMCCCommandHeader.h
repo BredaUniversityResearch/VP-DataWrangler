@@ -21,7 +21,13 @@ enum class EOperation : uint8_t
 
 struct BMCCCommandHeader
 {
-	BMCCCommandIdentifier Identifier;
+	BMCCCommandHeader() = default;
+	BMCCCommandHeader(const FBMCCCommandIdentifier& Identifier)
+		: Identifier(Identifier)
+	{
+	}
+
+	FBMCCCommandIdentifier Identifier;
 	EDataType DataType{ EDataType::Int8 };
 	EOperation Operation{ EOperation::Assign };
 };

@@ -5,6 +5,7 @@
 
 #include "BlackMagicBluetoothGUID.h"
 #include "BluetoothDeviceConnection.h"
+#include "BMCCCommandMeta.h"
 
 using namespace winrt::Windows::Foundation;
 using namespace winrt::Windows::Devices::Bluetooth;
@@ -87,6 +88,8 @@ FBluetoothService::FBluetoothWorker::FBluetoothWorker(IBMCCDataReceivedHandler* 
 	BLEDeviceWatcher.Start();
 
 	UpdateThread = FRunnableThread::Create(&UpdateThreadRunnable, TEXT("FBluetoothWorker::BackgroundService"));
+
+	ActiveConnections.Emplace(MakeUnique<FBluetoothDeviceConnection>(++m_LastUsedHandle, TargetDataReceivedHandler, FBluetoothDeviceConnection::ELoopbackDevice::Loopback));
 }
 
 FBluetoothService::FBluetoothWorker::~FBluetoothWorker()
@@ -215,15 +218,24 @@ void FBluetoothService::QueryCameraModel(BMCCDeviceHandle Target)
 	}
 }
 
-void FBluetoothService::QueryCameraSettings(BMCCDeviceHandle Target)
+void FBluetoothService::SendToCamera(BMCCDeviceHandle Target, const FBMCCCommandIdentifier& CommandId, const FBMCCCommandPayloadBase& Command)
 {
-	FBluetoothDeviceConnection* connection = Worker->FindDeviceByHandle(Target);
-	if (connection != nullptr)
+	const FBMCCCommandMeta* meta = FBMCCCommandMeta::FindMetaForIdentifier(CommandId);
+	if (meta == nullptr)
 	{
-		connection->QueryCameraSettings();
+		UE_LOG(LogBlackmagicCameraControl, Error, TEXT("Failed to find meta for command identifier %i.%i. Message was not sent"), CommandId.Category, CommandId.Parameter);
+		return;
+	}
+
+	if (Target == BMCCDeviceHandle_Broadcast)
+	{
+		for (const TUniquePtr<FBluetoothDeviceConnection>& device : Worker->ActiveConnections)
+		{ 
+			device->SendCommand(*meta, Command);
+		}
 	}
 	else
 	{
-		UE_LOG(LogBlackmagicCameraControl, Error, TEXT("Failed to get camera settings, device handle not found"));
+		__debugbreak();
 	}
 }

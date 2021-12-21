@@ -1,12 +1,16 @@
 #pragma once
+#include "BMCCCommandPayload.h"
 #include "BMCCCommandIdentifier.h"
 
-struct BMCCBattery_Info
+USTRUCT(BlueprintType)
+struct FBMCCBattery_Info: public FBMCCCommandPayloadBase
 {
-	static constexpr BMCCCommandIdentifier Identifier = BMCCCommandIdentifier(9, 0);
+	GENERATED_BODY()
+
+	static constexpr FBMCCCommandIdentifier Identifier = FBMCCCommandIdentifier(9, 0);
 
 	int16 BatteryVoltage_mV;
 	int16 BatteryPercentage;
 	int16 Unknown;
 };
-static_assert(sizeof(BMCCBattery_Info) == 6, "BMCCBattery_Info is expected to contain 3 int16s");
+static_assert(sizeof(FBMCCBattery_Info) == 6, "FBMCCBattery_Info is expected to contain 3 int16s");

@@ -1,15 +1,15 @@
 #pragma once
 
-struct BMCCCommandIdentifier
+struct FBMCCCommandIdentifier
 {
-	constexpr BMCCCommandIdentifier() = default;
-	constexpr BMCCCommandIdentifier(uint8 Category, uint8 Parameter)
+	constexpr FBMCCCommandIdentifier() = default;
+	constexpr FBMCCCommandIdentifier(uint8 Category, uint8 Parameter)
 		: Category(Category)
 		, Parameter(Parameter)
 	{
 	}
 
-	bool operator==(const BMCCCommandIdentifier& rhs) const
+	bool operator==(const FBMCCCommandIdentifier& rhs) const
 	{
 		return Category == rhs.Category && Parameter == rhs.Parameter;
 	}

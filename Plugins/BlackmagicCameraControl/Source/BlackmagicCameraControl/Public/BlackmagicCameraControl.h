@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "BlackmagicCameraControlService.h"
+#include "BMCCService.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogBlackmagicCameraControl, Log, All);
 
@@ -13,5 +13,5 @@ public:
 	virtual void ShutdownModule() override;
 
 private:
-	TUniquePtr<FBlackmagicCameraControlService> ControlService;
+	TUniquePtr<FBMCCService> ControlService;
 };

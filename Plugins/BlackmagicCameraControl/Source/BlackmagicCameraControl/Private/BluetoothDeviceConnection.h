@@ -2,6 +2,7 @@
 #include "WinRT.h"
 #include "BluetoothService.h"
 
+class FBMCCCommandMeta;
 class IBMCCDataReceivedHandler;
 using namespace winrt::Windows::Devices::Bluetooth;
 using namespace GenericAttributeProfile;
@@ -9,18 +10,25 @@ using namespace GenericAttributeProfile;
 class FBluetoothDeviceConnection
 {
 public:
+	enum class ELoopbackDevice
+	{
+		Loopback
+	};
+
 	FBluetoothDeviceConnection(BMCCDeviceHandle DeviceHandle, IBMCCDataReceivedHandler* CallbackService, const BluetoothLEDevice& Device, 
 	                           const GattDeviceService& DeviceInformationService, const GattDeviceService& BlackMagicService);
+	FBluetoothDeviceConnection(BMCCDeviceHandle DeviceHandle, IBMCCDataReceivedHandler* CallbackService, ELoopbackDevice);
 
 	bool IsValid() const;
 
 	void QueryCameraManufacturer();
 	void QueryCameraModel();
-	void QueryCameraSettings();
+
+	void SendCommand(const FBMCCCommandMeta& Meta, const FBMCCCommandPayloadBase& Payload) const;
 
 	void OnQueryCameraManufacturerCompleted(const GattReadResult& result);
-	void OnWriteResult(const GattCommunicationStatus& result);
-	void OnReceivedIncomingCameraControl(const winrt::Windows::Storage::Streams::IBuffer& InputData);
+	void OnWriteResult(const GattCommunicationStatus& result) const;
+	void OnReceivedIncomingCameraControl(const winrt::Windows::Storage::Streams::IBuffer& InputData) const;
 
 	void SetupBlackMagicServiceCharacteristics();
 

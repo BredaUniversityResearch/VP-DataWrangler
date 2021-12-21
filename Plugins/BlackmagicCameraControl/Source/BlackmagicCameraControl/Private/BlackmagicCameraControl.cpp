@@ -6,13 +6,13 @@ DEFINE_LOG_CATEGORY(LogBlackmagicCameraControl);
 
 void FBlackmagicCameraControl::StartupModule()
 {
-	ControlService = MakeUnique<FBlackmagicCameraControlService>();
-	IModularFeatures::Get().RegisterModularFeature(FBlackmagicCameraControlService::GetModularFeatureName(), ControlService.Get());
+	ControlService = MakeUnique<FBMCCService>();
+	IModularFeatures::Get().RegisterModularFeature(FBMCCService::GetModularFeatureName(), ControlService.Get());
 }
 
 void FBlackmagicCameraControl::ShutdownModule()
 {
-	IModularFeatures::Get().UnregisterModularFeature(FBlackmagicCameraControlService::GetModularFeatureName(), ControlService.Get());
+	IModularFeatures::Get().UnregisterModularFeature(FBMCCService::GetModularFeatureName(), ControlService.Get());
 	ControlService.Reset();
 }
 
