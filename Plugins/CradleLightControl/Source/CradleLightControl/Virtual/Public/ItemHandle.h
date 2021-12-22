@@ -23,11 +23,12 @@ class FItemDragDropOperation : public FDragDropOperation
 {
 public:
 
-    class UItemHandle* DraggedItem;
+    TArray<class UItemHandle*> DraggedItems;
+    UItemHandle* Destination;
 };
 
 UCLASS(BlueprintType)
-class UItemHandle : public UObject
+class CRADLELIGHTCONTROL_API UItemHandle : public UObject
 {
     GENERATED_BODY()
 
@@ -59,7 +60,7 @@ public:
     void EndRename(const FText& Text, ETextCommit::Type CommitType);
 
     TSharedPtr<FJsonValue> SaveToJson();
-    enum ELoadingResult
+    enum ELoadingResult : uint8
     {
         Success = 0,
         InvalidType,
@@ -111,9 +112,6 @@ public:
 
     bool bExpanded;
     bool bMatchesSearchString;
-
-private:
-
 
     bool bInRename;
 };

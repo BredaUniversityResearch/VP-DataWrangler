@@ -139,7 +139,7 @@ struct CRADLELIGHTCONTROL_API FConstDMXChannel
         uint8 Value;
 };
 
-class FDMXConfigAssetAction : public FAssetTypeActions_Base
+class CRADLELIGHTCONTROL_API FDMXConfigAssetAction : public FAssetTypeActions_Base
 {
 public:
     FDMXConfigAssetAction();

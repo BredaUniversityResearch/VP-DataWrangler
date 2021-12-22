@@ -23,9 +23,9 @@ public:
 
     SLATE_ARGUMENT(TSharedPtr<SDockTab>, ToolTab);
 
-    SLATE_END_ARGS()
-
-    void Construct(const FArguments& Args);
+    SLATE_END_ARGS();
+    
+    void Construct(const FArguments& Args, UToolData* ToolData);
 
     ~SLightControlTool();
 

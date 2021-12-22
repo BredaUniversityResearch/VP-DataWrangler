@@ -1,7 +1,7 @@
 #include "BaseLight.h"
 
 #include "ItemHandle.h"
-#include "LightControlTool.h"
+//#include "LightControlTool.h"
 #include "ToolData.h"
 
 #include "Engine/SkyLight.h"

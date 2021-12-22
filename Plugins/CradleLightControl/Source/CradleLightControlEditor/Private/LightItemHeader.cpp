@@ -3,6 +3,8 @@
 #include "ToolData.h"
 #include "ItemHandle.h"
 #include "BaseLight.h"
+#include "CradleLightControlEditor.h"
+
 void SLightItemHeader::Construct(const FArguments& Args)
 {
     check(Args._ToolData);
@@ -41,7 +43,7 @@ void SLightItemHeader::Update()
                 break;
             }
         }
-        LightHeaderCheckboxStyle = ToolData->MakeCheckboxStyleForType(IconType);
+        LightHeaderCheckboxStyle = FCradleLightControlEditorModule::Get().MakeCheckboxStyleForType(IconType);
 
         ContentBox->SetHAlign(HAlign_Fill);
         ContentBox->SetPadding(FMargin(5.0f, 0.0f));
@@ -209,7 +211,7 @@ void SLightItemHeader::CommitNewItemName(const FText& Text, ETextCommit::Type Co
         Item->BeginTransaction();
 
         Item->Name = Text.ToString();
-        Item->GenerateTableRow();
+        FCradleLightControlEditorModule::Get().GenerateItemHandleWidget(Item);
 
         GEditor->EndTransaction();
     }
@@ -283,7 +285,7 @@ void SLightItemHeader::CommitNewItemNote(const FText& Text, ETextCommit::Type Co
         Item->BeginTransaction();
 
         Item->Note = Text.ToString();
-        Item->GenerateTableRow();
+        //Item->GenerateTableRow();
 
         GEditor->EndTransaction();
     }

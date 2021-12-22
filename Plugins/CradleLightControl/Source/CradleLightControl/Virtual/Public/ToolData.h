@@ -7,38 +7,17 @@
 class UBaseLight;
 class UItemHandle;
 
-UENUM()
-enum EIconType
-{
-    GeneralLightOff = 0,
-    GeneralLightOn,
-    GeneralLightUndetermined,
-    SkyLightOff,
-    SkyLightOn,
-    SkyLightUndetermined,
-    SpotLightOff,
-    SpotLightOn,
-    SpotLightUndetermined,
-    DirectionalLightOff,
-    DirectionalLightOn,
-    DirectionalLightUndetermined,
-    PointLightOff,
-    PointLightOn,
-    PointLightUndetermined,
-    FolderClosed,
-    FolderOpened
-};
-
 DECLARE_DELEGATE(FClearSelectionDelegate);
 DECLARE_DELEGATE_RetVal_TwoParams(FString, FLightJsonFileDialogDelegate, FString /*Title*/, FString /*StartDir*/);
 DECLARE_DELEGATE(FOnTreeStructureChangedDelegate);
 DECLARE_DELEGATE_TwoParams(FItemExpansionChangedDelegate, UItemHandle*, bool);
 DECLARE_DELEGATE_OneParam(FOnMasterLightTransactedDelegate, UItemHandle*);
+DECLARE_DELEGATE_OneParam(FOnToolDataLoadedDelegate, uint8 /*LoadingResult*/)
 
 DECLARE_DELEGATE_OneParam(FMetaDataExtension, TSharedPtr<FJsonObject> /*RootJsonObject*/)
 
 UCLASS(BlueprintType)
-class UToolData : public UObject
+class CRADLELIGHTCONTROL_API UToolData : public UObject
 {
     GENERATED_BODY()
 public:
@@ -51,9 +30,6 @@ public:
     UBaseLight* GetLightByName(FString Name);
 
 
-    void GenerateIcons();
-    FCheckBoxStyle MakeCheckboxStyleForType(uint8 IconType);
-    FSlateBrush& GetIcon(EIconType Icon);
 
     void PostTransacted(const FTransactionObjectEvent& TransactionEvent) override;
 
@@ -70,6 +46,7 @@ public:
     UItemHandle* GetSelectedGroup();
     UItemHandle* GetSingleSelectedItem();
     const TArray<UItemHandle*>& GetSelectedLights();
+    TArray<UItemHandle*> GetSelectedItems();
 
     void BeginTransaction();
 
@@ -101,6 +78,7 @@ public:
     FOnTreeStructureChangedDelegate TreeStructureChangedDelegate;
     FItemExpansionChangedDelegate ItemExpansionChangedDelegate;
     FOnMasterLightTransactedDelegate MasterLightTransactedDelegate;
+    FOnToolDataLoadedDelegate OnToolDataLoaded;
 
     FTimerHandle AutoSaveTimer;
     //TSharedPtr<FActiveTimerHandle> AutoSaveTimer;
@@ -127,6 +105,5 @@ public:
     UPROPERTY()
         TArray<UItemHandle*> ListOfLightItems;
 
-    UPROPERTY(NonTransactional)
-        TMap<TEnumAsByte<EIconType>, FSlateBrush> Icons;
+
 };

@@ -1,4 +1,6 @@
 #include "LightTreeHierarchy.h"
+
+#include "CradleLightControlEditor.h"
 #include "Kismet/GameplayStatics.h"
 
 #include "Engine/SkyLight.h"
@@ -9,6 +11,8 @@
 #include "Widgets/Layout/SScaleBox.h"
 
 #include "Styling/SlateIconFinder.h"
+#include "ItemHandle.h"
+#include "ToolData.h"
 
 #include "LightControlTool.h"
 
@@ -233,6 +237,8 @@ void SLightTreeHierarchy::Construct(const FArguments& Args)
     SelectionChangedDelegate = Args._SelectionChangedDelegate;
     HeaderText = FText::FromString(Args._Name);
 
+    ToolData->OnToolDataLoaded = FOnToolDataLoadedDelegate::CreateRaw(this, &SLightTreeHierarchy::OnToolDataLoadedCallback);
+    ToolData->LoadMetaData();
     ToolData->ItemExpansionChangedDelegate = FItemExpansionChangedDelegate::CreateLambda([this](UItemHandle* Item, bool bState)
         {
             Tree->SetItemExpansion(Item, bState);
@@ -240,9 +246,8 @@ void SLightTreeHierarchy::Construct(const FArguments& Args)
 
     ToolData->TreeStructureChangedDelegate = FOnTreeStructureChangedDelegate::CreateLambda([this]()
         {
-            Tree->RequestTreeRefresh();
+    		Tree->RequestTreeRefresh();
         });
-
     if (DataVerificationDelegate.IsBound())
         LightVerificationTimer = RegisterActiveTimer(Args._DataVerificationInterval, FWidgetActiveTimerDelegate::CreateRaw(this, &SLightTreeHierarchy::VerifyLights));
     else
@@ -430,6 +435,7 @@ void SLightTreeHierarchy::OnActorSpawned(AActor* Actor)
         NewItemHandle->CheckNameAgainstSearchString(SearchString);
 
         ToolData->RootItems.Add(NewItemHandle);
+        FCradleLightControlEditorModule::Get().GenerateItemHandleWidget(NewItemHandle);
 
         Tree->RequestTreeRefresh();
     }
@@ -456,18 +462,25 @@ TSharedRef<ITableRow> SLightTreeHierarchy::AddToTree(UItemHandle* ItemPtr,
                 .OnCheckStateChanged_UObject(ItemPtr, &UItemHandle::OnCheck)
         ];
     }
-
+    if (!ItemPtr->TableRowBox)
+    {
+        SAssignNew(ItemPtr->TableRowBox, SBox);
+    }
     auto Row =
         SNew(STableRow<UItemHandle*>, OwnerTable)
         .Padding(2.0f)
-        .OnDragDetected_UObject(ItemPtr, &UItemHandle::TreeDragDetected)
-        .OnDrop_UObject(ItemPtr, &UItemHandle::TreeDropDetected)
+        .OnDragDetected_Raw(this, &SLightTreeHierarchy::DragDropBegin)
+        .OnDrop_Lambda([ItemPtr, this](const FDragDropEvent& DragDropEvent)
+        {
+            StaticCastSharedPtr<FItemDragDropOperation>(DragDropEvent.GetOperation())->Destination = ItemPtr;
+            return DragDropEnd(DragDropEvent);
+        })
         .Visibility_Lambda([ItemPtr]() {return ItemPtr->bMatchesSearchString ? EVisibility::Visible : EVisibility::Collapsed; })
         [
-            SAssignNew(ItemPtr->TableRowBox, SBox)
+            ItemPtr->TableRowBox.ToSharedRef()
         ];
 
-    ItemPtr->GenerateTableRow();
+    //ItemPtr->GenerateTableRow();
 
     return Row;
 }
@@ -525,6 +538,7 @@ FReply SLightTreeHierarchy::AddFolderToTree()
     NewFolder->Name = "New Group";
     NewFolder->CheckNameAgainstSearchString(SearchString);
     ToolData->RootItems.Add(NewFolder);
+    FCradleLightControlEditorModule::Get().GenerateItemHandleWidget(NewFolder);
 
     Tree->RequestTreeRefresh();
 
@@ -537,12 +551,195 @@ void SLightTreeHierarchy::TreeExpansionCallback(UItemHandle* Item, bool bExpande
     Item->bExpanded = bExpanded;
 }
 
+void SLightTreeHierarchy::OnToolDataLoadedCallback(uint8 LoadingResult)
+{
+    if (LoadingResult == UItemHandle::ELoadingResult::Success)
+    {
+        UE_LOG(LogTemp, Display, TEXT("Light control state loaded successfully"));
+    }
+    else
+    {
+        FString ErrorMessage = "";
+
+        switch (LoadingResult)
+        {
+        case UItemHandle::ELoadingResult::LightNotFound:
+            ErrorMessage = "At least one light could not be found. Please ensure all lights exist and haven't been renamed since the w.";
+            break;
+        case UItemHandle::ELoadingResult::EngineError:
+            ErrorMessage = "There was an error with the engine. Please try loading again. If the error persists, restart the engine.";
+            break;
+        case UItemHandle::ELoadingResult::InvalidType:
+            ErrorMessage = "The item type that was tried to be loaded was not valid. Please ensure that the item type in the .json file is between 0 and 4.";
+            break;
+        case UItemHandle::ELoadingResult::MultipleErrors:
+            ErrorMessage = "Multiple errors occurred. See output log for more details.";
+            break;
+        }
+
+        UE_LOG(LogTemp, Display, TEXT("Light control state could not load with following message: %s"), *ErrorMessage);
+
+        FNotificationInfo NotificationInfo(FText::FromString(FString::Printf(TEXT("Light control tool state could not be loaded. Please check the output log."))));
+
+        NotificationInfo.ExpireDuration = 30.0f;
+        NotificationInfo.bUseSuccessFailIcons = false;
+
+        FSlateNotificationManager::Get().AddNotification(NotificationInfo);
+    }
+
+    for (auto& Item : ToolData->RootItems)
+    {
+        RegenerateItemHandleWidgets(Item);
+    }
+}
+
+void SLightTreeHierarchy::RegenerateItemHandleWidgets(UItemHandle* ItemHandle)
+{
+    FCradleLightControlEditorModule::Get().GenerateItemHandleWidget(ItemHandle);
+
+    for (auto Child : ItemHandle->Children)
+    {
+        RegenerateItemHandleWidgets(Child);
+    }
+}
+
+
 EActiveTimerReturnType SLightTreeHierarchy::VerifyLights(double, float)
 {
     DataVerificationDelegate.Execute();
 
     return EActiveTimerReturnType::Continue;
 }
+
+FReply SLightTreeHierarchy::DragDropBegin(const FGeometry& Geometry, const FPointerEvent& MouseEvent)
+{
+    TSharedRef<FItemDragDropOperation> DragDropOp = MakeShared<FItemDragDropOperation>();
+    DragDropOp->DraggedItems = ToolData->GetSelectedItems();
+    
+    FReply Reply = FReply::Handled();
+
+    Reply.BeginDragDrop(DragDropOp);
+
+    return Reply;
+}
+
+FReply SLightTreeHierarchy::DragDropEnd(const FDragDropEvent& DragDropEvent)
+{
+    auto DragDrop = StaticCastSharedPtr<FItemDragDropOperation>(DragDropEvent.GetOperation());
+	UItemHandle* Destination = DragDrop->Destination;
+    for (auto Target : DragDrop->DraggedItems)
+    {
+
+
+        //auto Target = DragDrop->DraggedItem;
+        auto Source = Target->Parent;
+
+        if (!UItemHandle::VerifyDragDrop(Target, Destination))
+        {
+            GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, "Drag drop cancelled");
+            auto Reply = FReply::Handled();
+            Reply.EndDragDrop();
+
+            return FReply::Handled();
+        }
+
+        if (GEditor)
+        {
+            GEditor->BeginTransaction(FText::FromString("Light control tree drag and drop"));
+        }
+
+        // The source folder and the dragged item will always be affected, so always begin transacting them
+        if (Source)
+            Source->BeginTransaction(false);
+        else
+        {
+            ToolData->BeginTransaction();
+        }
+        Target->BeginTransaction(false);
+        Destination->BeginTransaction(false);
+        if (Destination->Type == Folder)
+        {
+
+            Destination = DragDrop->Destination;
+
+            Destination->BeginTransaction(false);
+
+
+            if (Source)
+                Source->Children.Remove(Target);
+            else
+                ToolData->RootItems.Remove(Target);
+            Destination->Children.Add(Target);
+            Target->Parent = Destination;
+
+            /*if (Source)
+                Source->GenerateTableRow();
+            Destination->GenerateTableRow();*/
+            ToolData->ItemExpansionChangedDelegate.ExecuteIfBound(Destination, true);
+        }
+        else
+        {
+            auto Parent = Destination->Parent;
+            Destination = ToolData->AddItem(true);
+            Destination->Name = DragDrop->Destination->Name + " Group";
+            Destination->Parent = Parent;
+
+
+            if (Destination->Parent)
+                Destination->Parent->BeginTransaction(false);
+            else
+                ToolData->BeginTransaction();
+
+            Destination->BeginTransaction(false);
+
+            if (Destination->Parent)
+            {
+                Destination->Parent->Children.Remove(DragDrop->Destination);
+                Destination->Parent->Children.Add(Destination);
+            }
+            else
+            {
+                ToolData->RootItems.Remove(DragDrop->Destination);
+                ToolData->RootItems.Add(Destination);
+            }
+
+            if (Source)
+                Source->Children.Remove(Target);
+            else
+                ToolData->RootItems.Remove(Target);
+
+            Destination->Children.Add(DragDrop->Destination);
+            Destination->Children.Add(Target);
+
+            auto PrevParent = Destination->Parent;
+
+            Target->Parent = Destination;
+            DragDrop->Destination->Parent = Destination;
+
+            //if (PrevParent)
+            //    PrevParent->GenerateTableRow();
+            //if (Source)
+            //    Source->GenerateTableRow();
+            ToolData->ItemExpansionChangedDelegate.ExecuteIfBound(Destination, true);
+        }
+        if (Source)
+        {
+            FCradleLightControlEditorModule::Get().GenerateItemHandleWidget(Source);
+        }
+    }
+    ToolData->TreeStructureChangedDelegate.ExecuteIfBound();
+    //ToolData->TreeWidget->RequestTreeRefresh();
+
+    GEditor->EndTransaction();
+    Destination->UpdateFolderIcon();
+    FCradleLightControlEditorModule::Get().GenerateItemHandleWidget(Destination);
+
+    auto Reply = FReply::Handled();
+    Reply.EndDragDrop();
+
+    return Reply;
+}
+
 
 void SLightTreeHierarchy::SearchBarOnChanged(const FText& NewString)
 {

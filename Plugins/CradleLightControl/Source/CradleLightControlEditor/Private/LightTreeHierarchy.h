@@ -50,9 +50,12 @@ public:
     void SelectionCallback(UItemHandle* Item, ESelectInfo::Type SelectType);
     FReply AddFolderToTree();
     void TreeExpansionCallback(UItemHandle* Item, bool bExpanded);
-
+    void OnToolDataLoadedCallback(uint8 LoadingResult);
+    void RegenerateItemHandleWidgets(UItemHandle* ItemHandle);
     EActiveTimerReturnType VerifyLights(double, float);
 
+    FReply DragDropBegin(const FGeometry& Geometry, const FPointerEvent& MouseEvent);
+    FReply DragDropEnd(const FDragDropEvent& DragDropEvent);
 
     void SearchBarOnChanged(const FText& NewString);
 

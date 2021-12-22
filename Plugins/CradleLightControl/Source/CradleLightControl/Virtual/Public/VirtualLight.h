@@ -7,7 +7,7 @@
 #include "VirtualLight.generated.h"
 
 UCLASS(BlueprintType)
-class UVirtualLight : public UBaseLight
+class CRADLELIGHTCONTROL_API UVirtualLight : public UBaseLight
 {
     GENERATED_BODY()
 

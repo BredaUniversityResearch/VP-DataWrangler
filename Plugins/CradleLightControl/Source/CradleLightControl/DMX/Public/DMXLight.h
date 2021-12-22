@@ -12,7 +12,7 @@
 
 
 UCLASS(BlueprintType)
-class UDMXLight : public UBaseLight
+class CRADLELIGHTCONTROL_API UDMXLight : public UBaseLight
 {
 public:
     GENERATED_BODY()

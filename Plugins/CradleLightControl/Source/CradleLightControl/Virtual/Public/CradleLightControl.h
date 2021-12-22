@@ -4,14 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
-#include "LightControlTool.h"
+//#include "LightControlTool.h"
 
-#include "GelPaletteWidget.h"
+//#include "GelPaletteWidget.h"
 
 #include "IDetailCustomization.h"
 #include "Chaos/AABB.h"
 
-class FCradleLightControlModule : public IModuleInterface
+class UToolData;
+
+class CRADLELIGHTCONTROL_API FCradleLightControlModule : public IModuleInterface
 {
 public:
 
@@ -19,32 +21,14 @@ public:
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
 
+	static FCradleLightControlModule& Get();
 
-	static bool OpenFileDialog(FString Title, void*
-                        NativeWindowHandle, FString DefaultPath, uint32 Flags, FString FileTypeList, TArray<FString>& OutFilenames);
-	static bool SaveFileDialog(FString Title, void*
-                        NativeWindowHandle, FString DefaultPath, uint32 Flags, FString FileTypeList, TArray<FString>& OutFilenames);
-
-	void OpenGelPalette(FGelPaletteSelectionCallback SelectionCallback);
-	void CloseGelPalette();
-
-	void RegisterTabSpawner();
-	void RegisterDMXTabSpawner();
-
-
-
-	TSharedPtr<FUICommandList> CommandList;
-
-	TSharedPtr<SDockTab> LightTab;
-	TSharedPtr<SDockTab> DMXTab;
-
-	TSharedPtr<SLightControlTool> VirtualLightControl;
-	TSharedPtr<class SDMXControlTool> DMXControl;
-
-	TSharedPtr<SGelPaletteWidget> GelPalette;
-	TSharedPtr<SWindow> GelPaletteWindow;
+	UToolData* GetVirtualLightToolData();
+	UToolData* GetDMXLightToolData();
 
 
 private:
 
+	UToolData* VirtualLightToolData;
+	UToolData* DMXLightToolData;
 };

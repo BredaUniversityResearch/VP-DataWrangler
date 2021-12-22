@@ -3,7 +3,7 @@
 #include "BaseLight.h"
 #include "ToolData.h"
 
-#include "LightControlTool.h"
+//#include "LightControlTool.h"
 
 #include "Styling/SlateIconFinder.h"
 
@@ -46,280 +46,21 @@ void UItemHandle::OnCheck(ECheckBoxState NewState)
 
     GEditor->BeginTransaction(FText::FromString(Name + " State change"));
 
-    Item->SetEnabled(B);
+    if (Item)
+    {
+		Item->SetEnabled(B);	    
+    }
+    else
+    {
+	    for (auto& Child : Children)
+	    {
+            Child->OnCheck(NewState);
+	    }
+    }
 
     GEditor->EndTransaction();
 }
 
-FReply UItemHandle::TreeDragDetected(const FGeometry& Geometry, const FPointerEvent& MouseEvent)
-{
-    TSharedRef<FItemDragDropOperation> DragDropOp = MakeShared<FItemDragDropOperation>();
-    DragDropOp->DraggedItem = this;
-
-    FReply Reply = FReply::Handled();
-
-    Reply.BeginDragDrop(DragDropOp);
-
-    return Reply;
-}
-
-FReply UItemHandle::TreeDropDetected(const FDragDropEvent& DragDropEvent)
-{
-    auto DragDrop = StaticCastSharedPtr<FItemDragDropOperation>(DragDropEvent.GetOperation());
-    auto Target = DragDrop->DraggedItem;
-    auto Source = Target->Parent;
-    UItemHandle* Destination = nullptr;
-
-    if (!VerifyDragDrop(Target, this))
-    {
-        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, "Drag drop cancelled");
-        auto Reply = FReply::Handled();
-        Reply.EndDragDrop();
-
-        return FReply::Handled();
-    }
-
-    if (GEditor)
-    {
-        GEditor->BeginTransaction(FText::FromString("Light control tree drag and drop"));
-    }
-
-    // The source folder and the dragged item will always be affected, so always begin transacting them
-    if (Source)
-        Source->BeginTransaction(false);
-    else
-    {
-        ToolData->BeginTransaction();
-    }
-    Target->BeginTransaction(false);
-    BeginTransaction(false);
-    if (Type == Folder)
-    {
-
-        Destination = this;
-
-        Destination->BeginTransaction(false);
-
-
-        if (Source)
-            Source->Children.Remove(Target);
-        else
-            ToolData->RootItems.Remove(Target);
-        Destination->Children.Add(Target);
-        Target->Parent = Destination;
-
-        if (Source)
-            Source->GenerateTableRow();
-        Destination->GenerateTableRow();
-        ToolData->ItemExpansionChangedDelegate.ExecuteIfBound(Destination, true);
-    }
-    else
-    {
-
-        Destination = ToolData->AddItem(true);
-        Destination->Name = Name + " Group";
-        Destination->Parent = Parent;
-
-
-        if (Parent)
-            Parent->BeginTransaction(false);
-        else
-            ToolData->BeginTransaction();
-
-        Destination->BeginTransaction(false);
-
-        if (Parent)
-        {
-            Parent->Children.Remove(this);
-            Parent->Children.Add(Destination);
-        }
-        else
-        {
-            ToolData->RootItems.Remove(this);
-            ToolData->RootItems.Add(Destination);
-        }
-
-        if (Source)
-            Source->Children.Remove(Target);
-        else
-            ToolData->RootItems.Remove(Target);
-
-        Destination->Children.Add(Target);
-        Destination->Children.Add(this);
-
-        auto PrevParent = Parent;
-
-        Target->Parent = Destination;
-        Parent = Destination;
-
-        if (PrevParent)
-            PrevParent->GenerateTableRow();
-        if (Source)
-            Source->GenerateTableRow();
-
-        ToolData->ItemExpansionChangedDelegate.ExecuteIfBound(Destination, true);
-    }
-
-    ToolData->TreeStructureChangedDelegate.ExecuteIfBound();
-    //ToolData->TreeWidget->RequestTreeRefresh();
-
-    GEditor->EndTransaction();
-    Destination->UpdateFolderIcon();
-
-    auto Reply = FReply::Handled();
-    Reply.EndDragDrop();
-
-    return FReply::Handled();
-}
-
-void UItemHandle::GenerateTableRow()
-{
-    if (!TableRowBox)
-        return;
-    auto IconType = Type;
-    if (Type == Folder)
-    {
-        if (Children.Num())
-        {
-            IconType = Children[0]->Type; // This is 0 if there is a folder as the first child, which leads to out of bounds indexing
-            for (size_t i = 1; i < Children.Num(); i++)
-            {
-                if (IconType != Children[i]->Type)
-                {
-                    IconType = Mixed;
-                }
-            }
-        }
-        else
-            IconType = Mixed;
-    }
-    CheckBoxStyle = ToolData->MakeCheckboxStyleForType(IconType);
-
-    CheckBoxStyle.CheckedPressedImage = CheckBoxStyle.UndeterminedImage;
-    CheckBoxStyle.UncheckedPressedImage = CheckBoxStyle.UndeterminedImage;
-
-    SHorizontalBox::FSlot* CheckBoxSlot;
-
-
-    if (Type != Folder)
-    {
-        SHorizontalBox::FSlot* TextSlot;
-        TableRowBox->SetContent(
-            SNew(SHorizontalBox)
-            + SHorizontalBox::Slot()
-            .Expose(CheckBoxSlot) // On/Off toggle button 
-            [
-                SNew(SCheckBox)
-                .IsChecked_UObject(this, &UItemHandle::IsLightEnabled)
-            .OnCheckStateChanged_UObject(this, &UItemHandle::OnCheck)
-            .Style(&CheckBoxStyle)
-            ]
-        + SHorizontalBox::Slot() // Name slot
-            .Expose(TextSlot)
-            .VAlign(VAlign_Center)
-            [
-                SAssignNew(RowNameBox, SBox)
-            ]
-        + SHorizontalBox::Slot()
-            .Padding(10.0f, 0.0f, 0.0f, 3.0f)
-            .VAlign(VAlign_Bottom)
-            [
-                SNew(STextBlock)
-                .Text(FText::FromString(Note))
-            ]
-        );
-
-        TextSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
-    }
-    else
-    {
-        SHorizontalBox::FSlot* FolderImageSlot;
-        SHorizontalBox::FSlot* CloseButtonSlot;
-        TableRowBox->SetContent(
-            SNew(SHorizontalBox)
-            + SHorizontalBox::Slot() // Name slot
-            .VAlign(VAlign_Center)
-            [
-                SAssignNew(RowNameBox, SBox)
-            ]
-        + SHorizontalBox::Slot()
-            .Expose(CloseButtonSlot)
-            .HAlign(HAlign_Right)
-            [
-                SNew(SButton)
-                .Text(FText::FromString("Delete"))
-            .OnClicked_UObject(this, &UItemHandle::RemoveFromTree)
-            ]
-        + SHorizontalBox::Slot() // On/Off toggle button
-            .Expose(CheckBoxSlot)
-            .HAlign(HAlign_Right)
-            [
-                SAssignNew(StateCheckbox, SCheckBox)
-                .IsChecked_UObject(this, &UItemHandle::IsLightEnabled)
-            .OnCheckStateChanged_UObject(this, &UItemHandle::OnCheck)
-            .Style(&CheckBoxStyle)
-            .RenderTransform(FSlateRenderTransform(FScale2D(1.1f)))
-            ]
-        + SHorizontalBox::Slot()
-            .Expose(FolderImageSlot)
-            .HAlign(HAlign_Right)
-            .Padding(3.0f, 0.0f, 3.0f, 0.0f)
-            [
-                SNew(SButton)
-                .ButtonColorAndOpacity(FSlateColor(FColor::Transparent))
-            .OnClicked_Lambda([this]() {
-            bExpanded = !bExpanded;
-            ExpandInTree();
-            return FReply::Handled();
-                })
-            [
-                SNew(SImage) // Image overlay for the button
-                .Image_Lambda([this]() {return &(bExpanded ? ToolData->GetIcon(FolderOpened) : ToolData->GetIcon(FolderClosed)); })
-                    .RenderTransform(FSlateRenderTransform(FScale2D(1.1f)))
-            ]
-            ]
-        );
-        //TableRowBox->SetRenderTransform(FSlateRenderTransform(FScale2D(1.2f)));
-        UpdateFolderIcon();
-
-        FolderImageSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
-        CloseButtonSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
-    }
-    CheckBoxSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
-
-    auto Font = FSlateFontInfo(FCoreStyle::GetDefaultFont(), 10);
-    if (Type == Folder) // Slightly larger font for group items
-        Font.Size = 12;
-
-    if (bInRename)
-    {
-        RowNameBox->SetContent(
-            SNew(SEditableText)
-            .Text(FText::FromString(Name))
-            .Font(Font)
-            .OnTextChanged_Lambda([this](FText Input)
-                {
-                    Name = Input.ToString();
-                })
-            .OnTextCommitted_UObject(this, &UItemHandle::EndRename));
-
-    }
-    else
-    {
-        RowNameBox->SetContent(
-            SNew(STextBlock)
-            .Text(FText::FromString(Name))
-            .Font(Font)
-            .ShadowColorAndOpacity(FLinearColor::Blue)
-            .ShadowOffset(FIntPoint(-1, 1))
-            .OnDoubleClicked_UObject(this, &UItemHandle::StartRename));
-    }
-
-    if (bMatchesSearchString)
-        TableRowBox->SetVisibility(EVisibility::Visible);
-    else
-        TableRowBox->SetVisibility(EVisibility::Collapsed);
-}
 
 bool UItemHandle::VerifyDragDrop(UItemHandle* Dragged, UItemHandle* Destination)
 {
@@ -371,7 +112,7 @@ bool UItemHandle::HasAsIndirectChild(UItemHandle* ItemHandle)
 FReply UItemHandle::StartRename(const FGeometry&, const FPointerEvent&)
 {
     bInRename = true;
-    GenerateTableRow();
+    //GenerateTableRow();
     return FReply::Handled();
 }
 
@@ -385,7 +126,7 @@ void UItemHandle::EndRename(const FText& Text, ETextCommit::Type CommitType)
 
 
     bInRename = false;
-    GenerateTableRow();
+    //GenerateTableRow();
 }
 
 TSharedPtr<FJsonValue> UItemHandle::SaveToJson()
@@ -625,6 +366,6 @@ void UItemHandle::PostTransacted(const FTransactionObjectEvent& TransactionEvent
         if (Type == Folder)
             ToolData->TreeStructureChangedDelegate.ExecuteIfBound();
 
-        GenerateTableRow();
+        //GenerateTableRow();
     }
 }

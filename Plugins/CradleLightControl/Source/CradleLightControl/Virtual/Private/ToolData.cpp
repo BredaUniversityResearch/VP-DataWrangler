@@ -2,7 +2,6 @@
 
 #include "ItemHandle.h"
 
-#include "ClassIconFinder.h"
 #include "Engine/DirectionalLight.h"
 #include "Engine/PointLight.h"
 #include "Engine/SkyLight.h"
@@ -10,7 +9,7 @@
 
 #include "BaseLight.h"
 
-#include "LightTreeHierarchy.h"
+//#include "LightTreeHierarchy.h"
 
 #include "Interfaces/IPluginManager.h"
 
@@ -18,8 +17,6 @@ UToolData::UToolData()
 {
     SetFlags(GetFlags() | RF_Transactional);
 
-    GenerateIcons();
-    
 
 }
 
@@ -46,71 +43,6 @@ UBaseLight* UToolData::GetLightByName(FString Name)
     return nullptr;
 }
 
-
-void UToolData::GenerateIcons()
-{
-    FLinearColor OffTint(0.2f, 0.2f, 0.2f, 0.5f);
-    FLinearColor UndeterminedTint(0.8f, 0.8f, 0.0f, 0.5f);
-    Icons.Emplace(SkyLightOn, *FClassIconFinder::FindThumbnailForClass(ASkyLight::StaticClass()));
-    Icons.Emplace(SkyLightOff, Icons[SkyLightOn]);
-    Icons[SkyLightOff].TintColor = OffTint;
-    Icons.Emplace(SkyLightUndetermined, Icons[SkyLightOn]);
-    Icons[SkyLightUndetermined].TintColor = UndeterminedTint;
-
-    Icons.Emplace(DirectionalLightOn, *FClassIconFinder::FindThumbnailForClass(ADirectionalLight::StaticClass()));
-    Icons.Emplace(DirectionalLightOff, Icons[DirectionalLightOn]);
-    Icons[DirectionalLightOff].TintColor = OffTint;
-    Icons.Emplace(DirectionalLightUndetermined, Icons[DirectionalLightOn]);
-    Icons[DirectionalLightUndetermined].TintColor = UndeterminedTint;
-
-    Icons.Emplace(SpotLightOn, *FClassIconFinder::FindThumbnailForClass(ASpotLight::StaticClass()));
-    Icons.Emplace(SpotLightOff, Icons[SpotLightOn]);
-    Icons[SpotLightOff].TintColor = OffTint;
-    Icons.Emplace(SpotLightUndetermined, Icons[SpotLightOn]);
-    Icons[SpotLightUndetermined].TintColor = UndeterminedTint;
-
-    Icons.Emplace(PointLightOn, *FClassIconFinder::FindThumbnailForClass(APointLight::StaticClass()));
-    Icons.Emplace(PointLightOff, Icons[PointLightOn]);
-    Icons[PointLightOff].TintColor = OffTint;
-    Icons.Emplace(PointLightUndetermined, Icons[PointLightOn]);
-    Icons[PointLightUndetermined].TintColor = UndeterminedTint;
-
-    Icons.Emplace(GeneralLightOn, Icons[PointLightOn]);
-    Icons.Emplace(GeneralLightOff, Icons[PointLightOff]);
-    Icons.Emplace(GeneralLightUndetermined, Icons[PointLightUndetermined]);
-
-    Icons.Emplace(FolderClosed, *FEditorStyle::GetBrush("ContentBrowser.ListViewFolderIcon.Mask"));
-    Icons.Emplace(FolderOpened, *FEditorStyle::GetBrush("ContentBrowser.ListViewFolderIcon.Base"));
-
-    for (auto& Icon : Icons)
-    {
-        //Icon.Value.DrawAs = ESlateBrushDrawType::Box;
-        Icon.Value.SetImageSize(FVector2D(24.0f));
-    }
-}
-
-FCheckBoxStyle UToolData::MakeCheckboxStyleForType(uint8 IconType)
-{
-    FCheckBoxStyle CheckBoxStyle;
-    CheckBoxStyle.CheckedImage = Icons[StaticCast<EIconType>(IconType * 3 + 1)];
-    CheckBoxStyle.CheckedHoveredImage = Icons[StaticCast<EIconType>(IconType * 3 + 1)];
-    CheckBoxStyle.CheckedPressedImage = Icons[StaticCast<EIconType>(IconType * 3 + 1)];
-
-    CheckBoxStyle.UncheckedImage = Icons[StaticCast<EIconType>(IconType * 3 + 0)];
-    CheckBoxStyle.UncheckedHoveredImage = Icons[StaticCast<EIconType>(IconType * 3 + 0)];
-    CheckBoxStyle.UncheckedPressedImage = Icons[StaticCast<EIconType>(IconType * 3 + 0)];
-
-    CheckBoxStyle.UndeterminedImage = Icons[StaticCast<EIconType>(IconType * 3 + 2)];
-    CheckBoxStyle.UndeterminedHoveredImage = Icons[StaticCast<EIconType>(IconType * 3 + 2)];
-    CheckBoxStyle.UndeterminedPressedImage = Icons[StaticCast<EIconType>(IconType * 3 + 2)];
-
-    return CheckBoxStyle;
-}
-
-FSlateBrush& UToolData::GetIcon(EIconType Icon)
-{
-    return Icons[Icon];
-}
 
 void UToolData::PostTransacted(const FTransactionObjectEvent& TransactionEvent)
 {
@@ -165,6 +97,11 @@ UItemHandle* UToolData::GetSingleSelectedItem()
 const TArray<UItemHandle*>& UToolData::GetSelectedLights()
 {
     return LightsUnderSelection;
+}
+
+TArray<UItemHandle*> UToolData::GetSelectedItems()
+{
+    return SelectedItems;
 }
 
 void UToolData::BeginTransaction()
@@ -345,47 +282,14 @@ void UToolData::LoadStateFromJSON(FString Path, bool bUpdatePresetPath)
         {
             TreeItem->ExpandInTree();
         }
-
-        if (LoadingResult == UItemHandle::ELoadingResult::Success)
-        {
-            UE_LOG(LogTemp, Display, TEXT("Light control state loaded successfully"));
-        }
-        else
-        {
-            FString ErrorMessage = "";
-
-            switch (LoadingResult)
-            {
-            case UItemHandle::ELoadingResult::LightNotFound:
-                ErrorMessage = "At least one light could not be found. Please ensure all lights exist and haven't been renamed since the w.";
-                break;
-            case UItemHandle::ELoadingResult::EngineError:
-                ErrorMessage = "There was an error with the engine. Please try loading again. If the error persists, restart the engine.";
-                break;
-            case UItemHandle::ELoadingResult::InvalidType:
-                ErrorMessage = "The item type that was tried to be loaded was not valid. Please ensure that the item type in the .json file is between 0 and 4.";
-                break;
-            case UItemHandle::ELoadingResult::MultipleErrors:
-                ErrorMessage = "Multiple errors occurred. See output log for more details.";
-                break;
-            }
-
-            UE_LOG(LogTemp, Display, TEXT("Light control state could not load with following message: %s"), *ErrorMessage);
-
-            FNotificationInfo NotificationInfo(FText::FromString(FString::Printf(TEXT("Light control tool state could not be loaded. Please check the output log."))));
-
-            NotificationInfo.ExpireDuration = 300.0f;
-            NotificationInfo.bUseSuccessFailIcons = false;
-
-            FSlateNotificationManager::Get().AddNotification(NotificationInfo);
-        }
+        OnToolDataLoaded.ExecuteIfBound(LoadingResult);
+     
     }
     else
     {
         UE_LOG(LogTemp, Error, TEXT("Could not open file %s"), *Path);
         ToolPresetPath = "";
     }
-
 
     bCurrentlyLoading = false;
 }

@@ -27,24 +27,24 @@
 #include "ItemHandle.h"
 #include "BaseLight.h"
 
-#include "CradleLightControl.h"
+#include "CradleLightControlEditor.h"
 #include "DesktopPlatform/Public/IDesktopPlatform.h"
 
 #include "GelPaletteWidget.h"
 
 #include "VirtualLight.h"
 
-void SLightControlTool::Construct(const FArguments& Args)
+
+
+void SLightControlTool::Construct(const FArguments& Args, UToolData* InToolData)
 {
     
 
     LoadResources();
 
     ToolTab = Args._ToolTab;
-
-    ToolData = NewObject<UToolData>();
+    ToolData = InToolData;
     ToolData->DataName = "VirtualLight";
-    ToolData->ItemClass = UVirtualLight::StaticClass();
     ToolData->OpenFileDialog = FLightJsonFileDialogDelegate::CreateRaw(this, &SLightControlTool::OpenFileDialog);
     ToolData->SaveFileDialog = FLightJsonFileDialogDelegate::CreateRaw(this, &SLightControlTool::SaveFileDialog);
     ToolData->MasterLightTransactedDelegate = FOnMasterLightTransactedDelegate::CreateLambda([this](UItemHandle* ItemHandle)
@@ -124,6 +124,7 @@ void SLightControlTool::Construct(const FArguments& Args)
 
     FWorldDelegates::OnWorldCleanup.AddLambda([this](UWorld*, bool, bool)
         {
+            ToolData->SaveMetaData();
             if (ActorSpawnedListenerHandle.IsValid())
             {
                 GWorld->RemoveOnActorSpawnedHandler(ActorSpawnedListenerHandle);
@@ -209,7 +210,7 @@ FString SLightControlTool::OpenFileDialog(FString Title, FString StartingPath)
 {
 
     TArray<FString> Res;
-    if (FCradleLightControlModule::OpenFileDialog(Title, ToolTab->GetParentWindow()->GetNativeWindow()->GetOSWindowHandle(),
+    if (FCradleLightControlEditorModule::OpenFileDialog(Title, ToolTab->GetParentWindow()->GetNativeWindow()->GetOSWindowHandle(),
         StartingPath, EFileDialogFlags::None, "JSON Data Table|*.json", Res))
     {
         return Res[0];
@@ -220,7 +221,7 @@ FString SLightControlTool::OpenFileDialog(FString Title, FString StartingPath)
 FString SLightControlTool::SaveFileDialog(FString Title, FString StartingPath)
 {
     TArray<FString> Res;
-    if (FCradleLightControlModule::SaveFileDialog(Title, ToolTab->GetParentWindow()->GetNativeWindow()->GetOSWindowHandle(),
+    if (FCradleLightControlEditorModule::SaveFileDialog(Title, ToolTab->GetParentWindow()->GetNativeWindow()->GetOSWindowHandle(),
         StartingPath, EFileDialogFlags::None, "JSON Data Table|*.json", Res))
     {
         return Res[0];
@@ -243,7 +244,7 @@ void SLightControlTool::UpdateLightList()
         UpdateItemData(NewItem->Handle);
 
         ToolData->RootItems.Add(NewItem->Handle);
-
+        FCradleLightControlEditorModule::Get().GenerateItemHandleWidget(NewItem->Handle);
     }
 
     // Fetch Sky Lights
@@ -257,6 +258,7 @@ void SLightControlTool::UpdateLightList()
         UpdateItemData(NewItem->Handle);
 
         ToolData->RootItems.Add(NewItem->Handle);
+        FCradleLightControlEditorModule::Get().GenerateItemHandleWidget(NewItem->Handle);
     }
 
     // Fetch Directional Lights
@@ -271,6 +273,7 @@ void SLightControlTool::UpdateLightList()
         UpdateItemData(NewItem->Handle);
 
         ToolData->RootItems.Add(NewItem->Handle);
+        FCradleLightControlEditorModule::Get().GenerateItemHandleWidget(NewItem->Handle);
     }
 
     // Fetch Spot Lights
@@ -285,6 +288,7 @@ void SLightControlTool::UpdateLightList()
         UpdateItemData(NewItem->Handle);
 
         ToolData->RootItems.Add(NewItem->Handle);
+        FCradleLightControlEditorModule::Get().GenerateItemHandleWidget(NewItem->Handle);
     }
 
     TreeWidget->Tree->RequestTreeRefresh();
@@ -557,6 +561,7 @@ void SLightControlTool::ClearSelection()
         ToolData->SelectionMasterLight = nullptr;
         ToolData->LightsUnderSelection.Empty();
     }
+    ItemHeader->Update();
     //UpdateLightHeader();
     UpdateExtraLightDetailBox();
     LightSpecificWidget->UpdateToolState();

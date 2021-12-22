@@ -1,7 +1,7 @@
 #include "LightPropertyEditor.h"
 #include "LightControlTool.h"
 
-#include "CradleLightControl.h"
+#include "CradleLightControlEditor.h"
 
 #include "ToolData.h"
 #include "ItemHandle.h"
@@ -365,7 +365,7 @@ void SLightPropertyEditor::PreDestroy()
 
 FReply SLightPropertyEditor::OnGelPaletteButtonClicked()
 {
-    auto& ThisModule = FModuleManager::LoadModuleChecked<FCradleLightControlModule>("CradleLightControl");
+    auto& ThisModule = FModuleManager::LoadModuleChecked<FCradleLightControlEditorModule>("CradleLightControl");
 
     ThisModule.OpenGelPalette(FGelPaletteSelectionCallback::CreateRaw(this, &SLightPropertyEditor::OnGelSelectionChanged));
 

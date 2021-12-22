@@ -15,7 +15,7 @@
 #include "BaseLight.h"
 #include "DMXLight.h"
 
-#include "CradleLightControl.h"
+#include "CradleLightControlEditor.h"
 #include "PropertyCustomizationHelpers.h"
 #include "DesktopPlatform/Public/IDesktopPlatform.h"
 
@@ -142,7 +142,7 @@ FString SDMXControlTool::OpenFileDialog(FString Title, FString StartingPath)
 {
 
     TArray<FString> Res;
-    if (FCradleLightControlModule::OpenFileDialog(Title, ToolTab->GetParentWindow()->GetNativeWindow()->GetOSWindowHandle(),
+    if (FCradleLightControlEditorModule::OpenFileDialog(Title, ToolTab->GetParentWindow()->GetNativeWindow()->GetOSWindowHandle(),
         StartingPath, EFileDialogFlags::None, "JSON Data Table|*.json", Res))
     {
         return Res[0];
@@ -153,7 +153,7 @@ FString SDMXControlTool::OpenFileDialog(FString Title, FString StartingPath)
 FString SDMXControlTool::SaveFileDialog(FString Title, FString StartingPath)
 {
     TArray<FString> Res;
-    if (FCradleLightControlModule::SaveFileDialog(Title, ToolTab->GetParentWindow()->GetNativeWindow()->GetOSWindowHandle(),
+    if (FCradleLightControlEditorModule::SaveFileDialog(Title, ToolTab->GetParentWindow()->GetNativeWindow()->GetOSWindowHandle(),
         StartingPath, EFileDialogFlags::None, "JSON Data Table|*.json", Res))
     {
         return Res[0];
@@ -221,7 +221,7 @@ FReply SDMXControlTool::AddLightButtonCallback()
         ToolData->GetSelectedGroup()->Children.Add(NewItemHandle);
     else
         ToolData->RootItems.Add(NewItemHandle);
-
+    FCradleLightControlEditorModule::Get().GenerateItemHandleWidget(NewItemHandle);
     ToolData->TreeStructureChangedDelegate.ExecuteIfBound();
 
     return FReply::Handled();
@@ -561,3 +561,4 @@ SHorizontalBox::FSlot& SDMXControlTool::LightSpecificPropertyEditor()
     return Slot;
 }
 
+#undef LOCTEXT_NAMESPACE
