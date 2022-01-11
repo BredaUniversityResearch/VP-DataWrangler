@@ -24,10 +24,9 @@ public:
 	void QueryCameraManufacturer();
 	void QueryCameraModel();
 
-	void SendCommand(const FBMCCCommandMeta& Meta, const FBMCCCommandPayloadBase& Payload) const;
+	void SendOutgoingCameraControl(const winrt::Windows::Storage::Streams::IBuffer& SerializedPackage) const;
 
 	void OnQueryCameraManufacturerCompleted(const GattReadResult& result);
-	void OnWriteResult(const GattCommunicationStatus& result) const;
 	void OnReceivedIncomingCameraControl(const winrt::Windows::Storage::Streams::IBuffer& InputData) const;
 
 	void SetupBlackMagicServiceCharacteristics();

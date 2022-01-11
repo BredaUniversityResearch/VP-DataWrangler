@@ -1,11 +1,11 @@
 #include "BMCCDispatcher.h"
 
-void UBMCCDispatcher::OnBatteryStatus(const FBMCCBattery_Info& BatteryInfo)
+void UBMCCDispatcher::OnBatteryStatus(BMCCDeviceHandle Source, const FBMCCBattery_Info& BatteryInfo)
 {
 	BatteryStatusReceived.Broadcast(BatteryInfo);
 }
 
-void UBMCCDispatcher::OnMediaTransportMode(const FBMCCMedia_TransportMode& TransportMode)
+void UBMCCDispatcher::OnMediaTransportMode(BMCCDeviceHandle Source, const FBMCCMedia_TransportMode& TransportMode)
 {
 	MediaTransportModeReceived.Broadcast(TransportMode);
 }

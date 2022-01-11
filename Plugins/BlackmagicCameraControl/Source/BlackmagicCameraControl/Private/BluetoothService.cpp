@@ -5,12 +5,49 @@
 
 #include "BlackMagicBluetoothGUID.h"
 #include "BluetoothDeviceConnection.h"
+#include "BMCCCommandHeader.h"
 #include "BMCCCommandMeta.h"
+#include "BMCCPacketHeader.h"
 
 using namespace winrt::Windows::Foundation;
 using namespace winrt::Windows::Devices::Bluetooth;
 using namespace GenericAttributeProfile;
 using namespace winrt::Windows::Devices::Enumeration;
+using namespace winrt::Windows::Storage::Streams;
+
+namespace
+{
+	void CreateCommandPackage(const FBMCCCommandMeta& Meta, const FBMCCCommandPayloadBase& Payload, Buffer& TargetBuffer)
+	{
+		FBMCCPacketHeader header;
+		int payloadSize = static_cast<int>((sizeof(FBMCCPacketHeader) + sizeof(BMCCCommandHeader) + Meta.PayloadSize));
+		int padBytes = ((payloadSize + 3) & ~3) - payloadSize;
+		assert(payloadSize + padBytes < 0xFF);
+		header.PacketSize = static_cast<uint8_t>(payloadSize - sizeof(FBMCCPacketHeader));
+
+		BMCCCommandHeader commandHeader(Meta.CommandIdentifier);
+
+		uint8_t* data = TargetBuffer.data();
+		std::memcpy(data, &header, sizeof(FBMCCPacketHeader));
+		std::memcpy(data + sizeof(FBMCCPacketHeader), &commandHeader, sizeof(commandHeader));
+		std::memcpy(data + sizeof(FBMCCPacketHeader) + sizeof(BMCCCommandHeader), &Payload, Meta.PayloadSize);
+
+		TargetBuffer.Length(payloadSize + padBytes);
+	}
+}
+
+struct FDataQueueEntry
+{
+	FDataQueueEntry() = default;
+	FDataQueueEntry(BMCCDeviceHandle TargetDevice, Buffer&& DataToSend)
+		: Target(TargetDevice)
+		, DataToSend(MoveTemp(DataToSend))
+	{
+	}
+
+	BMCCDeviceHandle Target{ 0 };
+	Buffer DataToSend{ nullptr };
+};
 
 class FBluetoothWorkerRunnable : public FRunnable
 {
@@ -35,6 +72,7 @@ public:
 
 	void TryConnectToDevice(const winrt::hstring& DeviceId);
 	FBluetoothDeviceConnection* FindDeviceByHandle(BMCCDeviceHandle Target);
+	void EnqueueSendPackage(BMCCDeviceHandle Target, Buffer&& DataToSend);
 
 	static void BackgroundService(FBluetoothWorker& Target);
 
@@ -52,6 +90,8 @@ public:
 
 	FBluetoothWorkerRunnable UpdateThreadRunnable;
 	FRunnableThread* UpdateThread;
+
+	TQueue<FDataQueueEntry> ReceiveQueue;
 };
 
 FBluetoothWorkerRunnable::FBluetoothWorkerRunnable(FBluetoothService::FBluetoothWorker* Worker)
@@ -66,11 +106,10 @@ uint32 FBluetoothWorkerRunnable::Run()
 		if (OwningWorker->DeviceIdConnectRetryQueue.Num() > 0)
 		{
 			FScopeLock lock(&OwningWorker->ReconnectQueueLock);
-			winrt::hstring result = std::move(OwningWorker->DeviceIdConnectRetryQueue[0]);
+			winrt::hstring result = MoveTemp(OwningWorker->DeviceIdConnectRetryQueue[0]);
 			OwningWorker->DeviceIdConnectRetryQueue.RemoveAt(0);
 			OwningWorker->TryConnectToDevice(result);
 		}
-		FPlatformProcess::Sleep(0.5f);
 	}
 	return 0;
 }
@@ -185,6 +224,21 @@ FBluetoothDeviceConnection* FBluetoothService::FBluetoothWorker::FindDeviceByHan
 	return nullptr;
 }
 
+void FBluetoothService::FBluetoothWorker::EnqueueSendPackage(BMCCDeviceHandle Target, Buffer&& DataToSend)
+{
+	if (Target == BMCCDeviceHandle_Broadcast)
+	{
+		for (TUniquePtr<FBluetoothDeviceConnection>& connection : ActiveConnections)
+		{
+			connection->SendOutgoingCameraControl(DataToSend);
+		}
+	}
+	else
+	{
+		__debugbreak(); // Not yet implemented
+	}
+}
+
 FBluetoothService::FBluetoothService(IBMCCDataReceivedHandler* DataReceivedHandler)
 {
 	Worker = MakeUnique<FBluetoothWorker>(DataReceivedHandler);
@@ -226,16 +280,7 @@ void FBluetoothService::SendToCamera(BMCCDeviceHandle Target, const FBMCCCommand
 		UE_LOG(LogBlackmagicCameraControl, Error, TEXT("Failed to find meta for command identifier %i.%i. Message was not sent"), CommandId.Category, CommandId.Parameter);
 		return;
 	}
-
-	if (Target == BMCCDeviceHandle_Broadcast)
-	{
-		for (const TUniquePtr<FBluetoothDeviceConnection>& device : Worker->ActiveConnections)
-		{ 
-			device->SendCommand(*meta, Command);
-		}
-	}
-	else
-	{
-		__debugbreak();
-	}
+	Buffer serializedDataBuffer(128);
+	CreateCommandPackage(*meta, Command, serializedDataBuffer);
+	Worker->EnqueueSendPackage(Target, MoveTemp(serializedDataBuffer));
 }

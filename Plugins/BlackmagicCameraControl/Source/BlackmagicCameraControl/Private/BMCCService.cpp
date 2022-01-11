@@ -22,6 +22,7 @@ FBMCCService::FBMCCService()
 {
 	DefaultDispatcher->AddToRoot();
 	m_Data->m_BluetoothService = MakeUnique<FBluetoothService>(this);
+	m_Data->CallbackHandlers.Emplace(DefaultDispatcher);
 }
 
 FBMCCService::~FBMCCService()
@@ -52,7 +53,8 @@ void FBMCCService::Tick(float DeltaTime)
 
 void FBMCCService::OnDataReceived(BMCCDeviceHandle Source, const BMCCCommandHeader& Header, const FBMCCCommandMeta& CommandMetaData, const TArrayView<uint8_t>& SerializedData)
 {
-	CommandMetaData.DeserializeAndDispatch(m_Data->CallbackHandlers, SerializedData);
+	__debugbreak(); //Pull this onto the main thread before dispatching.
+	CommandMetaData.DeserializeAndDispatch(m_Data->CallbackHandlers, Source, SerializedData);
 }
 
 void FBMCCService::BroadcastCommand(const FBMCCCommandIdentifier& Identifier,

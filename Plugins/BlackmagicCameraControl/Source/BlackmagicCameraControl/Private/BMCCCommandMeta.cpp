@@ -8,8 +8,8 @@
 
 namespace
 {
-	template<typename TCommandType, void(IBMCCCallbackHandler::* TDispatchFunction)(const TCommandType&)>
-	void DispatchWrapperImpl(const TArray<IBMCCCallbackHandler*>& Listeners, const TArrayView<uint8>& SerializedDataView)
+	template<typename TCommandType, void(IBMCCCallbackHandler::* TDispatchFunction)(BMCCDeviceHandle, const TCommandType&)>
+	void DispatchWrapperImpl(const TArray<IBMCCCallbackHandler*>& Listeners, BMCCDeviceHandle Source, const TArrayView<uint8>& SerializedDataView)
 	{
 		ensureMsgf(SerializedDataView.Num() == sizeof(TCommandType), TEXT("Could not deserialize message. Data size mismatch. Got %i expected %i"), SerializedDataView.Num(), sizeof(TCommandType));
 		if (TDispatchFunction != nullptr)
@@ -17,7 +17,7 @@ namespace
 			const TCommandType* data = reinterpret_cast<const TCommandType*>(SerializedDataView.GetData());
 			for (IBMCCCallbackHandler* handler : Listeners)
 			{
-				(handler->*TDispatchFunction)(*data);
+				(handler->*TDispatchFunction)(Source, *data);
 			}
 		}
 		else 
@@ -43,7 +43,7 @@ const FBMCCCommandMeta FBMCCCommandMeta::m_AllMeta[] = {
 	Create<FBMCCMedia_TransportMode, &IBMCCCallbackHandler::OnMediaTransportMode>()
 };
 
-template<typename TCommandType, void(IBMCCCallbackHandler::* TDispatchFunction)(const TCommandType&)>
+template<typename TCommandType, void(IBMCCCallbackHandler::* TDispatchFunction)(BMCCDeviceHandle, const TCommandType&)>
 FBMCCCommandMeta FBMCCCommandMeta::Create()
 {
 	return FBMCCCommandMeta(TCommandType::Identifier, sizeof(TCommandType), &DispatchWrapperImpl<TCommandType, TDispatchFunction>);
@@ -61,7 +61,7 @@ const FBMCCCommandMeta* FBMCCCommandMeta::FindMetaForIdentifier(const FBMCCComma
 	return nullptr;
 }
 
-void FBMCCCommandMeta::DeserializeAndDispatch(const TArray<IBMCCCallbackHandler*>& Array, const TArrayView<uint8>& ArrayView) const
+void FBMCCCommandMeta::DeserializeAndDispatch(const TArray<IBMCCCallbackHandler*>& Array, BMCCDeviceHandle Source, const TArrayView<uint8>& ArrayView) const
 {
-	DispatchWrapper(Array, ArrayView);
+	DispatchWrapper(Array, Source, ArrayView);
 }

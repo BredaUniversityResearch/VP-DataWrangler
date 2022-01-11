@@ -4,62 +4,10 @@
 #include "BlackMagicBluetoothGUID.h"
 #include "BMCCCommandHeader.h"
 #include "BMCCCommandMeta.h"
+#include "BMCCPacketHeader.h"
 
-using namespace winrt::Windows::Storage::Streams;
 using namespace winrt::Windows::Foundation;
-
-namespace
-{
-	enum class ECommandId : uint8_t
-	{
-		ChangeConfig,
-	};
-
-	struct PacketHeader
-	{
-		uint8_t TargetCamera{ 255 };//255 is broadcast
-		uint8_t PacketSize{ 0 };
-		ECommandId CommandId{ ECommandId::ChangeConfig };
-		uint8_t Reserved{ 0 };
-	};
-	static_assert(sizeof(PacketHeader) == 4, "Packet header is expected to be 4 bytes");
-
-	void CreateCommandPackage(const FBMCCCommandMeta& Meta, const FBMCCCommandPayloadBase& Payload, Buffer& TargetBuffer)
-	{
-		PacketHeader header;
-		int payloadSize = static_cast<int>((sizeof(PacketHeader) + sizeof(BMCCCommandHeader) + Meta.PayloadSize));
-		int padBytes = ((payloadSize + 3) & ~3) - payloadSize;
-		assert(payloadSize + padBytes < 0xFF);
-		header.PacketSize = static_cast<uint8_t>(payloadSize - sizeof(PacketHeader));
-
-		BMCCCommandHeader commandHeader(Meta.CommandIdentifier);
-
-		uint8_t* data = TargetBuffer.data();
-		std::memcpy(data, &header, sizeof(PacketHeader));
-		std::memcpy(data + sizeof(PacketHeader), &commandHeader, sizeof(commandHeader));
-		std::memcpy(data + sizeof(PacketHeader) + sizeof(BMCCCommandHeader), &Payload, Meta.PayloadSize);
-
-		TargetBuffer.Length(payloadSize + padBytes);
-	}
-
-	/*Buffer CreateCommandPackage(std::span<uint8_t> Payload)
-	{
-		PacketHeader header;
-		int payloadSize = static_cast<int>((sizeof(BMCCCommandHeader) + Payload.size_bytes()));
-		int padBytes = ((payloadSize + 3) & ~3) - payloadSize;
-		assert(payloadSize + padBytes < 0xFF);
-		header.PacketSize = static_cast<uint8_t>(payloadSize);
-
-		Buffer result(payloadSize + padBytes);
-		uint8_t* data = result.data();
-		std::memcpy(data, &header, sizeof(PacketHeader));
-		std::memcpy(data + sizeof(BMCCCommandHeader), Payload.data(), Payload.size_bytes());
-
-		result.Length(payloadSize + padBytes);
-
-		return result;
-	}*/
-};
+using namespace winrt::Windows::Storage::Streams;
 
 FBluetoothDeviceConnection::FBluetoothDeviceConnection(BMCCDeviceHandle DeviceHandle, IBMCCDataReceivedHandler* DataReceivedHandler, const BluetoothLEDevice& Device, const GattDeviceService& DeviceInformationService, const GattDeviceService& BlackMagicService)
 	: m_DeviceHandle(DeviceHandle)
@@ -109,19 +57,29 @@ void FBluetoothDeviceConnection::QueryCameraModel()
 	result.Completed(AsyncWrapper(this, &FBluetoothDeviceConnection::OnQueryCameraManufacturerCompleted));
 }
 
-void FBluetoothDeviceConnection::SendCommand(const FBMCCCommandMeta& Meta, const FBMCCCommandPayloadBase& Payload) const
+void FBluetoothDeviceConnection::SendOutgoingCameraControl(const IBuffer& SerializedPackage) const
 {
-	Buffer buffer(128);
-	CreateCommandPackage(Meta, Payload, buffer);
-
 	if (m_Device != nullptr)
 	{
-		IAsyncOperation<GattCommunicationStatus> result = m_BlackMagicService_OutgoingCameraControl.WriteValueAsync(buffer, GattWriteOption::WriteWithResponse);
-		result.Completed(AsyncWrapper(this, &FBluetoothDeviceConnection::OnWriteResult));
+		if (m_Device.ConnectionStatus() != BluetoothConnectionStatus::Connected)
+			return;
+
+		int packetLength = SerializedPackage.Length();
+		IAsyncOperation<GattCommunicationStatus> asyncOp = m_BlackMagicService_OutgoingCameraControl.WriteValueAsync(SerializedPackage, GattWriteOption::WriteWithResponse);
+		asyncOp.Completed([packetLength](IAsyncOperation<GattCommunicationStatus> result, AsyncStatus status) {
+			if (result.GetResults() == GattCommunicationStatus::Success)
+			{
+				UE_LOG(LogBlackmagicCameraControl, Verbose, TEXT("Successfully wrote data %i bytes to OutgoingCameraControl"), packetLength);
+			}
+			else
+			{
+				UE_LOG(LogBlackmagicCameraControl, Warning, TEXT("Failed to writ data to OutgoingCameraControl %s"), winrt::to_hstring(static_cast<int>(result.GetResults())).c_str());
+			}
+		});
 	}
 	else
 	{
-		OnReceivedIncomingCameraControl(buffer);
+		OnReceivedIncomingCameraControl(SerializedPackage);
 	}
 }
 
@@ -130,16 +88,11 @@ void FBluetoothDeviceConnection::OnQueryCameraManufacturerCompleted(const GattRe
 	UE_LOG(LogBlackmagicCameraControl, Warning, TEXT("%s"), ANSI_TO_TCHAR(reinterpret_cast<const char*>(result.Value().data())));
 }
 
-void FBluetoothDeviceConnection::OnWriteResult(const GattCommunicationStatus& result) const
-{
-	UE_LOG(LogBlackmagicCameraControl, Warning, TEXT("Write Result %s"), winrt::to_hstring(static_cast<int>(result)).c_str());
-}
-
 void FBluetoothDeviceConnection::OnReceivedIncomingCameraControl(const IBuffer& InputData) const
 {
 	int bytesProcessed = 0;
-	const PacketHeader* packet = reinterpret_cast<const PacketHeader*>(InputData.data());
-	bytesProcessed += sizeof(PacketHeader);
+	const FBMCCPacketHeader* packet = reinterpret_cast<const FBMCCPacketHeader*>(InputData.data());
+	bytesProcessed += sizeof(FBMCCPacketHeader);
 	while (InputData.Length() - bytesProcessed >= packet->PacketSize)
 	{
 		const BMCCCommandHeader* command = reinterpret_cast<const BMCCCommandHeader*>(InputData.data() + bytesProcessed);
@@ -149,7 +102,7 @@ void FBluetoothDeviceConnection::OnReceivedIncomingCameraControl(const IBuffer& 
 		{
 			if (m_DataReceivedHandler != nullptr)
 			{
-				ensureMsgf(bytesProcessed - sizeof(PacketHeader) + meta->PayloadSize <= packet->PacketSize, TEXT("Metadata mentions payload that is bigger than the actual packet size..."));
+				ensureMsgf(bytesProcessed - sizeof(FBMCCPacketHeader) + meta->PayloadSize <= packet->PacketSize, TEXT("Metadata mentions payload that is bigger than the actual packet size..."));
 				m_DataReceivedHandler->OnDataReceived(m_DeviceHandle, *command, *meta, TArrayView<uint8_t>(InputData.data() + bytesProcessed, meta->PayloadSize));
 			}
 			bytesProcessed += meta->PayloadSize;

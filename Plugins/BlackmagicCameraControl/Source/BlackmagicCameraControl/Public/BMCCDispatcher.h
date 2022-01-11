@@ -16,8 +16,8 @@ class BLACKMAGICCAMERACONTROL_API UBMCCDispatcher
 {
 	GENERATED_BODY()
 public:
-	virtual void OnBatteryStatus(const FBMCCBattery_Info& BatteryInfo) override;
-	virtual void OnMediaTransportMode(const FBMCCMedia_TransportMode& TransportMode) override;
+	virtual void OnBatteryStatus(BMCCDeviceHandle Source, const FBMCCBattery_Info& BatteryInfo) override;
+	virtual void OnMediaTransportMode(BMCCDeviceHandle Source, const FBMCCMedia_TransportMode& TransportMode) override;
 
 	UPROPERTY(BlueprintAssignable)
 	FOnBatteryStatusReceived BatteryStatusReceived;
