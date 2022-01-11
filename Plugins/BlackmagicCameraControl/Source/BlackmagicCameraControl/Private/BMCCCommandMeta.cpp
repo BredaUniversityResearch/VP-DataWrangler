@@ -5,20 +5,18 @@
 #include "BMCCMedia_TransportMode.h"
 
 #include "BlackmagicCameraControl.h"
+#include "BMCCVideo.h"
 
 namespace
 {
 	template<typename TCommandType, void(IBMCCCallbackHandler::* TDispatchFunction)(BMCCDeviceHandle, const TCommandType&)>
-	void DispatchWrapperImpl(const TArray<IBMCCCallbackHandler*>& Listeners, BMCCDeviceHandle Source, const TArrayView<uint8>& SerializedDataView)
+	void DispatchWrapperImpl(IBMCCCallbackHandler* DispatchTarget, BMCCDeviceHandle Source, const TArrayView<uint8>& SerializedDataView)
 	{
-		ensureMsgf(SerializedDataView.Num() == sizeof(TCommandType), TEXT("Could not deserialize message. Data size mismatch. Got %i expected %i"), SerializedDataView.Num(), sizeof(TCommandType));
+		ensureMsgf(SerializedDataView.Num() == sizeof(TCommandType), TEXT("Could not deserialize message. Data size mismatch. Got %i expected %llu"), SerializedDataView.Num(), sizeof(TCommandType));
 		if (TDispatchFunction != nullptr)
 		{
 			const TCommandType* data = reinterpret_cast<const TCommandType*>(SerializedDataView.GetData());
-			for (IBMCCCallbackHandler* handler : Listeners)
-			{
-				(handler->*TDispatchFunction)(Source, *data);
-			}
+			(DispatchTarget->*TDispatchFunction)(Source, *data);
 		}
 		else 
 		{
@@ -38,6 +36,10 @@ const FBMCCCommandMeta FBMCCCommandMeta::m_AllMeta[] = {
 	Create<FBMCCLens_SetAbsoluteZoomMm, &IBMCCCallbackHandler::OnLensAbsoluteZoomMm>(),
 	Create<FBMCCLens_SetAbsoluteZoomNormalized, &IBMCCCallbackHandler::OnLensAbsoluteZoomNormalized>(),
 	Create<FBMCCLens_SetContinuousZoom, &IBMCCCallbackHandler::OnLensContinuousZoom>(),
+
+	Create<FBMCCVideo_VideoMode, &IBMCCCallbackHandler::OnVideoVideoMode>(),
+	Create<FBMCCVideo_Gain, &IBMCCCallbackHandler::OnVideoGain>(),
+	Create<FBMCCVideo_RecordingFormat, &IBMCCCallbackHandler::OnVideoRecordingFormat>(),
 
 	Create<FBMCCBattery_Info, &IBMCCCallbackHandler::OnBatteryStatus>(),
 	Create<FBMCCMedia_TransportMode, &IBMCCCallbackHandler::OnMediaTransportMode>()
@@ -61,7 +63,7 @@ const FBMCCCommandMeta* FBMCCCommandMeta::FindMetaForIdentifier(const FBMCCComma
 	return nullptr;
 }
 
-void FBMCCCommandMeta::DeserializeAndDispatch(const TArray<IBMCCCallbackHandler*>& Array, BMCCDeviceHandle Source, const TArrayView<uint8>& ArrayView) const
+void FBMCCCommandMeta::DeserializeAndDispatch(IBMCCCallbackHandler* DispatchTarget, BMCCDeviceHandle Source, const TArrayView<uint8>& ArrayView) const
 {
-	DispatchWrapper(Array, Source, ArrayView);
+	DispatchWrapper(DispatchTarget, Source, ArrayView);
 }

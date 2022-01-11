@@ -8,7 +8,7 @@ class FBMCCCommandMeta
 	template<typename TCommandType>
 	using DispatchFn = void(IBMCCCallbackHandler::*)(BMCCDeviceHandle, const TCommandType&);
 
-	using DispatchWrapperFn = void(*)(const TArray<IBMCCCallbackHandler*>& Array, BMCCDeviceHandle Source, const TArrayView<uint8>& ArrayView);
+	using DispatchWrapperFn = void(*)(IBMCCCallbackHandler* DispatchTarget, BMCCDeviceHandle Source, const TArrayView<uint8>& ArrayView);
 
 public:
 	const int PayloadSize;
@@ -17,7 +17,7 @@ public:
 
 	static const FBMCCCommandMeta* FindMetaForIdentifier(const FBMCCCommandIdentifier& Identifier);
 
-	void DeserializeAndDispatch(const TArray<IBMCCCallbackHandler*>& Array, BMCCDeviceHandle Source, const TArrayView<uint8>& ArrayView) const;
+	void DeserializeAndDispatch(IBMCCCallbackHandler* DispatchTarget, BMCCDeviceHandle Source, const TArrayView<uint8>& ArrayView) const;
 
 private:
 	static const FBMCCCommandMeta m_AllMeta[];

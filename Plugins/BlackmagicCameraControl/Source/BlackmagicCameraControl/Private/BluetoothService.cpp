@@ -128,7 +128,7 @@ FBluetoothService::FBluetoothWorker::FBluetoothWorker(IBMCCDataReceivedHandler* 
 
 	UpdateThread = FRunnableThread::Create(&UpdateThreadRunnable, TEXT("FBluetoothWorker::BackgroundService"));
 
-	ActiveConnections.Emplace(MakeUnique<FBluetoothDeviceConnection>(++m_LastUsedHandle, TargetDataReceivedHandler, FBluetoothDeviceConnection::ELoopbackDevice::Loopback));
+	//ActiveConnections.Emplace(MakeUnique<FBluetoothDeviceConnection>(++m_LastUsedHandle, TargetDataReceivedHandler, FBluetoothDeviceConnection::ELoopbackDevice::Loopback));
 }
 
 FBluetoothService::FBluetoothWorker::~FBluetoothWorker()
@@ -235,7 +235,7 @@ void FBluetoothService::FBluetoothWorker::EnqueueSendPackage(BMCCDeviceHandle Ta
 	}
 	else
 	{
-		__debugbreak(); // Not yet implemented
+		checkNoEntry();// Not yet implemented
 	}
 }
 

@@ -14,6 +14,6 @@ struct FBMCCCommandIdentifier
 		return Category == rhs.Category && Parameter == rhs.Parameter;
 	}
 
-	const uint8 Category{ 10 };
-	const uint8 Parameter{ 1 };
+	uint8 Category{ 255 };
+	uint8 Parameter{ 255 };
 };

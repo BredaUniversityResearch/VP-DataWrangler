@@ -32,33 +32,17 @@ FBMCCService::~FBMCCService()
 
 void FBMCCService::Tick(float DeltaTime)
 {
-	static float dtAccumulator = 0;
-	dtAccumulator += DeltaTime;
-	if (dtAccumulator > 1.0f)
-	{
-		BroadcastCommand(FBMCCLens_Focus{});
-		BroadcastCommand(FBMCCLens_TriggerAutoFocus{});
-		BroadcastCommand(FBMCCLens_ApertureFStop{});
-		BroadcastCommand(FBMCCLens_ApertureNormalized{});
-		BroadcastCommand(FBMCCLens_ApertureOrdinal{});
-		BroadcastCommand(FBMCCLens_TriggerInstantAutoAperture{});
-		BroadcastCommand(FBMCCLens_OpticalImageStabilization{});
-		BroadcastCommand(FBMCCLens_SetAbsoluteZoomMm{});
-		BroadcastCommand(FBMCCLens_SetAbsoluteZoomNormalized{});
-		BroadcastCommand(FBMCCLens_SetContinuousZoom{});
-		BroadcastCommand(FBMCCBattery_Info{});
-		dtAccumulator = 0.0f;
-	}
 }
 
 void FBMCCService::OnDataReceived(BMCCDeviceHandle Source, const BMCCCommandHeader& Header, const FBMCCCommandMeta& CommandMetaData, const TArrayView<uint8_t>& SerializedData)
 {
-	__debugbreak(); //Pull this onto the main thread before dispatching.
-	CommandMetaData.DeserializeAndDispatch(m_Data->CallbackHandlers, Source, SerializedData);
+	for (const auto it : m_Data->CallbackHandlers)
+	{
+		it->OnDataReceived(Source, Header, CommandMetaData, SerializedData);
+	}
 }
 
-void FBMCCService::BroadcastCommand(const FBMCCCommandIdentifier& Identifier,
-	const FBMCCCommandPayloadBase& Command) const
+void FBMCCService::BroadcastCommand(const FBMCCCommandIdentifier& Identifier, const FBMCCCommandPayloadBase& Command) const
 {
 	m_Data->m_BluetoothService->SendToCamera(BMCCDeviceHandle_Broadcast, Identifier, Command);
 }

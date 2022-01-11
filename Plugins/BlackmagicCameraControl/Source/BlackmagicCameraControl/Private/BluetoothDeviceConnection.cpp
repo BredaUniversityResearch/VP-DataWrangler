@@ -102,7 +102,7 @@ void FBluetoothDeviceConnection::OnReceivedIncomingCameraControl(const IBuffer& 
 		{
 			if (m_DataReceivedHandler != nullptr)
 			{
-				ensureMsgf(bytesProcessed - sizeof(FBMCCPacketHeader) + meta->PayloadSize <= packet->PacketSize, TEXT("Metadata mentions payload that is bigger than the actual packet size..."));
+				ensureMsgf(meta->PayloadSize <= packet->PacketSize, TEXT("Metadata mentions payload that is bigger than the actual packet size..."));
 				m_DataReceivedHandler->OnDataReceived(m_DeviceHandle, *command, *meta, TArrayView<uint8_t>(InputData.data() + bytesProcessed, meta->PayloadSize));
 			}
 			bytesProcessed += meta->PayloadSize;
