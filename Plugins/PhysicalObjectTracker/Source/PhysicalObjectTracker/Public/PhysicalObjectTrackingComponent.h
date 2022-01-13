@@ -23,17 +23,17 @@ public:
 	UFUNCTION(CallInEditor, Category = "PhysicalObjectTrackingComponent")
 	void RefreshDeviceId();
 
-	UPROPERTY(Transient, VisibleAnywhere)
+	UPROPERTY(Transient, VisibleAnywhere, Category = "PhysicalObjectTrackingComponent")
 	int32 CurrentTargetDeviceId{-1};
 
-	UPROPERTY(EditAnywhere, meta=(DeviceSerialId))
+	UPROPERTY(EditAnywhere, Category = "PhysicalObjectTrackingComponent", meta=(DeviceSerialId))
 	FString SerialId;
 
 private:
 	void DebugCheckIfTrackingTargetExists() const;
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "PhysicalObjectTrackingComponent")
 	UPhysicalObjectTrackingReferencePoint* TrackingSpaceReference{nullptr};
-	UPROPERTY(EditInstanceOnly)
+	UPROPERTY(EditInstanceOnly, Category = "PhysicalObjectTrackingComponent")
 	AActor* WorldReferencePoint{nullptr};
 
 	UPROPERTY(Transient)

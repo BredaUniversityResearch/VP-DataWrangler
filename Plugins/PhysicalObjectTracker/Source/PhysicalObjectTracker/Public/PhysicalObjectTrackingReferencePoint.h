@@ -13,9 +13,9 @@ public:
 	const FVector& GetNeutralOffset() const;
 
 private:
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "PhysicalObjectTrackingReferencePoint")
 	FQuat NeutralRotationInverse;
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Category = "PhysicalObjectTrackingReferencePoint")
 	FVector NeutralOffset;
 };
 
