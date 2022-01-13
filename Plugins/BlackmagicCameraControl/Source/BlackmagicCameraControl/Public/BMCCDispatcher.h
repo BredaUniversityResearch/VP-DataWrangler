@@ -1,10 +1,10 @@
 #pragma once
 #include "BMCCCallbackHandler.h"
 
-#include "BMCCCommandHeader.h"
 #include "BMCCLens.h"
 #include "BMCCVideo.h"
 #include "BMCCBattery_Info.h"
+#include "BMCCForegroundThreadCallbackHandler.h"
 #include "BMCCMedia_TransportMode.h"
 
 #include "BMCCDispatcher.generated.h"
@@ -31,20 +31,9 @@ UCLASS(BlueprintType)
 class BLACKMAGICCAMERACONTROL_API UBMCCDispatcher
 	: public UObject
 	, public FTickableGameObject
-	, public IBMCCCallbackHandler
+	, public FBMCCForegroundThreadCallbackHandler
 {
 	GENERATED_BODY()
-
-	struct CachedMessage
-	{
-		CachedMessage() = default;;
-		CachedMessage(BMCCDeviceHandle Source, const BMCCCommandHeader& Header, const FBMCCCommandMeta& CommandMetaData, const TArrayView<uint8>& ArrayView);
-
-		BMCCDeviceHandle Source{};
-		BMCCCommandHeader Header{};
-		const FBMCCCommandMeta* CommandMetaData{};
-		TArray<uint8> SerializedData{};
-	};
 
 public:
 	virtual void Tick(float DeltaTime) override;
@@ -52,8 +41,6 @@ public:
 
 	virtual bool IsTickableInEditor() const override { return true; }
 	virtual bool IsTickableWhenPaused() const override { return true; }
-
-	virtual void OnDataReceived(BMCCDeviceHandle Source, const BMCCCommandHeader& Header, const FBMCCCommandMeta& CommandMetaData, const TArrayView<uint8>& ArrayView) override;
 
 	virtual void OnLensFocus(BMCCDeviceHandle Source, const FBMCCLens_Focus& Focus) override;
 	virtual void OnLensApertureFStop(BMCCDeviceHandle Source, const FBMCCLens_ApertureFStop& Aperture) override;
@@ -86,6 +73,4 @@ public:
 
 	UPROPERTY(BlueprintAssignable) FOnMediaTransportModeReceived MediaTransportModeReceived;
 
-private:
-	TQueue<CachedMessage> m_MessageQueue;
 };

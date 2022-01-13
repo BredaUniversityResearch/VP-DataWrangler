@@ -47,6 +47,16 @@ void FBMCCService::BroadcastCommand(const FBMCCCommandIdentifier& Identifier, co
 	m_Data->m_BluetoothService->SendToCamera(BMCCDeviceHandle_Broadcast, Identifier, Command);
 }
 
+void FBMCCService::SubscribeMessageReceivedHandler(IBMCCCallbackHandler* a_CallbackHandler)
+{
+	m_Data->CallbackHandlers.Emplace(a_CallbackHandler);
+}
+
+void FBMCCService::UnsubscribeMessageReceivedHandler(IBMCCCallbackHandler* a_CallbackHandler)
+{
+	m_Data->CallbackHandlers.RemoveSingleSwap(a_CallbackHandler);
+}
+
 UBMCCDispatcher* FBMCCService::GetDefaultDispatcher() const
 {
 	return DefaultDispatcher;

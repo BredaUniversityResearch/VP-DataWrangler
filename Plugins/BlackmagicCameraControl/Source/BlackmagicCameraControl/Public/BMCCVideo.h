@@ -51,7 +51,7 @@ struct FBMCCVideo_Gain : public FBMCCCommandPayloadBase
 //Missing 1.2 to 1.8
 
 USTRUCT(BlueprintType)
-struct FBMCCVideo_RecordingFormat : public FBMCCCommandPayloadBase
+struct	FBMCCVideo_RecordingFormat : public FBMCCCommandPayloadBase
 {
 	GENERATED_BODY()
 

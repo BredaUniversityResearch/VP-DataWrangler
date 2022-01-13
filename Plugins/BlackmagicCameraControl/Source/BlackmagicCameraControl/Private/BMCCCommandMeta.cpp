@@ -6,17 +6,26 @@
 
 #include "BlackmagicCameraControl.h"
 #include "BMCCVideo.h"
+#include "BMCCVendorSpecific.h"
 
 namespace
 {
-	template<typename TCommandType, void(IBMCCCallbackHandler::* TDispatchFunction)(BMCCDeviceHandle, const TCommandType&)>
+	template<typename TCommandType, void(IBMCCCallbackHandler::* TDispatchFunction)(BMCCDeviceHandle, const TCommandType&), int TPayloadSize>
 	void DispatchWrapperImpl(IBMCCCallbackHandler* DispatchTarget, BMCCDeviceHandle Source, const TArrayView<uint8>& SerializedDataView)
 	{
-		ensureMsgf(SerializedDataView.Num() == sizeof(TCommandType), TEXT("Could not deserialize message. Data size mismatch. Got %i expected %llu"), SerializedDataView.Num(), sizeof(TCommandType));
 		if (TDispatchFunction != nullptr)
 		{
-			const TCommandType* data = reinterpret_cast<const TCommandType*>(SerializedDataView.GetData());
-			(DispatchTarget->*TDispatchFunction)(Source, *data);
+			if constexpr (TPayloadSize == -1 && std::is_constructible_v<TCommandType, const TArrayView<uint8>&>)
+			{
+				TCommandType data = TCommandType(SerializedDataView);
+				(DispatchTarget->*TDispatchFunction)(Source, data);
+			}
+			else
+			{
+				ensureMsgf(SerializedDataView.Num() == TPayloadSize, TEXT("Could not deserialize message. Data size mismatch. Got %i expected %i"), SerializedDataView.Num(), TPayloadSize);
+				const TCommandType* data = reinterpret_cast<const TCommandType*>(SerializedDataView.GetData());
+				(DispatchTarget->*TDispatchFunction)(Source, *data);
+			}
 		}
 		else 
 		{
@@ -42,13 +51,15 @@ const FBMCCCommandMeta FBMCCCommandMeta::m_AllMeta[] = {
 	Create<FBMCCVideo_RecordingFormat, &IBMCCCallbackHandler::OnVideoRecordingFormat>(),
 
 	Create<FBMCCBattery_Info, &IBMCCCallbackHandler::OnBatteryStatus>(),
-	Create<FBMCCMedia_TransportMode, &IBMCCCallbackHandler::OnMediaTransportMode>()
+	Create<FBMCCMedia_TransportMode, &IBMCCCallbackHandler::OnMediaTransportMode>(),
+
+	Create<FBMCCVendorSpecific_CanonLens, &IBMCCCallbackHandler::OnVendorSpecificCanonLens, -1>()
 };
 
-template<typename TCommandType, void(IBMCCCallbackHandler::* TDispatchFunction)(BMCCDeviceHandle, const TCommandType&)>
+template<typename TCommandType, void(IBMCCCallbackHandler::* TDispatchFunction)(BMCCDeviceHandle, const TCommandType&), int PayloadSize>
 FBMCCCommandMeta FBMCCCommandMeta::Create()
 {
-	return FBMCCCommandMeta(TCommandType::Identifier, sizeof(TCommandType), &DispatchWrapperImpl<TCommandType, TDispatchFunction>);
+	return FBMCCCommandMeta(TCommandType::Identifier, PayloadSize, &DispatchWrapperImpl<TCommandType, TDispatchFunction, PayloadSize>);
 }
 
 const FBMCCCommandMeta* FBMCCCommandMeta::FindMetaForIdentifier(const FBMCCCommandIdentifier& Identifier)

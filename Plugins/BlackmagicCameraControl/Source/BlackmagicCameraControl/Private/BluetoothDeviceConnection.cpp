@@ -96,14 +96,24 @@ void FBluetoothDeviceConnection::OnReceivedIncomingCameraControl(const IBuffer& 
 	while (InputData.Length() - bytesProcessed >= packet->PacketSize)
 	{
 		const BMCCCommandHeader* command = reinterpret_cast<const BMCCCommandHeader*>(InputData.data() + bytesProcessed);
+		const uint8* data = InputData.data();
+		int bytesRemaining = static_cast<int>(InputData.Length()) - bytesProcessed;
+		UE_LOG(LogBlackmagicCameraControl, Display, TEXT("Received Message %i.%i. With data %s"), command->Identifier.Category, command->Identifier.Parameter, *BytesToHex(data + bytesProcessed, bytesRemaining));
 		bytesProcessed += sizeof(BMCCCommandHeader);
+
 		const FBMCCCommandMeta* meta = FBMCCCommandMeta::FindMetaForIdentifier(command->Identifier);
 		if (meta != nullptr)
 		{
+			int messageLength = meta->PayloadSize;
+			if (messageLength < 0)
+			{
+				messageLength = FMath::Max(0, bytesRemaining);
+			}
+
 			if (m_DataReceivedHandler != nullptr)
 			{
 				ensureMsgf(meta->PayloadSize <= packet->PacketSize, TEXT("Metadata mentions payload that is bigger than the actual packet size..."));
-				m_DataReceivedHandler->OnDataReceived(m_DeviceHandle, *command, *meta, TArrayView<uint8_t>(InputData.data() + bytesProcessed, meta->PayloadSize));
+				m_DataReceivedHandler->OnDataReceived(m_DeviceHandle, *command, *meta, TArrayView<uint8_t>(InputData.data() + bytesProcessed, messageLength));
 			}
 			bytesProcessed += meta->PayloadSize;
 		}

@@ -1,6 +1,7 @@
 #pragma once
 #include "BMCCDeviceHandle.h"
 #include "BMCCLens.h"
+#include "BMCCVendorSpecific.h"
 #include "BMCCVideo.h"
 
 #include "BMCCCallbackHandler.generated.h"
@@ -37,4 +38,6 @@ public:
 
 	virtual void OnBatteryStatus(BMCCDeviceHandle Source, const FBMCCBattery_Info& BatteryInfo) {};
 	virtual void OnMediaTransportMode(BMCCDeviceHandle Source, const FBMCCMedia_TransportMode& TransportMode) {};
+
+	virtual void OnVendorSpecificCanonLens(BMCCDeviceHandle Source, const FBMCCVendorSpecific_CanonLens& Data) {};
 };

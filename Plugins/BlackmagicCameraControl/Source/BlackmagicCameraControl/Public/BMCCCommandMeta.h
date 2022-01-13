@@ -22,7 +22,7 @@ public:
 private:
 	static const FBMCCCommandMeta m_AllMeta[];
 
-	template<typename TCommandType, void(IBMCCCallbackHandler::*TDispatchFunction)(BMCCDeviceHandle, const TCommandType&)>
+	template<typename TCommandType, void(IBMCCCallbackHandler::*TDispatchFunction)(BMCCDeviceHandle, const TCommandType&), int PayloadSize = sizeof(TCommandType)>
 	static FBMCCCommandMeta Create();
 
 	constexpr FBMCCCommandMeta(FBMCCCommandIdentifier Identifier, int PayloadSize, DispatchWrapperFn DispatchWrapper)

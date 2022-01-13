@@ -12,17 +12,7 @@ UBMCCDispatcher::CachedMessage::CachedMessage(BMCCDeviceHandle Source, const BMC
 
 void UBMCCDispatcher::Tick(float DeltaTime)
 {
-	while (!m_MessageQueue.IsEmpty())
-	{
-		CachedMessage message{};
-		m_MessageQueue.Dequeue(message);
-		message.CommandMetaData->DeserializeAndDispatch(this, message.Source, message.SerializedData);
-	}
-}
-
-void UBMCCDispatcher::OnDataReceived(BMCCDeviceHandle Source, const BMCCCommandHeader& Header, const FBMCCCommandMeta& CommandMetaData, const TArrayView<uint8>& ArrayView)
-{
-	m_MessageQueue.Enqueue(CachedMessage(Source, Header, CommandMetaData, ArrayView));
+	DispatchPendingMessages();
 }
 
 void UBMCCDispatcher::OnLensFocus(BMCCDeviceHandle Source, const FBMCCLens_Focus& Focus)

@@ -1,4 +1,5 @@
 #pragma once
+#include "BMCCForegroundThreadCallbackHandler.h"
 #include "BMCCLens.h"
 #include "BMCCVideo.h"
 
@@ -6,7 +7,9 @@
 
 class UCineCameraComponent;
 UCLASS(ClassGroup = (VirtualProduction), meta = (BlueprintSpawnableComponent))
-class UBlackmagicCineCameraSyncComponent : public UActorComponent
+class UBlackmagicCineCameraSyncComponent
+	: public UActorComponent
+	, public FBMCCForegroundThreadCallbackHandler
 {
 	GENERATED_BODY()
 public:
@@ -16,17 +19,10 @@ public:
 	virtual void Activate(bool bReset) override;
 	virtual void Deactivate() override;
 
+	virtual void OnLensFocus(BMCCDeviceHandle SourceDevice, const FBMCCLens_Focus& Data) override;
+	virtual void OnVideoVideoMode(BMCCDeviceHandle SourceDevice, const FBMCCVideo_VideoMode& VideoMode) override;
+	virtual void OnVideoRecordingFormat(BMCCDeviceHandle Source, const FBMCCVideo_RecordingFormat& RecordingFormat) override;
+	virtual void OnVendorSpecificCanonLens(BMCCDeviceHandle Source, const FBMCCVendorSpecific_CanonLens& Data) override;
 private:
-	UFUNCTION()
-	void OnLensFocus(int32 SourceDevice, const FBMCCLens_Focus& Data);
-	UFUNCTION()
-	void OnVideoVideoMode(int32 SourceDevice, const FBMCCVideo_VideoMode& VideoMode);
-	UFUNCTION()
-	void OnRecordingFormat(int32 SourceDevice, const FBMCCVideo_RecordingFormat& RecordingFormat);
-
-	UFUNCTION()
-	void SubscribeToEvents();
-private:
-	bool IsSubscribed{ false };
 	UCineCameraComponent* Target{ nullptr };
 };

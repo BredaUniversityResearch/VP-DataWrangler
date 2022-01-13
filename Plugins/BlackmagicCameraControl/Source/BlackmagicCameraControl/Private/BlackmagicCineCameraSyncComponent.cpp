@@ -13,6 +13,7 @@ UBlackmagicCineCameraSyncComponent::UBlackmagicCineCameraSyncComponent(const FOb
 void UBlackmagicCineCameraSyncComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	DispatchPendingMessages();
 }
 
 void UBlackmagicCineCameraSyncComponent::Activate(bool bReset)
@@ -25,14 +26,16 @@ void UBlackmagicCineCameraSyncComponent::Activate(bool bReset)
 		UE_LOG(LogBlackmagicCameraControl, Error, TEXT("Could not find CineCameraComponent on attached actor"));
 	}
 
-	SubscribeToEvents();
+	FBMCCService& service = IModularFeatures::Get().GetModularFeature<FBMCCService>(FBMCCService::GetModularFeatureName());
+	service.SubscribeMessageReceivedHandler(this);
 }
 
 void UBlackmagicCineCameraSyncComponent::Deactivate()
 {
 	Super::Deactivate();
 
-	__debugbreak();
+	FBMCCService& service = IModularFeatures::Get().GetModularFeature<FBMCCService>(FBMCCService::GetModularFeatureName());
+	service.UnsubscribeMessageReceivedHandler(this);
 }
 
 void UBlackmagicCineCameraSyncComponent::OnLensFocus(int32 SourceDevice, const FBMCCLens_Focus& Data)
@@ -45,7 +48,7 @@ void UBlackmagicCineCameraSyncComponent::OnVideoVideoMode(int32 SourceDevice, co
 	int a = 6;
 }
 
-void UBlackmagicCineCameraSyncComponent::OnRecordingFormat(int32 SourceDevice, const FBMCCVideo_RecordingFormat& RecordingFormat)
+void UBlackmagicCineCameraSyncComponent::OnVideoRecordingFormat(BMCCDeviceHandle Source, const FBMCCVideo_RecordingFormat& RecordingFormat)
 {
 	FCameraFilmbackSettings& filmbackSettings = Target->Filmback;
 	//filmbackSettings.SensorWidth = RecordingFormat.FrameWidthPixels;
@@ -53,11 +56,8 @@ void UBlackmagicCineCameraSyncComponent::OnRecordingFormat(int32 SourceDevice, c
 	filmbackSettings.SensorAspectRatio = RecordingFormat.FrameWidthPixels / RecordingFormat.FrameHeightPixels;
 }
 
-void UBlackmagicCineCameraSyncComponent::SubscribeToEvents()
+void UBlackmagicCineCameraSyncComponent::OnVendorSpecificCanonLens(BMCCDeviceHandle Source, const FBMCCVendorSpecific_CanonLens& Data)
 {
-	FBMCCService& service = IModularFeatures::Get().GetModularFeature<FBMCCService>(FBMCCService::GetModularFeatureName());
-	UBMCCDispatcher* dispatcher = service.GetDefaultDispatcher();
-	dispatcher->LensFocusReceived.AddDynamic(this, &UBlackmagicCineCameraSyncComponent::OnLensFocus);
-	dispatcher->VideoVideoMode.AddDynamic(this, &UBlackmagicCineCameraSyncComponent::OnVideoVideoMode);
-	dispatcher->VideoRecordingFormat.AddDynamic(this, &UBlackmagicCineCameraSyncComponent::OnRecordingFormat);
+	UE_LOG(LogBlackmagicCameraControl, Warning, TEXT("Received lens info: %s"), *Data.InfoString);
 }
+

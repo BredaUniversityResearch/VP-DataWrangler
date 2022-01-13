@@ -34,6 +34,9 @@ public:
 	void BroadcastCommand(const TCommandType& Command);
 	void BroadcastCommand(const FBMCCCommandIdentifier& Identifier, const FBMCCCommandPayloadBase& Command) const;
 
+	void SubscribeMessageReceivedHandler(IBMCCCallbackHandler* a_CallbackHandler);
+	void UnsubscribeMessageReceivedHandler(IBMCCCallbackHandler* a_CallbackHandler);
+
 	UBMCCDispatcher* GetDefaultDispatcher() const;
 
 private:
