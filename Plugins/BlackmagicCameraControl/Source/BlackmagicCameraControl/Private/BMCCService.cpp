@@ -22,11 +22,12 @@ FBMCCService::FBMCCService()
 {
 	DefaultDispatcher->AddToRoot();
 	m_Data->m_BluetoothService = MakeUnique<FBluetoothService>(this);
-	m_Data->CallbackHandlers.Emplace(DefaultDispatcher);
+	SubscribeMessageReceivedHandler(DefaultDispatcher);
 }
 
 FBMCCService::~FBMCCService()
 {
+	UnsubscribeMessageReceivedHandler(DefaultDispatcher);
 	DefaultDispatcher->RemoveFromRoot();
 }
 
