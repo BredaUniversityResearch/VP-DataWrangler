@@ -103,7 +103,7 @@ void UBaseLight::SetTemperatureRaw(float Value)
 
 void UBaseLight::SetCastShadows(bool bState)
 {
-
+    // Exists purely for virtual lights
 }
 
 void UBaseLight::AddHorizontal(float NormalizedDegrees)
@@ -138,9 +138,7 @@ TSharedPtr<FJsonObject> UBaseLight::SaveAsJson()
     JsonItem->SetNumberField("Temperature", Temperature);
     JsonItem->SetNumberField("Horizontal", Horizontal);
     JsonItem->SetNumberField("Vertical", Vertical);
-    
-
-    TSharedPtr<FJsonValue> JsonValue = MakeShared<FJsonValueObject>(JsonItem);
+        
     return JsonItem;
 }
 

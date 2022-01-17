@@ -20,8 +20,8 @@
 #include "DesktopPlatformModule.h"
 #include "IDesktopPlatform.h"
 
-// Test code for a plugin, mainly trying to get an editor window which can be customized using the Slate Framework
-// Don't mind the extra debug-y prints and text pieces
+// About module: Editor-only module, contains the code for the UI
+// Separated from the core module of the plugin because it uses the editor's icons, which are unavailable in standalone 
 
 #define LOCTEXT_NAMESPACE "FCradleLightControlEditorModule"
 
@@ -35,72 +35,27 @@ void FCradleLightControlEditorModule::StartupModule()
 
 	auto& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
 	auto& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
+	auto Action = MakeShared<FDMXConfigAssetAction>();
+	AssetTools.RegisterAssetTypeActions(Action);
 
 	GenerateIcons();
 
 
 
 	CommandList = MakeShareable(new FUICommandList);
-	// Keeping it here in the scenario that we want to add a button in one of the menus
-	//TSharedRef<FExtender> MenuExtender(new FExtender());
-	//MenuExtender->AddMenuExtension("EditMain", EExtensionHook::After, CommandList, FMenuExtensionDelegate::CreateLambda(
-	//[](FMenuBuilder& MenuBuilder)
-	//{
-	//		//auto CommandInfo = MakeShareable(new FUICommandInfo());
-	//		//MenuBuilder.AddMenuEntry(CommandInfo);
-	//}));
-	//LevelEditorModule.GetMenuExtensibilityManager()->AddExtender(MenuExtender);
-	//auto AssetCategory = AssetTools.RegisterAdvancedAssetCategory("CustomCategory", FText::FromString("Custom Category"));
-	auto Action = MakeShared<FDMXConfigAssetAction>();
-	//Action.
 
-	//AssetToolsModule.Get().
-	AssetTools.RegisterAssetTypeActions(Action);
-
+	// Create the tool widgets here without showing them.
+	// When they are called to show, they create their own SDockTabs and manage their lifetimes
 	VirtualLightControl = SNew(SLightControlTool, FCradleLightControlModule::Get().GetVirtualLightToolData());
 	DMXControl = SNew(SDMXControlTool);
 
-	// Create an extension to the toolbar (the one above the viewport in the level editor)
+	// Create an extension to the level editor toolbar 
 	TSharedRef<FExtender> ToolbarExtender(new FExtender());
-	ToolbarExtender->AddToolBarExtension("Settings", EExtensionHook::After, CommandList, FToolBarExtensionDelegate::CreateLambda(
-		[this](FToolBarBuilder& MenuBuilder)
-		{
-			FUIAction Action;
-			Action.ExecuteAction = FExecuteAction::CreateLambda([this]()
-				{
-					// I could not find a guaranteed, engine provided way to ensure that the button can spawn the tab multiple times
-					// while also not allowing for the tab to be spawned multiple times simultaneously
-					// So we only try to spawn the tab if one doesn't already exist, otherwise we just draw the user's attention to the existing one
-					if (!LightTab)
-					{
-						RegisterTabSpawner();
-						FGlobalTabmanager::Get()->TryInvokeTab(FTabId("VirtualLightControl"));
-					}
-					else
-						LightTab->DrawAttention();
-
-					if (!DMXTab)
-					{
-						RegisterDMXTabSpawner();
-						FGlobalTabmanager::Get()->TryInvokeTab(FTabId("DMXControl"));
-
-					}
-				});
-			MenuBuilder.AddToolBarButton(Action, NAME_None, FText::FromString("Cradle Light Control"));
-		}));
+	ToolbarExtender->AddToolBarExtension("Settings", EExtensionHook::After, CommandList, FToolBarExtensionDelegate::CreateRaw(this, &FCradleLightControlEditorModule::AddToolBarButton));
 
 	LevelEditorModule.GetToolBarExtensibilityManager()->AddExtender(ToolbarExtender);
-
-	FCoreDelegates::OnEnginePreExit.AddLambda([this]()
-		{
-			if (VirtualLightControl)
-				VirtualLightControl->PreDestroy();
-			if (DMXControl)
-				DMXControl->PreDestroy();
-
-			VirtualLightControl.Reset();
-			DMXControl.Reset();
-		});
+	auto ex = LevelEditorModule.GetToolBarExtensibilityManager()->GetAllExtenders();
+	FCoreDelegates::OnEnginePreExit.AddRaw(this, &FCradleLightControlEditorModule::OnEngineExit);
 
 	// Ensure that slate throttling is disabled
 	// If it is enabled, interacting with any slate widgets will freeze the main viewport
@@ -121,9 +76,47 @@ void FCradleLightControlEditorModule::ShutdownModule()
 
 }
 
+void FCradleLightControlEditorModule::AddToolBarButton(FToolBarBuilder& ToolbarBuilder)
+{
+	FUIAction Action;
+	Action.ExecuteAction = FExecuteAction::CreateRaw(this, &FCradleLightControlEditorModule::OnToolBarButtonClicked);
+	ToolbarBuilder.AddToolBarButton(Action, NAME_None, FText::FromString("Cradle Light Control"));
+}
+
+void FCradleLightControlEditorModule::OnToolBarButtonClicked()
+{
+	// I could not find a guaranteed, engine provided way to ensure that the button can spawn the tab multiple times
+	// while also not allowing for the tab to be spawned multiple times simultaneously
+	// So we only try to spawn the tab if one doesn't already exist, otherwise we just draw the user's attention to the existing one
+	if (!LightTab)
+	{
+		RegisterTabSpawner();
+		FGlobalTabmanager::Get()->TryInvokeTab(FTabId("VirtualLightControl"));
+	}
+	else
+		LightTab->DrawAttention();
+
+	if (!DMXTab)
+	{
+		RegisterDMXTabSpawner();
+		FGlobalTabmanager::Get()->TryInvokeTab(FTabId("DMXControl"));
+	}
+}
+
+void FCradleLightControlEditorModule::OnEngineExit()
+{
+	if (VirtualLightControl)
+		VirtualLightControl->PreDestroy();
+	if (DMXControl)
+		DMXControl->PreDestroy();
+
+	VirtualLightControl.Reset();
+	DMXControl.Reset();
+}
+
 
 bool FCradleLightControlEditorModule::OpenFileDialog(FString Title, void* NativeWindowHandle, FString DefaultPath, uint32 Flags,
-	FString FileTypeList, TArray<FString>& OutFilenames)
+                                                     FString FileTypeList, TArray<FString>& OutFilenames)
 {
 	IDesktopPlatform* Platform = FDesktopPlatformModule::Get();
 	return Platform->OpenFileDialog(NativeWindowHandle, Title, DefaultPath, "", FileTypeList, Flags, OutFilenames);
@@ -190,27 +183,8 @@ void FCradleLightControlEditorModule::CloseGelPalette()
 void FCradleLightControlEditorModule::RegisterTabSpawner()
 {
 	FGlobalTabmanager::Get()->RegisterNomadTabSpawner("VirtualLightControl", FOnSpawnTab::CreateLambda([this](const FSpawnTabArgs& Args)
-		{
-			/*LightTab = SNew(SDockTab)
-				.Label(FText::FromString("Light control tab"))
-				.TabRole(ETabRole::NomadTab)
-				.OnTabClosed_Lambda([this](TSharedRef<SDockTab>)
-					{
-						return;
-						FGlobalTabmanager::Get()->UnregisterNomadTabSpawner("VirtualLightControl");
-						VirtualLightControl->PreDestroy();
-						VirtualLightControl.Reset();
-						LightTab.Reset();
-					});
-
-			LightTab->SetContent(
-					SAssignNew(VirtualLightControl, SLightControlTool)
-					.ToolTab(LightTab)
-
-				);*/
-
+		{			
 			return VirtualLightControl->Show();
-
 		}));
 }
 
@@ -219,38 +193,27 @@ void FCradleLightControlEditorModule::RegisterDMXTabSpawner()
 
 	FGlobalTabmanager::Get()->RegisterNomadTabSpawner("DMXControl", FOnSpawnTab::CreateLambda([this](const FSpawnTabArgs& Args)
 		{
-			//DMXTab = SNew(SDockTab)
-			//	.Label(FText::FromString("DMX control tab"))
-			//	.TabRole(ETabRole::NomadTab)
-			//	.OnTabClosed_Lambda([this](TSharedRef<SDockTab>)
-			//		{
-			//			FGlobalTabmanager::Get()->UnregisterNomadTabSpawner("DMXControl");
-			//			//DMXControl->PreDestroy();
-			//			DMXControl.Reset();
-			//			DMXTab.Reset();
-			//		});
-
-			//DMXTab->SetContent(
-			//	SAssignNew(DMXControl, SDMXControlTool)
-			//	.ToolTab(DMXTab)
-			//);
-
 			return DMXControl->Show();
-
 		}));
 
 }
 
 void FCradleLightControlEditorModule::GenerateItemHandleWidget(UItemHandle* ItemHandle)
 {
+	// Create a root widget for the Item Handle if one doesn't already exist
 	if (!ItemHandle->TableRowBox)
 		SAssignNew(ItemHandle->TableRowBox, SBox);
-	auto IconType = ItemHandle->Type;
+
+	// Determine what icon to use for the checkbox which is turns the light on/off
+	// This is primarily for group items which may contain multiple types of lights
+	TEnumAsByte<ETreeItemType> IconType;
 	if (ItemHandle->Type == Folder)
 	{
 		if (ItemHandle->Children.Num())
 		{
-			IconType = ItemHandle->Children[0]->Type; // This is 0 if there is a folder as the first child, which leads to out of bounds indexing
+			// TODO: What if we have a group which contains, say, a point light and a group of point lights?
+			// Will the icon be mixed or point light? Need to test.
+			IconType = ItemHandle->Children[0]->Type; 
 			for (size_t i = 1; i < ItemHandle->Children.Num(); i++)
 			{
 				if (IconType != ItemHandle->Children[i]->Type)
@@ -264,15 +227,18 @@ void FCradleLightControlEditorModule::GenerateItemHandleWidget(UItemHandle* Item
 	}
 
 	ItemHandle->CheckBoxStyle = MakeCheckboxStyleForType(IconType);
-
 	ItemHandle->CheckBoxStyle.CheckedPressedImage = ItemHandle->CheckBoxStyle.UndeterminedImage;
 	ItemHandle->CheckBoxStyle.UncheckedPressedImage = ItemHandle->CheckBoxStyle.UndeterminedImage;
 
+	// The checkbox slot will be exposed with the goal of changing its size rule
 	SHorizontalBox::FSlot* CheckBoxSlot;
 
-
+	// The groups and light items have different widget layours, so we generate them differently based on type
 	if (ItemHandle->Type != Folder)
 	{
+		// Generation of widget for light items
+
+		// Exposed to change the size rule
 		SHorizontalBox::FSlot* TextSlot;
 		ItemHandle->TableRowBox->SetContent(
 			SNew(SHorizontalBox)
@@ -290,7 +256,7 @@ void FCradleLightControlEditorModule::GenerateItemHandleWidget(UItemHandle* Item
 			[
 				SAssignNew(ItemHandle->RowNameBox, SBox)
 			]
-			+ SHorizontalBox::Slot()
+			+ SHorizontalBox::Slot() // Additional note
 			.Padding(10.0f, 0.0f, 0.0f, 3.0f)
 			.VAlign(VAlign_Bottom)
 			[
@@ -303,6 +269,8 @@ void FCradleLightControlEditorModule::GenerateItemHandleWidget(UItemHandle* Item
 	}
 	else
 	{
+		// Generation of group widget
+
 		SHorizontalBox::FSlot* FolderImageSlot;
 		SHorizontalBox::FSlot* CloseButtonSlot;
 		ItemHandle->TableRowBox->SetContent(
@@ -312,13 +280,13 @@ void FCradleLightControlEditorModule::GenerateItemHandleWidget(UItemHandle* Item
 			[
 				SAssignNew(ItemHandle->RowNameBox, SBox)
 			]
-		+ SHorizontalBox::Slot()
-			.Expose(CloseButtonSlot)
+			+ SHorizontalBox::Slot()
+			.Expose(CloseButtonSlot) // Delete button slot
 			.HAlign(HAlign_Right)
 			[
 				SNew(SButton)
 				.Text(FText::FromString("Delete"))
-			.OnClicked_UObject(ItemHandle, &UItemHandle::RemoveFromTree)
+				.OnClicked_UObject(ItemHandle, &UItemHandle::RemoveFromTree)
 			]
 			+ SHorizontalBox::Slot() // On/Off toggle button
 			.Expose(CheckBoxSlot)
@@ -331,7 +299,7 @@ void FCradleLightControlEditorModule::GenerateItemHandleWidget(UItemHandle* Item
 				.RenderTransform(FSlateRenderTransform(FScale2D(1.1f)))
 			]
 			+ SHorizontalBox::Slot()
-			.Expose(FolderImageSlot)
+			.Expose(FolderImageSlot) // Additional expand/shrink button slot
 			.HAlign(HAlign_Right)
 			.Padding(3.0f, 0.0f, 3.0f, 0.0f)
 			[
@@ -343,14 +311,14 @@ void FCradleLightControlEditorModule::GenerateItemHandleWidget(UItemHandle* Item
 						ItemHandle->ExpandInTree();
 						return FReply::Handled();
 					})
-			[
-				SNew(SImage) // Image overlay for the button
-				.Image_Lambda([ItemHandle, this]() {return &(ItemHandle->bExpanded ? GetIcon(FolderOpened) : GetIcon(FolderClosed)); })
-				.RenderTransform(FSlateRenderTransform(FScale2D(1.1f)))
-			]
+				[
+					SNew(SImage) // Image overlay for the button
+					.Image_Lambda([ItemHandle, this]() {return &(ItemHandle->bExpanded ? GetIcon(FolderOpened) : GetIcon(FolderClosed)); })
+					.RenderTransform(FSlateRenderTransform(FScale2D(1.1f)))
+				]
 			]
 		);
-		//TableRowBox->SetRenderTransform(FSlateRenderTransform(FScale2D(1.2f)));
+		// TODO: Test if this even does anything.
 		ItemHandle->UpdateFolderIcon();
 
 		FolderImageSlot->SizeParam.SizeRule = FSizeParam::SizeRule_Auto;
@@ -362,6 +330,7 @@ void FCradleLightControlEditorModule::GenerateItemHandleWidget(UItemHandle* Item
 	if (ItemHandle->Type == Folder) // Slightly larger font for group items
 		Font.Size = 12;
 
+	// Fill in the name slot differently based on whether the item is being renamed or not
 	if (ItemHandle->bInRename)
 	{
 		ItemHandle->RowNameBox->SetContent(
@@ -386,6 +355,7 @@ void FCradleLightControlEditorModule::GenerateItemHandleWidget(UItemHandle* Item
 			.OnDoubleClicked_UObject(ItemHandle, &UItemHandle::StartRename));
 	}
 
+	// If the search string used in the tool does not match the name of the item, we hide it
 	if (ItemHandle->bMatchesSearchString)
 		ItemHandle->TableRowBox->SetVisibility(EVisibility::Visible);
 	else
@@ -430,13 +400,18 @@ void FCradleLightControlEditorModule::GenerateIcons()
 
 	for (auto& Icon : Icons)
 	{
-		//Icon.Value.DrawAs = ESlateBrushDrawType::Box;
 		Icon.Value.SetImageSize(FVector2D(24.0f));
 	}
 }
 
 FCheckBoxStyle FCradleLightControlEditorModule::MakeCheckboxStyleForType(uint8 IconType)
 {
+	check(IconType != ETreeItemType::Invalid);
+
+	// ETreeItemType and EIconType are ordered in such a manner that
+	// the light type in EIconType changes every 3 enums, with the order always being Off, On and Undetermined.
+	// Because of this, IconType * 3 + 0/1/2 will give us the Off/On/Undetermined icon for the given item type.
+
 	FCheckBoxStyle CheckBoxStyle;
 	CheckBoxStyle.CheckedImage = Icons[StaticCast<EIconType>(IconType * 3 + 1)];
 	CheckBoxStyle.CheckedHoveredImage = Icons[StaticCast<EIconType>(IconType * 3 + 1)];

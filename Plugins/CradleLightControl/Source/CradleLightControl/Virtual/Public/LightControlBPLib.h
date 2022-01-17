@@ -7,7 +7,7 @@
 #include "LightControlBPLib.generated.h"
 
 /**
- * 
+ * Blueprint function library to allow for the plugin's data to be accessed via blueprints
  */
 UCLASS(meta = (ScriptName="CradleLightControl"))
 class CRADLELIGHTCONTROL_API ULightControlBPLib : public UBlueprintFunctionLibrary

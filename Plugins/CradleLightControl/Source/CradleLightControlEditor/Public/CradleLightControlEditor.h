@@ -36,6 +36,9 @@ enum EIconType
 
 class UItemHandle;
 
+// About module: Editor-only module, contains the code for the UI
+// Separated from the core module of the plugin because it uses the editor's icons, which are unavailable in standalone 
+
 class FCradleLightControlEditorModule : public IModuleInterface
 {
 public:
@@ -44,6 +47,10 @@ public:
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
 
+	void AddToolBarButton(FToolBarBuilder& ToolbarBuilder);
+	void OnToolBarButtonClicked();
+
+	void OnEngineExit();
 
 	static bool OpenFileDialog(FString Title, void*
 		NativeWindowHandle, FString DefaultPath, uint32 Flags, FString FileTypeList, TArray<FString>& OutFilenames);
@@ -58,9 +65,12 @@ public:
 	void RegisterTabSpawner();
 	void RegisterDMXTabSpawner();
 
+	// Generates the widget for the given item handle. Necessary because of icons are in the editor module rather than the core module.
+	// This widget is used only in the tree hierarchy
 	void GenerateItemHandleWidget(UItemHandle* ItemHandle);
 
 	void GenerateIcons();
+	// Meant to be used with only the light icon types.
 	FCheckBoxStyle MakeCheckboxStyleForType(uint8 IconType);
 	FSlateBrush& GetIcon(EIconType Icon);
 

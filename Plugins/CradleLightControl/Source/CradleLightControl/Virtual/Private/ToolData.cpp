@@ -78,7 +78,7 @@ UItemHandle* UToolData::GetMasterLight()
 
 UItemHandle* UToolData::GetSelectedGroup()
 {
-    if (SelectedItems.Num())
+    if (SelectedItems.Num() && SelectedItems[0]->Type == Folder)
     {
         return SelectedItems[0];
     }
@@ -302,9 +302,9 @@ void UToolData::AutoSave()
     if (ToolPresetPath.IsEmpty())
     {
         auto ThisPlugin = IPluginManager::Get().FindPlugin("CradleLightControl");
-        auto Content = ThisPlugin->GetContentDir();
+        auto SavedDir = ThisPlugin->GetBaseDir() + "/Saved";
 
-        SaveStateToJson(Content + "/" + DataName + "AutoSave.json", false);
+        SaveStateToJson(SavedDir + "/" + DataName + "AutoSave.json", false);
     }
     else
         SaveStateToJson(ToolPresetPath, false);
@@ -315,9 +315,9 @@ void UToolData::AutoSave()
 TSharedPtr<FJsonObject> UToolData::OpenMetaDataJson()
 {
     auto ThisPlugin = IPluginManager::Get().FindPlugin("CradleLightControl");
-    auto Content = ThisPlugin->GetContentDir();
+    auto SavedDir = ThisPlugin->GetBaseDir() + "/Saved";
     FString Input;
-    if (FFileHelper::LoadFileToString(Input, *(Content + "/" + DataName + "MetaData.json")))
+    if (FFileHelper::LoadFileToString(Input, *(SavedDir + "/" + DataName + "MetaData.json")))
     {
         TSharedPtr<FJsonObject> JsonRoot;
         TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(Input);
@@ -334,7 +334,7 @@ void UToolData::SaveMetaData()
 {
     UE_LOG(LogTemp, Display, TEXT("Saving light control meta data."));
     auto ThisPlugin = IPluginManager::Get().FindPlugin("CradleLightControl");
-    auto Content = ThisPlugin->GetContentDir();
+    auto SavedDir = ThisPlugin->GetBaseDir() + "/Saved";
 
     TSharedPtr<FJsonObject> RootObject = MakeShared<FJsonObject>();
 
@@ -346,7 +346,7 @@ void UToolData::SaveMetaData()
     TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&Output);
     FJsonSerializer::Serialize(RootObject.ToSharedRef(), Writer);
 
-    FFileHelper::SaveStringToFile(Output, *(Content + "/" + DataName + "MetaData.json"));
+    FFileHelper::SaveStringToFile(Output, *(SavedDir + "/" + DataName + "MetaData.json"));
 }
 
 void UToolData::LoadMetaData()
@@ -365,8 +365,8 @@ void UToolData::LoadMetaData()
         else
         {
             auto ThisPlugin = IPluginManager::Get().FindPlugin("CradleLightControl");
-            auto Content = ThisPlugin->GetContentDir();
-            LoadStateFromJSON(Content + "/" + DataName + "AutoSave" + ".json", false);
+            auto SavedDir = ThisPlugin->GetBaseDir() + "/Saved";
+            LoadStateFromJSON(SavedDir + "/" + DataName + "AutoSave" + ".json", false);
         }
     }
     else

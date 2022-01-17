@@ -3,9 +3,8 @@
 #include "BaseLight.h"
 #include "ToolData.h"
 
-//#include "LightControlTool.h"
+#include "CradleLightControl.h"
 
-#include "Styling/SlateIconFinder.h"
 
 ECheckBoxState UItemHandle::IsLightEnabled() const
 {
@@ -13,9 +12,11 @@ ECheckBoxState UItemHandle::IsLightEnabled() const
 
     if (Type != Folder)
     {
+        // If the item is not a group, we just check if the item is On or Off and decide based on that
         return Item->IsEnabled() ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
     }
 
+    // If the item is a group, we need to see the state of all its children to decide on the state
     for (auto& Child : Children)
     {
         auto State = Child->IsLightEnabled();
@@ -26,6 +27,7 @@ ECheckBoxState UItemHandle::IsLightEnabled() const
         else if (State == ECheckBoxState::Undetermined)
             return ECheckBoxState::Undetermined;
 
+        // Are there both On and Off lights? Then we go with undetermined
         if (!AllOff && !AllOn)
             return ECheckBoxState::Undetermined;
     }
@@ -46,12 +48,13 @@ void UItemHandle::OnCheck(ECheckBoxState NewState)
 
     GEditor->BeginTransaction(FText::FromString(Name + " State change"));
 
-    if (Item)
+    if (Type != Folder)
     {
 		Item->SetEnabled(B);	    
     }
     else
     {
+        // Change the state of all children if this is a group, recursively
 	    for (auto& Child : Children)
 	    {
             Child->OnCheck(NewState);
@@ -100,6 +103,7 @@ bool UItemHandle::HasAsIndirectChild(UItemHandle* ItemHandle)
     if (Children.Find(ItemHandle) != INDEX_NONE)
         return true;
 
+    // Check the children recursively
     for (auto TreeItem : Children)
     {
         if (TreeItem->HasAsIndirectChild(ItemHandle))
@@ -112,7 +116,6 @@ bool UItemHandle::HasAsIndirectChild(UItemHandle* ItemHandle)
 FReply UItemHandle::StartRename(const FGeometry&, const FPointerEvent&)
 {
     bInRename = true;
-    //GenerateTableRow();
     return FReply::Handled();
 }
 
@@ -124,9 +127,7 @@ void UItemHandle::EndRename(const FText& Text, ETextCommit::Type CommitType)
         Name = Text.ToString();
     }
 
-
     bInRename = false;
-    //GenerateTableRow();
 }
 
 TSharedPtr<FJsonValue> UItemHandle::SaveToJson()
@@ -142,17 +143,12 @@ TSharedPtr<FJsonValue> UItemHandle::SaveToJson()
     JsonItem->SetBoolField("Expanded", bExpanded);
     if (Type != Folder)
     {
-        JsonItem->SetObjectField("Item", Item->SaveAsJson());/*
-        Item->SetStringField("RelatedLightName", SkyLight->GetName());
-        Item->SetNumberField("State", ItemState);
-        Item->SetNumberField("Intensity", Intensity);
-        Item->SetNumberField("Hue", Hue);
-        Item->SetNumberField("Saturation", Saturation);
-        Item->SetBoolField("UseTemperature", bUseTemperature);
-        Item->SetNumberField("Temperature", Temperature);*/
+        // If this is not a group, we save the item held by the handle
+        JsonItem->SetObjectField("Item", Item->SaveAsJson());    
     }
     else
     {
+        // Otherwise we save all of its child handles
         TArray<TSharedPtr<FJsonValue>> ChildrenJson;
 
         for (auto Child : Children)
@@ -180,7 +176,7 @@ UItemHandle::ELoadingResult UItemHandle::LoadFromJson(TSharedPtr<FJsonObject> Js
     {
         if (!GWorld)
         {
-            UE_LOG(LogTemp, Error, TEXT("There was an error with the engine. Try loading again. If the issue persists, restart the engine."));
+            UE_LOG(LogCradleLightControl, Error, TEXT("There was an error with the engine. Try loading again. If the issue persists, restart the engine."));
             return EngineError;
         }
 
@@ -195,10 +191,11 @@ UItemHandle::ELoadingResult UItemHandle::LoadFromJson(TSharedPtr<FJsonObject> Js
         {
             const TSharedPtr<FJsonObject>* ChildObjectPtr;
             auto Success = Child->TryGetObject(ChildObjectPtr);
+            check(Success);
+
             auto ChildObject = *ChildObjectPtr;
-            _ASSERT(Success);
             int ChildType = ChildObject->GetNumberField("Type");
-            auto ChildItem = ToolData->AddItem(ChildType == 0);
+            auto ChildItem = ToolData->AddItem(ChildType == Folder); 
 
             ChildItem->Parent = this;
 
@@ -237,6 +234,7 @@ FReply UItemHandle::RemoveFromTree()
     BeginTransaction(false);
     if (Parent)
     {
+        // If this handle has a parent, we move all of its children to the parent
         Parent->BeginTransaction(false);
         for (auto Child : Children)
         {
@@ -249,6 +247,7 @@ FReply UItemHandle::RemoveFromTree()
     }
     else
     {
+        // If the handle is a root item, we make its children root items as well
         ToolData->BeginTransaction();
         for (auto Child : Children)
         {
@@ -361,11 +360,11 @@ void UItemHandle::BeginTransaction(bool bAffectItem, bool bAffectParent)
 void UItemHandle::PostTransacted(const FTransactionObjectEvent& TransactionEvent)
 {
     UObject::PostTransacted(TransactionEvent);
+    // Transactions with Item Handles may involve changes in the tree hierarchy, so we need to notify the tree widget about it
     if (TransactionEvent.GetEventType() == ETransactionObjectEventType::UndoRedo)
     {
         if (Type == Folder)
             ToolData->TreeStructureChangedDelegate.ExecuteIfBound();
-
-        //GenerateTableRow();
+        
     }
 }

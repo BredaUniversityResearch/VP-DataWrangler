@@ -13,6 +13,8 @@
 
 class UToolData;
 
+DECLARE_LOG_CATEGORY_EXTERN(LogCradleLightControl, Log, All)
+
 class CRADLELIGHTCONTROL_API FCradleLightControlModule : public IModuleInterface
 {
 public:
@@ -21,6 +23,7 @@ public:
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
 
+	// Shorthand to get the module instance if it is loaded
 	static FCradleLightControlModule& Get();
 
 	UToolData* GetVirtualLightToolData();

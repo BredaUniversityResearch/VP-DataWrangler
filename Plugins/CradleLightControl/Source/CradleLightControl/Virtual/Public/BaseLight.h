@@ -5,6 +5,9 @@
 
 #include "BaseLight.generated.h"
 
+// Base class representing a light in the tools' data.
+// Contains data that is common between virtual and DMX controlled lights, and interface functions for them
+
 UCLASS(BlueprintType)
 class UBaseLight : public UObject
 {
@@ -60,6 +63,11 @@ public:
     UFUNCTION(BlueprintCallable)
         virtual void SetCastShadows(bool bState);
 
+
+    // Horizontal and vertical rotation are done using addition to preserve
+    // relative rotation between lights when transforming multiple at a time
+
+
     UFUNCTION(BlueprintCallable)
         virtual void AddHorizontal(float NormalizedDegrees);
     UFUNCTION(BlueprintCallable)
@@ -69,12 +77,15 @@ public:
     UFUNCTION(BlueprintCallable)
         virtual void SetOuterConeAngle(float NewValue);
 
+    // Returns a JSON object representative of the light
     virtual TSharedPtr<FJsonObject> SaveAsJson();
-    virtual FPlatformTypes::uint8 LoadFromJson(TSharedPtr<FJsonObject> JsonObject);
+    // Loads light dta from the given JSON object
+    virtual uint8 LoadFromJson(TSharedPtr<FJsonObject> JsonObject);
 
     virtual void BeginTransaction();
     virtual void PostTransacted(const FTransactionObjectEvent& TransactionEvent) override;
 
+    // Get the RGB color of the light based on its hue and saturation
     FLinearColor GetRGBColor() const;
 
 
