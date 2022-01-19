@@ -213,7 +213,7 @@ void FCradleLightControlEditorModule::GenerateItemHandleWidget(UItemHandle* Item
 		{
 			// TODO: What if we have a group which contains, say, a point light and a group of point lights?
 			// Will the icon be mixed or point light? Need to test.
-			IconType = ItemHandle->Children[0]->Type; 
+			IconType = ItemHandle->Children[0]->Type;
 			for (size_t i = 1; i < ItemHandle->Children.Num(); i++)
 			{
 				if (IconType != ItemHandle->Children[i]->Type)
@@ -225,6 +225,8 @@ void FCradleLightControlEditorModule::GenerateItemHandleWidget(UItemHandle* Item
 		else
 			IconType = Mixed;
 	}
+	else
+		IconType = ItemHandle->Type;
 
 	ItemHandle->CheckBoxStyle = MakeCheckboxStyleForType(IconType);
 	ItemHandle->CheckBoxStyle.CheckedPressedImage = ItemHandle->CheckBoxStyle.UndeterminedImage;

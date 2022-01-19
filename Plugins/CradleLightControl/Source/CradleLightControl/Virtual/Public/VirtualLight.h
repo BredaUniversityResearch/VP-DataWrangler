@@ -59,6 +59,8 @@ public:
         class ASpotLight* SpotLight;
     };
 
+    class AActor* OriginalActor;
+
     UPROPERTY()
         bool bCastShadows;
 };

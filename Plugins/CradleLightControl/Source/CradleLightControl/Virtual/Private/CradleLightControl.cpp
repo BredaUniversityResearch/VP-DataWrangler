@@ -9,9 +9,13 @@
 #include "DesktopPlatformModule.h"
 #include "DMXLight.h"
 #include "IDesktopPlatform.h"
+#include "ItemHandle.h"
 
 #include "ToolData.h"
 #include "VirtualLight.h"
+#include "Engine/Light.h"
+
+#include "Kismet/GameplayStatics.h"
 
 // Core module for the plugin
 // Main purpose of the module is to create and manage the data that the plugin uses it,
@@ -38,6 +42,19 @@ void FCradleLightControlModule::StartupModule()
 	// in the garbage collector's hierarchy. Otherwise they will get garbage collected at some point while still in use.
 	VirtualLightToolData->AddToRoot();
 	DMXLightToolData->AddToRoot();
+
+
+	if (GEngine && GEngine->IsEditor())
+	{
+		FModuleManager::Get().LoadModule("CradleLightControlEditor");
+
+		FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &FCradleLightControlModule::OnWorldInitialized);
+
+		FWorldDelegates::OnWorldCleanup.AddRaw(this, &FCradleLightControlModule::OnWorldCleanup);
+
+		
+	}
+	
 }
 
 void FCradleLightControlModule::ShutdownModule()
@@ -67,6 +84,28 @@ UToolData* FCradleLightControlModule::GetVirtualLightToolData()
 UToolData* FCradleLightControlModule::GetDMXLightToolData()
 {
 	return DMXLightToolData;
+}
+
+void FCradleLightControlModule::OnWorldInitialized(UWorld* World, const UWorld::InitializationValues)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::White, "FWorldDelegates::OnPostDuplicate called");
+
+	TArray<AActor*> Lights;
+	UGameplayStatics::GetAllActorsOfClass(World, ALight::StaticClass(), Lights);
+
+
+	for (auto& RootItem : VirtualLightToolData->RootItems)
+	{
+		RootItem->UpdateVirtualLights(Lights);
+	}
+}
+
+void FCradleLightControlModule::OnWorldCleanup(UWorld*, bool, bool)
+{
+	for (auto& RootItem : VirtualLightToolData->RootItems)
+	{
+		RootItem->RestoreVirtualLightReferences();
+	}
 }
 
 

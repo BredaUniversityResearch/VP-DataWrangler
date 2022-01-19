@@ -50,6 +50,15 @@ public:
         SetFlags(GetFlags() | RF_Transactional);
     };
 
+    // For use with the virtual light control tool. Used when starting a play session to update the light actor references.
+    // This is necessary because when a play session is started, levels are duplicated, so all actor references are technically invalid in the context of the play session.
+    // Takes an array of AActor*, for ease of use with UGameplayStatics::GetAllActorsOfClass();
+    void UpdateVirtualLights(TArray<AActor*>& ActorLights);
+
+    // FOr use with the virtual light control tool. Used when a play session is ended and the engine returns to the level editor.
+    // Necessary in order to restore the light actor pointers in the tool to the ones from the original level.
+    void RestoreVirtualLightReferences();
+
     // Used for checkboxes because checkboxes have 3 states
     ECheckBoxState IsLightEnabled() const;
     void OnCheck(ECheckBoxState NewState);

@@ -32,6 +32,9 @@ public:
 
 private:
 
+	void OnWorldInitialized(UWorld* World, const UWorld::InitializationValues);
+	void OnWorldCleanup(UWorld*, bool, bool);
+
 	UToolData* VirtualLightToolData;
 	UToolData* DMXLightToolData;
 };

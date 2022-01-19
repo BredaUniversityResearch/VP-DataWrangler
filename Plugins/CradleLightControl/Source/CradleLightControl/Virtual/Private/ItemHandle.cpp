@@ -1,10 +1,51 @@
 #include "ItemHandle.h"
 
-#include "BaseLight.h"
+#include "VirtualLight.h"
 #include "ToolData.h"
 
 #include "CradleLightControl.h"
 
+
+void UItemHandle::UpdateVirtualLights(TArray<AActor*>& ActorLights)
+{
+    auto VLight = Cast<UVirtualLight>(Item);
+    if (VLight && VLight->ActorPtr)
+    {
+        auto LightName = VLight->ActorPtr->GetName();
+        for (auto& L : ActorLights)
+        {
+            if (LightName == L->GetName())
+            {
+                VLight->OriginalActor = VLight->ActorPtr;
+                VLight->ActorPtr = L;
+                break;
+            }
+        }
+    }
+    else
+    {
+	    for (auto& Child : Children)
+	    {
+            Child->UpdateVirtualLights(ActorLights);
+	    }
+    }
+}
+
+void UItemHandle::RestoreVirtualLightReferences()
+{
+    auto VLight = Cast<UVirtualLight>(Item);
+    if (VLight && VLight->ActorPtr)
+    {
+    	VLight->ActorPtr = VLight->OriginalActor;
+    }
+    else
+    {
+        for (auto& Child : Children)
+        {
+            Child->RestoreVirtualLightReferences();
+        }
+    }
+}
 
 ECheckBoxState UItemHandle::IsLightEnabled() const
 {

@@ -117,10 +117,7 @@ void SLightControlTool::Construct(const FArguments& Args, UToolData* InToolData)
         UpdateLightList();
     }
 
-    OnWorldCleanupStartedDelegate = FWorldDelegates::OnWorldCleanup.AddLambda([this](UWorld*, bool, bool)
-        {
-            ToolData->bCurrentlyLoading = true;
-        });
+    
 
     FWorldDelegates::OnWorldCleanup.AddLambda([this](UWorld*, bool, bool)
         {
@@ -296,7 +293,7 @@ void SLightControlTool::UpdateLightList()
 
 void SLightControlTool::UpdateItemData(UItemHandle* ItemHandle)
 {
-    _ASSERT(Type != Folder);
+    check(ItemHandle->Type != Folder);
     auto Item = Cast<UVirtualLight>(ItemHandle->Item);
     FLinearColor RGB;
 
@@ -372,6 +369,7 @@ void SLightControlTool::VerifyTreeData()
 {
     if (ToolData->bCurrentlyLoading)
         return;
+    
     GEngine->AddOnScreenDebugMessage(-1, 0.5f, FColor::Blue, "Cleaning invalid lights");
     TArray<UItemHandle*> ToRemove;
     for (auto ItemHandle : ToolData->ListOfLightItems)
