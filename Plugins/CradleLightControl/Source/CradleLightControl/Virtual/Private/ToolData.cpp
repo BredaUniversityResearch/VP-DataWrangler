@@ -280,7 +280,7 @@ void UToolData::LoadStateFromJSON(FString Path, bool bUpdatePresetPath)
 
         for (auto TreeItem : RootItems)
         {
-            TreeItem->ExpandInTree();
+            ItemExpansionChangedDelegate.ExecuteIfBound(TreeItem, true);
         }
         OnToolDataLoaded.ExecuteIfBound(LoadingResult);
      

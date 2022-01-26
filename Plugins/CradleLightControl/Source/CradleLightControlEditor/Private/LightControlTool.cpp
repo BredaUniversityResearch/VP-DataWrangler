@@ -241,7 +241,7 @@ void SLightControlTool::UpdateLightList()
         UpdateItemData(NewItem->Handle);
 
         ToolData->RootItems.Add(NewItem->Handle);
-        FCradleLightControlEditorModule::Get().GenerateItemHandleWidget(NewItem->Handle);
+        TreeWidget->GenerateWidgetForItem(NewItem->Handle);
     }
 
     // Fetch Sky Lights
@@ -255,7 +255,7 @@ void SLightControlTool::UpdateLightList()
         UpdateItemData(NewItem->Handle);
 
         ToolData->RootItems.Add(NewItem->Handle);
-        FCradleLightControlEditorModule::Get().GenerateItemHandleWidget(NewItem->Handle);
+        TreeWidget->GenerateWidgetForItem(NewItem->Handle);
     }
 
     // Fetch Directional Lights
@@ -270,7 +270,7 @@ void SLightControlTool::UpdateLightList()
         UpdateItemData(NewItem->Handle);
 
         ToolData->RootItems.Add(NewItem->Handle);
-        FCradleLightControlEditorModule::Get().GenerateItemHandleWidget(NewItem->Handle);
+        TreeWidget->GenerateWidgetForItem(NewItem->Handle);
     }
 
     // Fetch Spot Lights
@@ -285,7 +285,7 @@ void SLightControlTool::UpdateLightList()
         UpdateItemData(NewItem->Handle);
 
         ToolData->RootItems.Add(NewItem->Handle);
-        FCradleLightControlEditorModule::Get().GenerateItemHandleWidget(NewItem->Handle);
+        TreeWidget->GenerateWidgetForItem(NewItem->Handle);
     }
 
     TreeWidget->Tree->RequestTreeRefresh();
@@ -453,6 +453,7 @@ SVerticalBox::FSlot& SLightControlTool::LightHeader()
         [
             SAssignNew(ItemHeader, SLightItemHeader)
             .ToolData(ToolData)
+			.TreeHierarchyWidget(TreeWidget)
         ];
 
     //UpdateLightHeader();
