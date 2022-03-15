@@ -57,13 +57,6 @@ void SLightControlTool::Construct(const FArguments& Args, UToolData* InToolData)
     
     ToolData->LoadMetaData();
 
-
-    // Build a database from what is in the level if there wasn't a file to recover from
-    if (ToolData->RootItems.Num() == 0)
-    {
-        UpdateLightList();
-    }
-
     DataAutoSaveTimer = RegisterActiveTimer(300.0f, FWidgetActiveTimerDelegate::CreateLambda([this](double, float)
         {
             ToolData->AutoSave();
@@ -118,8 +111,11 @@ void SLightControlTool::Construct(const FArguments& Args, UToolData* InToolData)
         ]
     ];
 
-
-    
+    // Build a database from what is in the level if there wasn't a file to recover from
+    if (ToolData->RootItems.Num() == 0)
+    {
+        UpdateLightList();
+    }
 
     FWorldDelegates::OnWorldCleanup.AddLambda([this](UWorld*, bool, bool)
         {
@@ -243,7 +239,8 @@ void SLightControlTool::UpdateLightList()
         UpdateItemData(NewItem->Handle);
 
         ToolData->RootItems.Add(NewItem->Handle);
-        TreeWidget->GenerateWidgetForItem(NewItem->Handle);
+
+    	TreeWidget->GenerateWidgetForItem(NewItem->Handle);
     }
 
     // Fetch Sky Lights
