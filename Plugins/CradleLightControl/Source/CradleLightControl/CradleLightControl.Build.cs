@@ -4,23 +4,11 @@ using UnrealBuildTool;
 
 public class CradleLightControl : ModuleRules
 {
-    string SourceCodeDir()
-    {
-        return PluginDirectory + "/Source/CradleLightControl/";
-
-    }
 	public CradleLightControl(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 
-        PublicIncludePaths.AddRange(
-			new string[] {
-				SourceCodeDir() + "Virtual/Public",
-				SourceCodeDir() + "DMX/Public",
-				//"../Virtual/Public"
-                // ... add public include paths required here ...
-			}
-			);
+        PublicIncludePaths.AddRange(new string[] {});
 				
 		
 		PrivateIncludePaths.AddRange(
@@ -33,38 +21,20 @@ public class CradleLightControl : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"Core",
-                "DMXProtocol",
-                "DMXProtocolEditor",
-                "DMXRuntime"
+		        //"DMXProtocol",
+          //      "DMXProtocolEditor",
+          //      "DMXRuntime"
 				// ... add other public dependencies that you statically link with here ...
 			}
-			);
+		);
 			
 		
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
+				"Core",
 				"CoreUObject",
 				"Engine",
-				"UnrealEd",
-				"Slate",
-				"SlateCore",
-                "InputCore", 
-				"Projects",
-				"RHI",
-				"RenderCore",
-				"AppFramework",
-				"Json",
-				"EditorStyle",
-				"DesktopPlatform",
-                "DMXProtocol",
-                "DMXProtocolEditor",
-                "DMXRuntime",
-				"PropertyEditor",
-				"DetailCustomizations",
-				"AssetTools"
-
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
