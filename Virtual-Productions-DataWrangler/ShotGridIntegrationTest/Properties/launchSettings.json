@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ShotGridIntegrationTest": {
+      "commandName": "Project",
+      "commandLineArgs": "credentialsFile=$(SolutionDir)/test_cred.json"
+    }
+  }
+}
