@@ -4,3 +4,5 @@ TestResults/
 **/bin/
 
 *.user
+
+ShotGridIntegrationTest/test_credentials.json
