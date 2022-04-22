@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ShotGridIntegration
+﻿namespace ShotGridIntegration
 {
-	internal class ShotGridAuthentication
+	public class ShotGridAuthentication
 	{
 		public readonly DateTime ExpiryTime;
 		public readonly string AccessToken;

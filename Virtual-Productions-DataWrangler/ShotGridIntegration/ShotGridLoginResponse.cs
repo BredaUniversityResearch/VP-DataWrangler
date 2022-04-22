@@ -3,12 +3,12 @@
 	public class ShotGridLoginResponse
 	{
 		public readonly bool Success;
-		public string? FailureReason;
+		public ShotGridErrorResponse? ErrorResponse;
 
-		public ShotGridLoginResponse(bool a_success, string? a_failureReason)
+		public ShotGridLoginResponse(bool a_success, ShotGridErrorResponse? a_errorResponse)
 		{
 			Success = a_success;
-			FailureReason = a_failureReason;
+			ErrorResponse = a_errorResponse;
 		}
 	}
 }

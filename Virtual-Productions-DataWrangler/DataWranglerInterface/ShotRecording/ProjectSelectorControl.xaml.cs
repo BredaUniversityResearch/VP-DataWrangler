@@ -1,7 +1,7 @@
 ﻿using System.Windows.Controls;
 using ShotGridIntegration;
 
-namespace DataWranglerInterface.ShotRecordingPage
+namespace DataWranglerInterface.ShotRecording
 {
 	public partial class ProjectSelectorControl : UserControl
 	{
@@ -33,13 +33,17 @@ namespace DataWranglerInterface.ShotRecordingPage
 
 				if (a_task.Result != null)
 				{
-					foreach (ShotGridEntityProject project in a_task.Result)
+					ProjectListDropDown.Dispatcher.Invoke(() =>
 					{
-						if (project.Attributes.Name != null)
+						foreach (ShotGridEntityProject project in a_task.Result)
 						{
-							ProjectListDropDown.Items.Add(new ProjectSelectionEntry(project.Id, project.Attributes.Name));
+							if (project.Attributes.Name != null)
+							{
+								ProjectListDropDown.Items.Add(new ProjectSelectionEntry(project.Id,
+									project.Attributes.Name));
+							}
 						}
-					}
+					});
 				}
 			});
 		}

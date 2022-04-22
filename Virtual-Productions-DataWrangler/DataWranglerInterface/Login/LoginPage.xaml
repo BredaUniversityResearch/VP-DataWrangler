@@ -3,25 +3,40 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:dataWranglerInterface="clr-namespace:DataWranglerInterface"
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
       Title="LoginPage">
 
 	<Grid>
+		<Grid>
+			<dataWranglerInterface:LoadingSpinner></dataWranglerInterface:LoadingSpinner>
+		</Grid>
+
 		<Grid HorizontalAlignment="Center" VerticalAlignment="Center">
 			<Grid.ColumnDefinitions>
 				<ColumnDefinition />
 				<ColumnDefinition />
 			</Grid.ColumnDefinitions>
 			<Grid.RowDefinitions>
-				<RowDefinition />
-				<RowDefinition />
+				<RowDefinition Height="1*"/>
+				<RowDefinition Height="1*"/>
+				<RowDefinition Height="1*"/>
+				<RowDefinition Height="2*"/>
 			</Grid.RowDefinitions>
 			<TextBlock Grid.Row="0" Grid.Column="0">User</TextBlock>
-			<TextBox x:Name="UserName" HorizontalAlignment="Left" VerticalAlignment="Top" Width="120" Grid.Row="0" Grid.Column="1"/>
+			<TextBox x:Name="Username" HorizontalAlignment="Left" VerticalAlignment="Top" Width="120" Grid.Row="0" Grid.Column="1"/>
 			<TextBlock Grid.Row="1" Grid.Column="0">Password</TextBlock>
-			<PasswordBox x:Name="PassWord" HorizontalAlignment="Left" VerticalAlignment="Top" Width="120" Grid.Row="1" Grid.Column="1"/>
+			<PasswordBox x:Name="Password" HorizontalAlignment="Left" VerticalAlignment="Top" Width="120" Grid.Row="1" Grid.Column="1"/>
+			<Button x:Name="LoginButton" Content="Login" Grid.Row="2" Grid.ColumnSpan="2" Grid.Column="0"></Button>
+			<Border x:Name="LoginErrorContainer" Grid.Row="3" Grid.ColumnSpan="2" Grid.Column="0" BorderBrush="Red" BorderThickness="2,2,2,2">
+				<TextBlock x:Name="LoginErrorMessage">Errors go here</TextBlock>
+			</Border>
 		</Grid>
+		<Grid>
+			<dataWranglerInterface:LoadingSpinner></dataWranglerInterface:LoadingSpinner>
+		</Grid>
+
 
 	</Grid>
 </Page>

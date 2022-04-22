@@ -21,6 +21,6 @@ namespace ShotGridIntegration
 		[JsonProperty("id")]
 		public int Id;
 		[JsonProperty("links")]
-		public EntityLinks Links;
+		public EntityLinks Links = new EntityLinks();
 	}
 }

@@ -9,8 +9,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ShotGridIntegration", "Shot
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ShotGridIntegrationTest", "ShotGridIntegrationTest\ShotGridIntegrationTest.csproj", "{C0361CCF-AA72-42AE-9BF7-DA0E2E27C64D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WpfApp1", "WpfApp1\WpfApp1.csproj", "{16C5DE83-B966-459E-97DB-2181DC5EC99E}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,10 +27,6 @@ Global
 		{C0361CCF-AA72-42AE-9BF7-DA0E2E27C64D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C0361CCF-AA72-42AE-9BF7-DA0E2E27C64D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C0361CCF-AA72-42AE-9BF7-DA0E2E27C64D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{16C5DE83-B966-459E-97DB-2181DC5EC99E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{16C5DE83-B966-459E-97DB-2181DC5EC99E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{16C5DE83-B966-459E-97DB-2181DC5EC99E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{16C5DE83-B966-459E-97DB-2181DC5EC99E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,6 +1,6 @@
 ﻿using System.Windows.Controls;
 
-namespace DataWranglerInterface.ShotRecordingPage
+namespace DataWranglerInterface.ShotRecording
 {
 	/// <summary>
 	/// Interaction logic for ShotRecordingPage.xaml
@@ -10,6 +10,8 @@ namespace DataWranglerInterface.ShotRecordingPage
 		public ShotRecordingPage()
 		{
 			InitializeComponent();
+
+			ProjectSelector.AsyncRefreshProjects();
 		}
 	}
 }

@@ -15,6 +15,7 @@ namespace ShotGridIntegration
 		private HttpClient m_client = new HttpClient();
 		private ShotGridAuthentication? m_authentication = null;
 
+		//Password is the ShotGrid passphrase, NOT the Autodesk ID password.
 		public async Task<ShotGridLoginResponse> TryLogin(string a_username, string a_password)
 		{
 			Dictionary<string, string> loginHeaders = new Dictionary<string, string>
@@ -53,7 +54,9 @@ namespace ShotGridIntegration
 			string responseString = await responseAuth.Content.ReadAsStringAsync();
 			if (!responseAuth.IsSuccessStatusCode)
 			{
-				return new ShotGridLoginResponse(false, $"Bad response code: {responseAuth.StatusCode} Full response: {responseString}");
+				ShotGridErrorResponse? errorResponse = JsonConvert.DeserializeObject<ShotGridErrorResponse>(responseString);
+
+				return new ShotGridLoginResponse(false, errorResponse);
 			}
 
 			APIAuthResponse? deserializedResponse = JsonConvert.DeserializeObject<APIAuthResponse>(responseString);
@@ -64,7 +67,7 @@ namespace ShotGridIntegration
 			}
 			else
 			{
-				return new ShotGridLoginResponse(false, $"Bad response: {responseString}");
+				return new ShotGridLoginResponse(false, null);
 			}
 		}
 
@@ -110,6 +113,16 @@ namespace ShotGridIntegration
 			HttpResponseMessage response = await m_client.SendAsync(request);
 			string result = await response.Content.ReadAsStringAsync();
 			return result;
+		}
+
+		public ShotGridAuthentication GetCurrentCredentials()
+		{
+			if (m_authentication == null)
+			{
+				throw new Exception("User not logged in");
+			}
+
+			return m_authentication;
 		}
 	}
 }
