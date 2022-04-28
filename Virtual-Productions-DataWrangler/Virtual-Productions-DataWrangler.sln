@@ -9,6 +9,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ShotGridIntegration", "Shot
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ShotGridIntegrationTest", "ShotGridIntegrationTest\ShotGridIntegrationTest.csproj", "{C0361CCF-AA72-42AE-9BF7-DA0E2E27C64D}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlackmagicCameraControl", "BlackmagicCameraControl\BlackmagicCameraControl.csproj", "{46399D93-F385-435B-9EAB-51FE22F19E83}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlackmagicCameraControlTest", "BlackmagicCameraControlTest\BlackmagicCameraControlTest.csproj", "{08181176-081A-4F40-84DF-3AC4C618F86A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +31,14 @@ Global
 		{C0361CCF-AA72-42AE-9BF7-DA0E2E27C64D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C0361CCF-AA72-42AE-9BF7-DA0E2E27C64D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C0361CCF-AA72-42AE-9BF7-DA0E2E27C64D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{46399D93-F385-435B-9EAB-51FE22F19E83}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{46399D93-F385-435B-9EAB-51FE22F19E83}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{46399D93-F385-435B-9EAB-51FE22F19E83}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{46399D93-F385-435B-9EAB-51FE22F19E83}.Release|Any CPU.Build.0 = Release|Any CPU
+		{08181176-081A-4F40-84DF-3AC4C618F86A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{08181176-081A-4F40-84DF-3AC4C618F86A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{08181176-081A-4F40-84DF-3AC4C618F86A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{08181176-081A-4F40-84DF-3AC4C618F86A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
