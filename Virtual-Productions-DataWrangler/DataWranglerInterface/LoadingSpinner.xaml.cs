@@ -16,7 +16,7 @@ using System.Windows.Shapes;
 namespace DataWranglerInterface
 {
 	/// <summary>
-	/// Interaction logic for LoadingSpinner.xaml
+	/// Interaction logic for LoadingSpinnerInstance.xaml
 	/// </summary>
 	public partial class LoadingSpinner : UserControl
 	{

@@ -1,19 +1,20 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
 using System.Threading.Tasks;
 using Windows.Devices.Bluetooth;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
 using Windows.Foundation;
+using Windows.Storage.Streams;
 using BlackmagicCameraControl.CommandPackets;
+using WinRT;
+using Buffer = Windows.Storage.Streams.Buffer;
 
 namespace BlackmagicCameraControl
 {
-	internal class BluetoothCameraConnection: IDisposable
+	internal class BluetoothCameraConnection : IDisposable
 	{
 		public enum EConnectionState
 		{
@@ -36,6 +37,7 @@ namespace BlackmagicCameraControl
 		private readonly GattDeviceService m_blackmagicService;
 		private GattCharacteristic? m_blackmagicServiceOutgoingCameraControl;
 		private GattCharacteristic? m_blackmagicServiceIncomingCameraControl;
+		private GattCharacteristic? m_blackmagicServiceTimecode;
 
 		private Task? m_connectingTask = null;
 
@@ -48,46 +50,53 @@ namespace BlackmagicCameraControl
 			m_deviceInformationService = a_deviceInformationService;
 			m_blackmagicService = a_blackmagicService;
 
-			m_connectingTask = Task.Run(async () => {
-				GattCharacteristicsResult characteristics = await m_deviceInformationService.GetCharacteristicsAsync(BluetoothCacheMode.Cached);
+			m_connectingTask = Task.Run(async () =>
+			{
+				GattCharacteristicsResult characteristics = await m_deviceInformationService.GetCharacteristicsAsync(BluetoothCacheMode.Uncached);
 				if (characteristics.Status == GattCommunicationStatus.Success)
 				{
 					foreach (GattCharacteristic characteristic in characteristics.Characteristics)
 					{
 						if (characteristic.Uuid ==
-						    BlackmagicCameraBluetoothGUID.DeviceInformationService_CameraManufacturer)
+							BlackmagicCameraBluetoothGUID.DeviceInformationService_CameraManufacturer)
 						{
 							m_deviceInformationCameraManufacturer = characteristic;
 						}
 						else if (characteristic.Uuid ==
-						         BlackmagicCameraBluetoothGUID.DeviceInformationService_CameraModel)
+								 BlackmagicCameraBluetoothGUID.DeviceInformationService_CameraModel)
 						{
 							m_deviceInformationCameraModel = characteristic;
 						}
 					}
 					GattCharacteristicsResult blackmagicCharacteristics = await m_blackmagicService.GetCharacteristicsAsync(BluetoothCacheMode.Cached);
 
-					if (characteristics.Status == GattCommunicationStatus.Success)
+					if (blackmagicCharacteristics.Status == GattCommunicationStatus.Success)
 					{
 						foreach (GattCharacteristic characteristic in blackmagicCharacteristics.Characteristics)
 						{
 							if (characteristic.Uuid ==
-							    BlackmagicCameraBluetoothGUID.BlackmagicService_IncomingCameraControl)
+								BlackmagicCameraBluetoothGUID.BlackmagicService_IncomingCameraControl)
 							{
 								m_blackmagicServiceIncomingCameraControl = characteristic;
 							}
 							else if (characteristic.Uuid ==
-							         BlackmagicCameraBluetoothGUID.BlackmagicService_OutgoingCameraControl)
+									 BlackmagicCameraBluetoothGUID.BlackmagicService_OutgoingCameraControl)
 							{
 								m_blackmagicServiceOutgoingCameraControl = characteristic;
+							}
+							else if (characteristic.Uuid ==
+							         BlackmagicCameraBluetoothGUID.BlackmagicService_Timecode)
+							{
+								m_blackmagicServiceTimecode = characteristic;
 							}
 						}
 					}
 				}
 
 				if (m_deviceInformationCameraManufacturer != null && m_deviceInformationCameraModel != null &&
-				    m_blackmagicServiceOutgoingCameraControl != null &&
-				    m_blackmagicServiceIncomingCameraControl != null)
+					m_blackmagicServiceOutgoingCameraControl != null &&
+					m_blackmagicServiceIncomingCameraControl != null &&
+					m_blackmagicServiceTimecode != null)
 				{
 					SubscribeToIncomingServices();
 					ConnectionState = EConnectionState.Connected;
@@ -107,27 +116,52 @@ namespace BlackmagicCameraControl
 			m_connectingTask?.Dispose();
 		}
 
-		public void WaitForConnection(TimeSpan a_timeout)
+		public bool WaitForConnection(TimeSpan a_timeout)
 		{
 			if (m_connectingTask != null)
 			{
-				if (!m_connectingTask.Wait(a_timeout))
-				{
-					throw new TimeoutException("Failed to connect to device in time");
-				}
+				return m_connectingTask.Wait(a_timeout);
 			}
+
+			return ConnectionState == EConnectionState.Connected;
 		}
 
 		private void SubscribeToIncomingServices()
 		{
 			GattClientCharacteristicConfigurationDescriptorValue newValue = GattClientCharacteristicConfigurationDescriptorValue.Indicate;
-			
+
 			Debug.Assert(m_blackmagicServiceIncomingCameraControl != null, nameof(m_blackmagicServiceIncomingCameraControl) + " != null");
 
 			m_blackmagicServiceIncomingCameraControl.WriteClientCharacteristicConfigurationDescriptorAsync(newValue).Completed = (_, _) =>
 			{
 				m_blackmagicServiceIncomingCameraControl.ValueChanged += OnReceivedIncomingCameraControl;
 			};
+
+			m_blackmagicServiceTimecode
+					.WriteClientCharacteristicConfigurationDescriptorAsync(
+						GattClientCharacteristicConfigurationDescriptorValue.Notify).Completed =
+				(a_result, _) => {
+					if (a_result.Status == AsyncStatus.Completed)
+					{
+						m_blackmagicServiceTimecode.ValueChanged += OnReceivedTimecode;
+					}
+					else
+					{
+						BlackmagicCameraLogInterface.LogError("Failed to subscribe to camera timecode service");
+					}
+				};
+		}
+
+		private void OnReceivedTimecode(GattCharacteristic a_sender, GattValueChangedEventArgs a_args)
+		{
+			using (Stream inputData = a_args.CharacteristicValue.AsStream())
+			{
+				CommandReader reader = new CommandReader(inputData);
+				reader.ReadInt32();
+				reader.ReadInt32();
+				int binaryTimecode = reader.ReadInt32();
+
+			}
 		}
 
 		private void OnReceivedIncomingCameraControl(GattCharacteristic a_sender, GattValueChangedEventArgs a_args)
@@ -135,7 +169,7 @@ namespace BlackmagicCameraControl
 			//Deserialize and dispatch events.
 			using (Stream inputData = a_args.CharacteristicValue.AsStream())
 			{
-				CommandReader reader = new CommandReader(inputData); 
+				CommandReader reader = new CommandReader(inputData);
 				while (reader.BytesRemaining >= PacketHeader.ByteSize)
 				{
 					PacketHeader packetHeader = reader.ReadPacketHeader();
@@ -166,6 +200,81 @@ namespace BlackmagicCameraControl
 					}
 				}
 			}
+		}
+
+		public Task<string> AsyncRequestCameraModel()
+		{
+			if (m_deviceInformationCameraModel == null)
+			{
+				throw new Exception();
+			}
+
+			return Task.Run(async () =>
+				{
+					GattReadResult result = await m_deviceInformationCameraModel.ReadValueAsync(BluetoothCacheMode.Uncached);
+					string resultString = Encoding.UTF8.GetString(result.Value.ToArray());
+					return resultString;
+				}
+			);
+		}
+
+		public void AsyncSendCommand(ICommandPacketBase a_command)
+		{
+			if (m_blackmagicServiceOutgoingCameraControl == null)
+			{
+				throw new Exception("Tried to send command that is not properly connected");
+			}
+
+			CommandMeta? commandMeta = CommandPacketFactory.FindCommandMeta(a_command.GetType());
+			if (commandMeta == null)
+			{
+				throw new Exception("Tried to serialize command that is not known by factory");
+			}
+
+			long payloadSize = (CommandHeader.ByteSize + commandMeta.SerializedSizeBytes);
+			long paddedPayloadSize = ((payloadSize + 3) & ~3);
+			if (paddedPayloadSize > 0xFF)
+			{
+				throw new Exception("Command too big");
+			}
+
+			PacketHeader packetHeader = new PacketHeader
+			{
+				Command = EPacketCommand.ChangeConfig,
+				PacketSize = (byte)paddedPayloadSize,
+			};
+
+			CommandHeader commandHeader = new CommandHeader
+			{
+				CommandIdentifier = commandMeta.Identifier,
+				DataType = commandMeta.DataType,
+				Operation = ECommandOperation.Assign
+			};
+
+			using (MemoryStream ms = new MemoryStream(64))
+			{
+				CommandWriter writer = new CommandWriter(ms);
+				packetHeader.WriteTo(writer);
+				commandHeader.WriteTo(writer);
+				a_command.WriteTo(writer);
+
+				IBuffer sendBuffer = WindowsRuntimeBuffer.Create(ms.GetBuffer(), 0, (int)ms.Length, ms.Capacity);
+				m_blackmagicServiceOutgoingCameraControl
+					.WriteValueAsync(sendBuffer, GattWriteOption.WriteWithResponse).AsTask().ContinueWith(
+						(a_sendCommand) =>
+						{
+							if (a_sendCommand.Result != GattCommunicationStatus.Success)
+							{
+								BlackmagicCameraLogInterface.LogError(
+									$"Failed to write value to outgoing camera control. Command: {commandMeta.CommandType}");
+							}
+						});
+			}
+		}
+
+		public BluetoothLEDevice GetDevice()
+		{
+			return m_device;
 		}
 	}
 }

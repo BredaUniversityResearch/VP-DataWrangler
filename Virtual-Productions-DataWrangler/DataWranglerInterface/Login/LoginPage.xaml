@@ -9,10 +9,6 @@
       Title="LoginPage">
 
 	<Grid>
-		<Grid>
-			<dataWranglerInterface:LoadingSpinner></dataWranglerInterface:LoadingSpinner>
-		</Grid>
-
 		<Grid HorizontalAlignment="Center" VerticalAlignment="Center">
 			<Grid.ColumnDefinitions>
 				<ColumnDefinition />
@@ -34,7 +30,7 @@
 			</Border>
 		</Grid>
 		<Grid>
-			<dataWranglerInterface:LoadingSpinner></dataWranglerInterface:LoadingSpinner>
+			<dataWranglerInterface:LoadingSpinner x:Name="LoadingSpinnerInstance"/>
 		</Grid>
 
 

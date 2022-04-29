@@ -10,5 +10,12 @@ namespace BlackmagicCameraControl.CommandPackets
 		public CommandIdentifier CommandIdentifier;
 		public ECommandDataType DataType;
 		public ECommandOperation Operation;
+
+		public void WriteTo(CommandWriter a_writer)
+		{
+			a_writer.Write(CommandIdentifier);
+			a_writer.Write((byte) DataType);
+			a_writer.Write((byte) Operation);
+		}
 	}
 }

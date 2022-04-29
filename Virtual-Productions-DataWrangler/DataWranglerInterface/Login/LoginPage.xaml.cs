@@ -17,10 +17,11 @@ namespace DataWranglerInterface.Login
 		{
 			InitializeComponent();
 
+			LoadingSpinnerInstance.Visibility = Visibility.Hidden;
 			LoginErrorContainer.Visibility = Visibility.Hidden;
 
 			LoginButton.Click += AttemptLogin;
-			if (false && !string.IsNullOrEmpty(Properties.Settings.Default.OAuthRefreshToken))
+			if (!string.IsNullOrEmpty(Properties.Settings.Default.OAuthRefreshToken))
 			{
 				m_runningLoginTask =
 					DataWranglerServiceProvider.Instance.ShotGridAPI.TryLogin(Properties.Settings.Default
@@ -69,12 +70,16 @@ namespace DataWranglerInterface.Login
 				});
 			}
 
+			Dispatcher.Invoke(() => { 
+				LoadingSpinnerInstance.Visibility = Visibility.Hidden; 
+			});
+
 			m_runningLoginTask = null;
 		}
 
 		private void OnLoginAttemptStarted()
 		{
+			LoadingSpinnerInstance.Visibility = Visibility.Visible;
 		}
-
 	}
 }

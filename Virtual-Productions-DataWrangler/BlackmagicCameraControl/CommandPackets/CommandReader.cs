@@ -58,6 +58,17 @@ namespace BlackmagicCameraControl.CommandPackets
 			return result;
 		}
 
+		public byte ReadInt8()
+		{
+			int value = m_targetStream.ReadByte();
+			if (value == -1)
+			{
+				throw new Exception("Failed to read 1 byte for int8");
+			}
+
+			return (byte)value;
+		}
+
 		public short ReadInt16()
 		{
 			int readCount = m_targetStream.Read(m_smallReadBuffer, 0, 2);
@@ -67,6 +78,17 @@ namespace BlackmagicCameraControl.CommandPackets
 			}
 
 			return BitConverter.ToInt16(m_smallReadBuffer, 0);
+		}
+
+		public int ReadInt32()
+		{
+			int readCount = m_targetStream.Read(m_smallReadBuffer, 0, 4);
+			if (readCount != 4)
+			{
+				throw new Exception("Failed to read 4 bytes for int32");
+			}
+
+			return BitConverter.ToInt32(m_smallReadBuffer, 0);
 		}
 	}
 }

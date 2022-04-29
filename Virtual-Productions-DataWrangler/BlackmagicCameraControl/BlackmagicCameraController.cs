@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Security.Cryptography;
+using System.Threading;
+using System.Threading.Tasks;
 using Windows.Devices.Bluetooth;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
 using Windows.Devices.Enumeration;
@@ -11,11 +14,14 @@ namespace BlackmagicCameraControl
 {
 	public class BlackmagicCameraController: IDisposable
 	{
+		private static readonly TimeSpan ReconnectTimeout = new TimeSpan(0, 0, 5);
+		private static readonly TimeSpan ConnectTimeout = new TimeSpan(0, 0, 15);
+
 		public delegate void CameraConnectedDelegate(CameraHandle a_handle);
 		public delegate void CameraDataReceivedDelegate(CameraHandle a_handle, ICommandPacketBase a_packet);
 
 		private DeviceWatcher BLEDeviceWatcher = DeviceInformation.CreateWatcher(BluetoothLEDevice.GetDeviceSelectorFromPairingState(true));
-		private int m_LastUsedHandle = 0;
+		private int m_lastUsedHandle = 0;
 
 		private List<BluetoothCameraConnection> m_activeConnections = new List<BluetoothCameraConnection>();
 		private List<string> m_retryConnectionQueue = new List<string>();
@@ -25,15 +31,24 @@ namespace BlackmagicCameraControl
 		public event CameraConnectedDelegate OnCameraConnected = delegate { };
 		public event CameraDataReceivedDelegate OnCameraDataReceived = delegate { };
 
+		private Thread m_reconnectThread;
+		private CancellationTokenSource m_reconnectThreadCancellationToken;
+
 		public BlackmagicCameraController()
 		{
 			BLEDeviceWatcher.Added += OnDeviceAdded;
 			BLEDeviceWatcher.Removed += OnDeviceRemoved;
 			BLEDeviceWatcher.Start();
+
+			m_reconnectThreadCancellationToken = new CancellationTokenSource();
+			m_reconnectThread = new Thread(BackgroundReconnectTask);
+			m_reconnectThread.Start();
 		}
 
 		public void Dispose()
 		{
+			m_reconnectThreadCancellationToken.Cancel();
+
 			foreach (BluetoothCameraConnection connection in m_activeConnections)
 			{
 				connection.Dispose();
@@ -42,6 +57,33 @@ namespace BlackmagicCameraControl
 			m_activeConnections.Clear();
 
 			BLEDeviceWatcher.Stop();
+			m_reconnectThread.Join();
+		}
+
+		private void BackgroundReconnectTask()
+		{
+			while (!m_reconnectThreadCancellationToken.IsCancellationRequested)
+			{
+				if (m_retryConnectionQueue.Count > 0)
+				{
+					string deviceId = m_retryConnectionQueue[0];
+					m_retryConnectionQueue.RemoveAt(0);
+					Stopwatch sw = new Stopwatch();
+					sw.Start();
+					TryConnectToDevice(deviceId);
+					TimeSpan elapsedTime = sw.Elapsed;
+
+					TimeSpan timeToSleep = ReconnectTimeout - elapsedTime;
+					if (timeToSleep > TimeSpan.Zero)
+					{
+						m_reconnectThreadCancellationToken.Token.WaitHandle.WaitOne(timeToSleep);
+					}
+				}
+				else
+				{
+					m_reconnectThreadCancellationToken.Token.WaitHandle.WaitOne(ReconnectTimeout);
+				}
+			}
 		}
 
 		private void OnDeviceAdded(DeviceWatcher a_sender, DeviceInformation a_args)
@@ -89,26 +131,79 @@ namespace BlackmagicCameraControl
 
 					if (blackmagicService != null && deviceInformationService != null)
 					{
-						BluetoothCameraConnection deviceConnection = new BluetoothCameraConnection(this, new CameraHandle(++m_LastUsedHandle),
+						BluetoothCameraConnection deviceConnection = new BluetoothCameraConnection(this, new CameraHandle(++m_lastUsedHandle),
 							connectedDevice, deviceInformationService, blackmagicService);
-						deviceConnection.WaitForConnection(new TimeSpan(0, 0, 5));
-						if (deviceConnection.ConnectionState == BluetoothCameraConnection.EConnectionState.Connected)
+						if (deviceConnection.WaitForConnection(ConnectTimeout) && 
+						    deviceConnection.ConnectionState == BluetoothCameraConnection.EConnectionState.Connected)
 						{
 							m_activeConnections.Add(deviceConnection);
 							OnCameraConnected.Invoke(deviceConnection.CameraHandle);
 						}
 						else
 						{
-							m_retryConnectionQueue.Add(connectedDevice.DeviceId);
+							if (!m_retryConnectionQueue.Contains(connectedDevice.DeviceId))
+							{
+								m_retryConnectionQueue.Add(connectedDevice.DeviceId);
+							}
 						}
 						m_activeConnectingSet.Remove(a_deviceId);
 					}
 				};
 		}
 
+		private BluetoothCameraConnection? FindCameraByHandle(CameraHandle a_cameraHandle)
+		{
+			foreach (BluetoothCameraConnection connection in m_activeConnections)
+			{
+				if (connection.CameraHandle == a_cameraHandle)
+				{
+					return connection;
+				}
+			}
+
+			return null;
+		}
+
 		public void NotifyDataReceived(CameraHandle a_cameraHandle, ICommandPacketBase a_packetInstance)
 		{
 			OnCameraDataReceived.Invoke(a_cameraHandle, a_packetInstance);
+		}
+
+		public void AsyncRequestCameraName(CameraHandle a_cameraHandle)
+		{
+			throw new NotImplementedException();
+		}
+
+		public void AsyncRequestCameraModel(CameraHandle a_cameraHandle)
+		{
+			BluetoothCameraConnection? connection = FindCameraByHandle(a_cameraHandle);
+			if (connection != null)
+			{
+				connection.AsyncRequestCameraModel().ContinueWith((a_result) =>
+				{
+					OnCameraDataReceived.Invoke(a_cameraHandle, new CommandPacketCameraModel(a_result.Result));
+				});
+			}
+		}
+
+		public string GetBluetoothName(CameraHandle a_cameraHandle)
+		{
+			BluetoothCameraConnection? connection = FindCameraByHandle(a_cameraHandle);
+			if (connection != null)
+			{
+				return connection.GetDevice().Name;
+			}
+
+			return "Invalid Camera Handle";
+		}
+
+		public void AsyncSendCommand(CameraHandle a_cameraHandle, ICommandPacketBase a_command)
+		{
+			BluetoothCameraConnection? connection = FindCameraByHandle(a_cameraHandle);
+			if (connection != null)
+			{
+				connection.AsyncSendCommand(a_command);
+			}
 		}
 	}
 }

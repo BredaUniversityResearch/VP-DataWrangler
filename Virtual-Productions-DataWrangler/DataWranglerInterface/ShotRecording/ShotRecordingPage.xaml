@@ -11,6 +11,6 @@
 	<Grid>
 
 		<ShotRecordingPage:ProjectSelectorControl x:Name="ProjectSelector" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="256"/>
-
+		<ShotRecordingPage:CameraInfoDisplay x:Name="CameraInfo" HorizontalAlignment="Right" VerticalAlignment="Top"/>
 	</Grid>
 </Page>

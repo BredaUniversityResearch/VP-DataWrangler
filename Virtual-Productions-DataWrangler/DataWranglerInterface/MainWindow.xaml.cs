@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System.ComponentModel;
+using System.Windows;
 using DataWranglerInterface.Login;
 using DataWranglerInterface.ShotRecording;
 
@@ -29,6 +30,17 @@ namespace DataWranglerInterface
 				Content = m_shotRecordingPage;
 				m_loginPage = null;
 			});
+		}
+
+		protected override void OnClosing(CancelEventArgs e)
+		{
+			base.OnClosing(e);
+			Content = null;
+			if (m_shotRecordingPage != null)
+			{
+				m_shotRecordingPage.Dispose();
+				m_shotRecordingPage = null;
+			}
 		}
 	}
 }

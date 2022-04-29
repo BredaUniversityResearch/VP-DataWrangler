@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net6.0-windows</TargetFramework>
+    <TargetFramework>net6.0-windows10.0.19041</TargetFramework>
     <RootNamespace>DataWranglerInterface</RootNamespace>
     <Nullable>enable</Nullable>
     <UseWindowsForms>False</UseWindowsForms>
@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\BlackmagicCameraControl\BlackmagicCameraControl.csproj" />
     <ProjectReference Include="..\ShotGridIntegration\ShotGridIntegration.csproj" />
   </ItemGroup>
 

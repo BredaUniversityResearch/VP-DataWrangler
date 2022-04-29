@@ -8,5 +8,13 @@
 		public byte PacketSize = 0;
 		public EPacketCommand Command = EPacketCommand.ChangeConfig;
 		public byte Reserved = 0;
+
+		public void WriteTo(CommandWriter a_writer)
+		{
+			a_writer.Write(TargetCamera);
+			a_writer.Write(PacketSize);
+			a_writer.Write((byte)Command);
+			a_writer.Write(Reserved);
+		}
 	}
 }

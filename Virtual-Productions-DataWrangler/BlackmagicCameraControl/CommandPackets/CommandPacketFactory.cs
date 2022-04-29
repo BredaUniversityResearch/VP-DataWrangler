@@ -11,18 +11,6 @@ namespace BlackmagicCameraControl.CommandPackets
 {
 	internal static class CommandPacketFactory
 	{
-		private class CommandMeta
-		{
-			public Type CommandType;
-			public int SerializedSizeBytes;
-
-			public CommandMeta(Type a_implementedType, int a_serializedSizeBytes)
-			{
-				CommandType = a_implementedType;
-				SerializedSizeBytes = a_serializedSizeBytes;
-			}
-		};
-
 		private static Dictionary<CommandIdentifier, CommandMeta> ms_knownCommands = new Dictionary<CommandIdentifier, CommandMeta>();
 
 		static CommandPacketFactory()
@@ -34,8 +22,8 @@ namespace BlackmagicCameraControl.CommandPackets
 				CommandPacketMetaAttribute? metaAttribute = type.GetCustomAttribute<CommandPacketMetaAttribute>();
 				if (metaAttribute != null)
 				{
-					Debug.Assert(type.GetConstructor(new [] {typeof(CommandReader)}) != null, $"Failed to find constructor with CommandReader as single param on type {type.Name}");
-					ms_knownCommands.Add(metaAttribute.Identifier, new CommandMeta(type, metaAttribute.SerializedSizeBytes));
+					Debug.Assert(type.GetConstructor(new [] {typeof(CommandReader)}) != null, $"Failed to find public constructor with CommandReader as single param on type {type.Name}");
+					ms_knownCommands.Add(metaAttribute.Identifier, new CommandMeta(type, metaAttribute.Identifier, metaAttribute.SerializedSizeBytes, metaAttribute.DataType));
 				}
 			}
 		}
@@ -57,6 +45,19 @@ namespace BlackmagicCameraControl.CommandPackets
 				return target.SerializedSizeBytes;
 			}
 			return -1;
+		}
+
+		public static CommandMeta? FindCommandMeta(Type a_type)
+		{
+			foreach(var kvp in ms_knownCommands)
+			{
+				if (kvp.Value.CommandType == a_type)
+				{
+					return kvp.Value;
+				}
+			}
+
+			return null;
 		}
 	}
 }

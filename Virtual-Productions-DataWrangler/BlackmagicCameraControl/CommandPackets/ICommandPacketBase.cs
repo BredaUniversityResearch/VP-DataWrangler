@@ -1,6 +1,7 @@
 ﻿namespace BlackmagicCameraControl.CommandPackets
 {
-	public class ICommandPacketBase
+	public abstract class ICommandPacketBase
 	{
+		public abstract void WriteTo(CommandWriter a_writer);
 	}
 }
