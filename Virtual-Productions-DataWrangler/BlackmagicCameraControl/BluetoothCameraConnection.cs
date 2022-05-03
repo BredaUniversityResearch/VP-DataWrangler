@@ -27,6 +27,7 @@ namespace BlackmagicCameraControl
 		public string DeviceId => m_device.DeviceId;
 
 		public readonly CameraHandle CameraHandle;
+		public DateTimeOffset LastReceivedDataTime { get; private set; }
 
 		private readonly BlackmagicCameraController m_dispatcher;
 
@@ -95,26 +96,27 @@ namespace BlackmagicCameraControl
 					}
 				}
 
-				if (m_deviceInformationCameraManufacturer != null && m_deviceInformationCameraModel != null &&
+				if (m_deviceInformationCameraManufacturer != null && 
+				    m_deviceInformationCameraModel != null &&
 					m_blackmagicServiceOutgoingCameraControl != null &&
 					m_blackmagicServiceIncomingCameraControl != null &&
 					m_blackmagicServiceTimecode != null)
 				{
 					SubscribeToIncomingServices();
+					LastReceivedDataTime = DateTimeOffset.UtcNow;
 					ConnectionState = EConnectionState.Connected;
 				}
 				else
 				{
 					ConnectionState = EConnectionState.Disconnected;
 				}
-			});
+			});	
 		}
 
 		private void OnConnectionStatusChanged(BluetoothLEDevice a_sender, object a_args)
 		{
 			if (a_sender.ConnectionStatus == BluetoothConnectionStatus.Disconnected)
 			{
-				Debugger.Break();
 				ConnectionState = EConnectionState.Disconnected;
 			}
 		}
@@ -177,6 +179,8 @@ namespace BlackmagicCameraControl
 
 		private void OnReceivedIncomingCameraControl(GattCharacteristic a_sender, GattValueChangedEventArgs a_args)
 		{
+			LastReceivedDataTime = a_args.Timestamp;
+
 			//Deserialize and dispatch events.
 			using (Stream inputData = a_args.CharacteristicValue.AsStream())
 			{
@@ -201,7 +205,9 @@ namespace BlackmagicCameraControl
 							break;
 						}
 
-						if (reader.BytesRemaining < commandMeta.SerializedSizeBytes || header.DataType != commandMeta.DataType)
+						int possiblePadding = packetHeader.PacketSize - ((int)CommandHeader.ByteSize + commandMeta.SerializedSizeBytes);
+
+						if (header.DataType != commandMeta.DataType || ((reader.BytesRemaining - commandMeta.SerializedSizeBytes) > possiblePadding && header.DataType != ECommandDataType.Utf8String))
 						{
 							throw new Exception($"Command meta data wrong: Bytes (Expected / Got) {commandMeta.SerializedSizeBytes} / {reader.BytesRemaining}, DataType: {commandMeta.DataType} / {header.DataType}");
 						}
@@ -209,7 +215,8 @@ namespace BlackmagicCameraControl
 						ICommandPacketBase? packetInstance = CommandPacketFactory.CreatePacket(header.CommandIdentifier, reader);
 						if (packetInstance != null)
 						{
-							m_dispatcher.NotifyDataReceived(CameraHandle.Invalid, a_args.Timestamp, packetInstance);
+							IBlackmagicCameraLogInterface.LogVerbose($"Received Packet {header.CommandIdentifier}. {packetInstance}");
+							m_dispatcher.NotifyDataReceived(CameraHandle, a_args.Timestamp, packetInstance);
 						}
 						else
 						{

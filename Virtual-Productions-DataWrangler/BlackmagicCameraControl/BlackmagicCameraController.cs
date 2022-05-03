@@ -14,8 +14,22 @@ namespace BlackmagicCameraControl
 {
 	public class BlackmagicCameraController: IDisposable
 	{
-		private static readonly TimeSpan ReconnectTimeout = new TimeSpan(0, 0, 5);
-		private static readonly TimeSpan ConnectTimeout = new TimeSpan(0, 0, 15);
+		private class RetryEntry
+		{
+			public string DeviceId;
+			public DateTimeOffset LastConnectAttempt;
+
+			public RetryEntry(string a_deviceId)
+			{
+				DeviceId = a_deviceId;
+				LastConnectAttempt = DateTimeOffset.UtcNow;
+			}
+		};
+
+		private static readonly TimeSpan BackgroundProcessingUpdateRate = new TimeSpan(0, 0, 1);
+		private static readonly TimeSpan CameraReconnectTime = new TimeSpan(0, 0, 5);
+		private static readonly TimeSpan ConnectTimeout = new TimeSpan(0, 0, 10);
+		private static readonly TimeSpan CameraDataReceivedTimeout = new TimeSpan(0, 0, 15);
 
 		public delegate void CameraConnectedDelegate(CameraHandle a_handle);
 		public delegate void CameraDataReceivedDelegate(CameraHandle a_handle, DateTimeOffset a_receivedTime, ICommandPacketBase a_packet);
@@ -24,15 +38,16 @@ namespace BlackmagicCameraControl
 		private int m_lastUsedHandle = 0;
 
 		private List<BluetoothCameraConnection> m_activeConnections = new List<BluetoothCameraConnection>();
-		private List<string> m_retryConnectionQueue = new List<string>();
+		private List<RetryEntry> m_retryConnectionQueue = new List<RetryEntry>();
 		private HashSet<string> m_activeConnectingSet = new HashSet<string>();
 
 		public int ConnectedCameraCount => m_activeConnections.Count;
 		public event CameraConnectedDelegate OnCameraConnected = delegate { };
+		public event CameraConnectedDelegate OnCameraDisconnected = delegate { };
 		public event CameraDataReceivedDelegate OnCameraDataReceived = delegate { };
 
 		private Thread m_reconnectThread;
-		private CancellationTokenSource m_reconnectThreadCancellationToken;
+		private CancellationTokenSource m_backgroundProcessingCancellationToken;
 
 		public BlackmagicCameraController()
 		{
@@ -40,14 +55,14 @@ namespace BlackmagicCameraControl
 			BLEDeviceWatcher.Removed += OnDeviceRemoved;
 			BLEDeviceWatcher.Start();
 
-			m_reconnectThreadCancellationToken = new CancellationTokenSource();
-			m_reconnectThread = new Thread(BackgroundReconnectTask);
+			m_backgroundProcessingCancellationToken = new CancellationTokenSource();
+			m_reconnectThread = new Thread(BackgroundProcessingMain);
 			m_reconnectThread.Start();
 		}
 
 		public void Dispose()
 		{
-			m_reconnectThreadCancellationToken.Cancel();
+			m_backgroundProcessingCancellationToken.Cancel();
 
 			foreach (BluetoothCameraConnection connection in m_activeConnections)
 			{
@@ -60,28 +75,47 @@ namespace BlackmagicCameraControl
 			m_reconnectThread.Join();
 		}
 
-		private void BackgroundReconnectTask()
+		private void BackgroundProcessingMain()
 		{
-			while (!m_reconnectThreadCancellationToken.IsCancellationRequested)
+			while (!m_backgroundProcessingCancellationToken.IsCancellationRequested)
 			{
-				if (m_retryConnectionQueue.Count > 0)
-				{
-					string deviceId = m_retryConnectionQueue[0];
-					m_retryConnectionQueue.RemoveAt(0);
-					Stopwatch sw = new Stopwatch();
-					sw.Start();
-					TryConnectToDevice(deviceId);
-					TimeSpan elapsedTime = sw.Elapsed;
+				Stopwatch sw = new Stopwatch();
+				sw.Start();
 
-					TimeSpan timeToSleep = ReconnectTimeout - elapsedTime;
-					if (timeToSleep > TimeSpan.Zero)
+				for (int i = m_activeConnections.Count - 1; i >= 0; --i)
+				{
+					BluetoothCameraConnection connection = m_activeConnections[i];
+					TimeSpan timeSinceLastDataReceived = DateTimeOffset.UtcNow - connection.LastReceivedDataTime;
+					if (timeSinceLastDataReceived > CameraDataReceivedTimeout || connection.ConnectionState == BluetoothCameraConnection.EConnectionState.Disconnected)
 					{
-						m_reconnectThreadCancellationToken.Token.WaitHandle.WaitOne(timeToSleep);
+						OnCameraDisconnected(connection.CameraHandle);
+						IBlackmagicCameraLogInterface.LogInfo($"Camera {connection.GetDevice().Name} disconnected due to data received timeout");
+
+						m_retryConnectionQueue.Add(new RetryEntry(connection.DeviceId));
+
+						m_activeConnections.RemoveAt(i);
+						connection.Dispose();
 					}
 				}
-				else
+
+				if (m_retryConnectionQueue.Count > 0)
 				{
-					m_reconnectThreadCancellationToken.Token.WaitHandle.WaitOne(ReconnectTimeout);
+					TimeSpan timeSinceConnectAttempt = DateTimeOffset.UtcNow - m_retryConnectionQueue[0].LastConnectAttempt;
+					if (timeSinceConnectAttempt > CameraReconnectTime)
+					{
+						RetryEntry retryEntry = m_retryConnectionQueue[0];
+						m_retryConnectionQueue.RemoveAt(0);
+						
+						TryConnectToDevice(retryEntry.DeviceId);
+					}
+				}
+				
+
+				TimeSpan elapsedTime = sw.Elapsed;
+				TimeSpan timeToSleep = BackgroundProcessingUpdateRate - elapsedTime;
+				if (timeToSleep > TimeSpan.Zero)
+				{
+					m_backgroundProcessingCancellationToken.Token.WaitHandle.WaitOne(timeToSleep);
 				}
 			}
 		}
@@ -103,21 +137,30 @@ namespace BlackmagicCameraControl
 
 		private void TryConnectToDevice(string a_deviceId)
 		{
-			if (!m_activeConnectingSet.Contains(a_deviceId))
+			Task.Run(async () =>
 			{
-				m_activeConnectingSet.Add(a_deviceId);
-			}
+				if (!m_activeConnectingSet.Contains(a_deviceId))
+				{
+					m_activeConnectingSet.Add(a_deviceId);
+				}
 
-			BluetoothLEDevice.FromIdAsync(a_deviceId).Completed =
-				(a_connectedDeviceOp, _) =>
+				IBlackmagicCameraLogInterface.LogVerbose($"Trying to connect to Bluetooth device {a_deviceId}.");
+
+				Task<BluetoothLEDevice> connectAttempt = BluetoothLEDevice.FromIdAsync(a_deviceId).AsTask();
+				if (!connectAttempt.Wait(ConnectTimeout))
+				{
+					IBlackmagicCameraLogInterface.LogVerbose($"Bluetooth device {a_deviceId} failed to connect.");
+					m_retryConnectionQueue.Add(new RetryEntry(a_deviceId));
+				}
+				else
 				{
 					bool shouldRetry = true;
 
 					GattDeviceService? blackmagicService = null;
 					GattDeviceService? deviceInformationService = null;
 
-					BluetoothLEDevice connectedDevice = a_connectedDeviceOp.GetResults();
-					GattDeviceServicesResult services = connectedDevice.GetGattServicesAsync(BluetoothCacheMode.Uncached).GetResults();
+					BluetoothLEDevice connectedDevice = connectAttempt.Result;
+					GattDeviceServicesResult services = await connectedDevice.GetGattServicesAsync(BluetoothCacheMode.Uncached);
 					if (services.Status == GattCommunicationStatus.Success)
 					{
 						foreach (GattDeviceService service in services.Services)
@@ -133,31 +176,35 @@ namespace BlackmagicCameraControl
 						}
 					}
 
-					if (blackmagicService != null && deviceInformationService != null)
+					if (blackmagicService != null && deviceInformationService != null && 
+					    connectedDevice.ConnectionStatus == BluetoothConnectionStatus.Connected) //Only check connection here as GetGattServicesAsync might still succeed if we don't have a connection...
 					{
-						if (connectedDevice.ConnectionStatus == BluetoothConnectionStatus.Connected)
+						BluetoothCameraConnection deviceConnection = new BluetoothCameraConnection(this,
+							new CameraHandle(++m_lastUsedHandle), connectedDevice, deviceInformationService, blackmagicService);
+						if (deviceConnection.WaitForConnection(ConnectTimeout) &&
+						    deviceConnection.ConnectionState == BluetoothCameraConnection.EConnectionState.Connected)
 						{
-							BluetoothCameraConnection deviceConnection = new BluetoothCameraConnection(this,
-								new CameraHandle(++m_lastUsedHandle),
-								connectedDevice, deviceInformationService, blackmagicService);
-							if (deviceConnection.WaitForConnection(ConnectTimeout) &&
-							    deviceConnection.ConnectionState ==
-							    BluetoothCameraConnection.EConnectionState.Connected)
-							{
-								m_activeConnections.Add(deviceConnection);
-								OnCameraConnected.Invoke(deviceConnection.CameraHandle);
-								shouldRetry = false;
-							}
+							m_activeConnections.Add(deviceConnection);
+							OnCameraConnected.Invoke(deviceConnection.CameraHandle);
+							shouldRetry = false;
+
+							IBlackmagicCameraLogInterface.LogInfo($"Camera {connectedDevice.Name} Connected.");
 						}
-						
 					}
-					if (shouldRetry && !m_retryConnectionQueue.Contains(connectedDevice.DeviceId))
+
+					if (shouldRetry &&
+					    m_retryConnectionQueue.Find((a_obj) => a_obj.DeviceId == connectedDevice.DeviceId) == null)
 					{
-						m_retryConnectionQueue.Add(connectedDevice.DeviceId);
+						IBlackmagicCameraLogInterface.LogVerbose(
+							$"Bluetooth Device {connectedDevice.Name} failed to connect. Retrying in a bit...");
+						m_retryConnectionQueue.Add(new RetryEntry(connectedDevice.DeviceId));
+
+						connectedDevice.Dispose();
 					}
 
 					m_activeConnectingSet.Remove(a_deviceId);
-				};
+				}
+			});
 		}
 
 		private BluetoothCameraConnection? FindCameraByHandle(CameraHandle a_cameraHandle)
@@ -212,6 +259,10 @@ namespace BlackmagicCameraControl
 			if (connection != null)
 			{
 				connection.AsyncSendCommand(a_command);
+			}
+			else
+			{
+				IBlackmagicCameraLogInterface.LogWarning($"AsyncSendCommand failed: Camera handle {a_cameraHandle} was not found");
 			}
 		}
 	}

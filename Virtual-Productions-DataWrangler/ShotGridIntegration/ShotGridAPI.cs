@@ -1,4 +1,6 @@
 ﻿
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Text;
 using System.Web;
@@ -75,16 +77,62 @@ namespace ShotGridIntegration
 		{
 			ShotGridSimpleSearchFilter filter = new ShotGridSimpleSearchFilter();
 			filter.FieldIs("sg_status", "Active");
-			string result = await Find("projects", filter, new[] {"name"});
+			return await FindAndParse<ShotGridEntityProject>("projects", filter, new[] { "name" });
+		}
 
-			JObject parsedResult = JObject.Parse(result);
-			ShotGridEntityProject[]? resultProjects = null;
-			if (parsedResult.TryGetValue("data", out JToken? dataNode))
+		public async Task<ShotGridEntityShot[]?> GetShotsForProject(int a_projectId)
+		{
+			ShotGridSimpleSearchFilter filter = new ShotGridSimpleSearchFilter();
+			filter.FieldIs("project.Project.id", a_projectId);
+			return await FindAndParse<ShotGridEntityShot>("shots", filter, new[] {"code", "description", "image" });
+		}
+
+		public async Task<ShotGridEntityShotVersion[]?> GetVersionsForShot(int a_shotId)
+		{
+			ShotGridSimpleSearchFilter filter = new ShotGridSimpleSearchFilter();
+			filter.FieldIs("entity.Shot.id", a_shotId);
+			return await FindAndParse<ShotGridEntityShotVersion>("versions", filter, new[] { "code", "description", "image" });
+		}
+
+		private bool ParseResponse<TTargetType>(string a_responseString, out TTargetType[]? a_result, [NotNullWhen(false)] out ShotGridErrorResponse? a_error)
+			where TTargetType: ShotGridEntity
+		{
+			a_result = null;
+			a_error = null;
+
+			JObject parsedResult = JObject.Parse(a_responseString);
+			if (parsedResult.ContainsKey("errors"))
 			{
-				resultProjects = dataNode.ToObject<ShotGridEntityProject[]>();
+				a_error = parsedResult.ToObject<ShotGridErrorResponse>()!;
+				return false;
+			}
+			else if (parsedResult.TryGetValue("data", out JToken? dataNode))
+			{
+				a_result = dataNode.ToObject<TTargetType[]>();
+				return true;
 			}
 
-			return resultProjects;
+			throw new Exception($"Failure deserializing response {a_responseString}");
+		}
+
+		private async Task<TTargetType[]?> FindAndParse<TTargetType>(string a_entityType, ShotGridSimpleSearchFilter a_filters, string[] a_fields)
+			where TTargetType : ShotGridEntity
+		{
+			string result = await Find(a_entityType, a_filters, a_fields);
+			if (ParseResponse(result, out TTargetType[]? resultEntities, out var errorResponse))
+			{
+				return resultEntities;
+			}
+			else
+			{
+				ReportError(errorResponse);
+				return null;
+			}
+		}
+
+		private void ReportError(ShotGridErrorResponse a_errorResponse)
+		{
+			throw new Exception("Api Exception: " + a_errorResponse);
 		}
 
 		public async Task<string> Find(string a_entityType, ShotGridSimpleSearchFilter a_filters, string[] a_fields)
@@ -123,6 +171,11 @@ namespace ShotGridIntegration
 			}
 
 			return m_authentication;
+		}
+
+		public void CreateNewShotVersion(int a_parentShotId, string a_versionName)
+		{
+			throw new NotImplementedException();
 		}
 	}
 }

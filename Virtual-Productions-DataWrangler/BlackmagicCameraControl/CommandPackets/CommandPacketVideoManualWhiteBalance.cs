@@ -21,5 +21,10 @@
 			a_writer.Write(ColorTemperature);
 			a_writer.Write(Tint);
 		}
+
+		public override string ToString()
+		{
+			return $"{GetType().Name} [{ColorTemperature}, {Tint}]";
+		}
 	}
 }

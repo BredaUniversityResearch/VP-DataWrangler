@@ -20,5 +20,10 @@ namespace BlackmagicCameraControl.CommandPackets
 		{
 			a_writer.Write(Angle);
 		}
+
+		public override string ToString()
+		{
+			return $"{GetType().Name} [{Angle}]";
+		}
 	}
 }

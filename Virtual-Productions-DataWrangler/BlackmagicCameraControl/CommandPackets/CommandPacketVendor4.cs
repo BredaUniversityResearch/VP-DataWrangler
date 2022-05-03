@@ -15,4 +15,9 @@ public class CommandPacketVendor4 : ICommandPacketBase
 	{
 		a_writer.Write((Unknown)? 1 : 0);
 	}
+
+	public override string ToString()
+	{
+		return $"{GetType().Name} [{Unknown}]";
+	}
 }

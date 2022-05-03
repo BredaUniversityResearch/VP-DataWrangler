@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace BlackmagicCameraControl.CommandPackets
+﻿namespace BlackmagicCameraControl.CommandPackets
 {
 	[CommandPacketMeta(12, 0, 2, ECommandDataType.Int16)]
 	public class CommandPacketVendorStorageTargetChanged: ICommandPacketBase
@@ -20,6 +14,11 @@ namespace BlackmagicCameraControl.CommandPackets
 		public override void WriteTo(CommandWriter a_writer)
 		{
 			a_writer.Write(StorageDriveIdentifier);
+		}
+
+		public override string ToString()
+		{
+			return $"{GetType().Name} [{StorageDriveIdentifier}, Utility: {StorageTargetName}]";
 		}
 	}
 }

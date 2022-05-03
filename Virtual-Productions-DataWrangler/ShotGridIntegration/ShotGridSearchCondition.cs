@@ -12,9 +12,9 @@ namespace ShotGridIntegration
 	{
 		public readonly string Field;
 		public readonly string Condition;
-		public readonly string Value;
+		public readonly object Value;
 
-		public ShotGridSearchCondition(string a_field, string a_condition, string a_value)
+		public ShotGridSearchCondition(string a_field, string a_condition, object a_value)
 		{
 			Field = a_field;
 			Condition = a_condition;

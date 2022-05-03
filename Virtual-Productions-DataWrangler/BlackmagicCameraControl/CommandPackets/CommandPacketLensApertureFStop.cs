@@ -18,6 +18,10 @@
 		{
 			a_writer.Write(FStop.AsInt16());
 		}
-	}
 
+		public override string ToString()
+		{
+			return $"{GetType().Name} [{FStop.AsFloat}]";
+		}
+	}
 }

@@ -55,5 +55,10 @@ namespace BlackmagicCameraControl.CommandPackets
 			a_writer.Write(SafeArea);
 			a_writer.Write((byte)Grid);
 		}
+
+		public override string ToString()
+		{
+			return $"{GetType().Name} [{Style}, {Opacity}, {SafeArea}, {Grid}]";
+		}
 	}
 }

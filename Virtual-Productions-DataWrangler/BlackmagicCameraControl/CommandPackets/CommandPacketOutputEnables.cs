@@ -28,5 +28,10 @@ namespace BlackmagicCameraControl.CommandPackets
 		{
 			a_writer.Write((short)EnabledOverlays);
 		}
+
+		public override string ToString()
+		{
+			return $"{GetType().Name} [{EnabledOverlays}]";
+		}
 	}
 }

@@ -1,13 +1,13 @@
 ﻿namespace BlackmagicCameraControl.CommandPackets
 {
 	[CommandPacketMeta(9, 0, 6, ECommandDataType.Int16)]
-	public class CommandPacketBatteryInfo: ICommandPacketBase
+	public class CommandPacketSystemBatteryInfo : ICommandPacketBase
 	{
 		public short BatteryVoltage_mV;
 		public short BatteryPercentage;
 		public short Unknown;
 
-		public CommandPacketBatteryInfo(CommandReader a_reader)
+		public CommandPacketSystemBatteryInfo(CommandReader a_reader)
 		{
 			BatteryVoltage_mV = a_reader.ReadInt16();
 			BatteryPercentage = a_reader.ReadInt16();
@@ -19,6 +19,12 @@
 			a_writer.Write(BatteryVoltage_mV);
 			a_writer.Write(BatteryPercentage);
 			a_writer.Write(Unknown);
+		}
+
+		public override string ToString()
+		{
+			return $"{GetType().Name} [{BatteryVoltage_mV}, {BatteryPercentage}, {Unknown}]";
+
 		}
 	}
 }

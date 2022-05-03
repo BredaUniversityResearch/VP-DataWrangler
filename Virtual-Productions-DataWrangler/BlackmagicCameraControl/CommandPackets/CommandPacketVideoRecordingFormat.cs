@@ -42,5 +42,10 @@ namespace BlackmagicCameraControl.CommandPackets
 			a_writer.Write(FrameHeight);
 			a_writer.Write((short)Flags);
 		}
+
+		public override string ToString()
+		{
+			return $"{GetType().Name} [{FileFrameRate}, {SensorFrameRate}, {FrameWidth}, {FrameHeight}, {Flags}]";
+		}
 	}
 }

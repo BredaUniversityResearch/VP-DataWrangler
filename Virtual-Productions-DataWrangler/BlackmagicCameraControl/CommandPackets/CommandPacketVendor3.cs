@@ -25,5 +25,10 @@ namespace BlackmagicCameraControl.CommandPackets
 			a_writer.Write(Unknown);
 			a_writer.Write(Unknown1);
 		}
+
+		public override string ToString()
+		{
+			return $"{GetType().Name} [{Unknown}, {Unknown1}]";
+		}
 	}
 }

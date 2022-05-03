@@ -18,5 +18,10 @@
 		{
 			a_writer.Write(Level);
 		}
+
+		public override string ToString()
+		{
+			return $"{GetType().Name} [{Level}]";
+		}
 	}
 }

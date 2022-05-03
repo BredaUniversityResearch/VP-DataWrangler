@@ -26,7 +26,12 @@ namespace DataWranglerInterface
 
 		public void Log(string a_severity, string a_message)
 		{
-			OnMessageLogged("LogBM", a_severity, a_message);
+			OnMessageLogged("BMAPI", a_severity, a_message);
+		}
+
+		public IBlackmagicCameraLogInterface.ELogSeverity GetLogLevel()
+		{
+			return IBlackmagicCameraLogInterface.ELogSeverity.Verbose;
 		}
 	}
 }

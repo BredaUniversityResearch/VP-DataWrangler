@@ -18,6 +18,11 @@
 		{
 			a_writer.Write(Zoom_mm);
 		}
+
+		public override string ToString()
+		{
+			return $"{GetType().Name} [{Zoom_mm}]";
+		}
 	}
 
 }

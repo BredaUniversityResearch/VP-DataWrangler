@@ -22,9 +22,20 @@ namespace DataWranglerInterface.ShotRecording
 			}
 		};
 
+		public delegate void SelectedProjectChangedDelegate(int projectId, string projectName);
+		public event SelectedProjectChangedDelegate OnSelectedProjectChanged = delegate { };
+
 		public ProjectSelectorControl()
 		{
 			InitializeComponent();
+
+			ProjectListDropDown.SelectionChanged += ProjectListDropDownOnSelectionChanged;
+		}
+
+		private void ProjectListDropDownOnSelectionChanged(object a_sender, SelectionChangedEventArgs a_e)
+		{
+			ProjectSelectionEntry entry = (ProjectSelectionEntry) ProjectListDropDown.SelectedItem;
+			OnSelectedProjectChanged.Invoke(entry.ProjectId, entry.ProjectName);
 		}
 
 		public void AsyncRefreshProjects()

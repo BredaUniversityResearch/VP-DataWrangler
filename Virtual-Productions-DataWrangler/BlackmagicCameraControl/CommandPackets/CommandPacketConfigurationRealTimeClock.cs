@@ -30,5 +30,10 @@ namespace BlackmagicCameraControl.CommandPackets
 			a_writer.Write(BinaryTimeCode);
 			a_writer.Write(BinaryDateCode);
 		}
+
+		public override string ToString()
+		{
+			return $"{GetType().Name} [0x{BinaryTimeCode:X}, 0x{BinaryDateCode:X}, Utility: {ClockTime}]";
+		}
 	}
 }

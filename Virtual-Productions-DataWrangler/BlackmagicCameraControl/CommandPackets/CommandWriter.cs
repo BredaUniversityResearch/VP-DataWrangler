@@ -30,6 +30,12 @@ public class CommandWriter
 		//m_targetStream.Seek(sizeof(int), SeekOrigin.Current);
 	}
 
+	public void Write(string a_valueToWrite)
+	{
+		byte[] stringAsBytes = System.Text.Encoding.UTF8.GetBytes(a_valueToWrite);
+		m_targetStream.Write(stringAsBytes, 0, stringAsBytes.Length);
+	}
+
 	public void Write(CommandIdentifier a_commandIdentifier)
 	{
 		Write(a_commandIdentifier.Category);

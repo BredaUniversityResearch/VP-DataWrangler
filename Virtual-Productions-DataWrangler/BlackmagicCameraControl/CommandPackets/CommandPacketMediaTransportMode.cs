@@ -56,5 +56,10 @@ namespace BlackmagicCameraControl.CommandPackets
 			a_writer.Write((byte) Slot1StorageMedium);
 			a_writer.Write((byte) Slot2StorageMedium);
 		}
+
+		public override string ToString()
+		{
+			return $"{GetType().Name} [{Mode}, {Speed}, {Flags}, {Slot1StorageMedium}, {Slot2StorageMedium}]";
+		}
 	}
 }

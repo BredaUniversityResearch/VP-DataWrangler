@@ -90,5 +90,17 @@ namespace BlackmagicCameraControl.CommandPackets
 
 			return BitConverter.ToInt32(m_smallReadBuffer, 0);
 		}
+
+		public string ReadString()
+		{
+			byte[] stringData = new byte[BytesRemaining];
+			int bytesRead = m_targetStream.Read(stringData, 0, stringData.Length);
+			if (bytesRead != stringData.Length)
+			{
+				throw new Exception("Failed to read string");
+			}
+
+			return System.Text.Encoding.UTF8.GetString(stringData);
+		}
 	}
 }

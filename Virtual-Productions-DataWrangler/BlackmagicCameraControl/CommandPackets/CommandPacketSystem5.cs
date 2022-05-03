@@ -4,18 +4,18 @@ using System.Diagnostics;
 namespace BlackmagicCameraControl.CommandPackets
 {
 	[CommandPacketMeta(9, 5, 4, ECommandDataType.Int8)]
-	public class CommandPacketBattery5 : ICommandPacketBase
+	public class CommandPacketSystem5 : ICommandPacketBase
 	{
 		public byte Unknown = 0;	//0
 		public byte Unknown1 = 0;	//16
 		public byte Unknown2 = 0;	//0
 		public byte Unknown3 = 0;	//0
 
-		public CommandPacketBattery5()
+		public CommandPacketSystem5()
 		{
 		}
 
-		public CommandPacketBattery5(CommandReader a_reader)
+		public CommandPacketSystem5(CommandReader a_reader)
 		{
 			Unknown = a_reader.ReadInt8();
 			Unknown1 = a_reader.ReadInt8();
@@ -32,6 +32,11 @@ namespace BlackmagicCameraControl.CommandPackets
 			a_writer.Write(Unknown1);
 			a_writer.Write(Unknown2);
 			a_writer.Write(Unknown3);
+		}
+
+		public override string ToString()
+		{
+			return $"{GetType().Name} [{Unknown}, {Unknown1}, {Unknown2}, {Unknown3}]";
 		}
 	}
 }

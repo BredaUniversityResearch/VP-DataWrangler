@@ -25,5 +25,10 @@
 			a_writer.Write((byte) BasicCodec);
 			a_writer.Write(Variant);
 		}
+
+		public override string ToString()
+		{
+			return $"{GetType().Name} [{BasicCodec}, {Variant}]";
+		}
 	}
 }

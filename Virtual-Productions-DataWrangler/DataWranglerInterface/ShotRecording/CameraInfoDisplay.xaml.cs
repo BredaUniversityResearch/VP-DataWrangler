@@ -55,7 +55,7 @@ namespace DataWranglerInterface.ShotRecording
 			{
 				Dispatcher.InvokeAsync(() => { CameraModel.Content = modelPacket.CameraModel; });
 			}
-			else if (a_packet is CommandPacketBatteryInfo batteryInfo)
+			else if (a_packet is CommandPacketSystemBatteryInfo batteryInfo)
 			{
 				if (!m_receivedAnyBatteryStatusPackets)
 				{

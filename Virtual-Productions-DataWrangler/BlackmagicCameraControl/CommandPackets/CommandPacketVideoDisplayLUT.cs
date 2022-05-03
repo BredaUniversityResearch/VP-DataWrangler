@@ -21,5 +21,10 @@
 			a_writer.Write(SelectedLUT);
 			a_writer.Write((IsEnabled)? 0 : 1);
 		}
+
+		public override string ToString()
+		{
+			return $"{GetType().Name} [{SelectedLUT}, {IsEnabled}]";
+		}
 	}
 }

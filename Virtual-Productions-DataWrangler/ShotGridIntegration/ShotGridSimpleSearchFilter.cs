@@ -9,7 +9,7 @@ namespace ShotGridIntegration
 	{
 		public readonly List<ShotGridSearchCondition> conditions = new List<ShotGridSearchCondition>();
 
-		public void FieldIs(string a_field, string a_status)
+		public void FieldIs(string a_field, object a_status)
 		{
 			conditions.Add(new ShotGridSearchCondition(a_field, "is", a_status));
 		}

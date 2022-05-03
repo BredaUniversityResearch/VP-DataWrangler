@@ -23,7 +23,7 @@ namespace BlackmagicCameraControlTest
 			ManualResetEvent waitHandle = new ManualResetEvent(false);
 			iface.OnCameraDataReceived += (a_source, a_timeReceived, a_packet) =>
 			{
-				if (a_packet is CommandPacketBatteryInfo)
+				if (a_packet is CommandPacketSystemBatteryInfo)
 				{
 					waitHandle.Set();
 				}

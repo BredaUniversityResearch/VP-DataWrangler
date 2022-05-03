@@ -3,7 +3,7 @@
 	[CommandPacketMeta(1, 14, 4, ECommandDataType.Int32)]
 	public class CommandPacketVideoISO: ICommandPacketBase
 	{
-		public int ISOValue = 0;
+		public int ISOValue = 0; //ISO value divided by 100, 1 == 100, 2 == 200, 4 == 400
 
 		public CommandPacketVideoISO()
 		{
@@ -17,6 +17,11 @@
 		public override void WriteTo(CommandWriter a_writer)
 		{
 			a_writer.Write(ISOValue);
+		}
+
+		public override string ToString()
+		{
+			return $"{GetType().Name} [{ISOValue}]";
 		}
 	}
 }

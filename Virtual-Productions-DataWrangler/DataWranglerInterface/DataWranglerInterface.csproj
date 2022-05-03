@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <None Remove="Resources\Loading.png" />
+    <None Remove="Resources\MissingThumbnail.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -26,19 +27,6 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
-    <Compile Update="Resources.Designer.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Update="Resources.resx">
-      <Generator>PublicResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-      <CustomToolNamespace></CustomToolNamespace>
-    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>
@@ -50,6 +38,7 @@
 
   <ItemGroup>
     <Resource Include="Resources\Loading.png" />
+    <Resource Include="Resources\MissingThumbnail.png" />
   </ItemGroup>
 
 </Project>

@@ -2,14 +2,8 @@
 
 namespace ShotGridIntegration
 {
-	public class ShotGridEntityProject
+	public class ShotGridEntityProject: ShotGridEntity
 	{
-		public class EntityLinks
-		{
-			[JsonProperty("self")]
-			public string? Self;
-		};
-
 		public class ProjectAttributes
 		{
 			[JsonProperty("name")]
@@ -18,9 +12,5 @@ namespace ShotGridIntegration
 
 		[JsonProperty("attributes")]
 		public ProjectAttributes Attributes = new ProjectAttributes();
-		[JsonProperty("id")]
-		public int Id;
-		[JsonProperty("links")]
-		public EntityLinks Links = new EntityLinks();
 	}
 }

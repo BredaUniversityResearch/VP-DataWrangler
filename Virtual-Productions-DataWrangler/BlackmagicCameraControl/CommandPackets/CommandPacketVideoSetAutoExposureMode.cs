@@ -29,5 +29,10 @@ namespace BlackmagicCameraControl.CommandPackets
 		{
 			a_writer.Write((byte)Mode);
 		}
+
+		public override string ToString()
+		{
+			return $"{GetType().Name} [{Mode}]";
+		}
 	}
 }

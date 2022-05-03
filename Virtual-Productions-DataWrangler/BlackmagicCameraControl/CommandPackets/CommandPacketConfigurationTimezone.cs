@@ -29,5 +29,10 @@ namespace BlackmagicCameraControl.CommandPackets
 		{
 			a_writer.Write(MinutesOffsetFromUTC);
 		}
+
+		public override string ToString()
+		{
+			return $"{GetType().Name} [{MinutesOffsetFromUTC}]";
+		}
 	}
 }

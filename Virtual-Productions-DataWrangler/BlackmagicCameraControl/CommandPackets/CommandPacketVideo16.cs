@@ -22,5 +22,10 @@ namespace BlackmagicCameraControl.CommandPackets
 		{
 			a_writer.Write(Unknown.AsInt16());
 		}
+
+		public override string ToString()
+		{
+			return $"{GetType().Name} [{Unknown.AsFloat}]";
+		}
 	}
 }
