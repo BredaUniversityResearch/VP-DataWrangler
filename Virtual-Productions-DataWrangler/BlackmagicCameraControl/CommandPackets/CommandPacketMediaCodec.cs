@@ -1,7 +1,7 @@
 ﻿namespace BlackmagicCameraControl.CommandPackets
 {
 	[CommandPacketMeta(10, 0, 2, ECommandDataType.Int8)]
-	public class CommandMediaCodec: ICommandPacketBase
+	public class CommandPacketMediaCodec: ICommandPacketBase
 	{
 		public enum EBasicCodec: byte
 		{
@@ -14,7 +14,7 @@
 		public EBasicCodec BasicCodec = EBasicCodec.Raw;
 		public byte Variant = 0;
 
-		public CommandMediaCodec(CommandReader a_reader)
+		public CommandPacketMediaCodec(CommandReader a_reader)
 		{
 			BasicCodec = (EBasicCodec) a_reader.ReadInt8();
 			Variant = a_reader.ReadInt8();

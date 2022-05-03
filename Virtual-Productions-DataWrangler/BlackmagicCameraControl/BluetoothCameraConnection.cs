@@ -50,6 +50,8 @@ namespace BlackmagicCameraControl
 			m_deviceInformationService = a_deviceInformationService;
 			m_blackmagicService = a_blackmagicService;
 
+			m_device.ConnectionStatusChanged += OnConnectionStatusChanged;
+
 			m_connectingTask = Task.Run(async () =>
 			{
 				GattCharacteristicsResult characteristics = await m_deviceInformationService.GetCharacteristicsAsync(BluetoothCacheMode.Uncached);
@@ -68,7 +70,7 @@ namespace BlackmagicCameraControl
 							m_deviceInformationCameraModel = characteristic;
 						}
 					}
-					GattCharacteristicsResult blackmagicCharacteristics = await m_blackmagicService.GetCharacteristicsAsync(BluetoothCacheMode.Cached);
+					GattCharacteristicsResult blackmagicCharacteristics = await m_blackmagicService.GetCharacteristicsAsync(BluetoothCacheMode.Uncached);
 
 					if (blackmagicCharacteristics.Status == GattCommunicationStatus.Success)
 					{
@@ -108,6 +110,15 @@ namespace BlackmagicCameraControl
 			});
 		}
 
+		private void OnConnectionStatusChanged(BluetoothLEDevice a_sender, object a_args)
+		{
+			if (a_sender.ConnectionStatus == BluetoothConnectionStatus.Disconnected)
+			{
+				Debugger.Break();
+				ConnectionState = EConnectionState.Disconnected;
+			}
+		}
+
 		public void Dispose()
 		{
 			m_device.Dispose();
@@ -137,19 +148,19 @@ namespace BlackmagicCameraControl
 				m_blackmagicServiceIncomingCameraControl.ValueChanged += OnReceivedIncomingCameraControl;
 			};
 
-			m_blackmagicServiceTimecode
-					.WriteClientCharacteristicConfigurationDescriptorAsync(
-						GattClientCharacteristicConfigurationDescriptorValue.Notify).Completed =
-				(a_result, _) => {
-					if (a_result.Status == AsyncStatus.Completed)
-					{
-						m_blackmagicServiceTimecode.ValueChanged += OnReceivedTimecode;
-					}
-					else
-					{
-						BlackmagicCameraLogInterface.LogError("Failed to subscribe to camera timecode service");
-					}
-				};
+			//m_blackmagicServiceTimecode
+			//		.WriteClientCharacteristicConfigurationDescriptorAsync(
+			//			GattClientCharacteristicConfigurationDescriptorValue.Notify).Completed =
+			//	(a_result, _) => {
+			//		if (a_result.Status == AsyncStatus.Completed)
+			//		{
+			//			m_blackmagicServiceTimecode.ValueChanged += OnReceivedTimecode;
+			//		}
+			//		else
+			//		{
+			//			IBlackmagicCameraLogInterface.LogError("Failed to subscribe to camera timecode service");
+			//		}
+			//	};
 		}
 
 		private void OnReceivedTimecode(GattCharacteristic a_sender, GattValueChangedEventArgs a_args)
@@ -182,20 +193,27 @@ namespace BlackmagicCameraControl
 					{
 						CommandHeader header = reader.ReadCommandHeader();
 
-						int commandSize = CommandPacketFactory.GetSerializedCommandSize(header.CommandIdentifier);
-						if (reader.BytesRemaining < commandSize)
+						CommandMeta? commandMeta = CommandPacketFactory.FindCommandMeta(header.CommandIdentifier);
+						if (commandMeta == null)
 						{
-							throw new Exception();
+							IBlackmagicCameraLogInterface.LogWarning($"Received unknown packet with identifier {header.CommandIdentifier}. Size: {reader.BytesRemaining}, Type: {header.DataType}");
+							inputData.Seek(packetHeader.PacketSize - CommandHeader.ByteSize, SeekOrigin.Current);
+							break;
+						}
+
+						if (reader.BytesRemaining < commandMeta.SerializedSizeBytes || header.DataType != commandMeta.DataType)
+						{
+							throw new Exception($"Command meta data wrong: Bytes (Expected / Got) {commandMeta.SerializedSizeBytes} / {reader.BytesRemaining}, DataType: {commandMeta.DataType} / {header.DataType}");
 						}
 
 						ICommandPacketBase? packetInstance = CommandPacketFactory.CreatePacket(header.CommandIdentifier, reader);
 						if (packetInstance != null)
 						{
-							m_dispatcher.NotifyDataReceived(CameraHandle, packetInstance);
+							m_dispatcher.NotifyDataReceived(CameraHandle.Invalid, a_args.Timestamp, packetInstance);
 						}
 						else
 						{
-							BlackmagicCameraLogInterface.LogWarning($"Received unknown packet with identifier {header.CommandIdentifier}");
+							throw new Exception("Failed to deserialize command with known meta");
 						}
 					}
 				}
@@ -258,14 +276,14 @@ namespace BlackmagicCameraControl
 				commandHeader.WriteTo(writer);
 				a_command.WriteTo(writer);
 
-				IBuffer sendBuffer = WindowsRuntimeBuffer.Create(ms.GetBuffer(), 0, (int)ms.Length, ms.Capacity);
+				IBuffer sendBuffer = WindowsRuntimeBuffer.Create(ms.GetBuffer(), 0, (int)ms.Length, (int)ms.Length);
 				m_blackmagicServiceOutgoingCameraControl
 					.WriteValueAsync(sendBuffer, GattWriteOption.WriteWithResponse).AsTask().ContinueWith(
 						(a_sendCommand) =>
 						{
 							if (a_sendCommand.Result != GattCommunicationStatus.Success)
 							{
-								BlackmagicCameraLogInterface.LogError(
+								IBlackmagicCameraLogInterface.LogError(
 									$"Failed to write value to outgoing camera control. Command: {commandMeta.CommandType}");
 							}
 						});

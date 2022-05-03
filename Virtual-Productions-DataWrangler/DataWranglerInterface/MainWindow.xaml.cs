@@ -1,5 +1,7 @@
 ﻿using System.ComponentModel;
+using System.Diagnostics;
 using System.Windows;
+using DataWranglerInterface.DebugSupport;
 using DataWranglerInterface.Login;
 using DataWranglerInterface.ShotRecording;
 
@@ -13,9 +15,16 @@ namespace DataWranglerInterface
 		private LoginPage? m_loginPage;
 		private ShotRecordingPage? m_shotRecordingPage;
 
+		private DebugWindow? m_debugWindow;
+
 		public MainWindow()
 		{
 			InitializeComponent();
+			if (Debugger.IsAttached)
+			{
+				m_debugWindow = new DebugWindow();
+				m_debugWindow.Show();
+			}
 
 			m_loginPage = new LoginPage();
 			m_loginPage.OnSuccessfulLogin += OnLoggedIn;
@@ -40,6 +49,11 @@ namespace DataWranglerInterface
 			{
 				m_shotRecordingPage.Dispose();
 				m_shotRecordingPage = null;
+			}
+
+			if (m_debugWindow != null && m_debugWindow.IsVisible)
+			{
+				m_debugWindow.Close();
 			}
 		}
 	}

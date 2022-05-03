@@ -21,7 +21,7 @@ namespace BlackmagicCameraControlTest
 			using BlackmagicCameraController iface = new BlackmagicCameraController();
 			CameraHandle handle = CreateCameraConnection(iface);
 			ManualResetEvent waitHandle = new ManualResetEvent(false);
-			iface.OnCameraDataReceived += (a_source, a_packet) =>
+			iface.OnCameraDataReceived += (a_source, a_timeReceived, a_packet) =>
 			{
 				if (a_packet is CommandPacketBatteryInfo)
 				{

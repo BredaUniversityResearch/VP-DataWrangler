@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using BlackmagicCameraControl;
 using BlackmagicCameraControl.CommandPackets;
+using DataWranglerInterface.DebugSupport;
 
 namespace DataWranglerInterface.ShotRecording
 {
@@ -13,6 +14,9 @@ namespace DataWranglerInterface.ShotRecording
 	{
 		private BlackmagicCameraController? m_controller = null;
 		private CameraHandle m_targetCamera = CameraHandle.Invalid;
+		private DateTime m_timeSyncPoint = DateTime.MinValue;
+
+		private bool m_receivedAnyBatteryStatusPackets = false;
 
 		public CameraInfoDisplay()
 		{
@@ -42,13 +46,10 @@ namespace DataWranglerInterface.ShotRecording
 
 			//m_controller.AsyncRequestCameraName(a_handle);
 			m_controller.AsyncRequestCameraModel(a_handle);
-			Debug.Fail("TODO: Set RTC & Timezone offset to known value, preferably value from machine which should be NTP synchronized.");
-			m_controller.AsyncSendCommand(a_handle, new CommandConfigurationRealTimeClock());
-
 			m_targetCamera = a_handle;
 		}
 
-		private void OnCameraDataReceived(CameraHandle a_handle, ICommandPacketBase a_packet)
+		private void OnCameraDataReceived(CameraHandle a_handle, DateTimeOffset a_receivedTime, ICommandPacketBase a_packet)
 		{
 			if (a_packet is CommandPacketCameraModel modelPacket)
 			{
@@ -56,32 +57,52 @@ namespace DataWranglerInterface.ShotRecording
 			}
 			else if (a_packet is CommandPacketBatteryInfo batteryInfo)
 			{
+				if (!m_receivedAnyBatteryStatusPackets)
+				{
+					if (m_controller == null)
+					{
+						throw new Exception();
+					}
+
+					CommandPacketConfigurationTimezone tzPacket = new CommandPacketConfigurationTimezone(TimeZoneInfo.Local);
+					m_controller.AsyncSendCommand(a_handle, tzPacket);
+					m_timeSyncPoint = DateTime.UtcNow;
+					m_controller.AsyncSendCommand(a_handle, new CommandPacketConfigurationRealTimeClock(m_timeSyncPoint));
+
+					IBlackmagicCameraLogInterface.LogInfo(
+						$"Synchronizing camera time to {DateTime.UtcNow} + {tzPacket.MinutesOffsetFromUTC} Minutes");
+
+					m_receivedAnyBatteryStatusPackets = true;
+				}
+
 				Dispatcher.InvokeAsync(() =>
 				{
 					CameraBattery.Content =
 						$"{batteryInfo.BatteryPercentage}% ({batteryInfo.BatteryVoltage_mV} mV)";
 				});
 			}
-			else if (a_packet is CommandMediaTransportMode transportMode)
+			else if (a_packet is CommandPacketMediaTransportMode transportMode)
 			{
+				//Note to self: Timestamp for created and modified is just the start time. Seems to be off by ~2 seconds.
+				Logger.LogInfo("CameraInfo", $"Transport mode changed to {transportMode.Mode} at {a_receivedTime}");
 				Dispatcher.InvokeAsync(() =>
 				{
 					CameraState.Content = transportMode.Mode.ToString();
 				});
 			}
-			else if (a_packet is CommandMediaCodec codecInfo)
-			{
-				int a = 7;
-			}
-			else if (a_packet is CommandConfigurationRealTimeClock rtcInfo)
+			else if (a_packet is CommandPacketConfigurationRealTimeClock rtcInfo)
 			{
 				Dispatcher.InvokeAsync(() => { CameraTime.Content = rtcInfo.ClockTime.ToLongTimeString(); });
+			}
+			else if (a_packet is CommandPacketVendorStorageTargetChanged storageTarget)
+			{
+				IBlackmagicCameraLogInterface.LogVerbose($"!SPEC! Storage target changed to: {storageTarget.StorageTargetName}");
 			}
 		}
 
 		private void ButtonBase_OnClick(object a_sender, RoutedEventArgs a_e)
 		{
-			m_controller!.AsyncSendCommand(m_targetCamera, new CommandConfigurationRealTimeClock() { BinaryDateCode = 0x19961231, BinaryTimeCode = 0x13374201});
+			m_controller!.AsyncSendCommand(m_targetCamera, new CommandPacketConfigurationRealTimeClock(DateTime.UtcNow));
 			//m_controller!.AsyncSendCommand(m_targetCamera,
 			//	new CommandMediaTransportMode() {Mode = CommandMediaTransportMode.EMode.Record});
 		}

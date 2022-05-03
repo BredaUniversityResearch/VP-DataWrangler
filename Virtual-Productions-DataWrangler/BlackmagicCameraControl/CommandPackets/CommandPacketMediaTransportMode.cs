@@ -2,8 +2,8 @@
 
 namespace BlackmagicCameraControl.CommandPackets
 {
-	[CommandPacketMeta(10, 1, 4, ECommandDataType.Int8)]
-	public class CommandMediaTransportMode: ICommandPacketBase
+	[CommandPacketMeta(10, 1, 5, ECommandDataType.Int8)]
+	public class CommandPacketMediaTransportMode: ICommandPacketBase
 	{
 		public enum EMode : byte
 		{
@@ -25,24 +25,27 @@ namespace BlackmagicCameraControl.CommandPackets
 		public enum EStorageMedium : byte
 		{
 			CFast = 0,
-			SD = 1
+			SD = 1,
+			SSD
 		};
 
 		public EMode Mode = EMode.Preview;
 		public byte Speed = 0; //- backwards, 0 pause, + forwards 
 		public EFlags Flags = 0;
-		public EStorageMedium ActiveStorage = EStorageMedium.CFast;
+		public EStorageMedium Slot1StorageMedium = EStorageMedium.CFast;
+		public EStorageMedium Slot2StorageMedium = EStorageMedium.CFast;
 
-		public CommandMediaTransportMode()
+		public CommandPacketMediaTransportMode()
 		{
 		}
 
-		public CommandMediaTransportMode(CommandReader a_reader)
+		public CommandPacketMediaTransportMode(CommandReader a_reader)
 		{
 			Mode = (EMode) a_reader.ReadInt8();
 			Speed = a_reader.ReadInt8();
 			Flags = (EFlags)a_reader.ReadInt8();
-			ActiveStorage = (EStorageMedium)a_reader.ReadInt8();
+			Slot1StorageMedium = (EStorageMedium)a_reader.ReadInt8();
+			Slot2StorageMedium = (EStorageMedium)a_reader.ReadInt8();
 		}
 
 		public override void WriteTo(CommandWriter a_writer)
@@ -50,7 +53,8 @@ namespace BlackmagicCameraControl.CommandPackets
 			a_writer.Write((byte) Mode);
 			a_writer.Write(Speed);
 			a_writer.Write((byte) Flags);
-			a_writer.Write((byte) ActiveStorage);
+			a_writer.Write((byte) Slot1StorageMedium);
+			a_writer.Write((byte) Slot2StorageMedium);
 		}
 	}
 }

@@ -18,7 +18,7 @@ namespace BlackmagicCameraControl
 		private static readonly TimeSpan ConnectTimeout = new TimeSpan(0, 0, 15);
 
 		public delegate void CameraConnectedDelegate(CameraHandle a_handle);
-		public delegate void CameraDataReceivedDelegate(CameraHandle a_handle, ICommandPacketBase a_packet);
+		public delegate void CameraDataReceivedDelegate(CameraHandle a_handle, DateTimeOffset a_receivedTime, ICommandPacketBase a_packet);
 
 		private DeviceWatcher BLEDeviceWatcher = DeviceInformation.CreateWatcher(BluetoothLEDevice.GetDeviceSelectorFromPairingState(true));
 		private int m_lastUsedHandle = 0;
@@ -111,43 +111,52 @@ namespace BlackmagicCameraControl
 			BluetoothLEDevice.FromIdAsync(a_deviceId).Completed =
 				(a_connectedDeviceOp, _) =>
 				{
-					BluetoothLEDevice connectedDevice = a_connectedDeviceOp.GetResults();
-					GattDeviceServicesResult services = connectedDevice.GetGattServicesAsync().GetResults();
+					bool shouldRetry = true;
 
 					GattDeviceService? blackmagicService = null;
 					GattDeviceService? deviceInformationService = null;
 
-					foreach (GattDeviceService service in services.Services)
+					BluetoothLEDevice connectedDevice = a_connectedDeviceOp.GetResults();
+					GattDeviceServicesResult services = connectedDevice.GetGattServicesAsync(BluetoothCacheMode.Uncached).GetResults();
+					if (services.Status == GattCommunicationStatus.Success)
 					{
-						if (service.Uuid == BlackmagicCameraBluetoothGUID.BlackmagicServiceUUID)
+						foreach (GattDeviceService service in services.Services)
 						{
-							blackmagicService = service;
-						}
-						else if (service.Uuid == BlackmagicCameraBluetoothGUID.DeviceInformationServiceUUID)
-						{
-							deviceInformationService = service;
+							if (service.Uuid == BlackmagicCameraBluetoothGUID.BlackmagicServiceUUID)
+							{
+								blackmagicService = service;
+							}
+							else if (service.Uuid == BlackmagicCameraBluetoothGUID.DeviceInformationServiceUUID)
+							{
+								deviceInformationService = service;
+							}
 						}
 					}
 
 					if (blackmagicService != null && deviceInformationService != null)
 					{
-						BluetoothCameraConnection deviceConnection = new BluetoothCameraConnection(this, new CameraHandle(++m_lastUsedHandle),
-							connectedDevice, deviceInformationService, blackmagicService);
-						if (deviceConnection.WaitForConnection(ConnectTimeout) && 
-						    deviceConnection.ConnectionState == BluetoothCameraConnection.EConnectionState.Connected)
+						if (connectedDevice.ConnectionStatus == BluetoothConnectionStatus.Connected)
 						{
-							m_activeConnections.Add(deviceConnection);
-							OnCameraConnected.Invoke(deviceConnection.CameraHandle);
-						}
-						else
-						{
-							if (!m_retryConnectionQueue.Contains(connectedDevice.DeviceId))
+							BluetoothCameraConnection deviceConnection = new BluetoothCameraConnection(this,
+								new CameraHandle(++m_lastUsedHandle),
+								connectedDevice, deviceInformationService, blackmagicService);
+							if (deviceConnection.WaitForConnection(ConnectTimeout) &&
+							    deviceConnection.ConnectionState ==
+							    BluetoothCameraConnection.EConnectionState.Connected)
 							{
-								m_retryConnectionQueue.Add(connectedDevice.DeviceId);
+								m_activeConnections.Add(deviceConnection);
+								OnCameraConnected.Invoke(deviceConnection.CameraHandle);
+								shouldRetry = false;
 							}
 						}
-						m_activeConnectingSet.Remove(a_deviceId);
+						
 					}
+					if (shouldRetry && !m_retryConnectionQueue.Contains(connectedDevice.DeviceId))
+					{
+						m_retryConnectionQueue.Add(connectedDevice.DeviceId);
+					}
+
+					m_activeConnectingSet.Remove(a_deviceId);
 				};
 		}
 
@@ -164,9 +173,9 @@ namespace BlackmagicCameraControl
 			return null;
 		}
 
-		public void NotifyDataReceived(CameraHandle a_cameraHandle, ICommandPacketBase a_packetInstance)
+		public void NotifyDataReceived(CameraHandle a_cameraHandle, DateTimeOffset a_receivedTime, ICommandPacketBase a_packetInstance)
 		{
-			OnCameraDataReceived.Invoke(a_cameraHandle, a_packetInstance);
+			OnCameraDataReceived.Invoke(a_cameraHandle, a_receivedTime, a_packetInstance);
 		}
 
 		public void AsyncRequestCameraName(CameraHandle a_cameraHandle)
@@ -181,7 +190,7 @@ namespace BlackmagicCameraControl
 			{
 				connection.AsyncRequestCameraModel().ContinueWith((a_result) =>
 				{
-					OnCameraDataReceived.Invoke(a_cameraHandle, new CommandPacketCameraModel(a_result.Result));
+					OnCameraDataReceived.Invoke(a_cameraHandle, DateTimeOffset.UtcNow, new CommandPacketCameraModel(a_result.Result));
 				});
 			}
 		}

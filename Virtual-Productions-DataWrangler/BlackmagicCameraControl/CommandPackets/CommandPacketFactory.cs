@@ -38,13 +38,13 @@ namespace BlackmagicCameraControl.CommandPackets
 			return null;
 		}
 
-		public static int GetSerializedCommandSize(CommandIdentifier a_identifier)
+		public static CommandMeta? FindCommandMeta(CommandIdentifier a_identifier)
 		{
 			if (ms_knownCommands.TryGetValue(a_identifier, out CommandMeta? target))
 			{
-				return target.SerializedSizeBytes;
+				return target;
 			}
-			return -1;
+			return null;
 		}
 
 		public static CommandMeta? FindCommandMeta(Type a_type)
