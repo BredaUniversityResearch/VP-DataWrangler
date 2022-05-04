@@ -10,19 +10,37 @@ namespace DataWranglerInterface.ShotRecording
 	/// </summary>
 	public partial class ShotRecordingPage : Page, IDisposable
 	{
-		private BlackmagicCameraController m_controller;
+		private BlackmagicCameraAPIController m_apiController;
+		private ActiveCameraHandler m_activeCameraHandler;
 
 		public ShotRecordingPage()
 		{
 			InitializeComponent();
 		
-			m_controller = new BlackmagicCameraController();
-			CameraInfo.SetController(m_controller);
+			m_apiController = new BlackmagicCameraAPIController();
+			m_activeCameraHandler = new ActiveCameraHandler(m_apiController);
+			m_activeCameraHandler.OnCameraConnected += OnCameraConnected;
+			m_activeCameraHandler.OnCameraDisconnected += OnCameraDisconnected;
 
 			ProjectSelector.AsyncRefreshProjects();
 
 			ProjectSelector.OnSelectedProjectChanged += OnSelectedProjectChanged;
 			ShotSelector.OnSelectedShotChanged += OnSelectedShotChanged;
+
+			ShotVersionDisplay.SetProjectSelector(ProjectSelector);
+		}
+
+		private void OnCameraConnected(ActiveCameraInfo a_camera)
+		{
+			CameraInfo.SetTargetCameraInfo(a_camera);
+		}
+
+		private void OnCameraDisconnected(ActiveCameraInfo a_handle)
+		{
+			if (CameraInfo.TargetCameraInfo == a_handle)
+			{
+				CameraInfo.SetTargetCameraInfo(null);
+			}
 		}
 
 		private void OnSelectedProjectChanged(int a_projectId, string a_projectName)
@@ -38,7 +56,7 @@ namespace DataWranglerInterface.ShotRecording
 
 		public void Dispose()
 		{
-			m_controller.Dispose();
+			m_apiController.Dispose();
 		}
 	}
 }

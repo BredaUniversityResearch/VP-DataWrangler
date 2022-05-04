@@ -12,99 +12,70 @@ namespace DataWranglerInterface.ShotRecording
 	/// </summary>
 	public partial class CameraInfoDisplay : UserControl
 	{
-		private BlackmagicCameraController? m_controller = null;
-		private CameraHandle m_targetCamera = CameraHandle.Invalid;
-		private DateTime m_timeSyncPoint = DateTime.MinValue;
-
-		private bool m_receivedAnyBatteryStatusPackets = false;
+		private ActiveCameraInfo? m_targetCamera;
+		public ActiveCameraInfo? TargetCameraInfo => m_targetCamera;
 
 		public CameraInfoDisplay()
 		{
 			InitializeComponent();
 		}
 
-		public void SetController(BlackmagicCameraController a_controller)
+		public void SetTargetCameraInfo(ActiveCameraInfo? a_activeCamera)
 		{
-			m_controller = a_controller;
-			m_controller.OnCameraConnected += OnCameraConnected;
-			m_controller.OnCameraDataReceived += OnCameraDataReceived;
+			if (m_targetCamera != null)
+			{
+				m_targetCamera.CameraPropertyChanged -= OnCameraPropertyChanged;
+			}
+
+			m_targetCamera = a_activeCamera;
+			if (m_targetCamera != null)
+			{
+				m_targetCamera.CameraPropertyChanged += OnCameraPropertyChanged;
+			}
+
+			Dispatcher.InvokeAsync(() =>
+				{
+					LoadingSpinner.Visibility = (m_targetCamera == null)? Visibility.Hidden : Visibility.Visible;
+				}
+			);
 		}
 
-		private void OnCameraConnected(CameraHandle a_handle)
+		private void OnCameraPropertyChanged(object? a_sender, CameraPropertyChangedEventArgs a_e)
 		{
-			if (m_controller == null)
+			if (m_targetCamera == null)
 			{
 				throw new Exception();
 			}
-			string cameraDisplayName = m_controller.GetBluetoothName(a_handle);
-			Dispatcher.InvokeAsync(() =>
-				{
-					LoadingSpinner.Visibility = Visibility.Hidden;
-					CameraDisplayName.Content = cameraDisplayName;
-				}
-			);
 
-			//m_controller.AsyncRequestCameraName(a_handle);
-			m_controller.AsyncRequestCameraModel(a_handle);
-			m_targetCamera = a_handle;
-		}
-
-		private void OnCameraDataReceived(CameraHandle a_handle, DateTimeOffset a_receivedTime, ICommandPacketBase a_packet)
-		{
-			if (a_packet is CommandPacketCameraModel modelPacket)
+			if (a_e.PropertyName == nameof(ActiveCameraInfo.CameraName))
 			{
-				Dispatcher.InvokeAsync(() => { CameraModel.Content = modelPacket.CameraModel; });
-			}
-			else if (a_packet is CommandPacketSystemBatteryInfo batteryInfo)
-			{
-				if (!m_receivedAnyBatteryStatusPackets)
-				{
-					if (m_controller == null)
+				Dispatcher.InvokeAsync(() =>
 					{
-						throw new Exception();
+						CameraDisplayName.Content = m_targetCamera.CameraName;
 					}
+				);
+			}
+			else if (a_e.PropertyName == nameof(ActiveCameraInfo.CameraModel))
+			{
+				Dispatcher.InvokeAsync(() => { CameraModel.Content = m_targetCamera.CameraModel; });
 
-					CommandPacketConfigurationTimezone tzPacket = new CommandPacketConfigurationTimezone(TimeZoneInfo.Local);
-					m_controller.AsyncSendCommand(a_handle, tzPacket);
-					m_timeSyncPoint = DateTime.UtcNow;
-					m_controller.AsyncSendCommand(a_handle, new CommandPacketConfigurationRealTimeClock(m_timeSyncPoint));
-
-					IBlackmagicCameraLogInterface.LogInfo(
-						$"Synchronizing camera time to {DateTime.UtcNow} + {tzPacket.MinutesOffsetFromUTC} Minutes");
-
-					m_receivedAnyBatteryStatusPackets = true;
-				}
-
+			}
+			else if (a_e.PropertyName == nameof(ActiveCameraInfo.BatteryPercentage))
+			{
 				Dispatcher.InvokeAsync(() =>
 				{
 					CameraBattery.Content =
-						$"{batteryInfo.BatteryPercentage}% ({batteryInfo.BatteryVoltage_mV} mV)";
+						$"{m_targetCamera.BatteryPercentage}% ({m_targetCamera.BatteryVoltage_mV} mV)";
 				});
 			}
-			else if (a_packet is CommandPacketMediaTransportMode transportMode)
+			else if (a_e.PropertyName == nameof(ActiveCameraInfo.CurrentTransportMode))
 			{
-				//Note to self: Timestamp for created and modified is just the start time. Seems to be off by ~2 seconds.
-				Logger.LogInfo("CameraInfo", $"Transport mode changed to {transportMode.Mode} at {a_receivedTime}");
-				Dispatcher.InvokeAsync(() =>
-				{
-					CameraState.Content = transportMode.Mode.ToString();
-				});
+				Dispatcher.InvokeAsync(() => CameraState.Content = m_targetCamera.CurrentTransportMode.ToString() );
 			}
-			else if (a_packet is CommandPacketConfigurationRealTimeClock rtcInfo)
+			else if (a_e.PropertyName == nameof(ActiveCameraInfo.CurrentStorageTarget))
 			{
-				Dispatcher.InvokeAsync(() => { CameraTime.Content = rtcInfo.ClockTime.ToLongTimeString(); });
+				Dispatcher.InvokeAsync(() => CameraStorageTarget.Content = m_targetCamera.CurrentStorageTarget.ToString());
 			}
-			else if (a_packet is CommandPacketVendorStorageTargetChanged storageTarget)
-			{
-				IBlackmagicCameraLogInterface.LogVerbose($"!SPEC! Storage target changed to: {storageTarget.StorageTargetName}");
-			}
-		}
-
-		private void ButtonBase_OnClick(object a_sender, RoutedEventArgs a_e)
-		{
-			m_controller!.AsyncSendCommand(m_targetCamera, new CommandPacketConfigurationRealTimeClock(DateTime.UtcNow));
-			//m_controller!.AsyncSendCommand(m_targetCamera,
-			//	new CommandMediaTransportMode() {Mode = CommandMediaTransportMode.EMode.Record});
 		}
 	}
 }

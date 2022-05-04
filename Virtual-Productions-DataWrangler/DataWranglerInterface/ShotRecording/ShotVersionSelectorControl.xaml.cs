@@ -11,12 +11,10 @@ namespace DataWranglerInterface.ShotRecording
 	{
 		private class ShotVersionSelectorEntry
 		{
-			public int VersionEntityId;
 			public ShotGridEntityShotVersion ShotVersionInfo;
 
-			public ShotVersionSelectorEntry(int a_versionEntityId, ShotGridEntityShotVersion a_shotVersion)
+			public ShotVersionSelectorEntry(ShotGridEntityShotVersion a_shotVersion)
 			{
-				VersionEntityId = a_versionEntityId;
 				ShotVersionInfo = a_shotVersion;
 			}
 
@@ -26,40 +24,32 @@ namespace DataWranglerInterface.ShotRecording
 			}
 		};
 
+		public delegate void ShotVersionSelected(ShotGridEntityShotVersion? a_shotVersion);
+		public event ShotVersionSelected OnShotVersionSelected = delegate { };
+		public int CurrentVersionEntityId => ((ShotGridEntityShotVersion)ShotVersionSelectorDropDown.DropDown.SelectedItem).Id;
+		
 		public ShotVersionSelectorControl()
 		{
 			InitializeComponent();
+			ShotVersionSelectorDropDown.DropDown.SelectionChanged += OnVersionSelectionChanged;
+		}
+
+
+		private void OnVersionSelectionChanged(object a_sender, SelectionChangedEventArgs a_e)
+		{
+			ShotVersionSelectorEntry? version = (ShotVersionSelectorEntry?)ShotVersionSelectorDropDown.DropDown.SelectedItem;
+			OnShotVersionSelected.Invoke(version?.ShotVersionInfo);
 		}
 
 		public void AsyncRefreshShotVersion(int a_shotId)
 		{
-			ShotVersionSelectorDropDown.Dispatcher.Invoke(() =>
-			{
-				ShotVersionSelectorDropDown.Items.Clear();
-			});
-
-			if (a_shotId != -1)
-			{
-				DataWranglerServiceProvider.Instance.ShotGridAPI.GetVersionsForShot(a_shotId).ContinueWith(a_task =>
-				{
-					if (a_task.Result != null)
-					{
-						ShotVersionSelectorDropDown.Dispatcher.Invoke(() =>
-						{
-							foreach (ShotGridEntityShotVersion shot in a_task.Result)
-							{
-								ShotVersionSelectorDropDown.Items.Add(new ShotVersionSelectorEntry(shot.Id, shot));
-							}
-						});
-					}
-				});
-			}
+			ShotVersionSelectorDropDown.BeginAsyncDataRefresh<ShotGridEntityShotVersion, ShotVersionSelectorEntry>(DataWranglerServiceProvider.Instance.ShotGridAPI.GetVersionsForShot(a_shotId));
 		}
 
 		public int GetHighestVersionNumber()
 		{
 			int highestVersionId = 0;
-			foreach (ShotVersionSelectorEntry entry in ShotVersionSelectorDropDown.Items)
+			foreach (ShotVersionSelectorEntry entry in ShotVersionSelectorDropDown.DropDown.Items)
 			{
 				string versionCode = entry.ShotVersionInfo.Attributes.VersionCode;
 				int lastSpacePos = versionCode.LastIndexOf(' ');
@@ -74,6 +64,21 @@ namespace DataWranglerInterface.ShotRecording
 			}
 
 			return highestVersionId;
+		}
+
+		public void BeginAddShotVersion()
+		{
+			ShotVersionSelectorDropDown.SetLoading(true);
+		}
+
+		public void EndAddShotVersion(ShotGridEntityShotVersion a_resultResult)
+		{
+			Dispatcher.Invoke(() =>
+			{
+				int index = ShotVersionSelectorDropDown.DropDown.Items.Add(new ShotVersionSelectorEntry(a_resultResult));
+				ShotVersionSelectorDropDown.DropDown.SelectedIndex = index;
+				ShotVersionSelectorDropDown.SetLoading(false);
+			});
 		}
 	}
 }

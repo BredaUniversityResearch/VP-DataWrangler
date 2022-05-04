@@ -77,25 +77,25 @@ namespace ShotGridIntegration
 		{
 			ShotGridSimpleSearchFilter filter = new ShotGridSimpleSearchFilter();
 			filter.FieldIs("sg_status", "Active");
-			return await FindAndParse<ShotGridEntityProject>("projects", filter, new[] { "name" });
+			return await FindAndParse<ShotGridEntityProject[]>("projects", filter, new[] { "name" });
 		}
 
 		public async Task<ShotGridEntityShot[]?> GetShotsForProject(int a_projectId)
 		{
 			ShotGridSimpleSearchFilter filter = new ShotGridSimpleSearchFilter();
 			filter.FieldIs("project.Project.id", a_projectId);
-			return await FindAndParse<ShotGridEntityShot>("shots", filter, new[] {"code", "description", "image" });
+			return await FindAndParse<ShotGridEntityShot[]>("shots", filter, new[] {"code", "description", "image" });
 		}
 
 		public async Task<ShotGridEntityShotVersion[]?> GetVersionsForShot(int a_shotId)
 		{
 			ShotGridSimpleSearchFilter filter = new ShotGridSimpleSearchFilter();
 			filter.FieldIs("entity.Shot.id", a_shotId);
-			return await FindAndParse<ShotGridEntityShotVersion>("versions", filter, new[] { "code", "description", "image" });
+			return await FindAndParse<ShotGridEntityShotVersion[]>("versions", filter, new[] { "code", "description", "image" });
 		}
 
-		private bool ParseResponse<TTargetType>(string a_responseString, out TTargetType[]? a_result, [NotNullWhen(false)] out ShotGridErrorResponse? a_error)
-			where TTargetType: ShotGridEntity
+		private bool ParseResponse<TTargetType>(string a_responseString, out TTargetType? a_result, [NotNullWhen(false)] out ShotGridErrorResponse? a_error)
+			where TTargetType: class
 		{
 			a_result = null;
 			a_error = null;
@@ -108,18 +108,18 @@ namespace ShotGridIntegration
 			}
 			else if (parsedResult.TryGetValue("data", out JToken? dataNode))
 			{
-				a_result = dataNode.ToObject<TTargetType[]>();
+				a_result = dataNode.ToObject<TTargetType>();
 				return true;
 			}
 
 			throw new Exception($"Failure deserializing response {a_responseString}");
 		}
 
-		private async Task<TTargetType[]?> FindAndParse<TTargetType>(string a_entityType, ShotGridSimpleSearchFilter a_filters, string[] a_fields)
-			where TTargetType : ShotGridEntity
+		private async Task<TTargetType?> FindAndParse<TTargetType>(string a_entityType, ShotGridSimpleSearchFilter a_filters, string[] a_fields)
+			where TTargetType : class
 		{
 			string result = await Find(a_entityType, a_filters, a_fields);
-			if (ParseResponse(result, out TTargetType[]? resultEntities, out var errorResponse))
+			if (ParseResponse(result, out TTargetType? resultEntities, out var errorResponse))
 			{
 				return resultEntities;
 			}
@@ -173,9 +173,85 @@ namespace ShotGridIntegration
 			return m_authentication;
 		}
 
-		public void CreateNewShotVersion(int a_parentShotId, string a_versionName)
+		public async Task<ShotGridEntityShotVersion?> CreateNewShotVersion(int a_projectId, int a_parentShotId, string a_versionName)
+		{
+			ShotGridEntityShotVersion.ShotVersionAttributes version = new ShotGridEntityShotVersion.ShotVersionAttributes();
+			version.VersionCode = a_versionName;
+
+			JsonSerializer serializer = JsonSerializer.Create(new JsonSerializerSettings
+			{
+				NullValueHandling = NullValueHandling.Ignore
+			});
+
+			ShotGridEntityCreateBaseData baseData = new ShotGridEntityCreateBaseData(a_projectId, ShotGridEntity.TypeNames.Shot, a_parentShotId);
+			JObject baseDataToken = JObject.FromObject(baseData, serializer);
+			JObject encodedToken = JObject.FromObject(version, serializer);
+			encodedToken.Merge(baseDataToken);
+
+			string requestBody = encodedToken.ToString();
+
+			string response = await Create("version", requestBody);
+
+			if (ParseResponse(response, out ShotGridEntityShotVersion? createdEntity, out ShotGridErrorResponse? errorResponse))
+			{
+				return createdEntity;
+			}
+			else
+			{
+				ReportError(errorResponse);
+				return null;
+			}
+		}
+
+		public async Task<string> Create(string a_entityType, string a_entityDataAsString)
+		{
+			if (m_authentication == null)
+			{
+				throw new ShotGridAPIException("No authentication requested");
+			}
+
+			HttpRequestMessage request = new HttpRequestMessage
+			{
+				Method = HttpMethod.Post,
+				RequestUri = new Uri($"{BaseUrl}entity/{a_entityType}"),
+				Headers = {
+					{ HttpRequestHeader.Accept.ToString(), "application/json" },
+					{ HttpRequestHeader.AcceptEncoding.ToString(), "gzip, deflate, br" },
+					{ HttpRequestHeader.Authorization.ToString(), "Bearer " + m_authentication.AccessToken },
+					{ HttpRequestHeader.ContentType.ToString(), "application/vnd+shotgun.api3_array+json; charset=utf-8" },
+				},
+				Content = new ByteArrayContent(Encoding.UTF8.GetBytes(a_entityDataAsString))
+			};
+
+			HttpResponseMessage response = await m_client.SendAsync(request);
+			string result = await response.Content.ReadAsStringAsync();
+			return result;
+		}
+
+		public void UpdateEntitySingleProperty(EShotGridEntity a_entity, int a_entityId, string a_propertyName, string a_value)
 		{
 			throw new NotImplementedException();
+			//if (m_authentication == null)
+			//{
+			//	throw new ShotGridAPIException("No authentication requested");
+			//}
+
+			//HttpRequestMessage request = new HttpRequestMessage
+			//{
+			//	Method = HttpMethod.Post,
+			//	RequestUri = new Uri($"{BaseUrl}entity/{a_entity}/{a_entityId}"),
+			//	Headers = {
+			//		{ HttpRequestHeader.Accept.ToString(), "application/json" },
+			//		{ HttpRequestHeader.AcceptEncoding.ToString(), "gzip, deflate, br" },
+			//		{ HttpRequestHeader.Authorization.ToString(), "Bearer " + m_authentication.AccessToken },
+			//		{ HttpRequestHeader.ContentType.ToString(), "application/vnd+shotgun.api3_array+json; charset=utf-8" },
+			//	},
+			//	Content = new ByteArrayContent(Encoding.UTF8.GetBytes(a_entityDataAsString))
+			//};
+
+			//HttpResponseMessage response = await m_client.SendAsync(request);
+			//string result = await response.Content.ReadAsStringAsync();
+			//return result;
 		}
 	}
 }

@@ -11,14 +11,14 @@ namespace BlackmagicCameraControlTest
 		[Fact]
 		public void ConnectToCamera()
 		{
-			using BlackmagicCameraController iface = new BlackmagicCameraController();
+			using BlackmagicCameraAPIController iface = new BlackmagicCameraAPIController();
 			CreateCameraConnection(iface);
 		}
 
 		[Fact]
 		public void ReceiveBatteryPercentage()
 		{
-			using BlackmagicCameraController iface = new BlackmagicCameraController();
+			using BlackmagicCameraAPIController iface = new BlackmagicCameraAPIController();
 			CameraHandle handle = CreateCameraConnection(iface);
 			ManualResetEvent waitHandle = new ManualResetEvent(false);
 			iface.OnCameraDataReceived += (a_source, a_timeReceived, a_packet) =>
@@ -31,18 +31,18 @@ namespace BlackmagicCameraControlTest
 			Assert.True(waitHandle.WaitOne(15000));
 		}
 
-		private CameraHandle CreateCameraConnection(BlackmagicCameraController a_controller)
+		private CameraHandle CreateCameraConnection(BlackmagicCameraAPIController a_apiController)
 		{
 			CameraHandle cameraHandle = CameraHandle.Invalid;
 			ManualResetEvent waitHandle = new ManualResetEvent(false);
-			a_controller.OnCameraConnected += (a_cameraHandle) =>
+			a_apiController.OnCameraConnected += (a_cameraHandle) =>
 			{
 				cameraHandle = a_cameraHandle;
 				waitHandle.Set();
 			};
 
-			Assert.True( a_controller.ConnectedCameraCount == 1 || waitHandle.WaitOne(15000), "Camera failed to connect");
-			return a_controller.GetConnectedCameraByIndex(0);
+			Assert.True( a_apiController.ConnectedCameraCount == 1 || waitHandle.WaitOne(15000), "Camera failed to connect");
+			return a_apiController.GetConnectedCameraByIndex(0);
 		}
 	}
 }

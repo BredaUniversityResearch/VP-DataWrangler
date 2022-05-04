@@ -10,10 +10,10 @@ namespace DataWranglerInterface.ShotRecording
 			public readonly int ProjectId;
 			public readonly string ProjectName;
 
-			public ProjectSelectionEntry(int a_projectId, string a_projectName)
+			public ProjectSelectionEntry(ShotGridEntityProject a_project)
 			{
-				ProjectId = a_projectId;
-				ProjectName = a_projectName;
+				ProjectId = a_project.Id;
+				ProjectName = a_project.Attributes.Name;
 			}
 
 			public override string ToString()
@@ -25,38 +25,24 @@ namespace DataWranglerInterface.ShotRecording
 		public delegate void SelectedProjectChangedDelegate(int projectId, string projectName);
 		public event SelectedProjectChangedDelegate OnSelectedProjectChanged = delegate { };
 
+		public int SelectedProjectId => ((ProjectSelectionEntry) ProjectListDropDown.DropDown.SelectedItem).ProjectId;
+
 		public ProjectSelectorControl()
 		{
 			InitializeComponent();
 
-			ProjectListDropDown.SelectionChanged += ProjectListDropDownOnSelectionChanged;
+			ProjectListDropDown.DropDown.SelectionChanged += DropDownOnSelectionChanged;
 		}
 
-		private void ProjectListDropDownOnSelectionChanged(object a_sender, SelectionChangedEventArgs a_e)
+		private void DropDownOnSelectionChanged(object a_sender, SelectionChangedEventArgs a_e)
 		{
-			ProjectSelectionEntry entry = (ProjectSelectionEntry) ProjectListDropDown.SelectedItem;
+			ProjectSelectionEntry entry = (ProjectSelectionEntry) ProjectListDropDown.DropDown.SelectedItem;
 			OnSelectedProjectChanged.Invoke(entry.ProjectId, entry.ProjectName);
 		}
 
 		public void AsyncRefreshProjects()
 		{
-			DataWranglerServiceProvider.Instance.ShotGridAPI.GetProjects().ContinueWith(a_task => {
-
-				if (a_task.Result != null)
-				{
-					ProjectListDropDown.Dispatcher.Invoke(() =>
-					{
-						foreach (ShotGridEntityProject project in a_task.Result)
-						{
-							if (project.Attributes.Name != null)
-							{
-								ProjectListDropDown.Items.Add(new ProjectSelectionEntry(project.Id,
-									project.Attributes.Name));
-							}
-						}
-					});
-				}
-			});
+			ProjectListDropDown.BeginAsyncDataRefresh<ShotGridEntityProject, ProjectSelectionEntry>(DataWranglerServiceProvider.Instance.ShotGridAPI.GetProjects());
 		}
 	}
 }

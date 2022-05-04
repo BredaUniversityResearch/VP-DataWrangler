@@ -1,12 +1,14 @@
-﻿<UserControl x:Class="DataWranglerInterface.ShotRecording.ShotSelectorControl"
+﻿<UserControl x:Class="DataWranglerInterface.ShotRecording.RemoteDataDropDown"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:DataWranglerInterface.ShotRecording"
+             xmlns:dataWranglerInterface="clr-namespace:DataWranglerInterface"
              mc:Ignorable="d" 
              d:DesignHeight="21" d:DesignWidth="120">
 	<Grid>
-		<local:RemoteDataDropDown x:Name="ShotSelectorDropDown" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+		<ComboBox x:Name="DropDown" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+        <dataWranglerInterface:LoadingSpinner x:Name="LoadingSpinner" Width="{Binding ActualHeight, ElementName=DropDown, Mode=OneWay}" />
 	</Grid>
 </UserControl>

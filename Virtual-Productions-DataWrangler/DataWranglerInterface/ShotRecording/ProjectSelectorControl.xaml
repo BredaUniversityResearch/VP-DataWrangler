@@ -7,6 +7,6 @@
              mc:Ignorable="d" 
              d:DesignHeight="21" d:DesignWidth="120">
 	<Grid>
-		<ComboBox x:Name="ProjectListDropDown" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+		<ShotRecordingPage:RemoteDataDropDown x:Name="ProjectListDropDown" />
 	</Grid>
 </UserControl>

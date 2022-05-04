@@ -29,7 +29,7 @@ namespace BlackmagicCameraControl
 		public readonly CameraHandle CameraHandle;
 		public DateTimeOffset LastReceivedDataTime { get; private set; }
 
-		private readonly BlackmagicCameraController m_dispatcher;
+		private readonly BlackmagicCameraAPIController m_dispatcher;
 
 		private readonly BluetoothLEDevice m_device;
 		private readonly GattDeviceService m_deviceInformationService;
@@ -42,7 +42,7 @@ namespace BlackmagicCameraControl
 
 		private Task? m_connectingTask = null;
 
-		public BluetoothCameraConnection(BlackmagicCameraController a_dispatcher, CameraHandle a_cameraHandle, BluetoothLEDevice a_target, GattDeviceService a_deviceInformationService,
+		public BluetoothCameraConnection(BlackmagicCameraAPIController a_dispatcher, CameraHandle a_cameraHandle, BluetoothLEDevice a_target, GattDeviceService a_deviceInformationService,
 			GattDeviceService a_blackmagicService)
 		{
 			CameraHandle = a_cameraHandle;

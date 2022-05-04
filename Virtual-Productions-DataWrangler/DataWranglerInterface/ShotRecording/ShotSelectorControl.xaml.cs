@@ -13,9 +13,9 @@ namespace DataWranglerInterface.ShotRecording
 			public readonly int ShotId;
 			public readonly ShotGridEntityShot ShotInfo;
 
-			public ShotSelectorEntry(int a_shotId, ShotGridEntityShot a_shotInfo)
+			public ShotSelectorEntry(ShotGridEntityShot a_shotInfo)
 			{
-				ShotId = a_shotId;
+				ShotId = a_shotInfo.Id;
 				ShotInfo = a_shotInfo;
 			}
 
@@ -32,35 +32,18 @@ namespace DataWranglerInterface.ShotRecording
 		{
 			InitializeComponent();
 
-			ShotSelectorDropDown.SelectionChanged += OnShotSelectionChanged;
+			ShotSelectorDropDown.DropDown.SelectionChanged += OnShotSelectionChanged;
 		}
 
 		private void OnShotSelectionChanged(object a_sender, SelectionChangedEventArgs a_e)
 		{
-			ShotSelectorEntry? entry = (ShotSelectorEntry?) ShotSelectorDropDown.SelectedItem;
+			ShotSelectorEntry? entry = (ShotSelectorEntry?) ShotSelectorDropDown.DropDown.SelectedItem;
 			OnSelectedShotChanged.Invoke(entry?.ShotInfo);
 		}
 
 		public void AsyncRefreshShots(int a_projectId)
 		{
-			ShotSelectorDropDown.Dispatcher.Invoke(() =>
-			{
-				ShotSelectorDropDown.Items.Clear();
-			});
-
-			DataWranglerServiceProvider.Instance.ShotGridAPI.GetShotsForProject(a_projectId).ContinueWith(a_task =>
-			{
-				if (a_task.Result != null)
-				{
-					ShotSelectorDropDown.Dispatcher.Invoke(() =>
-					{
-						foreach (ShotGridEntityShot shot in a_task.Result)
-						{
-							ShotSelectorDropDown.Items.Add(new ShotSelectorEntry(shot.Id, shot));
-						}
-					});
-				}
-			});
+			ShotSelectorDropDown.BeginAsyncDataRefresh<ShotGridEntityShot, ShotSelectorEntry>(DataWranglerServiceProvider.Instance.ShotGridAPI.GetShotsForProject(a_projectId));
 		}
 	}
 }

@@ -13,6 +13,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlackmagicCameraControl", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlackmagicCameraControlTest", "BlackmagicCameraControlTest\BlackmagicCameraControlTest.csproj", "{08181176-081A-4F40-84DF-3AC4C618F86A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataWranglerCommon", "DataWranglerCommon\DataWranglerCommon.csproj", "{60EB0E30-4B90-466F-B4BF-AF88BC72069F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{08181176-081A-4F40-84DF-3AC4C618F86A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{08181176-081A-4F40-84DF-3AC4C618F86A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{08181176-081A-4F40-84DF-3AC4C618F86A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{60EB0E30-4B90-466F-B4BF-AF88BC72069F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{60EB0E30-4B90-466F-B4BF-AF88BC72069F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{60EB0E30-4B90-466F-B4BF-AF88BC72069F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{60EB0E30-4B90-466F-B4BF-AF88BC72069F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

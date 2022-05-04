@@ -18,7 +18,7 @@
 		<ShotRecordingPage:ProjectSelectorControl x:Name="ProjectSelector" Margin="10,10,10,0" VerticalAlignment="Top" Grid.Column="0"/>
 		<ShotRecordingPage:ShotSelectorControl x:Name="ShotSelector" Margin="10,40,10,0" VerticalAlignment="Top" Grid.Column="0"/>
 		<ShotRecordingPage:ShotInfoDisplay x:Name="ShotInfoDisplay" Margin="10, 70, 10, 0" VerticalAlignment="Top"  Grid.Column="0"/>
-		<ShotRecordingPage:ShotVersionDisplayControl x:Name="ShotVersionDisplay" Margin="10,40,10,0" VerticalAlignment="Top" Grid.Column="1" />
+		<ShotRecordingPage:ShotVersionDisplayControl x:Name="ShotVersionDisplay" Margin="10,10,10,0" VerticalAlignment="Top" Grid.Column="1" />
 		<ShotRecordingPage:CameraInfoDisplay x:Name="CameraInfo" VerticalAlignment="Top" Grid.Column="2"/>
 	</Grid>
 </Page>

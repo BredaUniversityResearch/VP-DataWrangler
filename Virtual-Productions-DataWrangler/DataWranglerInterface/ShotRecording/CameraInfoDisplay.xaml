@@ -29,9 +29,8 @@
 			<Label x:Name="CameraBattery" Grid.Column="1" Grid.Row="2"></Label>
 	        <Label Grid.Column="0" Grid.Row="3">State</Label>
 	        <Label x:Name="CameraState" Grid.Column="1" Grid.Row="3"></Label>
-	        <Label Grid.Column="0" Grid.Row="4">Camera Time</Label>
-	        <Label x:Name="CameraTime" Grid.Column="1" Grid.Row="4"></Label>
-			<Button Grid.Row="5" Click="ButtonBase_OnClick"> Click Me</Button>
+	        <Label Grid.Column="0" Grid.Row="4">Storage Target</Label>
+	        <Label x:Name="CameraStorageTarget" Grid.Column="1" Grid.Row="4"></Label>
 		</Grid>
 	    <Grid>
 			<dataWranglerInterface:LoadingSpinner x:Name="LoadingSpinner"/>

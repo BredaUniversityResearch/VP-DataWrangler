@@ -7,6 +7,6 @@
              mc:Ignorable="d" 
              d:DesignHeight="21" d:DesignWidth="120">
     <Grid>
-		<ComboBox x:Name="ShotVersionSelectorDropDown" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+		<local:RemoteDataDropDown x:Name="ShotVersionSelectorDropDown" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
     </Grid>
 </UserControl>

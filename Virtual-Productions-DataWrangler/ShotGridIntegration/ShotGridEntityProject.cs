@@ -7,7 +7,7 @@ namespace ShotGridIntegration
 		public class ProjectAttributes
 		{
 			[JsonProperty("name")]
-			public string? Name;
+			public string Name = "";
 		};
 
 		[JsonProperty("attributes")]
