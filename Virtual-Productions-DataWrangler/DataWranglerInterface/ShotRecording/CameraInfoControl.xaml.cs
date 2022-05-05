@@ -1,21 +1,21 @@
-﻿using System.Diagnostics;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
-using BlackmagicCameraControl;
 using BlackmagicCameraControl.CommandPackets;
-using DataWranglerInterface.DebugSupport;
 
 namespace DataWranglerInterface.ShotRecording
 {
 	/// <summary>
-	/// Interaction logic for CameraInfoDisplay.xaml
+	/// Interaction logic for CameraInfoControl.xaml
 	/// </summary>
-	public partial class CameraInfoDisplay : UserControl
+	public partial class CameraInfoControl : UserControl
 	{
 		private ActiveCameraInfo? m_targetCamera;
 		public ActiveCameraInfo? TargetCameraInfo => m_targetCamera;
 
-		public CameraInfoDisplay()
+		public delegate void RecordingStateChangedHandler(ActiveCameraInfo a_camera, bool a_isNowRecording, DateTimeOffset a_stateChangeTime);
+		public event RecordingStateChangedHandler OnCameraRecordingStateChanged = delegate { };
+
+		public CameraInfoControl()
 		{
 			InitializeComponent();
 		}
@@ -71,6 +71,8 @@ namespace DataWranglerInterface.ShotRecording
 			else if (a_e.PropertyName == nameof(ActiveCameraInfo.CurrentTransportMode))
 			{
 				Dispatcher.InvokeAsync(() => CameraState.Content = m_targetCamera.CurrentTransportMode.ToString() );
+				bool isNowRecording = m_targetCamera.CurrentTransportMode == CommandPacketMediaTransportMode.EMode.Record;
+				OnCameraRecordingStateChanged.Invoke(m_targetCamera, isNowRecording, a_e.ReceivedChangeTime);
 			}
 			else if (a_e.PropertyName == nameof(ActiveCameraInfo.CurrentStorageTarget))
 			{

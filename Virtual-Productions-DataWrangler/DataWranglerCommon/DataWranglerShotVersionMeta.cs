@@ -1,39 +1,31 @@
 ﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using AutoNotify;
 
 namespace DataWranglerCommon
 {
+	public partial class DataWranglerVideoMeta
+	{
+		[AutoNotify]
+		private string m_source = "";
+
+		[AutoNotify]
+		private string m_codecName = "";
+
+		[AutoNotify] 
+		private DateTimeOffset? m_recordingStart = null;
+
+		[AutoNotify] private string m_storageTarget = null;
+	}
+
 	public class DataWranglerShotVersionMeta
 	{
-		public class VideoMeta: INotifyPropertyChanged
-		{
-			private string m_source = "";
-			public string Source
-			{
-				get => m_source;
-				set
-				{
-					m_source = value;
-					OnPropertyChanged();
-				}
-			}
-			
-			public string CodecName { get; set; } = "";
-
-			public event PropertyChangedEventHandler? PropertyChanged;
-
-			protected virtual void OnPropertyChanged([CallerMemberName] string? a_propertyName = null)
-			{
-				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(a_propertyName));
-			}
-		};
-
 		public class AudioMeta
 		{
 			public string Source = "";
 		};
 
-		public VideoMeta Video = new VideoMeta();
+		public DataWranglerVideoMeta Video = new DataWranglerVideoMeta();
 		public AudioMeta Audio = new AudioMeta();
 	}
 }

@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
+using ShotGridIntegration;
 
 namespace DataWranglerInterface.ShotRecording
 {
@@ -16,7 +17,7 @@ namespace DataWranglerInterface.ShotRecording
 			SetLoading(false);
 		}
 
-		public void BeginAsyncDataRefresh<TAPIResult, TDropDownType>(Task<TAPIResult[]?> a_task)
+		public void BeginAsyncDataRefresh<TAPIResult, TDropDownType>(Task<ShotGridAPIResponse<TAPIResult[]>> a_task)
 		{
 			if (m_itemEntryRefreshTask == null)
 			{
@@ -35,14 +36,14 @@ namespace DataWranglerInterface.ShotRecording
 					return;
 				}
 
-				TAPIResult[]? apiResults = a_results.Result;
+				ShotGridAPIResponse<TAPIResult[]> apiResults = a_results.Result;
 				TDropDownType[] result = Array.Empty<TDropDownType>();
-				if (apiResults != null)
+				if (!apiResults.IsError)
 				{
-					result = new TDropDownType[apiResults.Length];
+					result = new TDropDownType[apiResults.ResultData.Length];
 					for (int i = 0; i < result.Length; ++i)
 					{
-						TDropDownType? dropDownType = (TDropDownType?)Activator.CreateInstance(typeof(TDropDownType), apiResults[i]);
+						TDropDownType? dropDownType = (TDropDownType?)Activator.CreateInstance(typeof(TDropDownType), apiResults.ResultData[i]);
 						result[i] = dropDownType ?? throw new Exception($"Failed to create object {typeof(TDropDownType).Name} with {typeof(TAPIResult).Name} as first argument");
 					}
 				}

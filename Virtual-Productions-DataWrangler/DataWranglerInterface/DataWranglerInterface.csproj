@@ -1,45 +1,46 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net6.0-windows10.0.19041</TargetFramework>
-    <RootNamespace>DataWranglerInterface</RootNamespace>
-    <Nullable>enable</Nullable>
-    <UseWindowsForms>False</UseWindowsForms>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <UseWPF>True</UseWPF>
-    <StartupObject>DataWranglerInterface.App</StartupObject>
-  </PropertyGroup>
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net6.0-windows10.0.19041</TargetFramework>
+		<RootNamespace>DataWranglerInterface</RootNamespace>
+		<Nullable>enable</Nullable>
+		<UseWindowsForms>False</UseWindowsForms>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<UseWPF>True</UseWPF>
+		<StartupObject>DataWranglerInterface.App</StartupObject>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <None Remove="Resources\Loading.png" />
-    <None Remove="Resources\MissingThumbnail.png" />
-  </ItemGroup>
+	<ItemGroup>
+		<None Remove="Resources\Loading.png" />
+		<None Remove="Resources\MissingThumbnail.png" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\BlackmagicCameraControl\BlackmagicCameraControl.csproj" />
-    <ProjectReference Include="..\DataWranglerCommon\DataWranglerCommon.csproj" />
-    <ProjectReference Include="..\ShotGridIntegration\ShotGridIntegration.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\BlackmagicCameraControl\BlackmagicCameraControl.csproj" />
+		<ProjectReference Include="..\DataWranglerCommon\DataWranglerCommon.csproj" />
+		<ProjectReference Include="..\DataWranglerSourceAnalysis\DataWranglerSourceAnalysis.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
+		<ProjectReference Include="..\ShotGridIntegration\ShotGridIntegration.csproj" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Compile Update="Properties\Settings.Designer.cs">
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Settings.settings</DependentUpon>
-    </Compile>
-  </ItemGroup>
+	<ItemGroup>
+		<Compile Update="Properties\Settings.Designer.cs">
+			<DesignTimeSharedInput>True</DesignTimeSharedInput>
+			<AutoGen>True</AutoGen>
+			<DependentUpon>Settings.settings</DependentUpon>
+		</Compile>
+	</ItemGroup>
 
-  <ItemGroup>
-    <None Update="Properties\Settings.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-    </None>
-  </ItemGroup>
+	<ItemGroup>
+		<None Update="Properties\Settings.settings">
+			<Generator>SettingsSingleFileGenerator</Generator>
+			<LastGenOutput>Settings.Designer.cs</LastGenOutput>
+		</None>
+	</ItemGroup>
 
-  <ItemGroup>
-    <Resource Include="Resources\Loading.png" />
-    <Resource Include="Resources\MissingThumbnail.png" />
-  </ItemGroup>
+	<ItemGroup>
+		<Resource Include="Resources\Loading.png" />
+		<Resource Include="Resources\MissingThumbnail.png" />
+	</ItemGroup>
 
 </Project>

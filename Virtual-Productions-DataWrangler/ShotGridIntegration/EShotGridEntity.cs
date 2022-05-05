@@ -9,6 +9,7 @@ namespace ShotGridIntegration
 	public enum EShotGridEntity
 	{
 		Project,
-		Shot
+		Shot,
+		Version
 	}
 }

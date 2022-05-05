@@ -9,7 +9,7 @@ namespace ShotGridIntegration
 			[JsonProperty("code")] public string VersionCode = "";
 			[JsonProperty("description")] public string? Description;
 			[JsonProperty("image")] public string? ImageURL;
-			[JsonProperty("datawrangler_meta")] public string? DataWranglerMeta;
+			[JsonProperty("sg_datawrangler_meta")] public string? DataWranglerMeta;
 		};
 
 		[JsonProperty("attributes")]

@@ -26,7 +26,7 @@ namespace DataWranglerInterface.ShotRecording
 
 		public delegate void ShotVersionSelected(ShotGridEntityShotVersion? a_shotVersion);
 		public event ShotVersionSelected OnShotVersionSelected = delegate { };
-		public int CurrentVersionEntityId => ((ShotGridEntityShotVersion)ShotVersionSelectorDropDown.DropDown.SelectedItem).Id;
+		public int CurrentVersionEntityId => ((ShotVersionSelectorEntry)ShotVersionSelectorDropDown.DropDown.SelectedItem).ShotVersionInfo.Id;
 		
 		public ShotVersionSelectorControl()
 		{
@@ -79,6 +79,20 @@ namespace DataWranglerInterface.ShotRecording
 				ShotVersionSelectorDropDown.DropDown.SelectedIndex = index;
 				ShotVersionSelectorDropDown.SetLoading(false);
 			});
+		}
+
+		public void UpdateEntity(ShotGridEntityShotVersion a_resultResultData)
+		{
+			foreach (ShotVersionSelectorEntry entry in ShotVersionSelectorDropDown.DropDown.Items)
+			{
+				if (entry.ShotVersionInfo.Id == a_resultResultData.Id)
+				{
+					entry.ShotVersionInfo = a_resultResultData;
+					return;
+				}
+			}
+
+			throw new Exception("Could not find entry to update");
 		}
 	}
 }

@@ -1,4 +1,5 @@
 ﻿using System.Windows.Controls;
+using AutoNotify;
 using DataWranglerCommon;
 
 namespace DataWranglerInterface.ShotRecording
@@ -8,32 +9,21 @@ namespace DataWranglerInterface.ShotRecording
 	/// </summary>
 	public partial class ShotVersionVideoMetaControl : UserControl
 	{
-		public DataWranglerShotVersionMeta.VideoMeta CurrentMeta { get; private set; } = new();
+		[AutoNotify]
+		private DataWranglerVideoMeta m_currentMeta = new();
 
 		public ShotVersionVideoMetaControl()
 		{
 			InitializeComponent();
 
-			VideoSource.Items.Add("Alpha Blackmagic Ursa");
-			VideoSource.Items.Add("Beta D90");
+			VideoSource.Items.Add("Giga Chad Blackmagic Ursa");
+			VideoSource.Items.Add("Chad Pocket Cinema");
+			VideoSource.Items.Add("Virgin D90");
 		}
 
 		public void UpdateData(DataWranglerShotVersionMeta a_targetMeta)
 		{
 			CurrentMeta = a_targetMeta.Video;
-			SetUIForCurrentMeta();
-		}
-
-		private void SetUIForCurrentMeta()
-		{
-			if (!Dispatcher.CheckAccess())
-			{
-				Dispatcher.InvokeAsync(SetUIForCurrentMeta);
-				return;
-			}
-
-			VideoSource.SelectedItem = CurrentMeta.Source;
-
 		}
 	}
 }

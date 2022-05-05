@@ -26,6 +26,7 @@ namespace DataWranglerInterface.ShotRecording
 
 			ProjectSelector.OnSelectedProjectChanged += OnSelectedProjectChanged;
 			ShotSelector.OnSelectedShotChanged += OnSelectedShotChanged;
+			CameraInfo.OnCameraRecordingStateChanged += ShotVersionDisplay.OnActiveCameraRecordingStateChanged;
 
 			ShotVersionDisplay.SetProjectSelector(ProjectSelector);
 		}

@@ -35,6 +35,7 @@ namespace DataWranglerInterface.ShotRecording
 		public int BatteryVoltage_mV { get; private set; }
 		public CommandPacketMediaTransportMode.EMode CurrentTransportMode { get; private set; }
 		public string CurrentStorageTarget { get; private set; } = "";
+		public string SelectedCodec { get; private set; } = ""; //String representation of the basic coded selected by camera.
 
 		public ActiveCameraInfo(CameraHandle a_handle)
 		{
@@ -57,8 +58,7 @@ namespace DataWranglerInterface.ShotRecording
 					m_timeSyncPoint = DateTime.UtcNow;
 					a_controller.AsyncSendCommand(m_targetCamera, new CommandPacketConfigurationRealTimeClock(m_timeSyncPoint));
 
-					IBlackmagicCameraLogInterface.LogInfo(
-						$"Synchronizing camera with handle {m_targetCamera.ConnectionId} time to {DateTime.UtcNow} + {tzPacket.MinutesOffsetFromUTC} Minutes");
+					Logger.LogInfo("CameraInfo", $"Synchronizing camera with handle {m_targetCamera.ConnectionId} time to {DateTime.UtcNow} + {tzPacket.MinutesOffsetFromUTC} Minutes");
 
 					m_receivedAnyBatteryStatusPackets = true;
 				}
@@ -76,9 +76,15 @@ namespace DataWranglerInterface.ShotRecording
 
 				Logger.LogInfo("CameraInfo", $"Transport mode changed to {transportMode.Mode} at {a_receivedTime}");
 			}
+			else if (a_packet is CommandPacketMediaCodec codecPacket)
+			{
+				Logger.LogInfo("CameraInfo", $"Codec changed to: {codecPacket.BasicCodec}:{codecPacket.Variant}");
+				SelectedCodec = codecPacket.BasicCodec.ToString();
+				OnCameraPropertyChanged(nameof(CurrentTransportMode), a_receivedTime);
+			}
 			else if (a_packet is CommandPacketVendorStorageTargetChanged storageTarget)
 			{
-				IBlackmagicCameraLogInterface.LogVerbose($"Storage target changed to: {storageTarget.StorageTargetName}");
+				Logger.LogInfo("CameraInfo", $"Storage target changed to: {storageTarget.StorageTargetName}");
 
 				CurrentStorageTarget = storageTarget.StorageTargetName;
 				OnCameraPropertyChanged(nameof(CurrentStorageTarget), a_receivedTime);

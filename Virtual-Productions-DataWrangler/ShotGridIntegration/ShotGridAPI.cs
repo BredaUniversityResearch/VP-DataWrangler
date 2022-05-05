@@ -73,69 +73,81 @@ namespace ShotGridIntegration
 			}
 		}
 
-		public async Task<ShotGridEntityProject[]?> GetProjects()
+		public async Task<ShotGridAPIResponse<ShotGridEntityProject[]>> GetProjects()
 		{
 			ShotGridSimpleSearchFilter filter = new ShotGridSimpleSearchFilter();
 			filter.FieldIs("sg_status", "Active");
 			return await FindAndParse<ShotGridEntityProject[]>("projects", filter, new[] { "name" });
 		}
 
-		public async Task<ShotGridEntityShot[]?> GetShotsForProject(int a_projectId)
+		public async Task<ShotGridAPIResponse<ShotGridEntityShot[]>> GetShotsForProject(int a_projectId)
 		{
 			ShotGridSimpleSearchFilter filter = new ShotGridSimpleSearchFilter();
 			filter.FieldIs("project.Project.id", a_projectId);
 			return await FindAndParse<ShotGridEntityShot[]>("shots", filter, new[] {"code", "description", "image" });
 		}
 
-		public async Task<ShotGridEntityShotVersion[]?> GetVersionsForShot(int a_shotId)
+		public async Task<ShotGridAPIResponse<ShotGridEntityShotVersion[]>> GetVersionsForShot(int a_shotId)
 		{
 			ShotGridSimpleSearchFilter filter = new ShotGridSimpleSearchFilter();
 			filter.FieldIs("entity.Shot.id", a_shotId);
-			return await FindAndParse<ShotGridEntityShotVersion[]>("versions", filter, new[] { "code", "description", "image" });
+			return await FindAndParse<ShotGridEntityShotVersion[]>("versions", filter, new[] { "code", "description", "image", "sg_datawrangler_meta" });
 		}
 
-		private bool ParseResponse<TTargetType>(string a_responseString, out TTargetType? a_result, [NotNullWhen(false)] out ShotGridErrorResponse? a_error)
+		private ShotGridAPIResponse<TTargetType> ParseResponse<TTargetType>(HttpStatusCode a_statusCode, string a_responseString)
 			where TTargetType: class
 		{
-			a_result = null;
-			a_error = null;
+			ShotGridErrorResponse? error = null;
+			TTargetType? data = null;
 
 			JObject parsedResult = JObject.Parse(a_responseString);
-			if (parsedResult.ContainsKey("errors"))
-			{
-				a_error = parsedResult.ToObject<ShotGridErrorResponse>()!;
-				return false;
-			}
-			else if (parsedResult.TryGetValue("data", out JToken? dataNode))
-			{
-				a_result = dataNode.ToObject<TTargetType>();
-				return true;
-			}
 
-			throw new Exception($"Failure deserializing response {a_responseString}");
-		}
-
-		private async Task<TTargetType?> FindAndParse<TTargetType>(string a_entityType, ShotGridSimpleSearchFilter a_filters, string[] a_fields)
-			where TTargetType : class
-		{
-			string result = await Find(a_entityType, a_filters, a_fields);
-			if (ParseResponse(result, out TTargetType? resultEntities, out var errorResponse))
+			if (((int)a_statusCode >= 200) && ((int)a_statusCode <= 299))
 			{
-				return resultEntities;
+				JToken? dataNode = parsedResult["data"];
+				if (dataNode != null)
+				{
+					data = dataNode.ToObject<TTargetType>();
+				}
+				else
+				{
+					error = new ShotGridErrorResponse
+					{
+						Errors = new ShotGridErrorResponse.RequestError[]
+						{
+							new() {Detail = "Invalid response returned from ShotGrid, missing 'data' node in root Json object"}
+						}
+					};
+				}
+
 			}
 			else
 			{
-				ReportError(errorResponse);
-				return null;
+				error = parsedResult.ToObject<ShotGridErrorResponse>();
 			}
+
+			if (error != null)
+			{
+				ReportError(error);
+			}
+
+			return new ShotGridAPIResponse<TTargetType>(data, error);
 		}
 
 		private void ReportError(ShotGridErrorResponse a_errorResponse)
 		{
-			throw new Exception("Api Exception: " + a_errorResponse);
+			//Todo: Add logging here.
 		}
 
-		public async Task<string> Find(string a_entityType, ShotGridSimpleSearchFilter a_filters, string[] a_fields)
+		private async Task<ShotGridAPIResponse<TTargetType>> FindAndParse<TTargetType>(string a_entityType, ShotGridSimpleSearchFilter a_filters, string[] a_fields)
+			where TTargetType : class
+		{
+			HttpResponseMessage result = await Find(a_entityType, a_filters, a_fields);
+			string resultBody = await result.Content.ReadAsStringAsync();
+			return ParseResponse<TTargetType>(result.StatusCode, resultBody);
+		}
+
+		private async Task<HttpResponseMessage> Find(string a_entityType, ShotGridSimpleSearchFilter a_filters, string[] a_fields)
 		{
 			if (m_authentication == null)
 			{
@@ -159,8 +171,7 @@ namespace ShotGridIntegration
 			};
 
 			HttpResponseMessage response = await m_client.SendAsync(request);
-			string result = await response.Content.ReadAsStringAsync();
-			return result;
+			return response;
 		}
 
 		public ShotGridAuthentication GetCurrentCredentials()
@@ -173,7 +184,7 @@ namespace ShotGridIntegration
 			return m_authentication;
 		}
 
-		public async Task<ShotGridEntityShotVersion?> CreateNewShotVersion(int a_projectId, int a_parentShotId, string a_versionName)
+		public async Task<ShotGridAPIResponse<ShotGridEntityShotVersion>> CreateNewShotVersion(int a_projectId, int a_parentShotId, string a_versionName)
 		{
 			ShotGridEntityShotVersion.ShotVersionAttributes version = new ShotGridEntityShotVersion.ShotVersionAttributes();
 			version.VersionCode = a_versionName;
@@ -190,20 +201,13 @@ namespace ShotGridIntegration
 
 			string requestBody = encodedToken.ToString();
 
-			string response = await Create("version", requestBody);
+			HttpResponseMessage response = await Create("version", requestBody);
+			string responseBody = await response.Content.ReadAsStringAsync();
 
-			if (ParseResponse(response, out ShotGridEntityShotVersion? createdEntity, out ShotGridErrorResponse? errorResponse))
-			{
-				return createdEntity;
-			}
-			else
-			{
-				ReportError(errorResponse);
-				return null;
-			}
+			return ParseResponse<ShotGridEntityShotVersion>(response.StatusCode, responseBody);
 		}
 
-		public async Task<string> Create(string a_entityType, string a_entityDataAsString)
+		private async Task<HttpResponseMessage> Create(string a_entityType, string a_entityDataAsString)
 		{
 			if (m_authentication == null)
 			{
@@ -224,34 +228,36 @@ namespace ShotGridIntegration
 			};
 
 			HttpResponseMessage response = await m_client.SendAsync(request);
-			string result = await response.Content.ReadAsStringAsync();
-			return result;
+			return response;
 		}
 
-		public void UpdateEntitySingleProperty(EShotGridEntity a_entity, int a_entityId, string a_propertyName, string a_value)
+		public async Task<ShotGridAPIResponse<TEntityType>> UpdateEntityProperties<TEntityType>(EShotGridEntity a_entity, int a_entityId, Dictionary<string, object> a_propertiesToSet)
+			where TEntityType: class
 		{
-			throw new NotImplementedException();
-			//if (m_authentication == null)
-			//{
-			//	throw new ShotGridAPIException("No authentication requested");
-			//}
+			if (m_authentication == null)
+			{
+				throw new ShotGridAPIException("No authentication requested");
+			}
 
-			//HttpRequestMessage request = new HttpRequestMessage
-			//{
-			//	Method = HttpMethod.Post,
-			//	RequestUri = new Uri($"{BaseUrl}entity/{a_entity}/{a_entityId}"),
-			//	Headers = {
-			//		{ HttpRequestHeader.Accept.ToString(), "application/json" },
-			//		{ HttpRequestHeader.AcceptEncoding.ToString(), "gzip, deflate, br" },
-			//		{ HttpRequestHeader.Authorization.ToString(), "Bearer " + m_authentication.AccessToken },
-			//		{ HttpRequestHeader.ContentType.ToString(), "application/vnd+shotgun.api3_array+json; charset=utf-8" },
-			//	},
-			//	Content = new ByteArrayContent(Encoding.UTF8.GetBytes(a_entityDataAsString))
-			//};
+			string fullRequestAsString = JsonConvert.SerializeObject(a_propertiesToSet);
 
-			//HttpResponseMessage response = await m_client.SendAsync(request);
-			//string result = await response.Content.ReadAsStringAsync();
-			//return result;
+			HttpRequestMessage request = new HttpRequestMessage
+			{
+				Method = HttpMethod.Put,
+				RequestUri = new Uri($"{BaseUrl}entity/{a_entity}/{a_entityId}"),
+				Headers = {
+					{ HttpRequestHeader.Accept.ToString(), "application/json" },
+					{ HttpRequestHeader.AcceptEncoding.ToString(), "gzip, deflate, br" },
+					{ HttpRequestHeader.Authorization.ToString(), "Bearer " + m_authentication.AccessToken },
+					{ HttpRequestHeader.ContentType.ToString(), "application/vnd+shotgun.api3_array+json; charset=utf-8" },
+				},
+				Content = new ByteArrayContent(Encoding.UTF8.GetBytes(fullRequestAsString))
+			};
+
+			HttpResponseMessage response = await m_client.SendAsync(request);
+			string responseBody = await response.Content.ReadAsStringAsync();
+
+			return ParseResponse<TEntityType>(response.StatusCode, responseBody);
 		}
 	}
 }
