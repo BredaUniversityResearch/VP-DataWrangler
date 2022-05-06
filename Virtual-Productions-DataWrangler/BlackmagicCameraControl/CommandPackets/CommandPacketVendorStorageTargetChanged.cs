@@ -6,6 +6,10 @@
 		public short StorageDriveIdentifier;	//
 		public string StorageTargetName => $"A{StorageDriveIdentifier:D3}";
 
+		public CommandPacketVendorStorageTargetChanged()
+		{
+		}
+
 		public CommandPacketVendorStorageTargetChanged(CommandReader a_reader)
 		{
 			StorageDriveIdentifier = a_reader.ReadInt16();

@@ -6,28 +6,19 @@ using System.Text;
 using System.Threading.Tasks;
 using Windows.Devices.Bluetooth;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
-using Windows.Foundation;
 using Windows.Storage.Streams;
 using BlackmagicCameraControl.CommandPackets;
-using WinRT;
-using Buffer = Windows.Storage.Streams.Buffer;
 
 namespace BlackmagicCameraControl
 {
-	internal class BluetoothCameraConnection : IDisposable
+	internal class BlackmagicCameraConnectionBluetooth : IBlackmagicCameraConnection
 	{
-		public enum EConnectionState
-		{
-			QueryingProperties,
-			Connected,
-			Disconnected,
-		};
-
-		public EConnectionState ConnectionState { get; private set; }
 		public string DeviceId => m_device.DeviceId;
 
-		public readonly CameraHandle CameraHandle;
+		public IBlackmagicCameraConnection.EConnectionState ConnectionState { get; private set; }
+		public CameraHandle CameraHandle { get; private set; }
 		public DateTimeOffset LastReceivedDataTime { get; private set; }
+		public string HumanReadableName => GetDevice().Name;
 
 		private readonly BlackmagicCameraAPIController m_dispatcher;
 
@@ -42,7 +33,7 @@ namespace BlackmagicCameraControl
 
 		private Task? m_connectingTask = null;
 
-		public BluetoothCameraConnection(BlackmagicCameraAPIController a_dispatcher, CameraHandle a_cameraHandle, BluetoothLEDevice a_target, GattDeviceService a_deviceInformationService,
+		public BlackmagicCameraConnectionBluetooth(BlackmagicCameraAPIController a_dispatcher, CameraHandle a_cameraHandle, BluetoothLEDevice a_target, GattDeviceService a_deviceInformationService,
 			GattDeviceService a_blackmagicService)
 		{
 			CameraHandle = a_cameraHandle;
@@ -104,11 +95,11 @@ namespace BlackmagicCameraControl
 				{
 					SubscribeToIncomingServices();
 					LastReceivedDataTime = DateTimeOffset.UtcNow;
-					ConnectionState = EConnectionState.Connected;
+					ConnectionState = IBlackmagicCameraConnection.EConnectionState.Connected;
 				}
 				else
 				{
-					ConnectionState = EConnectionState.Disconnected;
+					ConnectionState = IBlackmagicCameraConnection.EConnectionState.Disconnected;
 				}
 			});	
 		}
@@ -117,7 +108,7 @@ namespace BlackmagicCameraControl
 		{
 			if (a_sender.ConnectionStatus == BluetoothConnectionStatus.Disconnected)
 			{
-				ConnectionState = EConnectionState.Disconnected;
+				ConnectionState = IBlackmagicCameraConnection.EConnectionState.Disconnected;
 			}
 		}
 
@@ -136,7 +127,7 @@ namespace BlackmagicCameraControl
 				return m_connectingTask.Wait(a_timeout);
 			}
 
-			return ConnectionState == EConnectionState.Connected;
+			return ConnectionState == IBlackmagicCameraConnection.EConnectionState.Connected;
 		}
 
 		private void SubscribeToIncomingServices()

@@ -21,7 +21,7 @@ namespace DataWranglerInterface.ShotRecording
 
 	public class ActiveCameraInfo: INotifyPropertyChanged
 	{
-		private CameraHandle m_targetCamera;
+		public readonly CameraHandle TargetCamera;
 		private DateTime m_timeSyncPoint = DateTime.MinValue;
 
 		private bool m_receivedAnyBatteryStatusPackets = false;
@@ -39,7 +39,7 @@ namespace DataWranglerInterface.ShotRecording
 
 		public ActiveCameraInfo(CameraHandle a_handle)
 		{
-			m_targetCamera = a_handle;
+			TargetCamera = a_handle;
 		}
 
 		public void OnCameraDataReceived(BlackmagicCameraAPIController a_controller, DateTimeOffset a_receivedTime, ICommandPacketBase a_packet)
@@ -54,11 +54,11 @@ namespace DataWranglerInterface.ShotRecording
 				if (!m_receivedAnyBatteryStatusPackets)
 				{
 					CommandPacketConfigurationTimezone tzPacket = new CommandPacketConfigurationTimezone(TimeZoneInfo.Local);
-					a_controller.AsyncSendCommand(m_targetCamera, tzPacket);
+					a_controller.AsyncSendCommand(TargetCamera, tzPacket);
 					m_timeSyncPoint = DateTime.UtcNow;
-					a_controller.AsyncSendCommand(m_targetCamera, new CommandPacketConfigurationRealTimeClock(m_timeSyncPoint));
+					a_controller.AsyncSendCommand(TargetCamera, new CommandPacketConfigurationRealTimeClock(m_timeSyncPoint));
 
-					Logger.LogInfo("CameraInfo", $"Synchronizing camera with handle {m_targetCamera.ConnectionId} time to {DateTime.UtcNow} + {tzPacket.MinutesOffsetFromUTC} Minutes");
+					Logger.LogInfo("CameraInfo", $"Synchronizing camera with handle {TargetCamera.ConnectionId} time to {DateTime.UtcNow} + {tzPacket.MinutesOffsetFromUTC} Minutes");
 
 					m_receivedAnyBatteryStatusPackets = true;
 				}

@@ -35,7 +35,7 @@ namespace DataWranglerInterface.ShotRecording
 
 			Dispatcher.InvokeAsync(() =>
 				{
-					LoadingSpinner.Visibility = (m_targetCamera == null)? Visibility.Hidden : Visibility.Visible;
+					LoadingSpinner.Visibility = (m_targetCamera == null)? Visibility.Visible : Visibility.Hidden;
 				}
 			);
 		}

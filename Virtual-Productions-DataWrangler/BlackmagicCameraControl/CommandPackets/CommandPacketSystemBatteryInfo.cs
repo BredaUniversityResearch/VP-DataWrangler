@@ -7,6 +7,10 @@
 		public short BatteryPercentage;
 		public short Unknown;
 
+		public CommandPacketSystemBatteryInfo()
+		{
+		}
+
 		public CommandPacketSystemBatteryInfo(CommandReader a_reader)
 		{
 			BatteryVoltage_mV = a_reader.ReadInt16();

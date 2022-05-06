@@ -22,6 +22,8 @@ namespace DataWranglerInterface.ShotRecording
 			m_activeCameraHandler.OnCameraConnected += OnCameraConnected;
 			m_activeCameraHandler.OnCameraDisconnected += OnCameraDisconnected;
 
+			CameraInfoDebug.CameraApiController = m_apiController;
+
 			ProjectSelector.AsyncRefreshProjects();
 
 			ProjectSelector.OnSelectedProjectChanged += OnSelectedProjectChanged;
@@ -31,9 +33,17 @@ namespace DataWranglerInterface.ShotRecording
 			ShotVersionDisplay.SetProjectSelector(ProjectSelector);
 		}
 
+		public void Dispose()
+		{
+			m_activeCameraHandler.OnCameraConnected -= OnCameraConnected;
+			m_activeCameraHandler.OnCameraDisconnected -= OnCameraDisconnected;
+			m_apiController.Dispose();
+		}
+
 		private void OnCameraConnected(ActiveCameraInfo a_camera)
 		{
 			CameraInfo.SetTargetCameraInfo(a_camera);
+			CameraInfoDebug.SetTargetCamera(a_camera);
 		}
 
 		private void OnCameraDisconnected(ActiveCameraInfo a_handle)
@@ -41,6 +51,7 @@ namespace DataWranglerInterface.ShotRecording
 			if (CameraInfo.TargetCameraInfo == a_handle)
 			{
 				CameraInfo.SetTargetCameraInfo(null);
+				CameraInfoDebug.SetTargetCamera(null);
 			}
 		}
 
@@ -53,11 +64,6 @@ namespace DataWranglerInterface.ShotRecording
 		{
 			ShotInfoDisplay.SetDisplayedShot(a_shotInfo);
 			ShotVersionDisplay.OnShotSelected(a_shotInfo?.Id ?? -1);
-		}
-
-		public void Dispose()
-		{
-			m_apiController.Dispose();
 		}
 	}
 }

@@ -14,6 +14,10 @@
 		public EBasicCodec BasicCodec = EBasicCodec.Raw;
 		public byte Variant = 0;
 
+		public CommandPacketMediaCodec()
+		{
+		}
+
 		public CommandPacketMediaCodec(CommandReader a_reader)
 		{
 			BasicCodec = (EBasicCodec) a_reader.ReadInt8();

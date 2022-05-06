@@ -76,14 +76,23 @@ namespace DataWranglerInterface.ShotRecording
 			{
 				if (!string.IsNullOrEmpty(a_shotVersion.Attributes.DataWranglerMeta))
 				{
-					DataWranglerShotVersionMeta? shotMeta = JsonConvert.DeserializeObject<DataWranglerShotVersionMeta>(a_shotVersion.Attributes.DataWranglerMeta);
-					if(shotMeta != null)
+					try
 					{
-						SetTargetMeta(shotMeta);
+						DataWranglerShotVersionMeta? shotMeta = JsonConvert.DeserializeObject<DataWranglerShotVersionMeta>(a_shotVersion.Attributes.DataWranglerMeta);
+						if (shotMeta != null)
+						{
+							SetTargetMeta(shotMeta);
+						}
+						else
+						{
+							Logger.LogError("Interface",
+								$"Failed to deserialize shot version meta from value: {a_shotVersion.Attributes.DataWranglerMeta}");
+							SetTargetMeta(new DataWranglerShotVersionMeta());
+						}
 					}
-					else
+					catch (JsonReaderException ex)
 					{
-						Logger.LogError("Interface", $"Failed to deserialize shot version meta from value: {a_shotVersion.Attributes.DataWranglerMeta}");
+						Logger.LogError("Interface", $"Failed to deserialize shot version meta from value: {a_shotVersion.Attributes.DataWranglerMeta}. Exception: {ex.Message}");
 						SetTargetMeta(new DataWranglerShotVersionMeta());
 					}
 				}
@@ -104,11 +113,18 @@ namespace DataWranglerInterface.ShotRecording
 
 		private void UpdateRemoteShotGridMetaField()
 		{
-			string metaAsString = JsonConvert.SerializeObject(m_currentVersionMeta);
+			int selectedVersionId = VersionSelectorControl.SelectedVersionEntityId;
+			if (selectedVersionId == -1)
+			{
+				Logger.LogWarning("Interface", "Tried to update ShotGridMeta for invalid shot version.");
+				return;
+			}
+
+			string metaAsString = JsonConvert.SerializeObject(m_currentVersionMeta, DataWranglerSerializationSettings.Instance);
 			Dictionary<string, object> valuesToSet = new Dictionary<string, object> { { "sg_datawrangler_meta", metaAsString } };
 
 			Task<ShotGridAPIResponse<ShotGridEntityShotVersion>> response = DataWranglerServiceProvider.Instance.ShotGridAPI.UpdateEntityProperties<ShotGridEntityShotVersion>(
-				EShotGridEntity.Version, VersionSelectorControl.CurrentVersionEntityId, valuesToSet);
+				EShotGridEntity.Version, selectedVersionId, valuesToSet);
 			response.ContinueWith((a_task) => {
 				if (a_task.Result.IsError)
 				{
