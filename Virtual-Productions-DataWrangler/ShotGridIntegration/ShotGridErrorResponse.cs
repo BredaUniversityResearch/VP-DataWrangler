@@ -29,5 +29,17 @@ namespace ShotGridIntegration
 
 		[JsonProperty("errors")]
 		public RequestError[] Errors = Array.Empty<RequestError>();
+
+		public override string ToString()
+		{
+			StringBuilder sb = new StringBuilder(256);
+			sb.Append("ShotGridErrorResponse: \n");
+			foreach (RequestError error in Errors)
+			{
+				sb.Append($"{error.Title}: {error.Detail}");
+			}
+
+			return sb.ToString();
+		}
 	}
 }

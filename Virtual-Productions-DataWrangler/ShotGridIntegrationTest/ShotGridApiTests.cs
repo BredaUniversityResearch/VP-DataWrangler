@@ -27,7 +27,7 @@ namespace ShotGridIntegrationTest
 			ShotGridLoginResponse loginResponse = api.TryLogin(CredentialProvider.Username!, CredentialProvider.Password!).Result;
 			Assert.IsTrue(loginResponse.Success);
 
-			ShotGridAPIResponse<ShotGridEntityProject[]> projects = api.GetProjects().Result;
+			ShotGridAPIResponse<ShotGridEntityProject[]> projects = api.GetActiveProjects().Result;
 			
 			Assert.IsFalse(projects.IsError);
 

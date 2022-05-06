@@ -1,5 +1,5 @@
 ﻿
-namespace DataWranglerInterface.DebugSupport
+namespace DataWranglerCommon
 {
 	public class Logger
 	{
@@ -28,6 +28,5 @@ namespace DataWranglerInterface.DebugSupport
 		{
 			Log(a_source, "Error", a_message);
 		}
-
 	}
 }

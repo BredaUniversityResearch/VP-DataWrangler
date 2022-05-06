@@ -9,6 +9,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="System.Management" Version="6.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\DataWranglerCommonWPF\DataWranglerCommonWPF.csproj" />
     <ProjectReference Include="..\DataWranglerCommon\DataWranglerCommon.csproj" />
     <ProjectReference Include="..\ShotGridIntegration\ShotGridIntegration.csproj" />

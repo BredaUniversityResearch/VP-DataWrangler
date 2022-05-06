@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using System.Windows;
 using DataWranglerCommonWPF.Login;
 using ShotGridIntegration;
@@ -24,6 +25,7 @@ namespace DataWranglerServiceWorker
 		}
 
 		private ShotGridAPI m_api;
+		public event Action OnSuccessfulLogin = delegate { };
 
 		public ShotGridAuthenticationWindow(ShotGridAPI a_api)
 		{
@@ -31,19 +33,21 @@ namespace DataWranglerServiceWorker
 
 			InitializeComponent();
 
-			LoginContent.OnSuccessfulLogin += OnSuccessfulLogin;
+			LoginContent.OnSuccessfulLogin += SuccessfulLoginCallback;
 			LoginContent.Initialize(m_api, new SettingsCredentialProvider());
 		}
 
-		private void OnSuccessfulLogin()
+		private void SuccessfulLoginCallback()
 		{
 			if (!Dispatcher.CheckAccess())
 			{
-				Dispatcher.InvokeAsync(OnSuccessfulLogin);
+				Dispatcher.InvokeAsync(SuccessfulLoginCallback);
 				return;
 			}
 
 			Close();
+
+			OnSuccessfulLogin.Invoke();
 		}
 
 		public void EnsureLogin()

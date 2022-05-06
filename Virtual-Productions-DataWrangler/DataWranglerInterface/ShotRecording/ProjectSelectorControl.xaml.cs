@@ -42,7 +42,7 @@ namespace DataWranglerInterface.ShotRecording
 
 		public void AsyncRefreshProjects()
 		{
-			ProjectListDropDown.BeginAsyncDataRefresh<ShotGridEntityProject, ProjectSelectionEntry>(DataWranglerServiceProvider.Instance.ShotGridAPI.GetProjects());
+			ProjectListDropDown.BeginAsyncDataRefresh<ShotGridEntityProject, ProjectSelectionEntry>(DataWranglerServiceProvider.Instance.ShotGridAPI.GetActiveProjects());
 		}
 	}
 }

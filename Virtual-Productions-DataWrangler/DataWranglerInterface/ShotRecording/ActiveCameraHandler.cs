@@ -1,5 +1,6 @@
 ﻿using BlackmagicCameraControl;
 using BlackmagicCameraControl.CommandPackets;
+using DataWranglerCommon;
 using DataWranglerInterface.DebugSupport;
 
 namespace DataWranglerInterface.ShotRecording

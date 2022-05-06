@@ -1,6 +1,6 @@
 ﻿using System.Windows.Controls;
 using BlackmagicCameraControl;
-using DataWranglerInterface.DebugSupport;
+using DataWranglerCommon;
 
 namespace DataWranglerInterface
 {

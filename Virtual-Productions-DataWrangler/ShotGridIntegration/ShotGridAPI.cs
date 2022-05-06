@@ -73,7 +73,7 @@ namespace ShotGridIntegration
 			}
 		}
 
-		public async Task<ShotGridAPIResponse<ShotGridEntityProject[]>> GetProjects()
+		public async Task<ShotGridAPIResponse<ShotGridEntityProject[]>> GetActiveProjects()
 		{
 			ShotGridSimpleSearchFilter filter = new ShotGridSimpleSearchFilter();
 			filter.FieldIs("sg_status", "Active");
