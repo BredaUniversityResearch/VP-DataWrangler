@@ -12,14 +12,14 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<None Remove="Resources\Loading.png" />
 		<None Remove="Resources\MissingThumbnail.png" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\BlackmagicCameraControl\BlackmagicCameraControl.csproj" />
+		<ProjectReference Include="..\DataWranglerCommonWPF\DataWranglerCommonWPF.csproj" />
 		<ProjectReference Include="..\DataWranglerCommon\DataWranglerCommon.csproj" />
-		<ProjectReference Include="..\DataWranglerSourceAnalysis\DataWranglerSourceAnalysis.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
+		<ProjectReference Include="..\DataWranglerSourceAnalysis\DataWranglerSourceAnalysis.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 		<ProjectReference Include="..\ShotGridIntegration\ShotGridIntegration.csproj" />
 	</ItemGroup>
 
@@ -39,7 +39,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Resource Include="Resources\Loading.png" />
 		<Resource Include="Resources\MissingThumbnail.png" />
 	</ItemGroup>
 

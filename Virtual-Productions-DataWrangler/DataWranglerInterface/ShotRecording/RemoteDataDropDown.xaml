@@ -5,10 +5,11 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:DataWranglerInterface.ShotRecording"
              xmlns:dataWranglerInterface="clr-namespace:DataWranglerInterface"
+             xmlns:dataWranglerCommonWpf="clr-namespace:DataWranglerCommonWPF;assembly=DataWranglerCommonWPF"
              mc:Ignorable="d" 
              d:DesignHeight="21" d:DesignWidth="120">
 	<Grid>
 		<ComboBox x:Name="DropDown" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
-        <dataWranglerInterface:LoadingSpinner x:Name="LoadingSpinner" Width="{Binding ActualHeight, ElementName=DropDown, Mode=OneWay}" />
+        <dataWranglerCommonWpf:LoadingSpinner x:Name="LoadingSpinner" Width="{Binding ActualHeight, ElementName=DropDown, Mode=OneWay}" />
 	</Grid>
 </UserControl>

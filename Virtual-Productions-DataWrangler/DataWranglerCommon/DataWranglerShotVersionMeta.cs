@@ -15,7 +15,7 @@ namespace DataWranglerCommon
 		[AutoNotify] 
 		private DateTimeOffset? m_recordingStart = null;
 
-		[AutoNotify] private string m_storageTarget = null;
+		[AutoNotify] private string m_storageTarget = "";
 	}
 
 	public class DataWranglerShotVersionMeta

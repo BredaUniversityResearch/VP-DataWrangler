@@ -1,8 +1,9 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics;
 using System.Windows;
+using DataWranglerCommonWPF.Login;
 using DataWranglerInterface.DebugSupport;
-using DataWranglerInterface.Login;
+using DataWranglerInterface.Properties;
 using DataWranglerInterface.ShotRecording;
 
 namespace DataWranglerInterface
@@ -12,6 +13,19 @@ namespace DataWranglerInterface
 	/// </summary>
 	public partial class MainWindow : Window
 	{
+		class SettingsCredentialProvider : ILoginCredentialProvider
+		{
+			public string OAuthRefreshToken
+			{
+				get => Settings.Default.OAuthRefreshToken;
+				set
+				{
+					Settings.Default.OAuthRefreshToken = value;
+					Settings.Default.Save();
+				}
+			}
+		}
+
 		private LoginPage? m_loginPage;
 		private ShotRecordingPage? m_shotRecordingPage;
 
@@ -28,6 +42,7 @@ namespace DataWranglerInterface
 
 			m_loginPage = new LoginPage();
 			m_loginPage.OnSuccessfulLogin += OnLoggedIn;
+			m_loginPage.Initialize(DataWranglerServiceProvider.Instance.ShotGridAPI, new SettingsCredentialProvider());
 			Content = m_loginPage;
 		}
 

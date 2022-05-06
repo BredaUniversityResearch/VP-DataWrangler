@@ -5,6 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:DataWranglerInterface.ShotRecording"
              xmlns:dataWranglerInterface="clr-namespace:DataWranglerInterface"
+             xmlns:dataWranglerCommonWpf="clr-namespace:DataWranglerCommonWPF;assembly=DataWranglerCommonWPF"
              mc:Ignorable="d" 
              d:DesignHeight="256" d:DesignWidth="256">
     <Grid>
@@ -33,7 +34,7 @@
 	        <Label x:Name="CameraStorageTarget" Grid.Column="1" Grid.Row="4"></Label>
 		</Grid>
 	    <Grid>
-			<dataWranglerInterface:LoadingSpinner x:Name="LoadingSpinner"/>
+			<dataWranglerCommonWpf:LoadingSpinner x:Name="LoadingSpinner"/>
         </Grid>
 	</Grid>
 </UserControl>

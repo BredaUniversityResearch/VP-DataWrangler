@@ -1,0 +1,41 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Resources\Loading.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ShotGridIntegration\ShotGridIntegration.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="LoadingSpinner.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="Login\LoginPage.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="LoadingSpinner.xaml">
+      <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="Login\LoginPage.xaml">
+      <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+      <SubType>Designer</SubType>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\Loading.png" />
+  </ItemGroup>
+
+</Project>
