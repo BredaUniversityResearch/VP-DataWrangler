@@ -3,9 +3,11 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Windows.Devices.Bluetooth;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
+using Windows.Foundation;
 using Windows.Storage.Streams;
 using BlackmagicCameraControl.CommandPackets;
 
@@ -13,6 +15,18 @@ namespace BlackmagicCameraControl
 {
 	internal class BlackmagicCameraConnectionBluetooth : IBlackmagicCameraConnection
 	{
+		[Flags]
+		public enum EBluetoothCameraStatus
+		{
+			None = 0x00,
+			PowerOn = 0x01,
+			Connected = 0x02,
+			Paired = 0x04,
+			VersionsVerified = 0x08,
+			InitialPayloadReceived = 0x10,
+			CameraReady = 0x20
+		};
+
 		public string DeviceId => m_device.DeviceId;
 
 		public IBlackmagicCameraConnection.EConnectionState ConnectionState { get; private set; }
@@ -20,6 +34,7 @@ namespace BlackmagicCameraControl
 		public DateTimeOffset LastReceivedDataTime { get; private set; }
 		public string HumanReadableName => GetDevice().Name;
 
+		private bool m_isInInitialReset = false;
 		private readonly BlackmagicCameraAPIController m_dispatcher;
 
 		private readonly BluetoothLEDevice m_device;
@@ -30,8 +45,9 @@ namespace BlackmagicCameraControl
 		private GattCharacteristic? m_blackmagicServiceOutgoingCameraControl;
 		private GattCharacteristic? m_blackmagicServiceIncomingCameraControl;
 		private GattCharacteristic? m_blackmagicServiceTimecode;
+		private GattCharacteristic? m_blackmagicCameraStatus;
 
-		private Task? m_connectingTask = null;
+		private Task? m_connectingTask;
 
 		public BlackmagicCameraConnectionBluetooth(BlackmagicCameraAPIController a_dispatcher, CameraHandle a_cameraHandle, BluetoothLEDevice a_target, GattDeviceService a_deviceInformationService,
 			GattDeviceService a_blackmagicService)
@@ -83,6 +99,11 @@ namespace BlackmagicCameraControl
 							{
 								m_blackmagicServiceTimecode = characteristic;
 							}
+							else if (characteristic.Uuid ==
+							         BlackmagicCameraBluetoothGUID.BlackmagicService_CameraStatus)
+							{
+								m_blackmagicCameraStatus = characteristic;
+							}
 						}
 					}
 				}
@@ -91,7 +112,8 @@ namespace BlackmagicCameraControl
 				    m_deviceInformationCameraModel != null &&
 					m_blackmagicServiceOutgoingCameraControl != null &&
 					m_blackmagicServiceIncomingCameraControl != null &&
-					m_blackmagicServiceTimecode != null)
+					m_blackmagicServiceTimecode != null &&
+				    m_blackmagicCameraStatus != null)
 				{
 					SubscribeToIncomingServices();
 					LastReceivedDataTime = DateTimeOffset.UtcNow;
@@ -104,11 +126,28 @@ namespace BlackmagicCameraControl
 			});	
 		}
 
-		private void OnConnectionStatusChanged(BluetoothLEDevice a_sender, object a_args)
+		public async Task AsyncPerformSoftReset(int a_offTimeMs = 2000)
 		{
-			if (a_sender.ConnectionStatus == BluetoothConnectionStatus.Disconnected)
+			if (m_blackmagicCameraStatus == null)
 			{
-				ConnectionState = IBlackmagicCameraConnection.EConnectionState.Disconnected;
+				throw new Exception();
+			}
+
+			m_isInInitialReset = true;
+			IBuffer sendBuffer = WindowsRuntimeBuffer.Create(new byte[]{ 0x00}, 0, (int)1, (int)1);
+			GattCommunicationStatus result = await m_blackmagicCameraStatus.WriteValueAsync(sendBuffer);
+			if (result != GattCommunicationStatus.Success)
+			{
+				IBlackmagicCameraLogInterface.LogError($"Initial reset failure to turn camera {HumanReadableName} off");
+			}
+
+			await Task.Delay(a_offTimeMs);
+
+			sendBuffer = WindowsRuntimeBuffer.Create(new byte[]{ 0x01}, 0, (int)1, (int)1);
+			result = await m_blackmagicCameraStatus.WriteValueAsync(sendBuffer);
+			if (result != GattCommunicationStatus.Success)
+			{
+				IBlackmagicCameraLogInterface.LogError($"Initial reset failure to turn camera {HumanReadableName} back on");
 			}
 		}
 
@@ -141,6 +180,30 @@ namespace BlackmagicCameraControl
 				m_blackmagicServiceIncomingCameraControl.ValueChanged += OnReceivedIncomingCameraControl;
 			};
 
+			Debug.Assert(m_blackmagicServiceOutgoingCameraControl != null, nameof(m_blackmagicServiceOutgoingCameraControl) + " != null");
+			m_blackmagicServiceOutgoingCameraControl
+					.WriteClientCharacteristicConfigurationDescriptorAsync(
+						GattClientCharacteristicConfigurationDescriptorValue.Notify).Completed =
+				(_, _) =>
+				{
+					m_blackmagicServiceOutgoingCameraControl.ValueChanged += OnReceivedOutgoingCameraControlResponse;
+				};
+
+			Debug.Assert(m_blackmagicCameraStatus!= null, nameof(m_blackmagicCameraStatus) + " != null");
+			m_blackmagicCameraStatus.WriteClientCharacteristicConfigurationDescriptorAsync(
+					GattClientCharacteristicConfigurationDescriptorValue.Notify).Completed =
+				(a_result, _) =>
+				{
+					if (a_result.Status == AsyncStatus.Completed)
+					{
+						m_blackmagicCameraStatus.ValueChanged += OnCameraStatusValueChanged;
+					}
+					else
+					{
+						IBlackmagicCameraLogInterface.LogError("Failed to subscribe to camera timecode service");
+					}
+				};
+
 			//m_blackmagicServiceTimecode
 			//		.WriteClientCharacteristicConfigurationDescriptorAsync(
 			//			GattClientCharacteristicConfigurationDescriptorValue.Notify).Completed =
@@ -164,8 +227,35 @@ namespace BlackmagicCameraControl
 				reader.ReadInt32();
 				reader.ReadInt32();
 				int binaryTimecode = reader.ReadInt32();
-
 			}
+		}
+		
+		private void OnConnectionStatusChanged(BluetoothLEDevice a_sender, object a_args)
+		{
+			if (a_sender.ConnectionStatus == BluetoothConnectionStatus.Disconnected)
+			{
+				if (!m_isInInitialReset)
+				{
+					ConnectionState = IBlackmagicCameraConnection.EConnectionState.Disconnected;
+				}
+			}
+			else if (a_sender.ConnectionStatus == BluetoothConnectionStatus.Connected &&
+			         m_isInInitialReset)
+			{
+				m_isInInitialReset = false;
+			}
+		}
+
+		private void OnCameraStatusValueChanged(GattCharacteristic a_sender, GattValueChangedEventArgs a_args)
+		{
+			byte[] payload = a_args.CharacteristicValue.ToArray();
+			EBluetoothCameraStatus cameraStatus = (EBluetoothCameraStatus) payload[0];
+			if (cameraStatus == EBluetoothCameraStatus.None)
+			{
+				ConnectionState = IBlackmagicCameraConnection.EConnectionState.Disconnected;
+			}
+
+			IBlackmagicCameraLogInterface.LogInfo("Received camera status: " + cameraStatus);
 		}
 
 		private void OnReceivedIncomingCameraControl(GattCharacteristic a_sender, GattValueChangedEventArgs a_args)
@@ -173,46 +263,64 @@ namespace BlackmagicCameraControl
 			LastReceivedDataTime = a_args.Timestamp;
 
 			//Deserialize and dispatch events.
-			using (Stream inputData = a_args.CharacteristicValue.AsStream())
+			using Stream inputData = a_args.CharacteristicValue.AsStream();
+			ProcessCommandsFromStream(inputData, a_args.Timestamp);
+		}
+
+		private void OnReceivedOutgoingCameraControlResponse(GattCharacteristic a_sender, GattValueChangedEventArgs a_args)
+		{
+			LastReceivedDataTime = a_args.Timestamp;
+
+			//Deserialize and dispatch events.
+			using Stream inputData = a_args.CharacteristicValue.AsStream();
+			ProcessCommandsFromStream(inputData, a_args.Timestamp);
+		}
+
+		private void ProcessCommandsFromStream(Stream a_inputData, DateTimeOffset a_receivedTime)
+		{
+			CommandReader reader = new CommandReader(a_inputData);
+			while (reader.BytesRemaining >= PacketHeader.ByteSize)
 			{
-				CommandReader reader = new CommandReader(inputData);
-				while (reader.BytesRemaining >= PacketHeader.ByteSize)
+				PacketHeader packetHeader = reader.ReadPacketHeader();
+				if (reader.BytesRemaining > packetHeader.PacketSize && reader.BytesRemaining < byte.MaxValue)
 				{
-					PacketHeader packetHeader = reader.ReadPacketHeader();
-					if (reader.BytesRemaining > packetHeader.PacketSize && reader.BytesRemaining < byte.MaxValue)
+					throw new Exception();
+				}
+
+				while (reader.BytesRemaining > CommandHeader.ByteSize)
+				{
+					CommandHeader header = reader.ReadCommandHeader();
+
+					CommandMeta? commandMeta = CommandPacketFactory.FindCommandMeta(header.CommandIdentifier);
+					if (commandMeta == null)
 					{
-						throw new Exception();
+						IBlackmagicCameraLogInterface.LogWarning(
+							$"Received unknown packet with identifier {header.CommandIdentifier}. Size: {reader.BytesRemaining}, Type: {header.DataType}");
+						a_inputData.Seek(packetHeader.PacketSize - CommandHeader.ByteSize, SeekOrigin.Current);
+						break;
 					}
 
-					while (reader.BytesRemaining > CommandHeader.ByteSize)
+					int possiblePadding = packetHeader.PacketSize -
+					                      ((int) CommandHeader.ByteSize + commandMeta.SerializedSizeBytes);
+
+					if (header.DataType != commandMeta.DataType ||
+					    ((reader.BytesRemaining - commandMeta.SerializedSizeBytes) > possiblePadding &&
+					     header.DataType != ECommandDataType.Utf8String))
 					{
-						CommandHeader header = reader.ReadCommandHeader();
+						throw new Exception(
+							$"Command meta data wrong: Bytes (Expected / Got) {commandMeta.SerializedSizeBytes} / {reader.BytesRemaining}, DataType: {commandMeta.DataType} / {header.DataType}");
+					}
 
-						CommandMeta? commandMeta = CommandPacketFactory.FindCommandMeta(header.CommandIdentifier);
-						if (commandMeta == null)
-						{
-							IBlackmagicCameraLogInterface.LogWarning($"Received unknown packet with identifier {header.CommandIdentifier}. Size: {reader.BytesRemaining}, Type: {header.DataType}");
-							inputData.Seek(packetHeader.PacketSize - CommandHeader.ByteSize, SeekOrigin.Current);
-							break;
-						}
-
-						int possiblePadding = packetHeader.PacketSize - ((int)CommandHeader.ByteSize + commandMeta.SerializedSizeBytes);
-
-						if (header.DataType != commandMeta.DataType || ((reader.BytesRemaining - commandMeta.SerializedSizeBytes) > possiblePadding && header.DataType != ECommandDataType.Utf8String))
-						{
-							throw new Exception($"Command meta data wrong: Bytes (Expected / Got) {commandMeta.SerializedSizeBytes} / {reader.BytesRemaining}, DataType: {commandMeta.DataType} / {header.DataType}");
-						}
-
-						ICommandPacketBase? packetInstance = CommandPacketFactory.CreatePacket(header.CommandIdentifier, reader);
-						if (packetInstance != null)
-						{
-							IBlackmagicCameraLogInterface.LogVerbose($"Received Packet {header.CommandIdentifier}. {packetInstance}");
-							m_dispatcher.NotifyDataReceived(CameraHandle, a_args.Timestamp, packetInstance);
-						}
-						else
-						{
-							throw new Exception("Failed to deserialize command with known meta");
-						}
+					ICommandPacketBase? packetInstance = CommandPacketFactory.CreatePacket(header.CommandIdentifier, reader);
+					if (packetInstance != null)
+					{
+						IBlackmagicCameraLogInterface.LogVerbose(
+							$"Received Packet {header.CommandIdentifier}. {packetInstance}");
+						m_dispatcher.NotifyDataReceived(CameraHandle, a_receivedTime, packetInstance);
+					}
+					else
+					{
+						throw new Exception("Failed to deserialize command with known meta");
 					}
 				}
 			}
@@ -234,7 +342,7 @@ namespace BlackmagicCameraControl
 			);
 		}
 
-		public void AsyncSendCommand(ICommandPacketBase a_command)
+		public void AsyncSendCommand(ICommandPacketBase a_command, ECommandOperation a_commandOperation)
 		{
 			if (m_blackmagicServiceOutgoingCameraControl == null)
 			{
@@ -264,7 +372,7 @@ namespace BlackmagicCameraControl
 			{
 				CommandIdentifier = commandMeta.Identifier,
 				DataType = commandMeta.DataType,
-				Operation = ECommandOperation.Assign
+				Operation = a_commandOperation
 			};
 
 			using (MemoryStream ms = new MemoryStream(64))
@@ -276,10 +384,10 @@ namespace BlackmagicCameraControl
 
 				IBuffer sendBuffer = WindowsRuntimeBuffer.Create(ms.GetBuffer(), 0, (int)ms.Length, (int)ms.Length);
 				m_blackmagicServiceOutgoingCameraControl
-					.WriteValueAsync(sendBuffer, GattWriteOption.WriteWithResponse).AsTask().ContinueWith(
+					.WriteValueWithResultAsync(sendBuffer, GattWriteOption.WriteWithResponse).AsTask().ContinueWith(
 						(a_sendCommand) =>
 						{
-							if (a_sendCommand.Result != GattCommunicationStatus.Success)
+							if (a_sendCommand.Result.Status != GattCommunicationStatus.Success)
 							{
 								IBlackmagicCameraLogInterface.LogError(
 									$"Failed to write value to outgoing camera control. Command: {commandMeta.CommandType}");

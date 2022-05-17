@@ -25,7 +25,7 @@ namespace DataWranglerInterface.ShotRecording
 		public delegate void SelectedProjectChangedDelegate(int projectId, string projectName);
 		public event SelectedProjectChangedDelegate OnSelectedProjectChanged = delegate { };
 
-		public int SelectedProjectId => ((ProjectSelectionEntry) ProjectListDropDown.DropDown.SelectedItem).ProjectId;
+		public int SelectedProjectId { get; private set; }
 
 		public ProjectSelectorControl()
 		{
@@ -37,6 +37,7 @@ namespace DataWranglerInterface.ShotRecording
 		private void DropDownOnSelectionChanged(object a_sender, SelectionChangedEventArgs a_e)
 		{
 			ProjectSelectionEntry entry = (ProjectSelectionEntry) ProjectListDropDown.DropDown.SelectedItem;
+			SelectedProjectId = entry.ProjectId;
 			OnSelectedProjectChanged.Invoke(entry.ProjectId, entry.ProjectName);
 		}
 

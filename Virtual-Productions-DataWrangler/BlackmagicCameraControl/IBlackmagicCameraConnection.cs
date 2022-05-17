@@ -18,6 +18,6 @@ namespace BlackmagicCameraControl
 		public string DeviceId { get; }
 		public string HumanReadableName { get; }
 
-		public void AsyncSendCommand(ICommandPacketBase a_command);
+		public void AsyncSendCommand(ICommandPacketBase a_command, ECommandOperation a_commandOperation);
 	}
 }

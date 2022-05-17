@@ -23,6 +23,7 @@ namespace DataWranglerInterface.ShotRecording
 	public class ActiveCameraInfo: INotifyPropertyChanged
 	{
 		public readonly CameraHandle TargetCamera;
+		private DateTimeOffset m_connectTime;
 		private DateTime m_timeSyncPoint = DateTime.MinValue;
 
 		private bool m_receivedAnyBatteryStatusPackets = false;
@@ -41,6 +42,7 @@ namespace DataWranglerInterface.ShotRecording
 		public ActiveCameraInfo(CameraHandle a_handle)
 		{
 			TargetCamera = a_handle;
+			m_connectTime = DateTimeOffset.UtcNow;
 		}
 
 		public void OnCameraDataReceived(BlackmagicCameraAPIController a_controller, DateTimeOffset a_receivedTime, ICommandPacketBase a_packet)
@@ -62,6 +64,14 @@ namespace DataWranglerInterface.ShotRecording
 					Logger.LogInfo("CameraInfo", $"Synchronizing camera with handle {TargetCamera.ConnectionId} time to {DateTime.UtcNow} + {tzPacket.MinutesOffsetFromUTC} Minutes");
 
 					m_receivedAnyBatteryStatusPackets = true;
+				}
+
+				if (SelectedCodec == "" && DateTimeOffset.UtcNow - m_connectTime > new TimeSpan(0, 0, 15))
+				{
+					a_controller.AsyncSendCommand(TargetCamera,
+						new CommandPacketMediaCodec()
+							{BasicCodec = CommandPacketMediaCodec.EBasicCodec.BlackmagicRAW, Variant = 0});
+
 				}
 
 				BatteryPercentage = batteryInfo.BatteryPercentage;

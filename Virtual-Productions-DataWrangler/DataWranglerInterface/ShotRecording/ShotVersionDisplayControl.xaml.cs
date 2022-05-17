@@ -19,6 +19,7 @@ namespace DataWranglerInterface.ShotRecording
 		private DataWranglerShotVersionMeta m_currentVersionMeta = new DataWranglerShotVersionMeta();
 
 		private bool m_isInBatchMetaChange = false;
+		private bool m_shouldCreateNewShotOnRecord = true;
 
 		public ShotVersionDisplayControl()
 		{
@@ -27,12 +28,16 @@ namespace DataWranglerInterface.ShotRecording
 			VideoMetaControl.UpdateData(m_currentVersionMeta);
 
 			CreateNewTake.Click += OnCreateNewShotVersion;
-			
+
 			AudioSource.Items.Add("Embedded");
 			AudioSource.Items.Add("External Audio Recorder");
 			AudioSource.SelectionChanged += OnAudioSourceChanged;
 
 			VersionSelectorControl.OnShotVersionSelected += OnShotVersionSelected;
+			AutoCreateNewTake.Checked += (_, _) =>
+			{
+				m_shouldCreateNewShotOnRecord = AutoCreateNewTake.IsChecked ?? false;
+			};
 		}
 
 		public void SetProjectSelector(ProjectSelectorControl a_projectSelector)
@@ -41,6 +46,11 @@ namespace DataWranglerInterface.ShotRecording
 		}
 
 		private void OnCreateNewShotVersion(object a_sender, RoutedEventArgs a_e)
+		{
+			CreateNewShot(new DataWranglerShotVersionMeta());
+		}
+
+		private void CreateNewShot(DataWranglerShotVersionMeta a_meta)
 		{
 			if (m_projectSelector == null)
 			{
@@ -53,8 +63,15 @@ namespace DataWranglerInterface.ShotRecording
 
 				VersionSelectorControl.BeginAddShotVersion();
 
-				DataWranglerServiceProvider.Instance.ShotGridAPI.CreateNewShotVersion(m_projectSelector.SelectedProjectId, m_selectedShotId,
-					$"Take {nextTakeId:D2}").ContinueWith(a_result =>
+				ShotGridEntityShotVersion.ShotVersionAttributes attributes =
+					new ShotGridEntityShotVersion.ShotVersionAttributes();
+				attributes.VersionCode = $"Take {nextTakeId:D2}";
+				attributes.DataWranglerMeta =
+					JsonConvert.SerializeObject(a_meta, DataWranglerSerializationSettings.Instance);
+
+				DataWranglerServiceProvider.Instance.ShotGridAPI.CreateNewShotVersion(
+					m_projectSelector.SelectedProjectId, m_selectedShotId,
+					attributes).ContinueWith(a_result =>
 				{
 					if (!a_result.Result.IsError)
 					{
@@ -178,14 +195,31 @@ namespace DataWranglerInterface.ShotRecording
 		{
 			if (a_isNowRecording)
 			{
+				DataWranglerShotVersionMeta targetMeta;
+				if (m_shouldCreateNewShotOnRecord)
+				{
+					targetMeta = m_currentVersionMeta.Clone();
+				}
+				else
+				{
+					targetMeta = m_currentVersionMeta;
+				}
+
 				m_isInBatchMetaChange = true;
 
-				m_currentVersionMeta.Video.RecordingStart = a_stateChangeTime;
-				m_currentVersionMeta.Video.StorageTarget = a_camera.CurrentStorageTarget;
-				m_currentVersionMeta.Video.CodecName = a_camera.SelectedCodec;
+				targetMeta.Video.RecordingStart = a_stateChangeTime;
+				targetMeta.Video.StorageTarget = a_camera.CurrentStorageTarget;
+				targetMeta.Video.CodecName = a_camera.SelectedCodec;
 
 				m_isInBatchMetaChange = false;
-				UpdateRemoteShotGridMetaField();
+				if (m_shouldCreateNewShotOnRecord)
+				{
+					CreateNewShot(targetMeta);
+				}
+				else
+				{
+					UpdateRemoteShotGridMetaField();
+				}
 			}
 		}
 	}

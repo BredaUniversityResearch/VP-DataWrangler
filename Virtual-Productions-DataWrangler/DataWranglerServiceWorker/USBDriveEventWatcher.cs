@@ -39,7 +39,7 @@ namespace DataWranglerServiceWorker
 		{
 			VolumeChangedEvent evt = new VolumeChangedEvent { DriveName = (string)a_e.NewEvent["DriveName"], EventType = (VolumeChangedEvent.EEventType)a_e.NewEvent["EventType"]};
 
-				Logger.LogInfo("USBDriveWatcher", a_e.NewEvent.GetText(TextFormat.Mof));
+			Logger.LogInfo("USBDriveWatcher", a_e.NewEvent.GetText(TextFormat.Mof));
 		}
 
 	}

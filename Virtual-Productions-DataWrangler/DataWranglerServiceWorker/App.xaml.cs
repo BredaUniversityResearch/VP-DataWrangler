@@ -19,14 +19,14 @@ namespace DataWranglerServiceWorker
 		public static extern void FreeConsole();
 
 		private ShotGridAPI m_targetApi;
-		private ShotGridDataWranglerShotVersionMetaCache m_metaCache;
+		private ShotGridDataCache m_metaCache;
 
 		private USBDriveEventWatcher m_driveEventWatcher = new USBDriveEventWatcher();
 
 		public App()
 		{
 			m_targetApi = new ShotGridAPI();
-			m_metaCache = new ShotGridDataWranglerShotVersionMetaCache(m_targetApi);
+			m_metaCache = new ShotGridDataCache(m_targetApi);
 		}
 
 		protected override void OnStartup(StartupEventArgs e)
@@ -46,6 +46,10 @@ namespace DataWranglerServiceWorker
 		private void OnSuccessfulLogin()
 		{
 			Task t = m_metaCache.UpdateCache();
+			t.ContinueWith((a_task) =>
+			{
+				new FileDiscoveryWorker("E:\\", m_metaCache).Run();
+			});
 		}
 
 		private void OnLoggerMessageLogged(string a_source, string a_severity, string a_message)

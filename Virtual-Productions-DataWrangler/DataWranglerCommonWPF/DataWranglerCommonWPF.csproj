@@ -38,4 +38,8 @@
     <Resource Include="Resources\Loading.png" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
+
 </Project>

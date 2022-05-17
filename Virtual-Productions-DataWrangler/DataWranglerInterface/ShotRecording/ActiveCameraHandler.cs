@@ -48,16 +48,6 @@ namespace DataWranglerInterface.ShotRecording
 			m_apiController.AsyncRequestCameraModel(a_handle);
 			m_activeCameras.Add(a_handle, info);
 			OnCameraConnected(info);
-
-			//string cameraDisplayName = m_apiController.GetBluetoothName(a_handle);
-			//Dispatcher.InvokeAsync(() =>
-			//	{
-			//		LoadingSpinner.Visibility = Visibility.Hidden;
-			//		CameraDisplayName.Content = cameraDisplayName;
-			//	}
-			//);
-
-			//m_controller.AsyncRequestCameraName(a_handle);
 		}
 
 		private void OnApiControllerCameraDisconnected(CameraHandle a_handle)

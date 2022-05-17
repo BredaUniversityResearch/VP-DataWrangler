@@ -24,7 +24,7 @@ namespace BlackmagicCameraControl
 			m_dispatcher = a_dispatcher;
 
 			CameraHandle = a_handle;
-			DeviceId = "DEBUG_DEVICE_ID_" + a_handle.ConnectionId;
+			DeviceId = "DEBUG_CONNECTION_"+a_handle.ConnectionId;
 			HumanReadableName = "Debug Connection " + a_handle.ConnectionId;
 			LastReceivedDataTime = DateTimeOffset.UtcNow;
 
@@ -63,7 +63,7 @@ namespace BlackmagicCameraControl
 			m_messageProducerThread.Join();
 		}
 
-		public void AsyncSendCommand(ICommandPacketBase a_command)
+		public void AsyncSendCommand(ICommandPacketBase a_command, ECommandOperation a_commandOperation)
 		{
 			if (a_command is CommandPacketMediaTransportMode)
 			{

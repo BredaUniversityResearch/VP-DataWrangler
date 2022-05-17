@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using DataWranglerCommon;
 using Newtonsoft.Json;
@@ -7,58 +8,33 @@ using ShotGridIntegration;
 
 namespace DataWranglerServiceWorker
 {
-	public class ShotGridDataWranglerShotVersionMetaCache
+	public class ShotGridDataCache
 	{
-		private class ShotVersionMetaCacheEntry
+		public static readonly TimeSpan MaxTimeOffset = new(0, 0, 2);
+
+		public class ShotVersionMetaCacheEntry
 		{
 			public ShotVersionIdentifier Identifier;
+			public string ShotCode;
 			public DataWranglerShotVersionMeta MetaValues;
 
-			public ShotVersionMetaCacheEntry(int a_projectId, int a_shotId, int a_versionId, DataWranglerShotVersionMeta a_metaValues)
+			public ShotVersionMetaCacheEntry(int a_projectId, int a_shotId, int a_versionId, string a_shotCode, DataWranglerShotVersionMeta a_metaValues)
 			{
 				Identifier = new ShotVersionIdentifier(a_projectId, a_shotId, a_versionId);
+				ShotCode = a_shotCode;
 				MetaValues = a_metaValues;
 			}
 		};
 
-		private class ShotVersionIdentifier
-		{
-			public readonly int ProjectId;
-			public readonly int ShotId;
-			public readonly int VersionId;
-
-			public ShotVersionIdentifier(int a_projectId, int a_shotId, int a_versionId)
-			{
-				ProjectId = a_projectId;
-				ShotId = a_shotId;
-				VersionId = a_versionId;
-			}
-
-			private bool Equals(ShotVersionIdentifier a_other)
-			{
-				return ProjectId == a_other.ProjectId && ShotId == a_other.ShotId && VersionId == a_other.VersionId;
-			}
-
-			public override bool Equals(object? a_obj)
-			{
-				if (ReferenceEquals(null, a_obj)) return false;
-				if (ReferenceEquals(this, a_obj)) return true;
-				if (a_obj.GetType() != this.GetType()) return false;
-				return Equals((ShotVersionIdentifier)a_obj);
-			}
-
-			public override int GetHashCode()
-			{
-				return HashCode.Combine(ProjectId, ShotId, VersionId);
-			}
-		};
-
 		private Dictionary<ShotVersionIdentifier, ShotVersionMetaCacheEntry> m_availableVersionMeta = new Dictionary<ShotVersionIdentifier, ShotVersionMetaCacheEntry>();
+		private Dictionary<int, ShotGridEntityProject> m_projects = new();
+		private Dictionary<int, ShotGridEntityShot> m_shots = new();
+		private Dictionary<int, ShotGridEntityShotVersion> m_shotVersions = new();
 
 		private ShotGridAPI m_targetApi;
 		private DateTimeOffset m_lastCacheUpdateTime = DateTimeOffset.MinValue;
 
-		public ShotGridDataWranglerShotVersionMetaCache(ShotGridAPI a_targetApi)
+		public ShotGridDataCache(ShotGridAPI a_targetApi)
 		{
 			m_targetApi = a_targetApi;
 		}
@@ -76,6 +52,8 @@ namespace DataWranglerServiceWorker
 			{
 				Logger.LogInfo("MetaCache", $"Fetched data for project {project.Id}");
 
+				m_projects.Add(project.Id, project);
+
 				ShotGridAPIResponse<ShotGridEntityShot[]> shotsInProject = await m_targetApi.GetShotsForProject(project.Id);
 				if (shotsInProject.IsError)
 				{
@@ -87,6 +65,8 @@ namespace DataWranglerServiceWorker
 				{
 					Logger.LogInfo("MetaCache", $"Fetched data for shot {shot.Id}");
 
+					m_shots.Add(shot.Id, shot);
+
 					ShotGridAPIResponse<ShotGridEntityShotVersion[]> shotVersionsForShot = await m_targetApi.GetVersionsForShot(shot.Id);
 					if (shotVersionsForShot.IsError)
 					{
@@ -96,6 +76,8 @@ namespace DataWranglerServiceWorker
 
 					foreach (ShotGridEntityShotVersion version in shotVersionsForShot.ResultData)
 					{
+						m_shotVersions.Add(version.Id, version);
+
 						if (version.Attributes.DataWranglerMeta != null)
 						{
 							DataWranglerShotVersionMeta? decodedMeta = JsonConvert.DeserializeObject<DataWranglerShotVersionMeta>(version.Attributes.DataWranglerMeta);
@@ -103,7 +85,7 @@ namespace DataWranglerServiceWorker
 							{
 								Logger.LogInfo("MetaCache", $"Got valid meta for shot version {version.Id}");
 								AddOrUpdateMeta(new ShotVersionMetaCacheEntry(project.Id, shot.Id,
-									version.Id, decodedMeta));
+									version.Id, version.Attributes.VersionCode, decodedMeta));
 							}
 						}
 					}
@@ -123,6 +105,26 @@ namespace DataWranglerServiceWorker
 			{
 				m_availableVersionMeta.Add(a_cacheEntry.Identifier, a_cacheEntry);
 			}
+		}
+
+		public bool FindShotVersionForFile(DateTimeOffset a_fileInfoCreationTimeUtc, string a_storageName, ECameraCodec a_codec, [NotNullWhen(true)] out ShotVersionMetaCacheEntry? a_shotVersionMetaCacheEntry)
+		{
+			foreach (ShotVersionMetaCacheEntry entry in m_availableVersionMeta.Values)
+			{
+				if (entry.MetaValues.Video.CodecName == a_codec.ToString() &&
+				    entry.MetaValues.Video.StorageTarget == a_storageName)
+				{
+					TimeSpan? timeSinceCreation = a_fileInfoCreationTimeUtc - entry.MetaValues.Video.RecordingStart!;
+					if (timeSinceCreation > -MaxTimeOffset && timeSinceCreation < MaxTimeOffset)
+					{
+						a_shotVersionMetaCacheEntry = entry;
+						return true;
+					}
+				}
+			}
+
+			a_shotVersionMetaCacheEntry = null;
+			return false;
 		}
 	}
 }

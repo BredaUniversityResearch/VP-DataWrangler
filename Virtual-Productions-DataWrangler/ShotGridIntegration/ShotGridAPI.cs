@@ -184,11 +184,8 @@ namespace ShotGridIntegration
 			return m_authentication;
 		}
 
-		public async Task<ShotGridAPIResponse<ShotGridEntityShotVersion>> CreateNewShotVersion(int a_projectId, int a_parentShotId, string a_versionName)
+		public async Task<ShotGridAPIResponse<ShotGridEntityShotVersion>> CreateNewShotVersion(int a_projectId, int a_parentShotId, ShotGridEntityShotVersion.ShotVersionAttributes a_versionAttributes)
 		{
-			ShotGridEntityShotVersion.ShotVersionAttributes version = new ShotGridEntityShotVersion.ShotVersionAttributes();
-			version.VersionCode = a_versionName;
-
 			JsonSerializer serializer = JsonSerializer.Create(new JsonSerializerSettings
 			{
 				NullValueHandling = NullValueHandling.Ignore
@@ -196,7 +193,7 @@ namespace ShotGridIntegration
 
 			ShotGridEntityCreateBaseData baseData = new ShotGridEntityCreateBaseData(a_projectId, ShotGridEntity.TypeNames.Shot, a_parentShotId);
 			JObject baseDataToken = JObject.FromObject(baseData, serializer);
-			JObject encodedToken = JObject.FromObject(version, serializer);
+			JObject encodedToken = JObject.FromObject(a_versionAttributes, serializer);
 			encodedToken.Merge(baseDataToken);
 
 			string requestBody = encodedToken.ToString();
