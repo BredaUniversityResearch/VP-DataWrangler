@@ -6,7 +6,7 @@ namespace DataWranglerServiceWorker
 {
 	public class USBDriveEventWatcher: IDisposable
 	{
-		private class VolumeChangedEvent
+		public class VolumeChangedEvent
 		{
 			public enum EEventType : ushort
 			{
@@ -15,11 +15,14 @@ namespace DataWranglerServiceWorker
 				DeviceRemoval = 3
 			};
 
-			public string DriveName = "";
+			public string DriveRootPath = "";
 			public EEventType EventType = EEventType.Invalid;
 		}
 
 		private ManagementEventWatcher m_volumeChangedEventWatcher;
+
+		public delegate void VolumeChangedDelegate(VolumeChangedEvent e);
+		public event VolumeChangedDelegate OnVolumeChanged = delegate { };
 
 		public USBDriveEventWatcher()
 		{
@@ -37,9 +40,8 @@ namespace DataWranglerServiceWorker
 
 		private void OnVolumeChangedEvent(object a_sender, EventArrivedEventArgs a_e)
 		{
-			VolumeChangedEvent evt = new VolumeChangedEvent { DriveName = (string)a_e.NewEvent["DriveName"], EventType = (VolumeChangedEvent.EEventType)a_e.NewEvent["EventType"]};
-
-			Logger.LogInfo("USBDriveWatcher", a_e.NewEvent.GetText(TextFormat.Mof));
+			VolumeChangedEvent evt = new VolumeChangedEvent { DriveRootPath = (string)a_e.NewEvent["DriveName"], EventType = (VolumeChangedEvent.EEventType)a_e.NewEvent["EventType"]};
+			OnVolumeChanged.Invoke(evt);
 		}
 
 	}

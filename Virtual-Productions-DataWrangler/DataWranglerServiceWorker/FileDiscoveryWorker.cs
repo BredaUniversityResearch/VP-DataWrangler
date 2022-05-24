@@ -48,15 +48,9 @@ namespace DataWranglerServiceWorker
 					if (m_cache.FindShotVersionForFile(fileInfo.CreationTimeUtc, storageName, codec, 
 						    out ShotGridDataCache.ShotVersionMetaCacheEntry? cacheEntry))
 					{
-						Console.WriteLine($"Found file {filePath} for shot {cacheEntry.ShotCode} ({cacheEntry.Identifier.ShotId})");
+						Console.WriteLine($"Found file {filePath} for shot {cacheEntry.ShotCode} ({cacheEntry.Identifier.VersionId})");
 
 						m_importWorker.AddFileToImport(cacheEntry.Identifier, fileInfo.FullName);
-
-						Debugger.Break();
-						//TODO: 
-						//Async import file to bulk storage, with progress
-						//Link imported file in ShotGrid.
-						//Audio
 					}
 				}
 			}

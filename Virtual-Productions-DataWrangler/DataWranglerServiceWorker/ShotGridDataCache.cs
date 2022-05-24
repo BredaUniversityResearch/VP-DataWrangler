@@ -107,6 +107,21 @@ namespace DataWranglerServiceWorker
 			}
 		}
 
+		public bool FindProjectForId(int a_projectId, [NotNullWhen(true)] out ShotGridEntityProject? a_projectData)
+		{
+			return m_projects.TryGetValue(a_projectId, out a_projectData);
+		}
+
+		public bool FindShotForId(int a_shotId, [NotNullWhen(true)] out ShotGridEntityShot? a_shotData)
+		{
+			return m_shots.TryGetValue(a_shotId, out a_shotData);
+		}
+
+		public bool FindShotVersionForId(int a_shotId, [NotNullWhen(true)] out ShotGridEntityShotVersion? a_shotData)
+		{
+			return m_shotVersions.TryGetValue(a_shotId, out a_shotData);
+		}
+
 		public bool FindShotVersionForFile(DateTimeOffset a_fileInfoCreationTimeUtc, string a_storageName, ECameraCodec a_codec, [NotNullWhen(true)] out ShotVersionMetaCacheEntry? a_shotVersionMetaCacheEntry)
 		{
 			foreach (ShotVersionMetaCacheEntry entry in m_availableVersionMeta.Values)

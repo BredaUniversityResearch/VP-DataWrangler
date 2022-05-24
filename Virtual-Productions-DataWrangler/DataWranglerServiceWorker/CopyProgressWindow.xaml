@@ -1,0 +1,15 @@
+﻿<Window x:Class="DataWranglerServiceWorker.CopyProgressWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:DataWranglerServiceWorker"
+        mc:Ignorable="d"
+        Title="CopyProgressWindow" Height="200" Width="400" ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
+    <StackPanel>
+        <Label>Copying file:</Label>
+        <Label x:Name="CurrentFileName">XXX</Label>
+	    <ProgressBar x:Name="CopyProgressIndicator" Height="20" Minimum="0" Maximum="100" />
+        <Label x:Name="QueueLength"></Label>
+	</StackPanel>
+</Window>
