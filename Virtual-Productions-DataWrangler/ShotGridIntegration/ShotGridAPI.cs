@@ -94,6 +94,22 @@ namespace ShotGridIntegration
 			return await FindAndParse<ShotGridEntityShotVersion[]>("versions", filter, new[] { "code", "description", "image", "sg_datawrangler_meta" });
 		}
 
+		public async Task<ShotGridAPIResponse<ShotGridEntityFilePublish[]>> GetPublishesForShotVersion(int a_shotVersionId)
+		{
+			ShotGridSimpleSearchFilter filter = new ShotGridSimpleSearchFilter();
+			filter.FieldIs("version.Version.id", a_shotVersionId);
+			return await FindAndParse<ShotGridEntityFilePublish[]>(ShotGridEntity.TypeNames.PublishedFile, filter, 
+				new JsonAttributeFieldEnumerator<ShotGridEntityFilePublish.FilePublishAttributes>().Get());
+		}
+
+		public async Task<ShotGridAPIResponse<ShotGridEntityRelation[]>> GetPublishFileTypes(int a_projectId)
+		{
+			ShotGridSimpleSearchFilter filter = new ShotGridSimpleSearchFilter();
+			//filter.FieldIs("project.Project.id", a_projectId);
+			return await FindAndParse<ShotGridEntityRelation[]>(ShotGridEntity.TypeNames.PublishedFileType, filter, 
+				new JsonAttributeFieldEnumerator<ShotGridEntityRelation.RelationAttributes>().Get());
+		}
+
 		private ShotGridAPIResponse<TTargetType> ParseResponse<TTargetType>(HttpStatusCode a_statusCode, string a_responseString)
 			where TTargetType: class
 		{
@@ -203,6 +219,26 @@ namespace ShotGridIntegration
 
 			return ParseResponse<ShotGridEntityShotVersion>(response.StatusCode, responseBody);
 		}
+		public async Task<ShotGridAPIResponse<ShotGridEntityFilePublish>> CreateFilePublish(int a_projectId, int a_shotId, int a_versionId, ShotGridEntityFilePublish.FilePublishAttributes a_publishAttributes)
+		{
+			JsonSerializer serializer = JsonSerializer.Create(new JsonSerializerSettings
+			{
+				NullValueHandling = NullValueHandling.Ignore
+			});
+
+
+			ShotGridEntityCreateBaseData baseData = new ShotGridEntityCreateBaseData(a_projectId, ShotGridEntity.TypeNames.Shot, a_shotId);
+			JObject baseDataToken = JObject.FromObject(baseData, serializer);
+			JObject encodedToken = JObject.FromObject(a_publishAttributes, serializer);
+			encodedToken.Merge(baseDataToken);
+
+			string requestBody = encodedToken.ToString();
+
+			HttpResponseMessage response = await Create(ShotGridEntity.TypeNames.PublishedFile, requestBody);
+			string responseBody = await response.Content.ReadAsStringAsync();
+
+			return ParseResponse<ShotGridEntityFilePublish>(response.StatusCode, responseBody);
+		}
 
 		private async Task<HttpResponseMessage> Create(string a_entityType, string a_entityDataAsString)
 		{
@@ -228,7 +264,7 @@ namespace ShotGridIntegration
 			return response;
 		}
 
-		public async Task<ShotGridAPIResponse<TEntityType>> UpdateEntityProperties<TEntityType>(EShotGridEntity a_entity, int a_entityId, Dictionary<string, object> a_propertiesToSet)
+		public async Task<ShotGridAPIResponse<TEntityType>> UpdateEntityProperties<TEntityType>(string a_entityType, int a_entityId, Dictionary<string, object> a_propertiesToSet)
 			where TEntityType: class
 		{
 			if (m_authentication == null)
@@ -241,7 +277,7 @@ namespace ShotGridIntegration
 			HttpRequestMessage request = new HttpRequestMessage
 			{
 				Method = HttpMethod.Put,
-				RequestUri = new Uri($"{BaseUrl}entity/{a_entity}/{a_entityId}"),
+				RequestUri = new Uri($"{BaseUrl}entity/{a_entityType}/{a_entityId}"),
 				Headers = {
 					{ HttpRequestHeader.Accept.ToString(), "application/json" },
 					{ HttpRequestHeader.AcceptEncoding.ToString(), "gzip, deflate, br" },
@@ -256,5 +292,61 @@ namespace ShotGridIntegration
 
 			return ParseResponse<TEntityType>(response.StatusCode, responseBody);
 		}
+
+		public async Task<ShotGridAPIResponse<ShotGridEntityFieldSchema[]>> GetEntityFieldSchema(string a_entityType, int a_projectId)
+		{
+			if (m_authentication == null)
+			{
+				throw new ShotGridAPIException("No authentication requested");
+			}
+
+			HttpRequestMessage request = new HttpRequestMessage
+			{
+				Method = HttpMethod.Get,
+				RequestUri = new Uri($"{BaseUrl}schema/{a_entityType}/fields?project_id={a_projectId}"),
+				Headers = {
+					{ HttpRequestHeader.Accept.ToString(), "application/json" },
+					{ HttpRequestHeader.AcceptEncoding.ToString(), "gzip, deflate, br" },
+					{ HttpRequestHeader.Authorization.ToString(), "Bearer " + m_authentication.AccessToken },
+				}
+			};
+
+			HttpResponseMessage response = await m_client.SendAsync(request);
+			string responseBody = await response.Content.ReadAsStringAsync();
+
+			return ParseResponse<ShotGridEntityFieldSchema[]>(response.StatusCode, responseBody);
+		}
+
+		public async Task<ShotGridAPIResponse<ShotGridEntityRelation?>> FindRelationByCode(string a_relationType, string a_code)
+		{
+			ShotGridAPIResponse<ShotGridEntityRelation[]> relations = await FindAndParse<ShotGridEntityRelation[]>(a_relationType, new ShotGridSimpleSearchFilter(), 
+				new JsonAttributeFieldEnumerator<ShotGridEntityRelation.RelationAttributes>().Get());
+			if (relations.IsError)
+			{
+				return new ShotGridAPIResponse<ShotGridEntityRelation?>(null, relations.ErrorInfo);
+			}
+			else
+			{
+				foreach (ShotGridEntityRelation relation in relations.ResultData)
+				{
+					if (string.Compare(relation.Attributes.Code, a_code, StringComparison.InvariantCultureIgnoreCase) == 0)
+					{
+						return new ShotGridAPIResponse<ShotGridEntityRelation?>(relation, null);
+					}
+				}
+
+				return new ShotGridAPIResponse<ShotGridEntityRelation?>(null, new ShotGridErrorResponse
+				{
+					Errors = new[]
+					{
+						new ShotGridErrorResponse.RequestError {Title = $"Unable to find relation by code {a_code}"}
+					}
+				});
+			}
+		}
 	}
+
+	public class ShotGridEntityFieldSchema
+	{
+	};
 }

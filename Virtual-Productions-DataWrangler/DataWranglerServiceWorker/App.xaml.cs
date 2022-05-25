@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
@@ -46,7 +47,7 @@ namespace DataWranglerServiceWorker
 			m_driveEventWatcher.OnVolumeChanged += OnVolumeChanged;
 		}
 
-		private void OnFileCopyStarted(string a_sourceFile, string a_destinationFile)
+		private void OnFileCopyStarted(ShotVersionIdentifier a_shotVersion, string a_sourceFile, string a_destinationFile)
 		{
 			m_copyProgress.SetTargetFile(a_sourceFile, a_destinationFile);
 			Dispatcher.InvokeAsync(() => {
@@ -57,13 +58,13 @@ namespace DataWranglerServiceWorker
 			});
 		}
 
-		private void OnFileCopyUpdate(string a_destinationFile, float a_progressPercent)
+		private void OnFileCopyUpdate(ShotVersionIdentifier a_shotVersion, string a_destinationFile, float a_progressPercent)
 		{
 			m_copyProgress.ProgressUpdate(a_progressPercent);
 			m_copyProgress.UpdateQueueLength(m_importWorker.ImportQueueLength);
 		}
 
-		private void OnFileCopyFinished(string a_destinationFile)	
+		private void OnFileCopyFinished(ShotVersionIdentifier a_shotVersion, string a_destinationFile)	
 		{
 			Dispatcher.InvokeAsync(() => {
 				if (m_importWorker.ImportQueueLength == 0)
@@ -71,6 +72,54 @@ namespace DataWranglerServiceWorker
 					m_copyProgress.Hide();
 				}
 			});
+
+			//TODO: Change this from hardcoded video type
+			CreatePublishEntryForFile(a_shotVersion, a_destinationFile, "video");
+		}
+
+		private void CreatePublishEntryForFile(ShotVersionIdentifier a_shotVersion, string a_destinationFile, string a_fileTypeRelation)
+		{
+			if (!m_metaCache.FindShotForId(a_shotVersion.ShotId, out ShotGridEntityShot? shotData))
+			{
+				Logger.LogError("DataImporter", $"Failed to get shot data for shot id {a_shotVersion.ShotId}. File won't be marked as published in shotgrid");
+				return;
+			}
+
+			if (!m_metaCache.FindShotVersionForId(a_shotVersion.VersionId, out ShotGridEntityShotVersion? versionData))
+			{
+				Logger.LogError("DataImporter", $"Failed to get shot version data for shot id {a_shotVersion.VersionId}. File won't be marked as published in shotgrid");
+				return;
+			}
+
+			ShotGridEntityReference? fileTypeTagReference = null;
+			ShotGridAPIResponse<ShotGridEntityRelation?> fileTypeRelation = m_targetApi.FindRelationByCode(ShotGridEntity.TypeNames.PublishedFileType, "video").Result;
+			if (!fileTypeRelation.IsError)
+			{
+				fileTypeTagReference = new ShotGridEntityReference(fileTypeRelation.ResultData);
+			}
+			else
+			{
+				Logger.LogError("DataImporter", $"Failed to find file type relation {a_fileTypeRelation} in shotgrid. Entity won't be linked");
+			}
+
+			string publishFileName = $"{shotData.Attributes.ShotCode}_{versionData.Attributes.VersionCode}";
+			ShotGridEntityFilePublish.FilePublishAttributes publishData = new ShotGridEntityFilePublish.FilePublishAttributes
+			{
+				Path = new ShotGridEntityFilePublish.FileLink
+				{
+					FileName = publishFileName,
+					LinkType = "local",
+					Url = new UriBuilder {Scheme = Uri.UriSchemeFile, Path = a_destinationFile}.Uri.AbsoluteUri
+				},
+				PublishedFileName = publishFileName,
+				PublishedFileType = fileTypeTagReference
+			};
+
+			m_targetApi.CreateFilePublish(a_shotVersion.ProjectId, a_shotVersion.ShotId, a_shotVersion.VersionId, publishData)
+				.ContinueWith(_ =>
+				{
+					Logger.LogInfo("DataImporter", $"Successfully published file {a_destinationFile}");
+				});
 		}
 
 		protected override void OnStartup(StartupEventArgs e)

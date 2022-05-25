@@ -21,8 +21,8 @@ namespace ShotGridIntegration
 			public string Title = ""; //A short, human-readable summary of the problem.
 			[JsonProperty("detail")]
 			public string Detail = ""; //A human-readable explanation specific to this occurrence of the problem.
-			[JsonProperty("meta")]
-			public string Meta = ""; //Non-standard meta-information about the error.
+			//[JsonProperty("meta")]
+			//public object Meta = ""; //Non-standard meta-information about the error.
 
 			//Missing: source - Object containing references to source - As of now don't know how to handle this.
 		};

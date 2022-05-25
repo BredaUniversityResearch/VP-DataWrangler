@@ -141,7 +141,7 @@ namespace DataWranglerInterface.ShotRecording
 			Dictionary<string, object> valuesToSet = new Dictionary<string, object> { { "sg_datawrangler_meta", metaAsString } };
 
 			Task<ShotGridAPIResponse<ShotGridEntityShotVersion>> response = DataWranglerServiceProvider.Instance.ShotGridAPI.UpdateEntityProperties<ShotGridEntityShotVersion>(
-				EShotGridEntity.Version, selectedVersionId, valuesToSet);
+				ShotGridEntity.TypeNames.ShotVersion, selectedVersionId, valuesToSet);
 			response.ContinueWith((a_task) => {
 				if (a_task.Result.IsError)
 				{

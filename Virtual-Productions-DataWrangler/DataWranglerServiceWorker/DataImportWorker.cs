@@ -25,12 +25,13 @@ namespace DataWranglerServiceWorker
 			}
 		};
 
-		private const string DefaultLocation = "//cradlenas/Projects/VirtualProductions/${ProjectName}/Shots/${ShotCode}/${ShotVersionCode}/";
+		//private const string DefaultLocation = "//cradlenas/Projects/VirtualProductions/${ProjectName}/Shots/${ShotCode}/${ShotVersionCode}/";
+		private const string DefaultLocation = "D:/Projects/VirtualProductions/TestImportRoot/${ProjectName}/Shots/${ShotCode}/${ShotVersionCode}/";
 		private const int DefaultCopyBufferSize = 32 * 1024 * 1024;
 
-		public delegate void CopyStartedDelegate(string sourceFile, string destinationFile);
-		public delegate void CopyProgressUpdate(string destinationFile, float progressPercent);
-		public delegate void CopyFinishedDelegate(string destinationFile);
+		public delegate void CopyStartedDelegate(ShotVersionIdentifier shotVersion, string sourceFile, string destinationFile);
+		public delegate void CopyProgressUpdate(ShotVersionIdentifier shotVersion, string destinationFile, float progressPercent);
+		public delegate void CopyFinishedDelegate(ShotVersionIdentifier shotVersion, string destinationFile);
 
 		public event CopyStartedDelegate OnCopyStarted = delegate { };
 		public event CopyProgressUpdate OnCopyUpdate = delegate { };
@@ -113,19 +114,17 @@ namespace DataWranglerServiceWorker
 
 				if (didDequeue && resultToCopy != null)
 				{
-					OnCopyStarted.Invoke(resultToCopy.SourcePath, resultToCopy.TargetPath);
+					OnCopyStarted.Invoke(resultToCopy.TargetShotVersion, resultToCopy.SourcePath, resultToCopy.TargetPath);
 					try
 					{
-						CopyFileWithProgress(resultToCopy.SourcePath, resultToCopy.TargetPath);
+						CopyFileWithProgress(resultToCopy.TargetShotVersion, resultToCopy.SourcePath, resultToCopy.TargetPath);
 					}
 					catch (IOException ex)
 					{
 						Logger.LogError("DataImporter", $"Import exception occurred processing file {resultToCopy.SourcePath} => {resultToCopy.TargetPath} Exception: {ex.Message}");
 					}
 
-					OnCopyFinished.Invoke(resultToCopy.TargetPath);
-
-					Debugger.Break(); //Link path from nas to take in the Published file section.
+					OnCopyFinished.Invoke(resultToCopy.TargetShotVersion, resultToCopy.TargetPath);
 				}
 				else
 				{
@@ -134,7 +133,7 @@ namespace DataWranglerServiceWorker
 			}
 		}
 
-		private void CopyFileWithProgress(string a_sourcePath, string a_targetPath)
+		private void CopyFileWithProgress(ShotVersionIdentifier a_shotVersion, string a_sourcePath, string a_targetPath)
 		{
 			string targetDirectory = Path.GetDirectoryName(a_targetPath)!;
 			if (!Directory.Exists(targetDirectory))
@@ -168,7 +167,7 @@ namespace DataWranglerServiceWorker
 				bytesCopied += currentBlockSize;
 
 				float percentageCopied = ((float) bytesCopied / (float) sourceSize);
-				OnCopyUpdate(a_targetPath, percentageCopied);
+				OnCopyUpdate(a_shotVersion, a_targetPath, percentageCopied);
 			}
 		}
 

@@ -3,7 +3,7 @@
 namespace ShotGridIntegration
 {
 	public class ShotGridAPIResponse<TSuccessDataType>
-		where TSuccessDataType: class
+		where TSuccessDataType: class?
 	{
 		public TSuccessDataType? ResultData = null;
 		public ShotGridErrorResponse? ErrorInfo = null;
