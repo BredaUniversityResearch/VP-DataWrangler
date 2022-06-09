@@ -110,6 +110,13 @@ namespace ShotGridIntegration
 				new JsonAttributeFieldEnumerator<ShotGridEntityRelation.RelationAttributes>().Get());
 		}
 
+		public async Task<ShotGridAPIResponse<ShotGridEntityLocalStorage[]>> GetLocalStorages()
+		{
+			ShotGridSimpleSearchFilter filter = new ShotGridSimpleSearchFilter();
+			return await FindAndParse<ShotGridEntityLocalStorage[]>(ShotGridEntity.TypeNames.LocalStorage, filter,
+				new JsonAttributeFieldEnumerator<ShotGridEntityLocalStorage.LocalStorageAttributes>().Get());
+		}
+
 		private ShotGridAPIResponse<TTargetType> ParseResponse<TTargetType>(HttpStatusCode a_statusCode, string a_responseString)
 			where TTargetType: class
 		{
@@ -240,6 +247,26 @@ namespace ShotGridIntegration
 			return ParseResponse<ShotGridEntityFilePublish>(response.StatusCode, responseBody);
 		}
 
+		public async Task<ShotGridAPIResponse<ShotGridEntityAttachment>> CreateFileAttachment(int a_projectId, int a_publishId, ShotGridEntityAttachment a_attachmentAttributes)
+		{
+			JsonSerializer serializer = JsonSerializer.Create(new JsonSerializerSettings
+			{
+				NullValueHandling = NullValueHandling.Ignore
+			});
+
+			ShotGridEntityCreateBaseData baseData = new ShotGridEntityCreateBaseData(a_projectId, ShotGridEntity.TypeNames.PublishedFile, a_publishId);
+			JObject baseDataToken = JObject.FromObject(baseData, serializer);
+			JObject encodedToken = JObject.FromObject(a_attachmentAttributes, serializer);
+			encodedToken.Merge(baseDataToken);
+
+			string requestBody = encodedToken.ToString();
+
+			HttpResponseMessage response = await Create(ShotGridEntity.TypeNames.Attachment, requestBody);
+			string responseBody = await response.Content.ReadAsStringAsync();
+
+			return ParseResponse<ShotGridEntityAttachment>(response.StatusCode, responseBody);
+		}
+
 		private async Task<HttpResponseMessage> Create(string a_entityType, string a_entityDataAsString)
 		{
 			if (m_authentication == null)
@@ -264,9 +291,11 @@ namespace ShotGridIntegration
 			return response;
 		}
 
-		public async Task<ShotGridAPIResponse<TEntityType>> UpdateEntityProperties<TEntityType>(string a_entityType, int a_entityId, Dictionary<string, object> a_propertiesToSet)
-			where TEntityType: class
+		public async Task<ShotGridAPIResponse<TEntityType>> UpdateEntityProperties<TEntityType>(int a_entityId, Dictionary<string, object> a_propertiesToSet)
+			where TEntityType: ShotGridEntity
 		{
+			string entityType = ShotGridEntity.GetEntityName<TEntityType>();
+
 			if (m_authentication == null)
 			{
 				throw new ShotGridAPIException("No authentication requested");
@@ -277,7 +306,7 @@ namespace ShotGridIntegration
 			HttpRequestMessage request = new HttpRequestMessage
 			{
 				Method = HttpMethod.Put,
-				RequestUri = new Uri($"{BaseUrl}entity/{a_entityType}/{a_entityId}"),
+				RequestUri = new Uri($"{BaseUrl}entity/{entityType}/{a_entityId}"),
 				Headers = {
 					{ HttpRequestHeader.Accept.ToString(), "application/json" },
 					{ HttpRequestHeader.AcceptEncoding.ToString(), "gzip, deflate, br" },

@@ -26,10 +26,8 @@ namespace DataWranglerServiceWorker
 			}
 		};
 
-		private Dictionary<ShotVersionIdentifier, ShotVersionMetaCacheEntry> m_availableVersionMeta = new Dictionary<ShotVersionIdentifier, ShotVersionMetaCacheEntry>();
-		private Dictionary<int, ShotGridEntityProject> m_projects = new();
-		private Dictionary<int, ShotGridEntityShot> m_shots = new();
-		private Dictionary<int, ShotGridEntityShotVersion> m_shotVersions = new();
+		private Dictionary<ShotVersionIdentifier, ShotVersionMetaCacheEntry> m_availableVersionMeta = new();
+		private Dictionary<string, Dictionary<int, ShotGridEntity>> m_cachedEntitiesByType = new();
 
 		private ShotGridAPI m_targetApi;
 		private DateTimeOffset m_lastCacheUpdateTime = DateTimeOffset.MinValue;
@@ -41,6 +39,18 @@ namespace DataWranglerServiceWorker
 
 		public async Task UpdateCache()
 		{
+			ShotGridAPIResponse<ShotGridEntityLocalStorage[]> activeStores = await m_targetApi.GetLocalStorages();
+			if (activeStores.IsError)
+			{
+				Logger.LogError("MetaCache", "Failed to fetch active stores: " + activeStores.ErrorInfo);
+				return;
+			}
+
+			foreach (ShotGridEntityLocalStorage localStore in activeStores.ResultData)
+			{
+				AddOrUpdateCachedEntity(localStore);
+			}
+
 			ShotGridAPIResponse<ShotGridEntityProject[]> activeProjects = await m_targetApi.GetActiveProjects();
 			if (activeProjects.IsError)
 			{
@@ -52,7 +62,7 @@ namespace DataWranglerServiceWorker
 			{
 				Logger.LogInfo("MetaCache", $"Fetched data for project {project.Id}");
 
-				m_projects.Add(project.Id, project);
+				AddOrUpdateCachedEntity(project);
 
 				ShotGridAPIResponse<ShotGridEntityShot[]> shotsInProject = await m_targetApi.GetShotsForProject(project.Id);
 				if (shotsInProject.IsError)
@@ -65,7 +75,7 @@ namespace DataWranglerServiceWorker
 				{
 					Logger.LogInfo("MetaCache", $"Fetched data for shot {shot.Id}");
 
-					m_shots.Add(shot.Id, shot);
+					AddOrUpdateCachedEntity(shot);
 
 					ShotGridAPIResponse<ShotGridEntityShotVersion[]> shotVersionsForShot = await m_targetApi.GetVersionsForShot(shot.Id);
 					if (shotVersionsForShot.IsError)
@@ -76,7 +86,7 @@ namespace DataWranglerServiceWorker
 
 					foreach (ShotGridEntityShotVersion version in shotVersionsForShot.ResultData)
 					{
-						m_shotVersions.Add(version.Id, version);
+						AddOrUpdateCachedEntity(version);
 
 						if (version.Attributes.DataWranglerMeta != null)
 						{
@@ -95,6 +105,19 @@ namespace DataWranglerServiceWorker
 			m_lastCacheUpdateTime = DateTimeOffset.UtcNow;
 		}
 
+		private void AddOrUpdateCachedEntity<TEntityType>(TEntityType a_entry)
+			where TEntityType : ShotGridEntity
+		{
+			Dictionary<int, ShotGridEntity>? entitiesById = null;
+			if (!m_cachedEntitiesByType.TryGetValue(ShotGridEntity.GetEntityName<TEntityType>(), out entitiesById))
+			{
+				entitiesById = new Dictionary<int, ShotGridEntity>();
+				m_cachedEntitiesByType.Add(ShotGridEntity.GetEntityName<TEntityType>(), entitiesById);
+			}
+
+			entitiesById[a_entry.Id] = a_entry;
+		}
+
 		private void AddOrUpdateMeta(ShotVersionMetaCacheEntry a_cacheEntry)
 		{
 			if (m_availableVersionMeta.TryGetValue(a_cacheEntry.Identifier, out var existingCacheEntry))
@@ -105,21 +128,6 @@ namespace DataWranglerServiceWorker
 			{
 				m_availableVersionMeta.Add(a_cacheEntry.Identifier, a_cacheEntry);
 			}
-		}
-
-		public bool FindProjectForId(int a_projectId, [NotNullWhen(true)] out ShotGridEntityProject? a_projectData)
-		{
-			return m_projects.TryGetValue(a_projectId, out a_projectData);
-		}
-
-		public bool FindShotForId(int a_shotId, [NotNullWhen(true)] out ShotGridEntityShot? a_shotData)
-		{
-			return m_shots.TryGetValue(a_shotId, out a_shotData);
-		}
-
-		public bool FindShotVersionForId(int a_shotId, [NotNullWhen(true)] out ShotGridEntityShotVersion? a_shotData)
-		{
-			return m_shotVersions.TryGetValue(a_shotId, out a_shotData);
 		}
 
 		public bool FindShotVersionForFile(DateTimeOffset a_fileInfoCreationTimeUtc, string a_storageName, ECameraCodec a_codec, [NotNullWhen(true)] out ShotVersionMetaCacheEntry? a_shotVersionMetaCacheEntry)
@@ -139,6 +147,41 @@ namespace DataWranglerServiceWorker
 			}
 
 			a_shotVersionMetaCacheEntry = null;
+			return false;
+		}
+
+		public bool FindEntityById<TEntityType>(int a_id, [NotNullWhen(true)] out TEntityType? a_result)
+			where TEntityType: ShotGridEntity
+		{
+			a_result = null;
+			if (m_cachedEntitiesByType.TryGetValue(ShotGridEntity.GetEntityName<TEntityType>(), out var entitiesById))
+			{
+				if (entitiesById.TryGetValue(a_id, out var entity))
+				{
+					a_result = (TEntityType) entity;
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		public bool FindEntity<TEntityType>(Func<TEntityType, bool> a_selector, [NotNullWhen(true)] out TEntityType? a_result)
+			where TEntityType: ShotGridEntity
+		{
+			a_result = null;
+			if (m_cachedEntitiesByType.TryGetValue(ShotGridEntity.GetEntityName<TEntityType>(), out var entitiesById))
+			{
+				foreach (var shotGridEntity in entitiesById.Values)
+				{
+					var entity = (TEntityType)shotGridEntity;
+					if (a_selector.Invoke(entity))
+					{
+						a_result = entity;
+						return true;
+					}
+				}
+			}
 			return false;
 		}
 	}

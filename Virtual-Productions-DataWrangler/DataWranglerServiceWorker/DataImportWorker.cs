@@ -11,27 +11,34 @@ namespace DataWranglerServiceWorker
 {
 	public class DataImportWorker
 	{
+		public enum ECopyResult
+		{
+			Success, //Did copy the file
+			UnknownFailure, //Something happened, not sure what.
+			FileAlreadyUpToDate, //File already exists at target and did not need update.
+			InvalidDestinationPath, //Destination path is invalid, could not resolve the folder for the destination
+		};
+
 		private class ImportQueueEntry
 		{
-			public string SourcePath;
-			public string TargetPath;
+			public FileCopyMetaData CopyMetaData;
 			public ShotVersionIdentifier TargetShotVersion;
 
-			public ImportQueueEntry(string a_sourcePath, string a_targetPath, ShotVersionIdentifier a_targetShotVersion)
+			public ImportQueueEntry(FileCopyMetaData a_copyMetaData, ShotVersionIdentifier a_targetShotVersion)
 			{
-				SourcePath = a_sourcePath;
-				TargetPath = a_targetPath;
+				CopyMetaData = a_copyMetaData;
 				TargetShotVersion = a_targetShotVersion;
 			}
 		};
 
-		//private const string DefaultLocation = "//cradlenas/Projects/VirtualProductions/${ProjectName}/Shots/${ShotCode}/${ShotVersionCode}/";
-		private const string DefaultLocation = "D:/Projects/VirtualProductions/TestImportRoot/${ProjectName}/Shots/${ShotCode}/${ShotVersionCode}/";
+		private const string DefaultDataStorageName = "CradleNas";
+		//private const string DefaultLocation = "D:/Projects/VirtualProductions/TestImportRoot/${ProjectName}/Shots/${ShotCode}/${ShotVersionCode}/";
+		private const string DefaultDataStoreFilePath = "${ProjectName}/Shots/${ShotCode}/${ShotVersionCode}/"; //Relative to DataStoreRoot
 		private const int DefaultCopyBufferSize = 32 * 1024 * 1024;
 
-		public delegate void CopyStartedDelegate(ShotVersionIdentifier shotVersion, string sourceFile, string destinationFile);
-		public delegate void CopyProgressUpdate(ShotVersionIdentifier shotVersion, string destinationFile, float progressPercent);
-		public delegate void CopyFinishedDelegate(ShotVersionIdentifier shotVersion, string destinationFile);
+		public delegate void CopyStartedDelegate(ShotVersionIdentifier shotVersion, FileCopyMetaData metaData);
+		public delegate void CopyProgressUpdate(ShotVersionIdentifier shotVersion, FileCopyMetaData metaData, float progressPercent);
+		public delegate void CopyFinishedDelegate(ShotVersionIdentifier shotVersion, FileCopyMetaData metaData, ECopyResult result);
 
 		public event CopyStartedDelegate OnCopyStarted = delegate { };
 		public event CopyProgressUpdate OnCopyUpdate = delegate { };
@@ -65,20 +72,27 @@ namespace DataWranglerServiceWorker
 
 		public void AddFileToImport(ShotVersionIdentifier a_shotVersionIdentifier, string a_sourceFilePath)
 		{
-			string targetPath = DefaultLocation + Path.GetFileName(a_sourceFilePath);
-			if (!m_dataCache.FindProjectForId(a_shotVersionIdentifier.ProjectId, out ShotGridEntityProject? project))
+			
+			if (!m_dataCache.FindEntity(a_obj => a_obj.Attributes.LocalStorageName == DefaultDataStorageName, out ShotGridEntityLocalStorage? targetStorage) ||
+			    targetStorage.Attributes.WindowsPath == null)
+			{
+				Logger.LogError("DataImport", $"Could not import file at path {a_sourceFilePath}. Could not find data storage with name \"{DefaultDataStorageName}\". Importer is NOT active");
+				return;
+			}
+
+			if (!m_dataCache.FindEntityById(a_shotVersionIdentifier.ProjectId, out ShotGridEntityProject? project))
 			{
 				Logger.LogError("DataImport", $"Could not import file at path {a_sourceFilePath}. Data references project ({a_shotVersionIdentifier.ProjectId}) which is not known by the cache");
 				return;
 			}
 
-			if (!m_dataCache.FindShotForId(a_shotVersionIdentifier.ShotId, out ShotGridEntityShot? shot))
+			if (!m_dataCache.FindEntityById(a_shotVersionIdentifier.ShotId, out ShotGridEntityShot? shot))
 			{
 				Logger.LogError("DataImport", $"Could not import file at path {a_sourceFilePath}. Data references shot ({a_shotVersionIdentifier.ShotId}) which is not known by the cache");
 				return;
 			}
 
-			if (!m_dataCache.FindShotVersionForId(a_shotVersionIdentifier.VersionId, out ShotGridEntityShotVersion? shotVersion))
+			if (!m_dataCache.FindEntityById(a_shotVersionIdentifier.VersionId, out ShotGridEntityShotVersion? shotVersion))
 			{
 				Logger.LogError("DataImport", $"Could not import file at path {a_sourceFilePath}. Data references shot version ({a_shotVersionIdentifier.VersionId}) which is not known by the cache");
 				return;
@@ -92,11 +106,12 @@ namespace DataWranglerServiceWorker
 				{"ShotVersionCode", RemoveInvalidPathCharacters(shotVersion.Attributes.VersionCode) }
 			};
 
+			string targetPath = DefaultDataStoreFilePath + Path.GetFileName(a_sourceFilePath);
 			targetPath = ResolvePath(targetPath, replacements);
 
 			lock (m_importQueue)
 			{
-				m_importQueue.Enqueue(new ImportQueueEntry(a_sourceFilePath, targetPath, a_shotVersionIdentifier));
+				m_importQueue.Enqueue(new ImportQueueEntry(new FileCopyMetaData(a_sourceFilePath, targetPath, targetStorage), a_shotVersionIdentifier));
 				m_queueAddedEvent.Set();
 			}
 		}
@@ -114,17 +129,18 @@ namespace DataWranglerServiceWorker
 
 				if (didDequeue && resultToCopy != null)
 				{
-					OnCopyStarted.Invoke(resultToCopy.TargetShotVersion, resultToCopy.SourcePath, resultToCopy.TargetPath);
+					ECopyResult result = ECopyResult.UnknownFailure;
+					OnCopyStarted.Invoke(resultToCopy.TargetShotVersion, resultToCopy.CopyMetaData);
 					try
 					{
-						CopyFileWithProgress(resultToCopy.TargetShotVersion, resultToCopy.SourcePath, resultToCopy.TargetPath);
+						result = CopyFileWithProgress(resultToCopy.TargetShotVersion, resultToCopy.CopyMetaData);
 					}
 					catch (IOException ex)
 					{
-						Logger.LogError("DataImporter", $"Import exception occurred processing file {resultToCopy.SourcePath} => {resultToCopy.TargetPath} Exception: {ex.Message}");
+						Logger.LogError("DataImporter", $"Import exception occurred processing file {resultToCopy.CopyMetaData.SourceFilePath} => {resultToCopy.CopyMetaData.DestinationFullFilePath} Exception: {ex.Message}");
 					}
 
-					OnCopyFinished.Invoke(resultToCopy.TargetShotVersion, resultToCopy.TargetPath);
+					OnCopyFinished.Invoke(resultToCopy.TargetShotVersion, resultToCopy.CopyMetaData, result);
 				}
 				else
 				{
@@ -133,29 +149,36 @@ namespace DataWranglerServiceWorker
 			}
 		}
 
-		private void CopyFileWithProgress(ShotVersionIdentifier a_shotVersion, string a_sourcePath, string a_targetPath)
+		private ECopyResult CopyFileWithProgress(ShotVersionIdentifier a_shotVersion, FileCopyMetaData a_copyMetaData)
 		{
-			string targetDirectory = Path.GetDirectoryName(a_targetPath)!;
+			string? targetDirectory = Path.GetDirectoryName(a_copyMetaData.DestinationFullFilePath);
+			if (targetDirectory == null)
+			{
+				Logger.LogError("DataImporter", $"Failed to get directory from path {a_copyMetaData.DestinationFullFilePath}");
+				return ECopyResult.InvalidDestinationPath;
+			}
+
 			if (!Directory.Exists(targetDirectory))
 			{
 				new DirectoryInfo(targetDirectory).Create();
 			}
 
-			FileInfo targetFileInfo = new FileInfo(a_targetPath);
+			FileInfo targetFileInfo = new FileInfo(a_copyMetaData.DestinationFullFilePath);
 			if (targetFileInfo.Exists)
 			{
-				FileInfo sourceFileInfo = new FileInfo(a_sourcePath);
+				FileInfo sourceFileInfo = new FileInfo(a_copyMetaData.SourceFilePath);
 				if (sourceFileInfo.Length <= targetFileInfo.Length)
 				{
-					throw new IOException("Target file already exists, and size is equal.");
+					Logger.LogInfo("DataImporter", $"Skipped file {a_copyMetaData.SourceFilePath}. Destination file seems up to date");
+					return ECopyResult.FileAlreadyUpToDate;
 				}
 
 			}
 
 			byte[] copyBuffer = new byte[DefaultCopyBufferSize];
 
-			using FileStream sourceStream = new FileStream(a_sourcePath, FileMode.Open, FileAccess.Read);
-			using FileStream targetStream = new FileStream(a_targetPath, FileMode.Create, FileAccess.Write);
+			using FileStream sourceStream = new FileStream(a_copyMetaData.SourceFilePath, FileMode.Open, FileAccess.Read);
+			using FileStream targetStream = new FileStream(a_copyMetaData.DestinationFullFilePath, FileMode.Create, FileAccess.Write);
 
 			long sourceSize = sourceStream.Length;
 			long bytesCopied = 0;
@@ -167,8 +190,10 @@ namespace DataWranglerServiceWorker
 				bytesCopied += currentBlockSize;
 
 				float percentageCopied = ((float) bytesCopied / (float) sourceSize);
-				OnCopyUpdate(a_shotVersion, a_targetPath, percentageCopied);
+				OnCopyUpdate(a_shotVersion, a_copyMetaData, percentageCopied);
 			}
+
+			return ECopyResult.Success;
 		}
 
 		private string ResolvePath(string a_inputPath, Dictionary<string, string> a_replacementVariables)

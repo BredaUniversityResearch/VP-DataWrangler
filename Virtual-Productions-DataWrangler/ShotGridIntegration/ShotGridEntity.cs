@@ -1,6 +1,18 @@
-﻿using Newtonsoft.Json;
+﻿using System.Reflection;
+using Newtonsoft.Json;
 
 namespace ShotGridIntegration;
+
+[AttributeUsage(AttributeTargets.Class)]
+public sealed class ShotGridEntityTypeAttribute: Attribute
+{
+	public readonly string TypeName;
+
+	public ShotGridEntityTypeAttribute(string a_typeName)
+	{
+		TypeName = a_typeName;
+	}
+};
 
 public class ShotGridEntity
 {
@@ -11,6 +23,8 @@ public class ShotGridEntity
 		public const string ShotVersion = "Version";
 		public const string PublishedFile = "PublishedFile";
 		public const string PublishedFileType = "PublishedFileType";
+		public const string LocalStorage = "LocalStorage";
+		public const string Attachment = "Attachment";
 	}
 
 	[JsonProperty("id")]
@@ -19,4 +33,16 @@ public class ShotGridEntity
 	public string ShotGridType = "";
 	[JsonProperty("links")]
 	public ShotGridEntityLinks Links = new ShotGridEntityLinks();
+
+	public static string GetEntityName<TEntityType>() 
+		where TEntityType : ShotGridEntity
+	{
+		ShotGridEntityTypeAttribute? attrib = typeof(TEntityType).GetCustomAttribute<ShotGridEntityTypeAttribute>(false);
+		if (attrib == null)
+		{
+			throw new Exception($"Shot Grid Entity {typeof(TEntityType).FullName} not decorated with ShotGridEntityTypeAttribute");
+		}
+
+		return attrib.TypeName;
+	}
 }

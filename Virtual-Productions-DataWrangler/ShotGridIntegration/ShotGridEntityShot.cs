@@ -2,6 +2,7 @@
 
 namespace ShotGridIntegration
 {
+	[ShotGridEntityType(TypeNames.Shot)]
 	public class ShotGridEntityShot: ShotGridEntity
 	{
 		public class ShotAttributes

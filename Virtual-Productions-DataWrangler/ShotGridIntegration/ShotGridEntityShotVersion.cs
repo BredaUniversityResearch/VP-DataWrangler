@@ -2,6 +2,7 @@
 
 namespace ShotGridIntegration
 {
+	[ShotGridEntityType(TypeNames.ShotVersion)]
 	public class ShotGridEntityShotVersion: ShotGridEntity
 	{
 		public class ShotVersionAttributes

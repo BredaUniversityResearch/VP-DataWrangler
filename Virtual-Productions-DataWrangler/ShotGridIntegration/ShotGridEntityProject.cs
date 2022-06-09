@@ -2,7 +2,8 @@
 
 namespace ShotGridIntegration
 {
-	public class ShotGridEntityProject: ShotGridEntity
+	[ShotGridEntityType(TypeNames.Project)]
+	public class ShotGridEntityProject : ShotGridEntity
 	{
 		public class ProjectAttributes
 		{

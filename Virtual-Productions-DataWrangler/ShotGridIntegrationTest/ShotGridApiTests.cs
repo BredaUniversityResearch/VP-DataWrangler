@@ -12,6 +12,7 @@ namespace ShotGridIntegrationTest
 		private const int TargetProjectId = 285;
 		private const int TargetShotId = 1369;
 		private const int TargetShotVersionId = 8195;
+		private const int TargetPublishFile = 133;
 
 		[TestMethod]
 		public void Login()
@@ -83,7 +84,7 @@ namespace ShotGridIntegrationTest
 			ShotGridLoginResponse loginResponse = api.TryLogin(CredentialProvider.Username!, CredentialProvider.Password!).Result;
 			Assert.IsTrue(loginResponse.Success);
 
-			ShotGridAPIResponse<ShotGridEntityFieldSchema[]> schemas = api.GetEntityFieldSchema(ShotGridEntity.TypeNames.PublishedFileType, TargetProjectId).Result;
+			ShotGridAPIResponse<ShotGridEntityFieldSchema[]> schemas = api.GetEntityFieldSchema("Attachment", TargetProjectId).Result;
 			Assert.IsFalse(schemas.IsError);
 			Assert.IsTrue(schemas.ResultData!.Length > 0);
 		}
@@ -109,7 +110,7 @@ namespace ShotGridIntegrationTest
 			Assert.IsTrue(loginResponse.Success);
 
 			ShotGridAPIResponse<ShotGridEntityShotVersion> response = api.UpdateEntityProperties<ShotGridEntityShotVersion>(
-				ShotGridEntity.TypeNames.ShotVersion, TargetShotVersionId, new Dictionary<string, object>{{"sg_datawrangler_meta", "test"}}).Result;
+				TargetShotVersionId, new Dictionary<string, object>{{"sg_datawrangler_meta", "test"}}).Result;
 
 			Assert.IsFalse(response.IsError);
 		}
@@ -124,14 +125,19 @@ namespace ShotGridIntegrationTest
 			ShotGridAPIResponse<ShotGridEntityRelation?> fileTypeRelation = api.FindRelationByCode(ShotGridEntity.TypeNames.PublishedFileType, "video").Result;
 			Assert.IsTrue(fileTypeRelation.ResultData != null);
 
+			string targetPath = "file://cradlenas/Projects/VirtualProductions/Phils VP Pipeline Testing Playground\\Shots\\Shot 01\\Take 08\\A014_05111248_C002.braw";
+
+
 			ShotGridEntityFilePublish.FilePublishAttributes attributes = new ShotGridEntityFilePublish.FilePublishAttributes();
 			attributes.Path = new ShotGridEntityFilePublish.FileLink{
-				Url = new UriBuilder { Scheme = Uri.UriSchemeFile, Path = "Projects/Virtual Productions/MyTestFile.txt", Host = "cradlenas" }.Uri.AbsoluteUri,
-				FileName = "MyTestFile.txt",
-				LinkType = "local"
+				//Url = new UriBuilder { Scheme = Uri.UriSchemeFile, Path = targetPath, Host = "cradlenas" }.Uri.AbsoluteUri,
+				FileName = "UNIT_TEST_TEST_FILE.braw",
+				LinkType = "local",
+				LocalPath = targetPath,
+				LocalStorageTarget = new ShotGridEntityReference("LocalStorage",3)
 			};
-			attributes.PublishedFileName = "Testing Text File";
-			attributes.PublishedFileType = new ShotGridEntityReference(fileTypeRelation.ResultData!);
+			attributes.PublishedFileName = "Testing braw File";
+			attributes.PublishedFileType = new ShotGridEntityReference(fileTypeRelation.ResultData!.ShotGridType, fileTypeRelation.ResultData.Id);
 			attributes.ShotVersion = new ShotGridEntityReference(ShotGridEntity.TypeNames.ShotVersion, TargetShotVersionId);
 
 			ShotGridAPIResponse<ShotGridEntityFilePublish> response = api.CreateFilePublish(TargetProjectId, TargetShotId, TargetShotVersionId, attributes).Result;
@@ -152,5 +158,29 @@ namespace ShotGridIntegrationTest
 			Assert.IsFalse(response.IsError);
 
 		}
+
+		[TestMethod]
+		public void GetLocalStorages()
+		{
+			ShotGridAPI api = new ShotGridAPI();
+			ShotGridLoginResponse loginResponse = api.TryLogin(CredentialProvider.Username!, CredentialProvider.Password!).Result;
+			Assert.IsTrue(loginResponse.Success);
+
+			ShotGridAPIResponse<ShotGridEntityLocalStorage[]> storages = api.GetLocalStorages().Result;
+
+			Assert.IsFalse(storages.IsError);
+		}
+
+		//[TestMethod]
+		//public void CreateAttachment()
+		//{
+		//	ShotGridAPI api = new ShotGridAPI();
+		//	ShotGridLoginResponse loginResponse = api.TryLogin(CredentialProvider.Username!, CredentialProvider.Password!).Result;
+		//	Assert.IsTrue(loginResponse.Success);
+
+		//	ShotGridAPIResponse<ShotGridEntityAttachment> storages = api.CreateFileAttachment(TargetProjectId, TargetPublishFile);
+
+		//	Assert.IsFalse(storages.IsError);
+		//}
 	}
 }

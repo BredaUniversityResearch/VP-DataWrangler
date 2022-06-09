@@ -47,9 +47,9 @@ namespace DataWranglerServiceWorker
 			m_driveEventWatcher.OnVolumeChanged += OnVolumeChanged;
 		}
 
-		private void OnFileCopyStarted(ShotVersionIdentifier a_shotVersion, string a_sourceFile, string a_destinationFile)
+		private void OnFileCopyStarted(ShotVersionIdentifier a_shotVersion, FileCopyMetaData a_copyMetaData)
 		{
-			m_copyProgress.SetTargetFile(a_sourceFile, a_destinationFile);
+			m_copyProgress.SetTargetFile(a_copyMetaData.SourceFilePath, a_copyMetaData.DestinationFullFilePath);
 			Dispatcher.InvokeAsync(() => {
 				if (!m_copyProgress.IsVisible)
 				{
@@ -58,13 +58,13 @@ namespace DataWranglerServiceWorker
 			});
 		}
 
-		private void OnFileCopyUpdate(ShotVersionIdentifier a_shotVersion, string a_destinationFile, float a_progressPercent)
+		private void OnFileCopyUpdate(ShotVersionIdentifier a_shotVersion, FileCopyMetaData a_copyMetaData, float a_progressPercent)
 		{
 			m_copyProgress.ProgressUpdate(a_progressPercent);
 			m_copyProgress.UpdateQueueLength(m_importWorker.ImportQueueLength);
 		}
 
-		private void OnFileCopyFinished(ShotVersionIdentifier a_shotVersion, string a_destinationFile)	
+		private void OnFileCopyFinished(ShotVersionIdentifier a_shotVersion, FileCopyMetaData a_copyMetaData, DataImportWorker.ECopyResult a_copyOperationResult)	
 		{
 			Dispatcher.InvokeAsync(() => {
 				if (m_importWorker.ImportQueueLength == 0)
@@ -73,19 +73,21 @@ namespace DataWranglerServiceWorker
 				}
 			});
 
-			//TODO: Change this from hardcoded video type
-			CreatePublishEntryForFile(a_shotVersion, a_destinationFile, "video");
+			//if (a_copyOperationResult == DataImportWorker.ECopyResult.Success)
+			{
+				CreatePublishEntryForFile(a_shotVersion, a_copyMetaData, "video");
+			}
 		}
 
-		private void CreatePublishEntryForFile(ShotVersionIdentifier a_shotVersion, string a_destinationFile, string a_fileTypeRelation)
+		private void CreatePublishEntryForFile(ShotVersionIdentifier a_shotVersion, FileCopyMetaData a_copyMetaData, string a_fileTypeRelation)
 		{
-			if (!m_metaCache.FindShotForId(a_shotVersion.ShotId, out ShotGridEntityShot? shotData))
+			if (!m_metaCache.FindEntityById(a_shotVersion.ShotId, out ShotGridEntityShot? shotData))
 			{
 				Logger.LogError("DataImporter", $"Failed to get shot data for shot id {a_shotVersion.ShotId}. File won't be marked as published in shotgrid");
 				return;
 			}
 
-			if (!m_metaCache.FindShotVersionForId(a_shotVersion.VersionId, out ShotGridEntityShotVersion? versionData))
+			if (!m_metaCache.FindEntityById(a_shotVersion.VersionId, out ShotGridEntityShotVersion? versionData))
 			{
 				Logger.LogError("DataImporter", $"Failed to get shot version data for shot id {a_shotVersion.VersionId}. File won't be marked as published in shotgrid");
 				return;
@@ -95,7 +97,7 @@ namespace DataWranglerServiceWorker
 			ShotGridAPIResponse<ShotGridEntityRelation?> fileTypeRelation = m_targetApi.FindRelationByCode(ShotGridEntity.TypeNames.PublishedFileType, "video").Result;
 			if (!fileTypeRelation.IsError)
 			{
-				fileTypeTagReference = new ShotGridEntityReference(fileTypeRelation.ResultData);
+				fileTypeTagReference = ShotGridEntityReference.Create(ShotGridEntity.TypeNames.PublishedFileType, fileTypeRelation.ResultData);
 			}
 			else
 			{
@@ -109,16 +111,33 @@ namespace DataWranglerServiceWorker
 				{
 					FileName = publishFileName,
 					LinkType = "local",
-					Url = new UriBuilder {Scheme = Uri.UriSchemeFile, Path = a_destinationFile}.Uri.AbsoluteUri
+					LocalPath = "asdf.jpg",
+					//LocalPath = a_copyMetaData.DestinationFullFilePath.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar),
+					LocalStorageTarget = new ShotGridEntityReference("LocalStorage", 1),
+					//LocalPathLinux = a_copyMetaData.DestinationDataStoreRoot + a_copyMetaData.DestinationRelativeFilePath.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar),
+					//LocalPathMac = a_copyMetaData.DestinationDataStoreRoot + a_copyMetaData.DestinationRelativeFilePath.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar),
+					//LocalPathWindows = a_copyMetaData.DestinationFullFilePath,
+					//Url = new UriBuilder { Scheme = Uri.UriSchemeFile, Path = a_copyMetaData.DestinationFullFilePath }.Uri.AbsoluteUri
 				},
+				//PathCache = a_copyMetaData.DestinationRelativeFilePath,
+				//PathCacheStorage = ShotGridEntityReference.Create(a_copyMetaData.StorageTarget),
 				PublishedFileName = publishFileName,
 				PublishedFileType = fileTypeTagReference
 			};
 
+			
+
 			m_targetApi.CreateFilePublish(a_shotVersion.ProjectId, a_shotVersion.ShotId, a_shotVersion.VersionId, publishData)
-				.ContinueWith(_ =>
+				.ContinueWith(a_taskResult =>
 				{
-					Logger.LogInfo("DataImporter", $"Successfully published file {a_destinationFile}");
+					if (!a_taskResult.Result.IsError)
+					{
+						Logger.LogInfo("DataImporter", $"Successfully published file {a_copyMetaData.DestinationFullFilePath}");
+					}
+					else
+					{
+						Logger.LogError("DataImporter", $"Failed to publish file {a_copyMetaData.DestinationFullFilePath}. Error: {a_taskResult.Result.ErrorInfo}");
+					}
 				});
 		}
 

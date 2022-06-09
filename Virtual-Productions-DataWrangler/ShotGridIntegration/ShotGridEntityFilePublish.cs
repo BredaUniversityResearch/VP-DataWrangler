@@ -2,12 +2,15 @@
 
 namespace ShotGridIntegration
 {
+    [ShotGridEntityType(TypeNames.PublishedFile)]
 	public class ShotGridEntityFilePublish : ShotGridEntity
 	{
 		public class FileLink
 		{
             [JsonProperty("link_type")] 
             public string LinkType = "local";
+            [JsonProperty("local_storage")]
+            public ShotGridEntityReference? LocalStorageTarget;
             [JsonProperty("local_path")]
             public string? LocalPath;
             [JsonProperty("local_path_linux")]
@@ -28,6 +31,10 @@ namespace ShotGridIntegration
 			public string PublishedFileName = "";
 			[JsonProperty("path")]
 			public FileLink? Path;
+            [JsonProperty("path_cache")]
+            public string? PathCache;
+            [JsonProperty("path_cache_storage")]
+            public ShotGridEntityReference? PathCacheStorage;
 			[JsonProperty("published_file_type")]
 			public ShotGridEntityReference? PublishedFileType;
             [JsonProperty("version")]
