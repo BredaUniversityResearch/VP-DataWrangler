@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="DataWranglerInterface.ShotRecording.ShotVersionVideoMetaControl"
+﻿<UserControl x:Class="DataWranglerInterface.ShotRecording.DataWranglerFileSourceUIBlackmagicUrsa"
              x:Name="VideoMetaUserControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -9,22 +9,17 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
 	<StackPanel xamlUtility:Spacing.Vertical="4">
-		<Label>Video Properties</Label>
-		<DockPanel>
-			<Label Width="64">Source</Label>
-			<ComboBox x:Name="VideoSource" SelectedItem="{Binding ElementName=VideoMetaUserControl, Path=CurrentMeta.Source}"/>
-		</DockPanel>
 		<DockPanel>
 			<Label Width="64">Codec</Label>
-			<TextBox Text="{Binding ElementName=VideoMetaUserControl, Path=CurrentMeta.CodecName}" IsEnabled="False"/>
+			<TextBox Text="{Binding ElementName=VideoMetaUserControl, Path=TargetMeta.CodecName}" IsEnabled="False"/>
 		</DockPanel>
 		<DockPanel>
 			<Label Width="64">Shot Start</Label>
-			<TextBox Text="{Binding ElementName=VideoMetaUserControl, Path=CurrentMeta.RecordingStart}" IsEnabled="False"/>
+			<TextBox Text="{Binding ElementName=VideoMetaUserControl, Path=TargetMeta.RecordingStart}" IsEnabled="False"/>
 		</DockPanel>
 		<DockPanel>
 			<Label Width="64">Storage</Label>
-			<TextBox Text="{Binding ElementName=VideoMetaUserControl, Path=CurrentMeta.StorageTarget}" IsEnabled="False"/>
+			<TextBox Text="{Binding ElementName=VideoMetaUserControl, Path=TargetMeta.StorageTarget}" IsEnabled="False"/>
 		</DockPanel>
 	</StackPanel>
 </UserControl>

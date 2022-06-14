@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Roslyn Component Debug": {
+      "commandName": "DebugRoslynComponent",
+      "targetProject": "..\\DataWranglerInterface\\DataWranglerInterface.csproj"
+    }
+  }
+}

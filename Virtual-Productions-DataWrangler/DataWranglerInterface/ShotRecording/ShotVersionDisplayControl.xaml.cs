@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using DataWranglerCommon;
@@ -25,16 +26,12 @@ namespace DataWranglerInterface.ShotRecording
 		{
 			InitializeComponent();
 
-			VideoMetaControl.UpdateData(m_currentVersionMeta);
+			FileSourcesControl.UpdateData(m_currentVersionMeta);
 
 			CreateNewTake.Click += OnCreateNewShotVersion;
 
-			AudioSource.Items.Add("Embedded");
-			AudioSource.Items.Add("External Audio Recorder");
-			AudioSource.SelectionChanged += OnAudioSourceChanged;
-
 			VersionSelectorControl.OnShotVersionSelected += OnShotVersionSelected;
-			AutoCreateNewTake.Checked += (_, _) =>
+			AutoCreateNewTake.Click += (_, _) =>
 			{
 				m_shouldCreateNewShotOnRecord = AutoCreateNewTake.IsChecked ?? false;
 			};
@@ -95,7 +92,7 @@ namespace DataWranglerInterface.ShotRecording
 				{
 					try
 					{
-						DataWranglerShotVersionMeta? shotMeta = JsonConvert.DeserializeObject<DataWranglerShotVersionMeta>(a_shotVersion.Attributes.DataWranglerMeta);
+						DataWranglerShotVersionMeta? shotMeta = JsonConvert.DeserializeObject<DataWranglerShotVersionMeta>(a_shotVersion.Attributes.DataWranglerMeta, DataWranglerSerializationSettings.Instance);
 						if (shotMeta != null)
 						{
 							SetTargetMeta(shotMeta);
@@ -152,7 +149,7 @@ namespace DataWranglerInterface.ShotRecording
 					VersionSelectorControl.UpdateEntity(response.Result.ResultData!);
 					if (!string.IsNullOrEmpty(a_task.Result.ResultData.Attributes.DataWranglerMeta))
 					{
-						DataWranglerShotVersionMeta? updatedMeta = JsonConvert.DeserializeObject<DataWranglerShotVersionMeta>(a_task.Result.ResultData.Attributes.DataWranglerMeta);
+						DataWranglerShotVersionMeta? updatedMeta = JsonConvert.DeserializeObject<DataWranglerShotVersionMeta>(a_task.Result.ResultData.Attributes.DataWranglerMeta, DataWranglerSerializationSettings.Instance);
 						if (updatedMeta != null)
 						{
 							SetTargetMeta(updatedMeta);
@@ -164,31 +161,19 @@ namespace DataWranglerInterface.ShotRecording
 
 		private void SetTargetMeta(DataWranglerShotVersionMeta a_meta)
 		{
-			m_currentVersionMeta.Video.PropertyChanged -= OnAnyMetaPropertyChanged;
+			foreach (DataWranglerFileSourceMeta meta in m_currentVersionMeta.FileSources)
+			{
+				meta.PropertyChanged -= OnAnyMetaPropertyChanged;
+			}
 
 			m_currentVersionMeta = a_meta;
 
-			m_currentVersionMeta.Video.PropertyChanged += OnAnyMetaPropertyChanged;
-
-			VideoMetaControl.UpdateData(m_currentVersionMeta);
-
-			SetValuesFromMeta(m_currentVersionMeta);
-		}
-
-		private void SetValuesFromMeta(DataWranglerShotVersionMeta a_meta)
-		{
-			if (!Dispatcher.CheckAccess())
+			foreach (DataWranglerFileSourceMeta meta in m_currentVersionMeta.FileSources)
 			{
-				Dispatcher.InvokeAsync(() => SetValuesFromMeta(a_meta));
-				return;
+				meta.PropertyChanged += OnAnyMetaPropertyChanged;
 			}
 
-			AudioSource.SelectedItem = a_meta.Audio.Source;
-		}
-
-		private void OnAudioSourceChanged(object a_sender, SelectionChangedEventArgs a_e)
-		{
-			m_currentVersionMeta.Audio.Source = (string)(AudioSource.SelectedItem);
+			FileSourcesControl.UpdateData(m_currentVersionMeta);
 		}
 
 		public void OnActiveCameraRecordingStateChanged(ActiveCameraInfo a_camera, bool a_isNowRecording, DateTimeOffset a_stateChangeTime)
@@ -207,9 +192,15 @@ namespace DataWranglerInterface.ShotRecording
 
 				m_isInBatchMetaChange = true;
 
-				targetMeta.Video.RecordingStart = a_stateChangeTime;
-				targetMeta.Video.StorageTarget = a_camera.CurrentStorageTarget;
-				targetMeta.Video.CodecName = a_camera.SelectedCodec;
+				foreach (DataWranglerFileSourceMeta source in targetMeta.FileSources)
+				{
+					if (source is DataWranglerFileSourceMetaBlackmagicUrsa ursaSource)
+					{
+						ursaSource.RecordingStart = a_stateChangeTime;
+						ursaSource.StorageTarget = a_camera.CurrentStorageTarget;
+						ursaSource.CodecName = a_camera.SelectedCodec;
+					}
+				}
 
 				m_isInBatchMetaChange = false;
 				if (m_shouldCreateNewShotOnRecord)

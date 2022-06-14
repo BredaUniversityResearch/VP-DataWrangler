@@ -9,6 +9,7 @@ namespace DataWranglerCommon
 		private DataWranglerSerializationSettings()
 		{
 			DateFormatHandling = DateFormatHandling.IsoDateFormat;
+			Converters.Add(new DataWranglerFileSourceMetaConverter());
 		}
 	}
 }

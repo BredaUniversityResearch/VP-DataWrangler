@@ -10,8 +10,6 @@ namespace DataWranglerServiceWorker
 {
 	public class ShotGridDataCache
 	{
-		public static readonly TimeSpan MaxTimeOffset = new(0, 0, 2);
-
 		public class ShotVersionMetaCacheEntry
 		{
 			public ShotVersionIdentifier Identifier;
@@ -134,15 +132,11 @@ namespace DataWranglerServiceWorker
 		{
 			foreach (ShotVersionMetaCacheEntry entry in m_availableVersionMeta.Values)
 			{
-				if (entry.MetaValues.Video.CodecName == a_codec.ToString() &&
-				    entry.MetaValues.Video.StorageTarget == a_storageName)
+				DataWranglerFileSourceMeta? meta = entry.MetaValues.HasFileSourceForFile(a_fileInfoCreationTimeUtc, a_storageName, a_codec.ToString());
+				if (meta != null)
 				{
-					TimeSpan? timeSinceCreation = a_fileInfoCreationTimeUtc - entry.MetaValues.Video.RecordingStart!;
-					if (timeSinceCreation > -MaxTimeOffset && timeSinceCreation < MaxTimeOffset)
-					{
-						a_shotVersionMetaCacheEntry = entry;
-						return true;
-					}
+					a_shotVersionMetaCacheEntry = entry;
+					return true;
 				}
 			}
 
