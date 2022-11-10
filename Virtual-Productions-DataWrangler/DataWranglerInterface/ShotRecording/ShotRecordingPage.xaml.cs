@@ -10,14 +10,14 @@ namespace DataWranglerInterface.ShotRecording
 	/// </summary>
 	public partial class ShotRecordingPage : Page, IDisposable
 	{
-		private BlackmagicCameraAPIController m_apiController;
+		private BlackmagicBluetoothCameraAPIController m_apiController;
 		private ActiveCameraHandler m_activeCameraHandler;
 
 		public ShotRecordingPage()
 		{
 			InitializeComponent();
 		
-			m_apiController = new BlackmagicCameraAPIController();
+			m_apiController = new BlackmagicBluetoothCameraAPIController();
 			m_activeCameraHandler = new ActiveCameraHandler(m_apiController);
 			m_activeCameraHandler.OnCameraConnected += OnCameraConnected;
 			m_activeCameraHandler.OnCameraDisconnected += OnCameraDisconnected;

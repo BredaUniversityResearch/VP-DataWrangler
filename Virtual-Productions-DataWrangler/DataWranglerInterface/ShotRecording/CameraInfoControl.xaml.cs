@@ -64,8 +64,13 @@ namespace DataWranglerInterface.ShotRecording
 			{
 				Dispatcher.InvokeAsync(() =>
 				{
+					if (m_targetCamera == null)
+					{
+						return;
+					}
+
 					CameraBattery.Content =
-						$"{m_targetCamera.BatteryPercentage}% ({m_targetCamera.BatteryVoltage_mV} mV)";
+						$"{m_targetCamera.BatteryPercentage}% ({m_targetCamera?.BatteryVoltage_mV} mV)";
 				});
 			}
 			else if (a_e.PropertyName == nameof(ActiveCameraInfo.CurrentTransportMode))

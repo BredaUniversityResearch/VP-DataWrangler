@@ -14,7 +14,7 @@ using WinRT;
 
 namespace BlackmagicCameraControl
 {
-	public class BlackmagicCameraAPIController: IDisposable
+	public class BlackmagicBluetoothCameraAPIController: IDisposable
 	{
 		private class RetryEntry
 		{
@@ -76,7 +76,7 @@ namespace BlackmagicCameraControl
 		private Thread m_reconnectThread;
 		private CancellationTokenSource m_backgroundProcessingCancellationToken;
 
-		public BlackmagicCameraAPIController()
+		public BlackmagicBluetoothCameraAPIController()
 		{
 			BLEDeviceWatcher.Added += OnDeviceAdded;
 			BLEDeviceWatcher.Removed += OnDeviceRemoved;
@@ -179,6 +179,9 @@ namespace BlackmagicCameraControl
 				IBlackmagicCameraLogInterface.LogVerbose($"Trying to connect to Bluetooth device {a_deviceAddress}.");
 
 				Task<BluetoothLEDevice> connectAttempt = BluetoothLEDevice.FromIdAsync(a_deviceAddress).AsTask();
+				//TODO: Filter out useless device like HIDs via the use of the Device Appearance Category / Subcategory. 
+				// -> connectAttempt.Result.Appearance.Category
+
 				if (!connectAttempt.Wait(ConnectTimeout))
 				{
 					IBlackmagicCameraLogInterface.LogVerbose($"Bluetooth device {a_deviceAddress} failed to connect.");

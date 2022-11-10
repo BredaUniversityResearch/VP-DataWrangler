@@ -66,7 +66,15 @@ namespace DataWranglerInterface.ShotRecording
 				return;
 			}
 
-			m_currentTargetMeta.FileSources.Add(new DataWranglerFileSourceMetaBlackmagicUrsa());
+			DataWranglerFileSourceMeta? meta = m_currentTargetMeta.FileSources.Find(source => source.SourceType == DataWranglerFileSourceMetaBlackmagicUrsa.MetaSourceType);
+			if (meta == null || !meta.IsUniqueMeta)
+			{
+				m_currentTargetMeta.FileSources.Add(new DataWranglerFileSourceMetaBlackmagicUrsa());
+			}
+			else
+			{
+				Logger.LogWarning("UI", $"Could not add meta of type {meta.SourceType} as this is marked as being a unique meta.");
+			}
 			UpdateData(m_currentTargetMeta);
 		}
 

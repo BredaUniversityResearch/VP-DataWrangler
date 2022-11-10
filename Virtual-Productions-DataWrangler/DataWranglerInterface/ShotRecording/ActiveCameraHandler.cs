@@ -7,7 +7,7 @@ namespace DataWranglerInterface.ShotRecording
 {
 	public class ActiveCameraHandler
 	{
-		private BlackmagicCameraAPIController m_apiController;
+		private BlackmagicBluetoothCameraAPIController m_apiController;
 		private Dictionary<CameraHandle, ActiveCameraInfo> m_activeCameras = new Dictionary<CameraHandle, ActiveCameraInfo>();
 
 		public delegate void CameraConnectedHandler(ActiveCameraInfo a_camera);
@@ -16,7 +16,7 @@ namespace DataWranglerInterface.ShotRecording
 		public event CameraConnectedHandler OnCameraConnected = delegate { };
 		public event CameraDisconnectedHandler OnCameraDisconnected = delegate { };
 
-		public ActiveCameraHandler(BlackmagicCameraAPIController a_apiController)
+		public ActiveCameraHandler(BlackmagicBluetoothCameraAPIController a_apiController)
 		{
 			m_apiController = a_apiController;
 			m_apiController.OnCameraConnected += OnApiControllerCameraConnected;

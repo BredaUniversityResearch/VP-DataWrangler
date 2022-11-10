@@ -7,14 +7,14 @@ public class DataWranglerFileSourceMetaConverter : JsonConverter<DataWranglerFil
 {
 	public override bool CanWrite => false;
 
-	public override void WriteJson(JsonWriter writer, DataWranglerFileSourceMeta? value, JsonSerializer serializer)
+	public override void WriteJson(JsonWriter a_writer, DataWranglerFileSourceMeta? a_value, JsonSerializer a_serializer)
 	{
 		throw new NotImplementedException();
 	}
 
-	public override DataWranglerFileSourceMeta? ReadJson(JsonReader reader, Type objectType, DataWranglerFileSourceMeta? existingValue, bool hasExistingValue, JsonSerializer serializer)
+	public override DataWranglerFileSourceMeta? ReadJson(JsonReader a_reader, Type a_objectType, DataWranglerFileSourceMeta? a_existingValue, bool a_hasExistingValue, JsonSerializer a_serializer)
 	{
-		JObject? rootObject = serializer.Deserialize<JObject>(reader);
+		JObject? rootObject = a_serializer.Deserialize<JObject>(a_reader);
 		if (rootObject == null)
 		{
 			throw new JsonSerializationException("Failed to deserialize object to JObject (DataWranglerFileSourceMeta)");

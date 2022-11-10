@@ -10,7 +10,7 @@ namespace DataWranglerInterface.ShotRecording
 	/// </summary>
 	public partial class CameraInfoDebugControl : UserControl
 	{
-		public BlackmagicCameraAPIController? CameraApiController = null;
+		public BlackmagicBluetoothCameraAPIController? CameraApiController = null;
 		private ActiveCameraInfo? m_activeCamera = null;
 
 		public CameraInfoDebugControl()

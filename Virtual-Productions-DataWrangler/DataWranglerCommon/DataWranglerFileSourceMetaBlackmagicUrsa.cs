@@ -8,6 +8,8 @@ public partial class DataWranglerFileSourceMetaBlackmagicUrsa: DataWranglerFileS
 
 	public static readonly TimeSpan MaxTimeOffset = new(0, 0, 2);
 
+	public override bool IsUniqueMeta => true;
+
 	[AutoNotify]
 	private string m_source = "";
 

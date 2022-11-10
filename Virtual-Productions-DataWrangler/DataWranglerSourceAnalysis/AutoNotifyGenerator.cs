@@ -88,7 +88,29 @@ namespace {namespaceName}
             // if the class doesn't implement INotifyPropertyChanged already, add it
             if (!classSymbol.Interfaces.Contains(notifySymbol, SymbolEqualityComparer.Default))
             {
-	            source.Append("public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;");
+	            bool baseContainsAutoNotify = false;
+	            if (classSymbol.BaseType != null && !classSymbol.BaseType.Equals(context.Compilation.ObjectType, SymbolEqualityComparer.Default))
+	            {
+		            foreach (ISymbol baseField in classSymbol.BaseType.GetMembers())
+		            {
+			            if (baseField is IFieldSymbol baseTypedField)
+			            {
+				            AttributeData? data = baseTypedField.GetAttributes().SingleOrDefault(ad => ad.AttributeClass!.Equals(attributeSymbol, SymbolEqualityComparer.Default));
+				            if (data != null)
+				            {
+					            baseContainsAutoNotify = true;
+					            break;
+				            }
+			            }
+		            }
+
+	            }
+
+	            if (!baseContainsAutoNotify)
+	            {
+		            source.AppendLine("public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;");
+		            source.AppendLine(@"protected void OnAutoPropertyChanged(string a_propertyName) { this.PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(a_propertyName)); }");
+                }
             }
 
             // create properties for each field 
@@ -129,7 +151,7 @@ public {fieldType} {propertyName}
     set
     {{
         this.{fieldName} = value;
-        this.PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(nameof({propertyName})));
+        this.OnAutoPropertyChanged(nameof({propertyName}));
     }}
 }}
 

@@ -45,7 +45,7 @@ namespace DataWranglerInterface.ShotRecording
 			m_connectTime = DateTimeOffset.UtcNow;
 		}
 
-		public void OnCameraDataReceived(BlackmagicCameraAPIController a_controller, DateTimeOffset a_receivedTime, ICommandPacketBase a_packet)
+		public void OnCameraDataReceived(BlackmagicBluetoothCameraAPIController a_controller, DateTimeOffset a_receivedTime, ICommandPacketBase a_packet)
 		{
 			if (a_packet is CommandPacketCameraModel modelPacket)
 			{

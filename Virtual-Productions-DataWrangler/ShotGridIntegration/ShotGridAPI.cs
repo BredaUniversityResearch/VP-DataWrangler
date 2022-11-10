@@ -170,7 +170,7 @@ namespace ShotGridIntegration
 			return ParseResponse<TTargetType>(result.StatusCode, resultBody);
 		}
 
-		private async Task<HttpResponseMessage> Find(string a_entityType, ShotGridSimpleSearchFilter a_filters, string[] a_fields)
+		private async Task<HttpResponseMessage> Find(string a_entityType, ShotGridSimpleSearchFilter a_filters, string[] a_fields, bool a_allowReAuthenticate = true)
 		{
 			if (m_authentication == null)
 			{
@@ -194,6 +194,20 @@ namespace ShotGridIntegration
 			};
 
 			HttpResponseMessage response = await m_client.SendAsync(request);
+
+			if (response.StatusCode == HttpStatusCode.Unauthorized && a_allowReAuthenticate)
+			{
+				ShotGridLoginResponse loginResponse = await TryLogin(m_authentication.RefreshToken);
+				if (loginResponse.Success)
+				{
+					response = await Find(a_entityType, a_filters, a_fields, false);
+				}
+				else
+				{
+					throw new ShotGridAPIException(loginResponse.ErrorResponse.ToString());
+				}
+			}
+
 			return response;
 		}
 

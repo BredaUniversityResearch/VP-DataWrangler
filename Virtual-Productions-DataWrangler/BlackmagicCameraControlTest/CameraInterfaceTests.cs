@@ -11,14 +11,14 @@ namespace BlackmagicCameraControlTest
 		[Fact]
 		public void ConnectToCamera()
 		{
-			using BlackmagicCameraAPIController iface = new BlackmagicCameraAPIController();
+			using BlackmagicBluetoothCameraAPIController iface = new BlackmagicBluetoothCameraAPIController();
 			CreateCameraConnection(iface);
 		}
 
 		[Fact]
 		public void ReceiveBatteryPercentage()
 		{
-			using BlackmagicCameraAPIController iface = new BlackmagicCameraAPIController();
+			using BlackmagicBluetoothCameraAPIController iface = new BlackmagicBluetoothCameraAPIController();
 			CameraHandle handle = CreateCameraConnection(iface);
 			ManualResetEvent waitHandle = new ManualResetEvent(false);
 			iface.OnCameraDataReceived += (a_source, a_timeReceived, a_packet) =>
@@ -31,7 +31,7 @@ namespace BlackmagicCameraControlTest
 			Assert.True(waitHandle.WaitOne(15000));
 		}
 
-		private CameraHandle CreateCameraConnection(BlackmagicCameraAPIController a_apiController)
+		private CameraHandle CreateCameraConnection(BlackmagicBluetoothCameraAPIController a_apiController)
 		{
 			CameraHandle cameraHandle = CameraHandle.Invalid;
 			ManualResetEvent waitHandle = new ManualResetEvent(false);

@@ -46,7 +46,7 @@ namespace DataWranglerInterface.ShotRecording
 
 		private DispatcherTimer m_updateTimer;
 
-		private BlackmagicCameraAPIController? m_cameraApiController = null;
+		private BlackmagicBluetoothCameraAPIController? m_cameraApiController = null;
 
 		public delegate void BluetoothDeviceSelected(ulong a_bluetoothAddress);
 		public event BluetoothDeviceSelected OnBluetoothDeviceSelected = delegate { };
@@ -61,7 +61,7 @@ namespace DataWranglerInterface.ShotRecording
 			AvailableDeviceDropdown.SelectionChanged += OnSelectedDeviceChanged;
 		}
 
-		public void SetApiController(BlackmagicCameraAPIController a_controller)
+		public void SetApiController(BlackmagicBluetoothCameraAPIController a_controller)
 		{
 			m_cameraApiController = a_controller;
 			m_cameraApiController.OnCameraRequestPairingCode = OnCameraRequestedPairingCode;
@@ -74,7 +74,7 @@ namespace DataWranglerInterface.ShotRecording
 				return;
 			}
 
-			foreach (BlackmagicCameraAPIController.AdvertisementEntry entry in
+			foreach (BlackmagicBluetoothCameraAPIController.AdvertisementEntry entry in
 			         m_cameraApiController.GetAdvertisedDevices())
 			{
 				AdvertisedDeviceEntry dropDownEntry = new AdvertisedDeviceEntry(entry.DeviceBluetoothAddress, entry.DeviceShortName);

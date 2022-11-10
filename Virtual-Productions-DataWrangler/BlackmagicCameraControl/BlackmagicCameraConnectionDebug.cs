@@ -12,14 +12,14 @@ namespace BlackmagicCameraControl
 		public IBlackmagicCameraConnection.EConnectionState ConnectionState => IBlackmagicCameraConnection.EConnectionState.Connected;
 		public string DeviceId { get; }
 		public string HumanReadableName { get; }
-		private BlackmagicCameraAPIController m_dispatcher;
+		private BlackmagicBluetoothCameraAPIController m_dispatcher;
 
 		private Thread m_messageProducerThread;
 		private CancellationTokenSource m_messageProducerCancellationTokenSource = new CancellationTokenSource();
 
 		private Queue<ICommandPacketBase> m_packetSendQueue = new Queue<ICommandPacketBase>();
 
-		public BlackmagicCameraConnectionDebug(BlackmagicCameraAPIController a_dispatcher, CameraHandle a_handle)
+		public BlackmagicCameraConnectionDebug(BlackmagicBluetoothCameraAPIController a_dispatcher, CameraHandle a_handle)
 		{
 			m_dispatcher = a_dispatcher;
 
@@ -44,7 +44,7 @@ namespace BlackmagicCameraControl
 			while (!m_messageProducerCancellationTokenSource.IsCancellationRequested)
 			{
 				m_dispatcher.NotifyDataReceived(CameraHandle, DateTimeOffset.UtcNow,
-					new CommandPacketSystemBatteryInfo() {BatteryPercentage = 67, BatteryVoltage_mV = 1337});
+					new CommandPacketSystemBatteryInfo() {BatteryPercentage = 69, BatteryVoltage_mV = 1337});
 				LastReceivedDataTime = DateTimeOffset.UtcNow;
 
 				while (m_packetSendQueue.Count > 0)

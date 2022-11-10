@@ -1,8 +1,4 @@
-﻿using System.ComponentModel;
-using System.Runtime.CompilerServices;
-using Newtonsoft.Json;
-
-namespace DataWranglerCommon
+﻿namespace DataWranglerCommon
 {
 	public class DataWranglerShotVersionMeta
 	{

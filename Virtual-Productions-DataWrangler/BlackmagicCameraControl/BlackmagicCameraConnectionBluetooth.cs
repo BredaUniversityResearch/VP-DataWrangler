@@ -35,7 +35,7 @@ namespace BlackmagicCameraControl
 		public string HumanReadableName => GetDevice().Name;
 
 		private bool m_isInInitialReset = false;
-		private readonly BlackmagicCameraAPIController m_dispatcher;
+		private readonly BlackmagicBluetoothCameraAPIController m_dispatcher;
 
 		private readonly BluetoothLEDevice m_device;
 		private readonly GattDeviceService m_deviceInformationService;
@@ -49,7 +49,7 @@ namespace BlackmagicCameraControl
 
 		private Task? m_connectingTask;
 
-		public BlackmagicCameraConnectionBluetooth(BlackmagicCameraAPIController a_dispatcher, CameraHandle a_cameraHandle, BluetoothLEDevice a_target, GattDeviceService a_deviceInformationService,
+		public BlackmagicCameraConnectionBluetooth(BlackmagicBluetoothCameraAPIController a_dispatcher, CameraHandle a_cameraHandle, BluetoothLEDevice a_target, GattDeviceService a_deviceInformationService,
 			GattDeviceService a_blackmagicService)
 		{
 			CameraHandle = a_cameraHandle;
