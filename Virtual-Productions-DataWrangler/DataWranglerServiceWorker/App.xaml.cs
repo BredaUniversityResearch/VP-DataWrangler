@@ -111,18 +111,18 @@ namespace DataWranglerServiceWorker
 				{
 					FileName = publishFileName,
 					LinkType = "local",
-					LocalPath = "asdf.jpg",
-					//LocalPath = a_copyMetaData.DestinationFullFilePath.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar),
+					LocalPath = a_copyMetaData.DestinationFullFilePath.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar),
 					LocalStorageTarget = new ShotGridEntityReference("LocalStorage", 1),
 					//LocalPathLinux = a_copyMetaData.DestinationDataStoreRoot + a_copyMetaData.DestinationRelativeFilePath.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar),
 					//LocalPathMac = a_copyMetaData.DestinationDataStoreRoot + a_copyMetaData.DestinationRelativeFilePath.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar),
 					//LocalPathWindows = a_copyMetaData.DestinationFullFilePath,
-					//Url = new UriBuilder { Scheme = Uri.UriSchemeFile, Path = a_copyMetaData.DestinationFullFilePath }.Uri.AbsoluteUri
+					Url = new UriBuilder { Scheme = Uri.UriSchemeFile, Path = a_copyMetaData.DestinationFullFilePath }.Uri.AbsoluteUri
 				},
 				//PathCache = a_copyMetaData.DestinationRelativeFilePath,
 				//PathCacheStorage = ShotGridEntityReference.Create(a_copyMetaData.StorageTarget),
 				PublishedFileName = publishFileName,
-				PublishedFileType = fileTypeTagReference
+				PublishedFileType = fileTypeTagReference,
+				Description = "File auto-published by Data Wrangler"
 			};
 
 			
@@ -171,6 +171,10 @@ namespace DataWranglerServiceWorker
 			//	m_importWorker.Start();
 			//	new FileDiscoveryWorker("E:\\", m_metaCache, m_importWorker).Run();
 			//});
+
+			m_cacheUpdateTask.ContinueWith((a_task) => { 
+				CreatePublishEntryForFile(ShotVersionIdentifier
+			});
 		}
 
 		private void OnLoggerMessageLogged(string a_source, string a_severity, string a_message)

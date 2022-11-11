@@ -39,6 +39,8 @@ namespace ShotGridIntegration
 			public ShotGridEntityReference? PublishedFileType;
             [JsonProperty("version")]
 			public ShotGridEntityReference? ShotVersion;
+            [JsonProperty("description")]
+			public string Description = "";
 		};
 
 		[JsonProperty("attributes")]

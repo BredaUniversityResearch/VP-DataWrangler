@@ -9,21 +9,34 @@
       Title="LoginPage">
 
 	<Grid>
+		<Border HorizontalAlignment="Center" VerticalAlignment="Top" Width="419" Margin="0,16,0,0" Background="{DynamicResource {x:Static SystemColors.ControlDarkDarkBrushKey}}" CornerRadius="4,4,4,4" Padding="16,16,16,16" >
+			<Border.Effect>
+				<DropShadowEffect/>
+			</Border.Effect>
+			<Border.BorderBrush>
+				<LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+					<GradientStop Color="Black"/>
+					<GradientStop Color="White" Offset="1"/>
+				</LinearGradientBrush>
+			</Border.BorderBrush>
+			<Image Source="/DataWranglerCommonWPF;component/Resources/ShotGridLogo.png"/>
+		</Border>
 		<Grid HorizontalAlignment="Center" VerticalAlignment="Center">
 			<Grid.ColumnDefinitions>
-				<ColumnDefinition />
-				<ColumnDefinition />
+				<ColumnDefinition/>
+				<ColumnDefinition/>
 			</Grid.ColumnDefinitions>
 			<Grid.RowDefinitions>
+				<RowDefinition Height="2*"/>
 				<RowDefinition Height="1*"/>
 				<RowDefinition Height="1*"/>
 				<RowDefinition Height="1*"/>
 				<RowDefinition Height="2*"/>
 			</Grid.RowDefinitions>
-			<TextBlock Grid.Row="0" Grid.Column="0">User</TextBlock>
-			<TextBox x:Name="Username" HorizontalAlignment="Left" VerticalAlignment="Top" Width="120" Grid.Row="0" Grid.Column="1"/>
-			<TextBlock Grid.Row="1" Grid.Column="0">Password</TextBlock>
-			<PasswordBox x:Name="Password" HorizontalAlignment="Left" VerticalAlignment="Top" Width="120" Grid.Row="1" Grid.Column="1"/>
+			<TextBlock Grid.Row="0" Grid.Column="0" Padding="4">User</TextBlock>
+			<TextBox Grid.Row="0" Grid.Column="1" x:Name="Username" HorizontalAlignment="Left" VerticalAlignment="Center" Width="120"/>
+			<TextBlock Grid.Row="1" Grid.Column="0" Padding="4">Passphrase</TextBlock>
+			<PasswordBox Grid.Row="1" Grid.Column="1" x:Name="Password" HorizontalAlignment="Left" VerticalAlignment="Center" Width="120"/>
 			<Button x:Name="LoginButton" Content="Login" Grid.Row="2" Grid.ColumnSpan="2" Grid.Column="0"></Button>
 			<Border x:Name="LoginErrorContainer" Grid.Row="3" Grid.ColumnSpan="2" Grid.Column="0" BorderBrush="Red" BorderThickness="2,2,2,2">
 				<TextBlock x:Name="LoginErrorMessage">Errors go here</TextBlock>
@@ -32,7 +45,6 @@
 		<Grid>
 			<dataWranglerCommonWpf:LoadingSpinner x:Name="LoadingSpinnerInstance"/>
 		</Grid>
-
 
 	</Grid>
 </Page>

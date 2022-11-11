@@ -1,14 +1,31 @@
-﻿using System.Windows.Controls;
+﻿using System.Collections.ObjectModel;
+using System.Windows.Controls;
 using BlackmagicCameraControl;
 using DataWranglerCommon;
 
-namespace DataWranglerInterface
+namespace DataWranglerInterface.DebugSupport
 {
+	public class LogMessage
+	{
+		public string Source { get; }
+		public string Severity { get; }
+		public string Message { get; }
+
+		public LogMessage(string a_source, string a_severity, string a_message)
+		{
+			Source = a_source;
+			Severity = a_severity;
+			Message = a_message;
+		}
+	};
+
 	/// <summary>
 	/// Interaction logic for LogPage.xaml
 	/// </summary>
 	public partial class LogPage : Page, IBlackmagicCameraLogInterface
 	{
+		public ObservableCollection<LogMessage> Messages { get; } = new ObservableCollection<LogMessage>();
+
 		public LogPage()
 		{
 			InitializeComponent();
@@ -21,7 +38,7 @@ namespace DataWranglerInterface
 
 		private void OnMessageLogged(string a_source, string a_severity, string a_message)
 		{
-			Dispatcher.Invoke(() => { LogOutput.Text += $"{a_source}\t{a_severity}\t{a_message}\n"; });
+			Dispatcher.InvokeAsync(() => { Messages.Add(new LogMessage(a_source, a_severity, a_message)); });
 		}
 
 		public void Log(string a_severity, string a_message)
