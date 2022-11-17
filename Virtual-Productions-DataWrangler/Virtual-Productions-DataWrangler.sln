@@ -21,7 +21,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataWranglerServiceWorker",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataWranglerCommonWPF", "DataWranglerCommonWPF\DataWranglerCommonWPF.csproj", "{080EEB62-DBB1-4619-8592-50CF2BB9E4D0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlackmagicDeckLinkControl", "BlackmagicDeckLinkControl\BlackmagicDeckLinkControl.csproj", "{F9616159-28FC-4233-996D-E6A8DECA699A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlackmagicDeckLinkControl", "BlackmagicDeckLinkControl\BlackmagicDeckLinkControl.csproj", "{F9616159-28FC-4233-996D-E6A8DECA699A}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlackmagicDeckLinkControlTest", "BlackmagicDeckLinkControlTest\BlackmagicDeckLinkControlTest.csproj", "{C65FE35A-5087-4248-8DC1-1B397D141AEB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -153,6 +155,18 @@ Global
 		{F9616159-28FC-4233-996D-E6A8DECA699A}.Release|x64.Build.0 = Release|Any CPU
 		{F9616159-28FC-4233-996D-E6A8DECA699A}.Release|x86.ActiveCfg = Release|Any CPU
 		{F9616159-28FC-4233-996D-E6A8DECA699A}.Release|x86.Build.0 = Release|Any CPU
+		{C65FE35A-5087-4248-8DC1-1B397D141AEB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C65FE35A-5087-4248-8DC1-1B397D141AEB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C65FE35A-5087-4248-8DC1-1B397D141AEB}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{C65FE35A-5087-4248-8DC1-1B397D141AEB}.Debug|x64.Build.0 = Debug|Any CPU
+		{C65FE35A-5087-4248-8DC1-1B397D141AEB}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{C65FE35A-5087-4248-8DC1-1B397D141AEB}.Debug|x86.Build.0 = Debug|Any CPU
+		{C65FE35A-5087-4248-8DC1-1B397D141AEB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C65FE35A-5087-4248-8DC1-1B397D141AEB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C65FE35A-5087-4248-8DC1-1B397D141AEB}.Release|x64.ActiveCfg = Release|Any CPU
+		{C65FE35A-5087-4248-8DC1-1B397D141AEB}.Release|x64.Build.0 = Release|Any CPU
+		{C65FE35A-5087-4248-8DC1-1B397D141AEB}.Release|x86.ActiveCfg = Release|Any CPU
+		{C65FE35A-5087-4248-8DC1-1B397D141AEB}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
