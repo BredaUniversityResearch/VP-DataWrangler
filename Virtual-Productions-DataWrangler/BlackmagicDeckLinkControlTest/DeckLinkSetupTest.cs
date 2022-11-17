@@ -1,9 +1,7 @@
-using System;
-using System.Threading;
 using BlackmagicDeckLinkControl;
 using Xunit;
 
-namespace BlackmagicCameraControlTest
+namespace BlackmagicDeckLinkControlTest
 {
 	public class DeckLinkSetupTest
 	{

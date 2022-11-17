@@ -2,6 +2,12 @@
   "profiles": {
     "DataWranglerInterface": {
       "commandName": "Project"
+    },
+    "CRADLE-VP2": {
+      "commandName": "Project",
+      "remoteDebugEnabled": true,
+      "remoteDebugMachine": "CRADLE-VP2:4026",
+      "authenticationMode": "Windows"
     }
   }
 }

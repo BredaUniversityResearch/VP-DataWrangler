@@ -24,4 +24,6 @@
 	  <ProjectReference Include="..\BlackmagicDeckLinkControl\BlackmagicDeckLinkControl.csproj" />
 	</ItemGroup>
 
+	<ProjectExtensions><VisualStudio><UserProperties testenvironments_1json__JsonSchema="test environ" /></VisualStudio></ProjectExtensions>
+
 </Project>
