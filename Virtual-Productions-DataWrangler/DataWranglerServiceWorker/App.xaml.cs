@@ -172,9 +172,9 @@ namespace DataWranglerServiceWorker
 			//	new FileDiscoveryWorker("E:\\", m_metaCache, m_importWorker).Run();
 			//});
 
-			m_cacheUpdateTask.ContinueWith((a_task) => { 
-				CreatePublishEntryForFile(ShotVersionIdentifier
-			});
+			//m_cacheUpdateTask.ContinueWith((a_task) => { 
+			//	CreatePublishEntryForFile(ShotVersionIdentifier
+			//});
 		}
 
 		private void OnLoggerMessageLogged(string a_source, string a_severity, string a_message)
