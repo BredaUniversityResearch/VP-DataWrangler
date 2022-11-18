@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices.WindowsRuntime;
@@ -60,12 +61,14 @@ namespace BlackmagicCameraControl
 
 			m_device.ConnectionStatusChanged += OnConnectionStatusChanged;
 
-			m_connectingTask = Task.Run(async () =>
+			m_connectingTask = Task.Run(() =>
 			{
-				GattCharacteristicsResult characteristics = await m_deviceInformationService.GetCharacteristicsAsync(BluetoothCacheMode.Uncached);
-				if (characteristics.Status == GattCommunicationStatus.Success)
+				IBlackmagicCameraLogInterface.LogVerbose($"Querying device information service for {m_device.Name}");
+				IReadOnlyList<GattCharacteristic> characteristics = m_deviceInformationService.GetAllCharacteristics();
+				if (characteristics != null)
 				{
-					foreach (GattCharacteristic characteristic in characteristics.Characteristics)
+					IBlackmagicCameraLogInterface.LogVerbose($"Device information service query succeeded for {m_device.Name}");
+					foreach (GattCharacteristic characteristic in characteristics)
 					{
 						if (characteristic.Uuid ==
 							BlackmagicCameraBluetoothGUID.DeviceInformationService_CameraManufacturer)
@@ -78,11 +81,11 @@ namespace BlackmagicCameraControl
 							m_deviceInformationCameraModel = characteristic;
 						}
 					}
-					GattCharacteristicsResult blackmagicCharacteristics = await m_blackmagicService.GetCharacteristicsAsync(BluetoothCacheMode.Uncached);
+					IReadOnlyList<GattCharacteristic> blackmagicCharacteristics = m_blackmagicService.GetAllCharacteristics();
 
-					if (blackmagicCharacteristics.Status == GattCommunicationStatus.Success)
+					if (blackmagicCharacteristics != null)
 					{
-						foreach (GattCharacteristic characteristic in blackmagicCharacteristics.Characteristics)
+						foreach (GattCharacteristic characteristic in blackmagicCharacteristics)
 						{
 							if (characteristic.Uuid ==
 								BlackmagicCameraBluetoothGUID.BlackmagicService_IncomingCameraControl)
@@ -107,12 +110,16 @@ namespace BlackmagicCameraControl
 						}
 					}
 				}
+				else
+				{
+					IBlackmagicCameraLogInterface.LogVerbose($"Device information service query failed for {m_device.Name}");
+				}
 
 				if (m_deviceInformationCameraManufacturer != null && 
 				    m_deviceInformationCameraModel != null &&
-					m_blackmagicServiceOutgoingCameraControl != null &&
-					m_blackmagicServiceIncomingCameraControl != null &&
-					m_blackmagicServiceTimecode != null &&
+				    m_blackmagicServiceOutgoingCameraControl != null &&
+				    m_blackmagicServiceIncomingCameraControl != null &&
+				    m_blackmagicServiceTimecode != null &&
 				    m_blackmagicCameraStatus != null)
 				{
 					SubscribeToIncomingServices();
@@ -157,7 +164,7 @@ namespace BlackmagicCameraControl
 			m_deviceInformationService.Dispose();
 			m_blackmagicService.Dispose();
 			m_connectingTask?.Dispose();
-		}
+		}	
 
 		public bool WaitForConnection(TimeSpan a_timeout)
 		{

@@ -51,8 +51,9 @@ namespace BlackmagicCameraControl
 
 		private static readonly TimeSpan BackgroundProcessingUpdateRate = new TimeSpan(0, 0, 1);
 		private static readonly TimeSpan CameraReconnectTime = new TimeSpan(0, 0, 5);
-		private static readonly TimeSpan ConnectTimeout = new TimeSpan(0, 0, 10);
-		private static readonly TimeSpan CameraDataReceivedTimeout = new TimeSpan(0, 0, 15);
+		private static readonly TimeSpan BluetoothDeviceConnectTimeout = new TimeSpan(0, 0, 10);
+		private static readonly TimeSpan CameraConnectSetupTimeout = new TimeSpan(0, 1, 15);
+		private static readonly TimeSpan CameraDataReceivedTimeout = new TimeSpan(0, 0, 30);
 
 		public delegate void CameraConnectedDelegate(CameraHandle a_handle);
 		public delegate void CameraDataReceivedDelegate(CameraHandle a_handle, DateTimeOffset a_receivedTime, ICommandPacketBase a_packet);
@@ -182,7 +183,7 @@ namespace BlackmagicCameraControl
 				//TODO: Filter out useless device like HIDs via the use of the Device Appearance Category / Subcategory. 
 				// -> connectAttempt.Result.Appearance.Category
 
-				if (!connectAttempt.Wait(ConnectTimeout))
+				if (!connectAttempt.Wait(BluetoothDeviceConnectTimeout))
 				{
 					IBlackmagicCameraLogInterface.LogVerbose($"Bluetooth device {a_deviceAddress} failed to connect.");
 					m_retryConnectionQueue.Add(new RetryEntry(a_deviceAddress));
@@ -216,7 +217,15 @@ namespace BlackmagicCameraControl
 						}
 						else
 						{
-							failReason = "Device Unreachable";
+							if (connectedDevice.Appearance.Category != 0x0210)
+							{
+								failReason = $"Device ({connectedDevice.Name}) unreachable, and has incompatible category ({connectedDevice.Appearance.Category}). Expecting {0x0210})";
+								shouldRetry = false;
+							}
+							else
+							{
+								failReason = "Device Unreachable";
+							}
 						}
 
 						if (blackmagicService != null && deviceInformationService != null &&
@@ -226,7 +235,7 @@ namespace BlackmagicCameraControl
 								new BlackmagicCameraConnectionBluetooth(this,
 									new CameraHandle(++m_lastUsedHandle), connectedDevice, deviceInformationService,
 									blackmagicService);
-							if (deviceConnection.WaitForConnection(ConnectTimeout) &&
+							if (deviceConnection.WaitForConnection(CameraConnectSetupTimeout) &&
 							    deviceConnection.ConnectionState ==
 							    IBlackmagicCameraConnection.EConnectionState.Connected)
 							{

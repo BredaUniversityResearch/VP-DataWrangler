@@ -14,7 +14,7 @@
     //  "dockerImage": "mcr.microsoft.com/dotnet/sdk"
     //}
     {
-      "name": "ssh-remote",
+      "name": "CRADLE-VP2 Remote",
       "type": "ssh",
       "remoteUri": "ssh://cradle@CRADLE-VP2:22"
     }
