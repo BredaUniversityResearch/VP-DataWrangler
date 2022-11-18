@@ -18,6 +18,7 @@ namespace DataWranglerServiceWorker
 
 		public FileDiscoveryWorker(string a_rootPath, ShotGridDataCache a_cache, DataImportWorker a_importWorker)
 		{
+			Logger.LogInfo("FileDiscoveryWorker", $"Starting file discovery for drive {a_rootPath}");
 			m_rootPath = a_rootPath;
 			string? rootPath = Path.GetPathRoot(a_rootPath);
 			if (rootPath == null)
@@ -54,6 +55,8 @@ namespace DataWranglerServiceWorker
 					}
 				}
 			}
+
+			Logger.LogInfo("FileDiscoveryWorker", $"Done processing files for path {m_rootPath}");
 		}
 	}
 }

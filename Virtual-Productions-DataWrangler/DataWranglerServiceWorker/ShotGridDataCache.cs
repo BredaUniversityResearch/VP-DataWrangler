@@ -10,6 +10,8 @@ namespace DataWranglerServiceWorker
 {
 	public class ShotGridDataCache
 	{
+		private static readonly JsonSerializerSettings DeserializeSettings;
+
 		public class ShotVersionMetaCacheEntry
 		{
 			public ShotVersionIdentifier Identifier;
@@ -29,6 +31,12 @@ namespace DataWranglerServiceWorker
 
 		private ShotGridAPI m_targetApi;
 		private DateTimeOffset m_lastCacheUpdateTime = DateTimeOffset.MinValue;
+
+		static ShotGridDataCache()
+		{
+			DeserializeSettings = new JsonSerializerSettings();
+			DeserializeSettings.Converters.Add(new DataWranglerFileSourceMetaConverter());
+		}
 
 		public ShotGridDataCache(ShotGridAPI a_targetApi)
 		{
@@ -88,19 +96,28 @@ namespace DataWranglerServiceWorker
 
 						if (version.Attributes.DataWranglerMeta != null)
 						{
-							DataWranglerShotVersionMeta? decodedMeta = JsonConvert.DeserializeObject<DataWranglerShotVersionMeta>(version.Attributes.DataWranglerMeta);
-							if (decodedMeta != null)
+							try
 							{
-								Logger.LogInfo("MetaCache", $"Got valid meta for shot version {version.Id}");
-								AddOrUpdateMeta(new ShotVersionMetaCacheEntry(project.Id, shot.Id,
-									version.Id, version.Attributes.VersionCode, decodedMeta));
+								DataWranglerShotVersionMeta? decodedMeta = JsonConvert.DeserializeObject<DataWranglerShotVersionMeta>(version.Attributes.DataWranglerMeta, DeserializeSettings);
+								if (decodedMeta != null)
+								{
+									Logger.LogInfo("MetaCache", $"Got valid meta for shot version {version.Id}");
+									AddOrUpdateMeta(new ShotVersionMetaCacheEntry(project.Id, shot.Id,
+										version.Id, version.Attributes.VersionCode, decodedMeta));
+								}
+							}
+							catch (JsonSerializationException ex)
+							{
+								Logger.LogError("MetaCache", $"Failed to deserialize data for shot version {version.Id}. Exception: {ex.Message}");
 							}
 						}
 					}
 				}
 			}
 
+
 			m_lastCacheUpdateTime = DateTimeOffset.UtcNow;
+			Logger.LogInfo("MetaCache", $"Cache updated. Last update time {DateTime.Now}");
 		}
 
 		private void AddOrUpdateCachedEntity<TEntityType>(TEntityType a_entry)
