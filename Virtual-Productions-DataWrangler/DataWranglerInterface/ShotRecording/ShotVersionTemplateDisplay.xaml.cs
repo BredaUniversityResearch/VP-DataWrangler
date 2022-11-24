@@ -19,7 +19,6 @@ namespace DataWranglerInterface.ShotRecording
 
 		private ProjectSelectorControl? m_projectSelector = null;
 		private ShotSelectorControl? m_shotSelectorControl = null;
-		private DataWranglerShotVersionMeta m_currentVersionMeta = new DataWranglerShotVersionMeta();
 
 		private bool m_shouldCreateNewShotOnRecord = true;
 
@@ -27,8 +26,6 @@ namespace DataWranglerInterface.ShotRecording
 		{
 			InitializeComponent();
 			
-			CreateNewTake.Click += OnCreateNewShotVersion;
-
 			AutoCreateNewTake.Click += (_, _) =>
 			{
 				m_shouldCreateNewShotOnRecord = AutoCreateNewTake.IsChecked ?? false;
@@ -40,11 +37,6 @@ namespace DataWranglerInterface.ShotRecording
 			m_parentPage = a_parentPage;
 			m_projectSelector = a_projectSelector;
 			m_shotSelectorControl = a_shotSelector;
-		}
-
-		private void OnCreateNewShotVersion(object a_sender, RoutedEventArgs a_e)
-		{
-			CreateNewShot(new DataWranglerShotVersionMeta());
 		}
 
 		private void CreateNewShot(DataWranglerShotVersionMeta a_meta)
@@ -104,28 +96,20 @@ namespace DataWranglerInterface.ShotRecording
 		{
 			if (a_isNowRecording)
 			{
-				DataWranglerShotVersionMeta targetMeta;
 				if (m_shouldCreateNewShotOnRecord)
 				{
-					targetMeta = m_currentVersionMeta.Clone();
-				}
-				else
-				{
-					targetMeta = m_currentVersionMeta;
-				}
+					DataWranglerShotVersionMeta targetMeta = VersionTemplateFileSourcesControl.CreateMetaFromCurrentTemplate();
 
-				foreach (DataWranglerFileSourceMeta source in targetMeta.FileSources)
-				{
-					if (source is DataWranglerFileSourceMetaBlackmagicUrsa ursaSource)
+					foreach (DataWranglerFileSourceMeta source in targetMeta.FileSources)
 					{
-						ursaSource.RecordingStart = a_stateChangeTime;
-						ursaSource.StorageTarget = a_camera.CurrentStorageTarget;
-						ursaSource.CodecName = a_camera.SelectedCodec;
+						if (source is DataWranglerFileSourceMetaBlackmagicUrsa ursaSource)
+						{
+							ursaSource.RecordingStart = a_stateChangeTime;
+							ursaSource.StorageTarget = a_camera.CurrentStorageTarget;
+							ursaSource.CodecName = a_camera.SelectedCodec;
+						}
 					}
-				}
 
-				if (m_shouldCreateNewShotOnRecord)
-				{
 					CreateNewShot(targetMeta);
 				}
 			}

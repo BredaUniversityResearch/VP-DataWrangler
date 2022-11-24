@@ -9,7 +9,7 @@ namespace DataWranglerInterface.ShotRecording
 	/// </summary>
 	public partial class ShotVersionTemplateFileSourcesControl : UserControl
 	{
-		private readonly List<DataWranglerFileSourceMeta> m_currentTemplateMeta = new List<DataWranglerFileSourceMeta>();
+		private readonly DataWranglerShotVersionMeta m_currentTemplateMeta = new DataWranglerShotVersionMeta();
 		private List<UserControl> m_currentFileSourceControls = new List<UserControl>();
 
 		private ContextMenu m_addFileSourceContextMenu;
@@ -26,8 +26,13 @@ namespace DataWranglerInterface.ShotRecording
 
 			InitializeComponent();
 
-			m_currentTemplateMeta.Add(new DataWranglerFileSourceMetaBlackmagicUrsa());
+			m_currentTemplateMeta.FileSources.Add(new DataWranglerFileSourceMetaBlackmagicUrsa());
 			UpdateDisplayedWidgets();
+		}
+
+		public DataWranglerShotVersionMeta CreateMetaFromCurrentTemplate()
+		{
+			return m_currentTemplateMeta.Clone();
 		}
 
 		public void UpdateDisplayedWidgets()
@@ -37,7 +42,7 @@ namespace DataWranglerInterface.ShotRecording
 			Dispatcher.InvokeAsync(() =>
 			{
 				FileSourceControl.Children.Clear();
-				foreach (DataWranglerFileSourceMeta fs in m_currentTemplateMeta)
+				foreach (DataWranglerFileSourceMeta fs in m_currentTemplateMeta.FileSources)
 				{
 					if (fs is DataWranglerFileSourceMetaBlackmagicUrsa ursaSource)
 					{
@@ -61,10 +66,10 @@ namespace DataWranglerInterface.ShotRecording
 
 		private void OnAddSourceContextMenuClick(object a_sender, RoutedEventArgs a_e)
 		{
-			DataWranglerFileSourceMeta? meta = m_currentTemplateMeta.Find(source => source.SourceType == DataWranglerFileSourceMetaBlackmagicUrsa.MetaSourceType);
+			DataWranglerFileSourceMeta? meta = m_currentTemplateMeta.FileSources.Find(source => source.SourceType == DataWranglerFileSourceMetaBlackmagicUrsa.MetaSourceType);
 			if (meta == null || !meta.IsUniqueMeta)
 			{
-				m_currentTemplateMeta.Add(new DataWranglerFileSourceMetaBlackmagicUrsa());
+				m_currentTemplateMeta.FileSources.Add(new DataWranglerFileSourceMetaBlackmagicUrsa());
 				UpdateDisplayedWidgets();
 			}
 			else
@@ -75,7 +80,7 @@ namespace DataWranglerInterface.ShotRecording
 
 		private void RemoveMeta(DataWranglerFileSourceMeta a_meta)
 		{
-			bool success = m_currentTemplateMeta.Remove(a_meta);
+			bool success = m_currentTemplateMeta.FileSources.Remove(a_meta);
 			if (!success)
 			{
 				throw new Exception("Failed to remove meta from file sources");
