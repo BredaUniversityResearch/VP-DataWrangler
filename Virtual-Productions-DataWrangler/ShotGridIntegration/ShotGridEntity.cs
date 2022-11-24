@@ -25,6 +25,7 @@ public class ShotGridEntity
 		public const string PublishedFileType = "PublishedFileType";
 		public const string LocalStorage = "LocalStorage";
 		public const string Attachment = "Attachment";
+		public const string ActivityStream = "ActivityStream";
 	}
 
 	[JsonProperty("id")]

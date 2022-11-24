@@ -34,7 +34,6 @@ namespace DataWranglerInterface.ShotRecording
 			ShotVersionSelectorDropDown.DropDown.SelectionChanged += OnVersionSelectionChanged;
 		}
 
-
 		private void OnVersionSelectionChanged(object a_sender, SelectionChangedEventArgs a_e)
 		{
 			ShotVersionSelectorEntry? version = (ShotVersionSelectorEntry?)ShotVersionSelectorDropDown.DropDown.SelectedItem;

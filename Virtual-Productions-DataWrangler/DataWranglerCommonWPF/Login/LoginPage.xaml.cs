@@ -14,6 +14,7 @@ namespace DataWranglerCommonWPF.Login
 	{
 		private Task<ShotGridLoginResponse>? m_runningLoginTask;
 		public event Action OnSuccessfulLogin = delegate { };
+		private bool m_allowLoginFromRefreshToken = true; //Only first time. Any time after first we should not have a valid refresh token.
 
 		private ShotGridAPI? m_targetAPI;
 		private ILoginCredentialProvider? m_credentialProvider;
@@ -34,11 +35,12 @@ namespace DataWranglerCommonWPF.Login
 			m_targetAPI = a_targetAPI;
 			m_credentialProvider = a_credentialProvider;
 
-			if (!string.IsNullOrEmpty(a_credentialProvider.OAuthRefreshToken))
+			if (!string.IsNullOrEmpty(a_credentialProvider.OAuthRefreshToken) && m_allowLoginFromRefreshToken)
 			{
 				m_runningLoginTask = m_targetAPI.TryLogin(a_credentialProvider.OAuthRefreshToken);
 				m_runningLoginTask.ContinueWith(a_task => OnLoginAttemptCompleted(a_task.Result));
 				OnLoginAttemptStarted();
+				m_allowLoginFromRefreshToken = false;
 			}
 		}
 

@@ -10,8 +10,6 @@ namespace DataWranglerServiceWorker
 {
 	public class ShotGridDataCache
 	{
-		private static readonly JsonSerializerSettings DeserializeSettings;
-
 		public class ShotVersionMetaCacheEntry
 		{
 			public ShotVersionIdentifier Identifier;
@@ -31,12 +29,6 @@ namespace DataWranglerServiceWorker
 
 		private ShotGridAPI m_targetApi;
 		private DateTimeOffset m_lastCacheUpdateTime = DateTimeOffset.MinValue;
-
-		static ShotGridDataCache()
-		{
-			DeserializeSettings = new JsonSerializerSettings();
-			DeserializeSettings.Converters.Add(new DataWranglerFileSourceMetaConverter());
-		}
 
 		public ShotGridDataCache(ShotGridAPI a_targetApi)
 		{
@@ -98,7 +90,7 @@ namespace DataWranglerServiceWorker
 						{
 							try
 							{
-								DataWranglerShotVersionMeta? decodedMeta = JsonConvert.DeserializeObject<DataWranglerShotVersionMeta>(version.Attributes.DataWranglerMeta, DeserializeSettings);
+								DataWranglerShotVersionMeta? decodedMeta = JsonConvert.DeserializeObject<DataWranglerShotVersionMeta>(version.Attributes.DataWranglerMeta, DataWranglerSerializationSettings.Instance);
 								if (decodedMeta != null)
 								{
 									Logger.LogInfo("MetaCache", $"Got valid meta for shot version {version.Id}");

@@ -29,6 +29,12 @@
 			<AutoGen>True</AutoGen>
 			<DependentUpon>Settings.settings</DependentUpon>
 		</Compile>
+		<Compile Update="ShotRecording\ShotVersionInfoDisplay.xaml.cs">
+		  <SubType>Code</SubType>
+		</Compile>
+		<Compile Update="ShotRecording\ShotVersionTemplateFileSourcesControl.xaml.cs">
+		  <SubType>Code</SubType>
+		</Compile>
 	</ItemGroup>
 
 	<ItemGroup>
@@ -40,6 +46,17 @@
 
 	<ItemGroup>
 		<Resource Include="Resources\MissingThumbnail.png" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Page Update="ShotRecording\ShotVersionInfoDisplay.xaml">
+	    <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+	    <SubType>Designer</SubType>
+	  </Page>
+	  <Page Update="ShotRecording\ShotVersionTemplateFileSourcesControl.xaml">
+	    <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+	    <SubType>Designer</SubType>
+	  </Page>
 	</ItemGroup>
 
 </Project>

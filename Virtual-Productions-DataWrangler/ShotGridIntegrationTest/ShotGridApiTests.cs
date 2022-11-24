@@ -78,6 +78,25 @@ namespace ShotGridIntegrationTest
 		}
 
 		[TestMethod]
+		public void GetSortedVersionsForShot()
+		{
+
+			ShotGridAPI api = new ShotGridAPI();
+			ShotGridLoginResponse loginResponse = api.TryLogin(CredentialProvider.Username!, CredentialProvider.Password!).Result;
+			Assert.IsTrue(loginResponse.Success);
+
+			ShotGridAPIResponse<ShotGridEntityShotVersion[]> shotVersions = api.GetVersionsForShot(TargetShotId, new ShotGridSortSpecifier("code", false)).Result;
+
+			Assert.IsFalse(shotVersions.IsError);
+
+			foreach (ShotGridEntityShotVersion shotVersion in shotVersions.ResultData!)
+			{
+				Assert.IsTrue(!string.IsNullOrEmpty(shotVersion.Attributes.VersionCode));
+				Assert.IsTrue(shotVersion.Links.Self != null);
+			}
+		}
+
+		[TestMethod]
 		public void GetPublishesSchema()
 		{
 			ShotGridAPI api = new ShotGridAPI();
@@ -169,6 +188,18 @@ namespace ShotGridIntegrationTest
 			ShotGridAPIResponse<ShotGridEntityLocalStorage[]> storages = api.GetLocalStorages().Result;
 
 			Assert.IsFalse(storages.IsError);
+		}
+
+		[TestMethod]
+		public void GetProjectActivityStream()
+		{
+			ShotGridAPI api = new ShotGridAPI();
+			ShotGridLoginResponse loginResponse = api.TryLogin(CredentialProvider.Username!, CredentialProvider.Password!).Result;
+			Assert.IsTrue(loginResponse.Success);
+
+			ShotGridAPIResponse<ShotGridEntityActivityStreamResponse> activityStream = api.GetProjectActivityStream(TargetProjectId).Result;
+
+			Assert.IsFalse(activityStream.IsError);
 		}
 
 		//[TestMethod]

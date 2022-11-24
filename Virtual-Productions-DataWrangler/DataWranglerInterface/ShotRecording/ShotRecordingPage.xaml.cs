@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Threading;
 using BlackmagicCameraControl;
 using ShotGridIntegration;
 
@@ -12,6 +13,13 @@ namespace DataWranglerInterface.ShotRecording
 	{
 		private BlackmagicBluetoothCameraAPIController m_apiController;
 		private ActiveCameraHandler m_activeCameraHandler;
+
+		public delegate void ShotVersionCreationDelegate(int a_shotId);
+		public event ShotVersionCreationDelegate? OnNewShotVersionCreationStarted;
+
+		public delegate void ShotVersionCreatedDelegate(ShotGridEntityShotVersion a_data);
+		public event ShotVersionCreatedDelegate? OnNewShotVersionCreated;
+
 
 		public ShotRecordingPage()
 		{
@@ -28,9 +36,10 @@ namespace DataWranglerInterface.ShotRecording
 
 			ProjectSelector.OnSelectedProjectChanged += OnSelectedProjectChanged;
 			ShotSelector.OnSelectedShotChanged += OnSelectedShotChanged;
-			CameraInfo.OnCameraRecordingStateChanged += ShotVersionDisplay.OnActiveCameraRecordingStateChanged;
+			CameraInfo.OnCameraRecordingStateChanged += ShotTemplateDisplay.OnActiveCameraRecordingStateChanged;
 
-			ShotVersionDisplay.SetProjectSelector(ProjectSelector);
+			ShotTemplateDisplay.SetParentControls(this, ProjectSelector, ShotSelector);
+			ShotVersionInfoDisplay.SetParentControls(this);
 		}
 
 		public void Dispose()
@@ -63,7 +72,17 @@ namespace DataWranglerInterface.ShotRecording
 		private void OnSelectedShotChanged(ShotGridEntityShot? a_shotInfo)
 		{
 			ShotInfoDisplay.SetDisplayedShot(a_shotInfo);
-			ShotVersionDisplay.OnShotSelected(a_shotInfo?.Id ?? -1);
+			ShotVersionInfoDisplay.OnShotSelected(a_shotInfo?.Id ?? -1);
+		}
+
+		public void BeginAddShotVersion(int a_shotId)
+		{
+			OnNewShotVersionCreationStarted?.Invoke(a_shotId);
+		}
+
+		public void CompleteAddShotVersion(ShotGridEntityShotVersion a_data)
+		{
+			OnNewShotVersionCreated?.Invoke(a_data);
 		}
 	}
 }

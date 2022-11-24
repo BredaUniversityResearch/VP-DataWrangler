@@ -1,4 +1,5 @@
-﻿using System.Windows.Controls;
+﻿using System.Windows;
+using System.Windows.Controls;
 
 namespace DataWranglerInterface.ShotRecording
 {
@@ -7,12 +8,24 @@ namespace DataWranglerInterface.ShotRecording
 	/// </summary>
 	public partial class DataWranglerFileSourceUIDecorator : UserControl
 	{
-		public DataWranglerFileSourceUIDecorator(UserControl a_childControl, Action a_onRemoveAction)
+		public DataWranglerFileSourceUIDecorator(UserControl a_childControl, Action? a_onRemoveAction)
 		{
 			InitializeComponent();
 			ContentContainer.Children.Add(a_childControl);
 
-			RemoveMetaButton.Click += (_, _) => { a_onRemoveAction.Invoke(); };
+			if (a_onRemoveAction != null)
+			{
+				RemoveMetaButton.Click += (_, _) => { a_onRemoveAction.Invoke(); };
+			}
+			else
+			{
+				RemoveMetaButton.Visibility = Visibility.Hidden;
+			}
+
+			if (a_childControl is IDataWranglerFileSourceUITitleProvider titleProvider)
+			{
+				FileSourceMeta.Content = titleProvider.FileSourceTitle;
+			}
 		}
 	}
 }

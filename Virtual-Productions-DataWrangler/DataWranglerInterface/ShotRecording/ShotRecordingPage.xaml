@@ -15,13 +15,14 @@
 			<ColumnDefinition Width="*"></ColumnDefinition>
 		</Grid.ColumnDefinitions>
 
-		<ShotRecordingPage:ProjectSelectorControl x:Name="ProjectSelector" Margin="10,10,10,0" VerticalAlignment="Top" Grid.Column="0"/>
+		<ShotRecordingPage:ProjectSelectorControl x:Name="ProjectSelector" Margin="9,10,11,0" VerticalAlignment="Top" Grid.Column="0"/>
 		<ShotRecordingPage:ShotSelectorControl x:Name="ShotSelector" Margin="10,40,10,0" VerticalAlignment="Top" Grid.Column="0"/>
 		<ShotRecordingPage:ShotInfoDisplay x:Name="ShotInfoDisplay" Margin="10, 70, 10, 0" VerticalAlignment="Top"  Grid.Column="0"/>
-		<ShotRecordingPage:ShotVersionDisplayControl x:Name="ShotVersionDisplay" Margin="10,10,10,0" VerticalAlignment="Top" Grid.Column="1" />
+		<ShotRecordingPage:ShotVersionInfoDisplay x:Name="ShotVersionInfoDisplay" Margin="10,10,10,0" VerticalAlignment="Top" Grid.Column="1" />
 		<StackPanel Grid.Column="2">
 			<ShotRecordingPage:CameraInfoControl x:Name="CameraInfo"/>
 			<ShotRecordingPage:CameraInfoDebugControl x:Name="CameraInfoDebug"/>
+			<ShotRecordingPage:ShotVersionTemplateDisplay x:Name="ShotTemplateDisplay" Margin="10,10,10,0" VerticalAlignment="Top"/>
 		</StackPanel>
 	</Grid>
 </Page>

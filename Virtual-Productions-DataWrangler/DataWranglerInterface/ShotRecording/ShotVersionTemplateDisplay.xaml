@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="DataWranglerInterface.ShotRecording.ShotVersionDisplayControl"
+﻿<UserControl x:Class="DataWranglerInterface.ShotRecording.ShotVersionTemplateDisplay"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
@@ -10,7 +10,6 @@
 	<StackPanel xamlUtility:Spacing.Vertical="10">
 		<Button x:Name="CreateNewTake">New Take</Button>
 		<CheckBox x:Name="AutoCreateNewTake" IsChecked="True">Automatically create new take</CheckBox>
-        <local:ShotVersionSelectorControl x:Name="VersionSelectorControl" />
-		<local:ShotVersionFileSourcesControl x:Name="FileSourcesControl" />
+		<local:ShotVersionTemplateFileSourcesControl x:Name="VersionTemplateFileSourcesControl" />
 	</StackPanel>
 </UserControl>

@@ -5,6 +5,7 @@ using DataWranglerCommonWPF.Login;
 using DataWranglerInterface.DebugSupport;
 using DataWranglerInterface.Properties;
 using DataWranglerInterface.ShotRecording;
+using ShotGridIntegration;
 
 namespace DataWranglerInterface
 {
@@ -26,7 +27,7 @@ namespace DataWranglerInterface
 			}
 		}
 
-		private LoginPage? m_loginPage;
+		private LoginPage m_loginPage;
 		private ShotRecordingPage? m_shotRecordingPage;
 
 		private DebugWindow? m_debugWindow;
@@ -34,16 +35,14 @@ namespace DataWranglerInterface
 		public MainWindow()
 		{
 			InitializeComponent();
-			if (Debugger.IsAttached)
+			if (true)
 			{
 				m_debugWindow = new DebugWindow();
 				m_debugWindow.Show();
 			}
 
 			m_loginPage = new LoginPage();
-			m_loginPage.OnSuccessfulLogin += OnLoggedIn;
-			m_loginPage.Initialize(DataWranglerServiceProvider.Instance.ShotGridAPI, new SettingsCredentialProvider());
-			Content = m_loginPage;
+			OnRequestUserAuthentication();
 		}
 
 		private void OnLoggedIn()
@@ -52,7 +51,18 @@ namespace DataWranglerInterface
 			{
 				m_shotRecordingPage = new ShotRecordingPage();
 				Content = m_shotRecordingPage;
-				m_loginPage = null;
+			});
+
+			DataWranglerServiceProvider.Instance.ShotGridAPI.StartAutoRefreshToken(OnRequestUserAuthentication);
+		}
+
+		private void OnRequestUserAuthentication()
+		{
+			Dispatcher.InvokeAsync(() =>
+			{
+				m_loginPage.OnSuccessfulLogin += OnLoggedIn;
+				m_loginPage.Initialize(DataWranglerServiceProvider.Instance.ShotGridAPI, new SettingsCredentialProvider());
+				Content = m_loginPage;
 			});
 		}
 

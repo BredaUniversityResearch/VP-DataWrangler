@@ -64,9 +64,9 @@ namespace BlackmagicCameraControl
 		private Dictionary<ulong, AdvertisementEntry> m_availableDeviceAdvertisementsByBluetoothAddress = new();
 		private int m_lastUsedHandle = 0;
 
-		private List<IBlackmagicCameraConnection> m_activeConnections = new List<IBlackmagicCameraConnection>();
-		private List<RetryEntry> m_retryConnectionQueue = new List<RetryEntry>();
-		private HashSet<string> m_activeConnectingSet = new HashSet<string>();
+		private readonly List<IBlackmagicCameraConnection> m_activeConnections = new List<IBlackmagicCameraConnection>();
+		private readonly List<RetryEntry> m_retryConnectionQueue = new List<RetryEntry>();
+		private readonly HashSet<string> m_activeConnectingSet = new HashSet<string>();
 
 		public int ConnectedCameraCount => m_activeConnections.Count;
 		public event CameraConnectedDelegate OnCameraConnected = delegate { };
@@ -172,9 +172,12 @@ namespace BlackmagicCameraControl
 		{
 			Task.Run(async () =>
 			{
-				if (!m_activeConnectingSet.Contains(a_deviceAddress))
+				lock (m_activeConnectingSet)
 				{
-					m_activeConnectingSet.Add(a_deviceAddress);
+					if (!m_activeConnectingSet.Contains(a_deviceAddress))
+					{
+						m_activeConnectingSet.Add(a_deviceAddress);
+					}
 				}
 
 				IBlackmagicCameraLogInterface.LogVerbose($"Trying to connect to Bluetooth device {a_deviceAddress}.");
@@ -277,7 +280,10 @@ namespace BlackmagicCameraControl
 						connectedDevice.Dispose();
 					}
 
-					m_activeConnectingSet.Remove(a_deviceAddress);
+					lock (m_activeConnectingSet)
+					{
+						m_activeConnectingSet.Remove(a_deviceAddress);
+					}
 				}
 			});
 		}

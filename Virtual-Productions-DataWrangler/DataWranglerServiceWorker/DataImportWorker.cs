@@ -151,7 +151,7 @@ namespace DataWranglerServiceWorker
 
 		private ECopyResult CopyFileWithProgress(ShotVersionIdentifier a_shotVersion, FileCopyMetaData a_copyMetaData)
 		{
-			string? targetDirectory = Path.GetDirectoryName(a_copyMetaData.DestinationFullFilePath);
+			string? targetDirectory = Path.GetDirectoryName(a_copyMetaData.DestinationFullFilePath.LocalPath);
 			if (targetDirectory == null)
 			{
 				Logger.LogError("DataImporter", $"Failed to get directory from path {a_copyMetaData.DestinationFullFilePath}");
@@ -163,10 +163,10 @@ namespace DataWranglerServiceWorker
 				new DirectoryInfo(targetDirectory).Create();
 			}
 
-			FileInfo targetFileInfo = new FileInfo(a_copyMetaData.DestinationFullFilePath);
+			FileInfo targetFileInfo = new FileInfo(a_copyMetaData.DestinationFullFilePath.LocalPath);
 			if (targetFileInfo.Exists)
 			{
-				FileInfo sourceFileInfo = new FileInfo(a_copyMetaData.SourceFilePath);
+				FileInfo sourceFileInfo = new FileInfo(a_copyMetaData.SourceFilePath.LocalPath);
 				if (sourceFileInfo.Length <= targetFileInfo.Length)
 				{
 					Logger.LogInfo("DataImporter", $"Skipped file {a_copyMetaData.SourceFilePath}. Destination file seems up to date");
@@ -177,8 +177,8 @@ namespace DataWranglerServiceWorker
 
 			byte[] copyBuffer = new byte[DefaultCopyBufferSize];
 
-			using FileStream sourceStream = new FileStream(a_copyMetaData.SourceFilePath, FileMode.Open, FileAccess.Read);
-			using FileStream targetStream = new FileStream(a_copyMetaData.DestinationFullFilePath, FileMode.Create, FileAccess.Write);
+			using FileStream sourceStream = new FileStream(a_copyMetaData.SourceFilePath.LocalPath, FileMode.Open, FileAccess.Read);
+			using FileStream targetStream = new FileStream(a_copyMetaData.DestinationFullFilePath.LocalPath, FileMode.Create, FileAccess.Write);
 
 			long sourceSize = sourceStream.Length;
 			long bytesCopied = 0;

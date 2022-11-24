@@ -49,7 +49,7 @@ namespace DataWranglerServiceWorker
 
 		private void OnFileCopyStarted(ShotVersionIdentifier a_shotVersion, FileCopyMetaData a_copyMetaData)
 		{
-			m_copyProgress.SetTargetFile(a_copyMetaData.SourceFilePath, a_copyMetaData.DestinationFullFilePath);
+			m_copyProgress.SetTargetFile(a_copyMetaData.SourceFilePath.LocalPath, a_copyMetaData.DestinationFullFilePath.LocalPath);
 			Dispatcher.InvokeAsync(() => {
 				if (!m_copyProgress.IsVisible)
 				{
@@ -111,12 +111,12 @@ namespace DataWranglerServiceWorker
 				{
 					FileName = publishFileName,
 					LinkType = "local",
-					LocalPath = a_copyMetaData.DestinationFullFilePath.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar),
+					LocalPath = a_copyMetaData.DestinationFullFilePath.LocalPath,
 					LocalStorageTarget = new ShotGridEntityReference("LocalStorage", 1),
 					//LocalPathLinux = a_copyMetaData.DestinationDataStoreRoot + a_copyMetaData.DestinationRelativeFilePath.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar),
 					//LocalPathMac = a_copyMetaData.DestinationDataStoreRoot + a_copyMetaData.DestinationRelativeFilePath.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar),
-					//LocalPathWindows = a_copyMetaData.DestinationFullFilePath,
-					Url = new UriBuilder { Scheme = Uri.UriSchemeFile, Path = a_copyMetaData.DestinationFullFilePath }.Uri.AbsoluteUri
+					LocalPathWindows = a_copyMetaData.DestinationFullFilePath.LocalPath,
+					Url = a_copyMetaData.DestinationFullFilePath.ToString()
 				},
 				//PathCache = a_copyMetaData.DestinationRelativeFilePath,
 				//PathCacheStorage = ShotGridEntityReference.Create(a_copyMetaData.StorageTarget),
@@ -150,6 +150,11 @@ namespace DataWranglerServiceWorker
 
 			Console.WriteLine("DataWranglerServiceWorker");
 
+			OnRequestUserAuthentication();
+		}
+
+		private void OnRequestUserAuthentication()
+		{
 			ShotGridAuthenticationWindow window = new ShotGridAuthenticationWindow(m_targetApi);
 			window.EnsureLogin();
 			window.OnSuccessfulLogin += OnSuccessfulLogin;
@@ -157,6 +162,8 @@ namespace DataWranglerServiceWorker
 
 		private void OnSuccessfulLogin()
 		{
+			m_targetApi.StartAutoRefreshToken(OnRequestUserAuthentication);
+
 			m_cacheUpdateTask = m_metaCache.UpdateCache();
 			m_cacheUpdateTask.ContinueWith(_ =>
 				{
@@ -165,16 +172,6 @@ namespace DataWranglerServiceWorker
 						new FileDiscoveryWorker(rootPath, m_metaCache, m_importWorker).Run();
 					}
 				});
-
-			//t.ContinueWith((a_task) =>
-			//{
-			//	m_importWorker.Start();
-			//	new FileDiscoveryWorker("E:\\", m_metaCache, m_importWorker).Run();
-			//});
-
-			//m_cacheUpdateTask.ContinueWith((a_task) => { 
-			//	CreatePublishEntryForFile(ShotVersionIdentifier
-			//});
 		}
 
 		private void OnLoggerMessageLogged(string a_source, string a_severity, string a_message)

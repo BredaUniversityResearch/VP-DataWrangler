@@ -28,6 +28,18 @@ namespace DataWranglerInterface.ShotRecording
 		public delegate void ShotSelectionChangedDelegate(ShotGridEntityShot? a_shotInfo);
 		public event ShotSelectionChangedDelegate OnSelectedShotChanged = delegate { };
 
+		public int SelectedShotId => GetSelectedShotId();
+
+		private int GetSelectedShotId()
+		{
+			if (ShotSelectorDropDown.DropDown.SelectedItem is ShotSelectorEntry entry)
+			{
+				return entry.ShotId;
+			}
+
+			return -1;
+		}
+
 		public ShotSelectorControl()
 		{
 			InitializeComponent();
