@@ -14,22 +14,26 @@ namespace ShotGridIntegrationTest
 		private const int TargetShotVersionId = 8195;
 		private const int TargetPublishFile = 133;
 
+		private static ShotGridAPI m_api = new ShotGridAPI();
+
+		[ClassInitialize]
+		public static void SetupAuthorization(TestContext _)
+		{
+			ShotGridLoginResponse response = m_api.TryLogin(CredentialProvider.Username!, CredentialProvider.Password!).Result;
+			Assert.IsTrue(response.Success);
+		}
+
 		[TestMethod]
 		public void Login()
 		{
-			ShotGridAPI api = new ShotGridAPI();
-			ShotGridLoginResponse response = api.TryLogin(CredentialProvider.Username!, CredentialProvider.Password!).Result;
+			ShotGridLoginResponse response = m_api.TryRefreshToken().Result;
 			Assert.IsTrue(response.Success);
 		}
 
 		[TestMethod]
 		public void GetProjects()
 		{
-			ShotGridAPI api = new ShotGridAPI();
-			ShotGridLoginResponse loginResponse = api.TryLogin(CredentialProvider.Username!, CredentialProvider.Password!).Result;
-			Assert.IsTrue(loginResponse.Success);
-
-			ShotGridAPIResponse<ShotGridEntityProject[]> projects = api.GetActiveProjects().Result;
+			ShotGridAPIResponse<ShotGridEntityProject[]> projects = m_api.GetActiveProjects().Result;
 			
 			Assert.IsFalse(projects.IsError);
 
@@ -43,11 +47,7 @@ namespace ShotGridIntegrationTest
 		[TestMethod]
 		public void GetShots()
 		{
-			ShotGridAPI api = new ShotGridAPI();
-			ShotGridLoginResponse loginResponse = api.TryLogin(CredentialProvider.Username!, CredentialProvider.Password!).Result;
-			Assert.IsTrue(loginResponse.Success);
-
-			ShotGridAPIResponse<ShotGridEntityShot[]> shots = api.GetShotsForProject(TargetProjectId).Result;
+			ShotGridAPIResponse<ShotGridEntityShot[]> shots = m_api.GetShotsForProject(TargetProjectId).Result;
 
 			Assert.IsFalse(shots.IsError);
 
@@ -61,12 +61,7 @@ namespace ShotGridIntegrationTest
 		[TestMethod]
 		public void GetVersionsForShot()
 		{
-
-			ShotGridAPI api = new ShotGridAPI();
-			ShotGridLoginResponse loginResponse = api.TryLogin(CredentialProvider.Username!, CredentialProvider.Password!).Result;
-			Assert.IsTrue(loginResponse.Success);
-
-			ShotGridAPIResponse<ShotGridEntityShotVersion[]> shotVersions = api.GetVersionsForShot(TargetShotId).Result;
+			ShotGridAPIResponse<ShotGridEntityShotVersion[]> shotVersions = m_api.GetVersionsForShot(TargetShotId).Result;
 
 			Assert.IsFalse(shotVersions.IsError);
 
@@ -80,12 +75,7 @@ namespace ShotGridIntegrationTest
 		[TestMethod]
 		public void GetSortedVersionsForShot()
 		{
-
-			ShotGridAPI api = new ShotGridAPI();
-			ShotGridLoginResponse loginResponse = api.TryLogin(CredentialProvider.Username!, CredentialProvider.Password!).Result;
-			Assert.IsTrue(loginResponse.Success);
-
-			ShotGridAPIResponse<ShotGridEntityShotVersion[]> shotVersions = api.GetVersionsForShot(TargetShotId, new ShotGridSortSpecifier("code", false)).Result;
+			ShotGridAPIResponse<ShotGridEntityShotVersion[]> shotVersions = m_api.GetVersionsForShot(TargetShotId, new ShotGridSortSpecifier("code", false)).Result;
 
 			Assert.IsFalse(shotVersions.IsError);
 
@@ -99,11 +89,7 @@ namespace ShotGridIntegrationTest
 		[TestMethod]
 		public void GetPublishesSchema()
 		{
-			ShotGridAPI api = new ShotGridAPI();
-			ShotGridLoginResponse loginResponse = api.TryLogin(CredentialProvider.Username!, CredentialProvider.Password!).Result;
-			Assert.IsTrue(loginResponse.Success);
-
-			ShotGridAPIResponse<ShotGridEntityFieldSchema[]> schemas = api.GetEntityFieldSchema("Attachment", TargetProjectId).Result;
+			ShotGridAPIResponse<ShotGridEntityFieldSchema[]> schemas = m_api.GetEntityFieldSchema("Attachment", TargetProjectId).Result;
 			Assert.IsFalse(schemas.IsError);
 			Assert.IsTrue(schemas.ResultData!.Length > 0);
 		}
@@ -111,12 +97,7 @@ namespace ShotGridIntegrationTest
 		[TestMethod]
 		public void GetPublishesForShot()
 		{
-
-			ShotGridAPI api = new ShotGridAPI();
-			ShotGridLoginResponse loginResponse = api.TryLogin(CredentialProvider.Username!, CredentialProvider.Password!).Result;
-			Assert.IsTrue(loginResponse.Success);
-
-			ShotGridAPIResponse<ShotGridEntityFilePublish[]> shots = api.GetPublishesForShotVersion(TargetShotVersionId).Result;
+			ShotGridAPIResponse<ShotGridEntityFilePublish[]> shots = m_api.GetPublishesForShotVersion(TargetShotVersionId).Result;
 
 			Assert.IsFalse(shots.IsError);
 		}
@@ -124,11 +105,7 @@ namespace ShotGridIntegrationTest
 		[TestMethod]
 		public void UpdateEntityData()
 		{
-			ShotGridAPI api = new ShotGridAPI();
-			ShotGridLoginResponse loginResponse = api.TryLogin(CredentialProvider.Username!, CredentialProvider.Password!).Result;
-			Assert.IsTrue(loginResponse.Success);
-
-			ShotGridAPIResponse<ShotGridEntityShotVersion> response = api.UpdateEntityProperties<ShotGridEntityShotVersion>(
+			ShotGridAPIResponse<ShotGridEntityShotVersion> response = m_api.UpdateEntityProperties<ShotGridEntityShotVersion>(
 				TargetShotVersionId, new Dictionary<string, object>{{"sg_datawrangler_meta", "test"}}).Result;
 
 			Assert.IsFalse(response.IsError);
@@ -137,11 +114,7 @@ namespace ShotGridIntegrationTest
 		[TestMethod]
 		public void CreateFilePublish()
 		{
-			ShotGridAPI api = new ShotGridAPI();
-			ShotGridLoginResponse login = api.TryLogin(CredentialProvider.Username!, CredentialProvider.Password!).Result;
-			Assert.IsTrue(login.Success);
-
-			ShotGridAPIResponse<ShotGridEntityRelation?> fileTypeRelation = api.FindRelationByCode(ShotGridEntity.TypeNames.PublishedFileType, "video").Result;
+			ShotGridAPIResponse<ShotGridEntityRelation?> fileTypeRelation = m_api.FindRelationByCode(ShotGridEntity.TypeNames.PublishedFileType, "video").Result;
 			Assert.IsTrue(fileTypeRelation.ResultData != null);
 
 			string targetPath = "file://cradlenas/Projects/VirtualProductions/Phils VP Pipeline Testing Playground\\Shots\\Shot 01\\Take 08\\A014_05111248_C002.braw";
@@ -159,7 +132,7 @@ namespace ShotGridIntegrationTest
 			attributes.PublishedFileType = new ShotGridEntityReference(fileTypeRelation.ResultData!.ShotGridType, fileTypeRelation.ResultData.Id);
 			attributes.ShotVersion = new ShotGridEntityReference(ShotGridEntity.TypeNames.ShotVersion, TargetShotVersionId);
 
-			ShotGridAPIResponse<ShotGridEntityFilePublish> response = api.CreateFilePublish(TargetProjectId, TargetShotId, TargetShotVersionId, attributes).Result;
+			ShotGridAPIResponse<ShotGridEntityFilePublish> response = m_api.CreateFilePublish(TargetProjectId, TargetShotId, TargetShotVersionId, attributes).Result;
 
 			Assert.IsFalse(response.IsError);
 
@@ -168,11 +141,7 @@ namespace ShotGridIntegrationTest
 		[TestMethod]
 		public void GetFilePublishTypes()
 		{
-			ShotGridAPI api = new ShotGridAPI();
-			ShotGridLoginResponse login = api.TryLogin(CredentialProvider.Username!, CredentialProvider.Password!).Result;
-			Assert.IsTrue(login.Success);
-
-			ShotGridAPIResponse<ShotGridEntityRelation[]> response = api.GetPublishFileTypes(TargetProjectId).Result;
+			ShotGridAPIResponse<ShotGridEntityRelation[]> response = m_api.GetPublishFileTypes(TargetProjectId).Result;
 
 			Assert.IsFalse(response.IsError);
 
@@ -181,11 +150,7 @@ namespace ShotGridIntegrationTest
 		[TestMethod]
 		public void GetLocalStorages()
 		{
-			ShotGridAPI api = new ShotGridAPI();
-			ShotGridLoginResponse loginResponse = api.TryLogin(CredentialProvider.Username!, CredentialProvider.Password!).Result;
-			Assert.IsTrue(loginResponse.Success);
-
-			ShotGridAPIResponse<ShotGridEntityLocalStorage[]> storages = api.GetLocalStorages().Result;
+			ShotGridAPIResponse<ShotGridEntityLocalStorage[]> storages = m_api.GetLocalStorages().Result;
 
 			Assert.IsFalse(storages.IsError);
 		}
@@ -193,11 +158,7 @@ namespace ShotGridIntegrationTest
 		[TestMethod]
 		public void GetProjectActivityStream()
 		{
-			ShotGridAPI api = new ShotGridAPI();
-			ShotGridLoginResponse loginResponse = api.TryLogin(CredentialProvider.Username!, CredentialProvider.Password!).Result;
-			Assert.IsTrue(loginResponse.Success);
-
-			ShotGridAPIResponse<ShotGridEntityActivityStreamResponse> activityStream = api.GetProjectActivityStream(TargetProjectId).Result;
+			ShotGridAPIResponse<ShotGridEntityActivityStreamResponse> activityStream = m_api.GetProjectActivityStream(TargetProjectId).Result;
 
 			Assert.IsFalse(activityStream.IsError);
 		}

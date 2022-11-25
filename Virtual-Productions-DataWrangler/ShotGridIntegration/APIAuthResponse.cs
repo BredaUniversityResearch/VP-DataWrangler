@@ -1,11 +1,33 @@
 ﻿// ReSharper disable InconsistentNaming
+using Newtonsoft.Json;
+
 namespace ShotGridIntegration
 {
+	/*
+{
+  "token_type": "Bearer",
+  "expires_in": 3600,
+  "access_token": "eyJraWQiOiJubkFKZm82T2lMRHhINXZkbDhBT0lQeVBpcjRLTEJsTUZEZzFXOEFMa3A0IiwiYWxnIjoiUlMyNTYifQ.eyJ2ZXIiOjEsImp0aSI6IkFULjN3enRtV0ItRG50THl4ckhCQ3B5S2JiX29uUFJlak0xQ2hCUTY3ZTk4Wm8iLCJpc3MiOiJodHRwczovL2F1dG9kZXNrLXRlc3Qub2t0YXByZXZpZXcuY29tL29hdXRoMi9kZWZhdWx0IiwiYXVkIjoiYXBpOi8vZGVmYXVsdCIsImlhdCI6MTYxMjg0MDg5OSwiZXhwIjoxNjEyODQ0NDk5LCJjaWQiOiIwb2F3djEyMGdzZ3VmdzVMZzBoNyIsInVpZCI6IjAwdXd2Nm05dm1jb1RNTE9GMGg3Iiwic2NwIjpbIm9wZW5pZCJdLCJzdWIiOiJha2FzaHRlc3RAbWFpbGluYXRvci5jb20ifQ.dP7Fbh9MBMlaVMdlUZZG9uoTZhEC5V_5ogr7qe-bvP3St9Sc4sb4CC7aixWIKTBlo1VfC2hqtJqU0zugmnyvvsyWGFBQ_k5TeqxAw4q0-oOeaeAcQ2rWeGY9MNG-9vbXLq21c5vYm8DlWmcKXrTZ5cRxJfjraj7JC53DpQDDTcVc8w2RLmFqLQKXbnplKHwKnhsSQF8XVxdmyAlEptl8-advLN1Z51MS55bELz2dg3CoiDYZj7XugUg9OJb_DjCBO5e-Nl7ScqYw3JB3BLso9IfoC-8e0lG7NmsYHzvewO94bCyOD34TAfnNEHdHC_uSorhErTJGucoIuRx8HkURhA",
+  "refresh_token": "DTR2qadZxt24Yk-J75tZbDpui6-hLwHD_PZ8zBmppuc",
+  "id_token": "eyJraWQiOiJubkFKZm82T2lMRHhINXZkbDhBT0lQeVBpcjRLTEJsTUZEZzFXOEFMa3A0IiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiIwMHv2djZtOXZtY29UTUxPRjBoNyIsInZlciI6MSwiaXNzIjoiaHR0cHM6Ly9hdXRvZGVzay10ZXN0Lm9rdGFwcmV2aWv2LmNvbS9vYXV0aDIvZGVmYXVsdCIsImF1ZCI6IjBvYXd2MTIwZ3NndWZ3NUxnMGg3IiwiaWF0IjoxNjEyODQwODk5LCJleHAiOjE2MTI4NDQ0OTksImp0aSI6IklELmRPUUZEU3hsMmMzWE42UFMtYVM3Ymw5MGxsSkNubG5wa1pFS2JCdFFRRDQiLCJhbXIiOlsib3RwIiwibWZhIl0sImlkcCI6IjAwb2pkbHY4cGFDeEgwWVFVMGg3Iiwibm9uY2UiOiIyN2VmZDc1Yy04MmEyLTQzNmEtYTdjYi1mODFkNzIyYTg3YjUiLCJhdXRoX3RpbWUiOjE2MTI4NDAzNTIsImF0X2hhc2giOiJKOGpldTdPNlhDZFdnOUhMc1FOMDdnIn0.Fgvmi7qrOYRiCRKuXZKoUkXMIq2uSbeuoHwykXqCcdVgP0u_SSQorvWkUjcD66tpfyMN-PdvMqrT4tC8HqJcBGhIH_o8asBwFl4Can3eYpLDnCT2gjwy3J8BImo4vswjCG1YzL-zTemLzreKa49WcMFy0Is3ygGwvC0zF9bDpPoO4r_U4mkEmlMe-5hq2xK0alo1VIE7mdcEzbql04KeWRN1W5odC6INJH4CSf-MOJMrGkJcg8mhEnqj44L4jRzrhK0OmpA7GO-psRfmopxBnJkZYW65pnm8YhB7C8jKczxv1JOD_IBthORw9TrW6L8C7eSLRPUx-fB84T2v2wxWRw"
+}
+ */
 	public class APIAuthResponse
 	{
-		public string token_type = "";
-		public string access_token = "";
-		public int expires_in;
-		public string refresh_token = "";
+		[JsonProperty("token_type")]
+		public string TokenType = string.Empty;
+		[JsonProperty("expires_in")]
+		private int m_expiryTimeSeconds = 0;
+		private readonly DateTime m_responseCreationTime = DateTime.UtcNow;
+		public DateTime ExpiresAt => m_responseCreationTime + TimeSpan.FromSeconds(m_expiryTimeSeconds);
+
+		[JsonProperty("access_token")]
+		public string AccessToken = string.Empty;
+
+		[JsonProperty("refresh_token")]
+		public string RefreshToken = string.Empty;
+
+		[JsonProperty("id_token")]
+		public string IdToken = string.Empty;
 	}
 }

@@ -8,9 +8,9 @@
 
 		public ShotGridAuthentication(APIAuthResponse a_authResponse)
 		{
-			ExpiryTime = DateTime.UtcNow + TimeSpan.FromSeconds(a_authResponse.expires_in);
-			AccessToken = a_authResponse.access_token;
-			RefreshToken = a_authResponse.refresh_token;
+			ExpiryTime = a_authResponse.ExpiresAt;
+			AccessToken = a_authResponse.AccessToken;
+			RefreshToken = a_authResponse.RefreshToken;
 		}
 	}
 }

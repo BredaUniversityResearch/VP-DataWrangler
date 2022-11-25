@@ -67,18 +67,18 @@ namespace ShotGridIntegration
 			{
 				ShotGridErrorResponse? errorResponse = JsonConvert.DeserializeObject<ShotGridErrorResponse>(responseString, SerializerSettings);
 
-				return new ShotGridLoginResponse(false, errorResponse);
+				return new ShotGridLoginResponse(false, errorResponse, null);
 			}
 
 			APIAuthResponse? deserializedResponse = JsonConvert.DeserializeObject<APIAuthResponse>(responseString, SerializerSettings);
 			if (deserializedResponse != null)
 			{
 				m_authentication = new ShotGridAuthentication(deserializedResponse);
-				return new ShotGridLoginResponse(true, null);
+				return new ShotGridLoginResponse(true, null, deserializedResponse);
 			}
 			else
 			{
-				return new ShotGridLoginResponse(false, null);
+				return new ShotGridLoginResponse(false, null, deserializedResponse);
 			}
 		}
 
@@ -86,12 +86,13 @@ namespace ShotGridIntegration
 		{
 			if (m_authentication != null)
 			{
-				Dictionary<string, string> loginHeaders = new Dictionary<string, string>
+				ShotGridLoginResponse response = await TryLogin(m_authentication.RefreshToken);
+				if (response.Success)
 				{
-					{ "refresh_token", m_authentication.RefreshToken },
-					{ "grant_type", "refresh_token" }
-				};
-				return await TryLogin(loginHeaders);
+					m_authentication = new ShotGridAuthentication(response.AuthResponse);
+				}
+
+				return response;
 			}
 			else
 			{
