@@ -73,7 +73,7 @@ namespace DataWranglerServiceWorker
 				}
 			});
 
-			//if (a_copyOperationResult == DataImportWorker.ECopyResult.Success)
+			if (a_copyOperationResult == DataImportWorker.ECopyResult.Success)
 			{
 				CreatePublishEntryForFile(a_shotVersion, a_copyMetaData, "video");
 			}
@@ -112,7 +112,7 @@ namespace DataWranglerServiceWorker
 					FileName = publishFileName,
 					LinkType = "local",
 					LocalPath = a_copyMetaData.DestinationFullFilePath.LocalPath,
-					LocalStorageTarget = new ShotGridEntityReference("LocalStorage", 1),
+					//LocalStorageTarget = ShotGridEntityReference.Create(a_copyMetaData.StorageTarget),
 					//LocalPathLinux = a_copyMetaData.DestinationDataStoreRoot + a_copyMetaData.DestinationRelativeFilePath.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar),
 					//LocalPathMac = a_copyMetaData.DestinationDataStoreRoot + a_copyMetaData.DestinationRelativeFilePath.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar),
 					LocalPathWindows = a_copyMetaData.DestinationFullFilePath.LocalPath,

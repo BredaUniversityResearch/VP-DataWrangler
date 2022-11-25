@@ -5,6 +5,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading;
 using DataWranglerCommon;
+using Newtonsoft.Json;
 using ShotGridIntegration;
 
 namespace DataWranglerServiceWorker
@@ -140,6 +141,11 @@ namespace DataWranglerServiceWorker
 						Logger.LogError("DataImporter", $"Import exception occurred processing file {resultToCopy.CopyMetaData.SourceFilePath} => {resultToCopy.CopyMetaData.DestinationFullFilePath} Exception: {ex.Message}");
 					}
 
+					if (result == ECopyResult.Success)
+					{
+						WriteMetadata(resultToCopy);
+					}
+
 					OnCopyFinished.Invoke(resultToCopy.TargetShotVersion, resultToCopy.CopyMetaData, result);
 				}
 				else
@@ -147,6 +153,16 @@ namespace DataWranglerServiceWorker
 					WaitHandle.WaitAny(new[] {m_dataImportThreadCancellationToken.Token.WaitHandle, m_queueAddedEvent});
 				}
 			}
+		}
+
+		private void WriteMetadata(ImportQueueEntry a_resultToCopy)
+		{
+			string targetPath = Path.ChangeExtension(a_resultToCopy.CopyMetaData.SourceFilePath.LocalPath, "imported");
+			using FileStream targetStream = new FileStream(targetPath, FileMode.Create, FileAccess.Write);
+			using TextWriter textWriter = new StreamWriter(targetStream);
+
+			ImportedFileMetaData importedMeta = new ImportedFileMetaData(a_resultToCopy.TargetShotVersion, m_dataCache);
+			JsonSerializer.CreateDefault().Serialize(textWriter, importedMeta);
 		}
 
 		private ECopyResult CopyFileWithProgress(ShotVersionIdentifier a_shotVersion, FileCopyMetaData a_copyMetaData)
@@ -175,7 +191,7 @@ namespace DataWranglerServiceWorker
 
 			}
 
-			byte[] copyBuffer = new byte[DefaultCopyBufferSize];
+			/*byte[] copyBuffer = new byte[DefaultCopyBufferSize];
 
 			using FileStream sourceStream = new FileStream(a_copyMetaData.SourceFilePath.LocalPath, FileMode.Open, FileAccess.Read);
 			using FileStream targetStream = new FileStream(a_copyMetaData.DestinationFullFilePath.LocalPath, FileMode.Create, FileAccess.Write);
@@ -191,7 +207,7 @@ namespace DataWranglerServiceWorker
 
 				float percentageCopied = ((float) bytesCopied / (float) sourceSize);
 				OnCopyUpdate(a_shotVersion, a_copyMetaData, percentageCopied);
-			}
+			}*/
 
 			return ECopyResult.Success;
 		}

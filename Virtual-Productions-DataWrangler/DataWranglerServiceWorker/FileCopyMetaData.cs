@@ -17,7 +17,14 @@ namespace DataWranglerServiceWorker
 			SourceFilePath = new Uri(a_sourceFilePath, UriKind.Absolute);
 			DestinationRelativeFilePath = a_destinationRelativeFilePath;
 			StorageTarget = a_storageTarget;
-			DestinationFullFilePath = new Uri(new Uri(a_storageTarget.Attributes.WindowsPath), a_destinationRelativeFilePath);
+
+			string storageTargetPath = a_storageTarget.Attributes.WindowsPath;
+			if (!storageTargetPath.EndsWith('/'))
+			{
+				storageTargetPath += '/';
+			}
+
+			DestinationFullFilePath = new Uri(new Uri(storageTargetPath), a_destinationRelativeFilePath);
 		}
 	}
 }
