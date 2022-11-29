@@ -22,41 +22,5 @@ namespace DataWranglerCommonWPF.Properties {
                 return defaultInstance;
             }
         }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string LastUserName {
-            get {
-                return ((string)(this["LastUserName"]));
-            }
-            set {
-                this["LastUserName"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string LastUserPassword {
-            get {
-                return ((string)(this["LastUserPassword"]));
-            }
-            set {
-                this["LastUserPassword"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("True")]
-        public bool ShouldRememberUserAndPass {
-            get {
-                return ((bool)(this["ShouldRememberUserAndPass"]));
-            }
-            set {
-                this["ShouldRememberUserAndPass"] = value;
-            }
-        }
     }
 }

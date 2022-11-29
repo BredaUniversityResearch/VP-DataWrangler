@@ -31,6 +31,13 @@ namespace ShotGridIntegrationTest
 		}
 
 		[TestMethod]
+		public void OAuthLogin()
+		{
+			ShotGridLoginResponse response = m_api.TryLoginOAuth("", "").Result;
+			Assert.IsTrue(response.Success);
+		}
+
+		[TestMethod]
 		public void GetProjects()
 		{
 			ShotGridAPIResponse<ShotGridEntityProject[]> projects = m_api.GetActiveProjects().Result;

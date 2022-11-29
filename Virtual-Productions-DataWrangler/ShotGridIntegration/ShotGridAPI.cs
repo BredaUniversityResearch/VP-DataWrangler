@@ -38,6 +38,17 @@ namespace ShotGridIntegration
 			return await TryLogin(loginHeaders);
 		}
 
+		public async Task<ShotGridLoginResponse> TryLoginOAuth(string a_clientId, string a_clientSecret)
+		{
+			Dictionary<string, string> loginHeaders = new Dictionary<string, string>
+			{
+				{ "client_id", a_clientId },
+				{ "client_secret", a_clientSecret },
+				{ "grant_type", "client_credentials" }
+			};
+			return await TryLogin(loginHeaders);
+		}
+
 		public async Task<ShotGridLoginResponse> TryLogin(string a_refreshToken)
 		{
 			Dictionary<string, string> loginHeaders = new Dictionary<string, string>

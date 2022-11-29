@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
+using DataWranglerCommon;
 using DataWranglerCommonWPF.Properties;
 using ShotGridIntegration;
 
@@ -28,13 +29,13 @@ namespace DataWranglerCommonWPF.Login
 			LoadingSpinnerInstance.Visibility = Visibility.Hidden;
 			LoginErrorContainer.Visibility = Visibility.Hidden;
 
-			UserSettings settings = Properties.UserSettings.Default;
-			if (settings.ShouldRememberUserAndPass)
-			{
-				Username.Text = settings.LastUserName;
-				Password.Password = settings.LastUserPassword;
-				RememberMeCheckbox.IsChecked = settings.ShouldRememberUserAndPass;
-			}
+			//UserSettings settings = Properties.UserSettings.Default;
+			//if (settings.ShouldRememberUserAndPass)
+			//{
+			//	Username.Text = settings.LastUserName;
+			//	Password.Password = settings.LastUserPassword;
+			//	RememberMeCheckbox.IsChecked = settings.ShouldRememberUserAndPass;
+			//}
 
 			LoginButton.Click += AttemptLogin;
 			
@@ -47,7 +48,7 @@ namespace DataWranglerCommonWPF.Login
 
 			if (!string.IsNullOrEmpty(a_credentialProvider.OAuthRefreshToken) && m_allowLoginFromRefreshToken && !Keyboard.IsKeyDown(Key.LeftShift))
 			{
-				m_runningLoginTask = a_targetAPI.TryLogin(a_credentialProvider.OAuthRefreshToken);
+				m_runningLoginTask = a_targetAPI.TryLoginOAuth(ShotGridApiKeyProvider.ShotGridApiScriptName, ShotGridApiKeyProvider.ShotGridApiScriptKey);
 				m_runningLoginTask.ContinueWith(a_task => OnLoginAttemptCompleted(a_task.Result));
 				OnLoginAttemptStarted();
 				m_allowLoginFromRefreshToken = false;
@@ -56,7 +57,7 @@ namespace DataWranglerCommonWPF.Login
 
 		private void AttemptLogin(object a_sender, RoutedEventArgs a_e)
 		{
-			UpdateSavedUserSettings();
+			//UpdateSavedUserSettings();
 
 			if (m_targetAPI == null)
 			{
@@ -70,32 +71,29 @@ namespace DataWranglerCommonWPF.Login
 
 			LoginErrorContainer.Visibility = Visibility.Hidden;
 
-			string user = Username.Text;
-			string password = Password.Password;
-
-			m_runningLoginTask = m_targetAPI.TryLogin(user, password);
+			m_runningLoginTask = m_targetAPI.TryLoginOAuth(ShotGridApiKeyProvider.ShotGridApiScriptName, ShotGridApiKeyProvider.ShotGridApiScriptKey);
 			m_runningLoginTask.ContinueWith(a_task => OnLoginAttemptCompleted(a_task.Result));
 			OnLoginAttemptStarted();
 		}
 
-		private void UpdateSavedUserSettings()
-		{
-			UserSettings settings = UserSettings.Default;
-			if (RememberMeCheckbox.IsChecked ?? false)
-			{
-				settings.LastUserName = Username.Text;
-				settings.LastUserPassword = Password.Password;
-				settings.ShouldRememberUserAndPass = true;
-			}
-			else
-			{
-				settings.LastUserName = "";
-				settings.LastUserPassword = "";
-				settings.ShouldRememberUserAndPass = false;
-			}
+		//private void UpdateSavedUserSettings()
+		//{
+		//	UserSettings settings = UserSettings.Default;
+		//	if (RememberMeCheckbox.IsChecked ?? false)
+		//	{
+		//		settings.LastUserName = Username.Text;
+		//		settings.LastUserPassword = Password.Password;
+		//		settings.ShouldRememberUserAndPass = true;
+		//	}
+		//	else
+		//	{
+		//		settings.LastUserName = "";
+		//		settings.LastUserPassword = "";
+		//		settings.ShouldRememberUserAndPass = false;
+		//	}
 
-			settings.Save();
-		}
+		//	settings.Save();
+		//}
 
 		private void OnLoginAttemptCompleted(ShotGridLoginResponse a_obj)
 		{

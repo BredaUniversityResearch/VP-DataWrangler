@@ -12,6 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\DataWranglerCommon\DataWranglerCommon.csproj" />
     <ProjectReference Include="..\ShotGridIntegration\ShotGridIntegration.csproj" />
   </ItemGroup>
 

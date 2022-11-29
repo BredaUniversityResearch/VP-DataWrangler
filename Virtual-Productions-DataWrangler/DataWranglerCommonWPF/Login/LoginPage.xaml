@@ -35,9 +35,9 @@
 				<RowDefinition Height="2*"/>
 			</Grid.RowDefinitions>
 			<TextBlock Grid.Row="0" Grid.Column="0" Padding="4">User</TextBlock>
-			<TextBox Grid.Row="0" Grid.Column="1" x:Name="Username" HorizontalAlignment="Left" VerticalAlignment="Center" Width="120"/>
+			<TextBox Grid.Row="0" Grid.Column="1" x:Name="Username" HorizontalAlignment="Left" VerticalAlignment="Center" Width="120" IsReadOnly="True"/>
 			<TextBlock Grid.Row="1" Grid.Column="0" Padding="4">Passphrase</TextBlock>
-			<PasswordBox Grid.Row="1" Grid.Column="1" x:Name="Password" HorizontalAlignment="Left" VerticalAlignment="Center" Width="120"/>
+			<TextBox Grid.Row="1" Grid.Column="1" x:Name="Password" HorizontalAlignment="Left" VerticalAlignment="Center" Width="120" IsReadOnly="True"/>
 			<CheckBox Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" x:Name="RememberMeCheckbox">Remember me</CheckBox>
 			<Button x:Name="LoginButton" Content="Login" Grid.Row="3" Grid.ColumnSpan="2" Grid.Column="0"></Button>
 			<Border x:Name="LoginErrorContainer" Grid.Row="4" Grid.ColumnSpan="2" Grid.Column="0" BorderBrush="Red" BorderThickness="2,2,2,2">
