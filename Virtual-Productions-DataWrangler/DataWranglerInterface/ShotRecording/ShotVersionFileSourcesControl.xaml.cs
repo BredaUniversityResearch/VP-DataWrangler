@@ -32,10 +32,7 @@ namespace DataWranglerInterface.ShotRecording
 				FileSourceControl.Children.Clear();
 				foreach (DataWranglerFileSourceMeta fs in m_currentMeta.FileSources)
 				{
-					if (fs is DataWranglerFileSourceMetaBlackmagicUrsa ursaSource)
-					{
-						AddMetaEditor(new DataWranglerFileSourceUIBlackmagicUrsa(ursaSource), fs);
-					}
+					AddMetaEditor(DataWranglerFileSourceUIDecorator.CreateEditorForMeta(fs), fs);
 				}
 			});
 		}

@@ -21,7 +21,14 @@ namespace DataWranglerInterface.ShotRecording
 			{
 				Header = "Blackmagic Ursa (BT)"
 			};
-			item.Click += OnAddSourceContextMenuClick;
+			item.Click += (_, _) => TryAddSource(new DataWranglerFileSourceMetaBlackmagicUrsa());
+			m_addFileSourceContextMenu.Items.Add(item);
+
+			item = new MenuItem
+			{
+				Header = "TASCAM DR-60 MkII"
+			};
+			item.Click += (_, _) => TryAddSource(new DataWranglerFileSourceMetaTascam());
 			m_addFileSourceContextMenu.Items.Add(item);
 
 			InitializeComponent();
@@ -44,10 +51,7 @@ namespace DataWranglerInterface.ShotRecording
 				FileSourceControl.Children.Clear();
 				foreach (DataWranglerFileSourceMeta fs in m_currentTemplateMeta.FileSources)
 				{
-					if (fs is DataWranglerFileSourceMetaBlackmagicUrsa ursaSource)
-					{
-						AddMetaEditor(new DataWranglerFileSourceUIBlackmagicUrsa(ursaSource), fs);
-					}
+					AddMetaEditor(DataWranglerFileSourceUIDecorator.CreateEditorForMeta(fs), fs);
 				}
 			});
 		}
@@ -64,12 +68,12 @@ namespace DataWranglerInterface.ShotRecording
 			m_addFileSourceContextMenu.IsOpen = true;
 		}
 
-		private void OnAddSourceContextMenuClick(object a_sender, RoutedEventArgs a_e)
+		private void TryAddSource(DataWranglerFileSourceMeta a_meta)
 		{
-			DataWranglerFileSourceMeta? meta = m_currentTemplateMeta.FileSources.Find(source => source.SourceType == DataWranglerFileSourceMetaBlackmagicUrsa.MetaSourceType);
+			DataWranglerFileSourceMeta? meta = m_currentTemplateMeta.FileSources.Find(source => source.SourceType == a_meta.SourceType);
 			if (meta == null || !meta.IsUniqueMeta)
 			{
-				m_currentTemplateMeta.FileSources.Add(new DataWranglerFileSourceMetaBlackmagicUrsa());
+				m_currentTemplateMeta.FileSources.Add(a_meta);
 				UpdateDisplayedWidgets();
 			}
 			else

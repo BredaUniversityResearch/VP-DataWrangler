@@ -47,14 +47,13 @@ namespace DataWranglerServiceWorker
 				FileInfo fileInfo = new FileInfo(filePath);
 				if (CameraCodec.FindFromFileExtension(fileInfo.Extension, out var codec))
 				{
-					//if (m_cache.FindShotVersionForFile(fileInfo.CreationTimeUtc, storageName, codec, 
-					//	    out ShotGridDataCache.ShotVersionMetaCacheEntry? cacheEntry))
-					//{
-					//Logger.LogInfo("FileDiscoveryWorker", $"Found file {filePath} for shot {cacheEntry.ShotCode} ({cacheEntry.Identifier.VersionId})");
-					//
-					//m_importWorker.AddFileToImport(cacheEntry.Identifier, fileInfo.FullName);
-					//}
-					m_importWorker.AddFileToImport(new ShotVersionIdentifier(285, 1369, 8195), fileInfo.FullName);
+					if (m_cache.FindShotVersionForFile(fileInfo.CreationTimeUtc, storageName, codec, 
+						    out ShotGridDataCache.ShotVersionMetaCacheEntry? cacheEntry))
+					{
+						Logger.LogInfo("FileDiscoveryWorker", $"Found file {filePath} for shot {cacheEntry.ShotCode} ({cacheEntry.Identifier.VersionId})");
+					
+						m_importWorker.AddFileToImport(cacheEntry.Identifier, fileInfo.FullName);
+					}
 				}
 			}
 

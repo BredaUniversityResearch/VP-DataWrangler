@@ -6,12 +6,18 @@
              xmlns:local="clr-namespace:DataWranglerInterface.ShotRecording"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
-	<StackPanel>
-        <DockPanel>
+	<Grid>
+        <Grid.RowDefinitions>
+			<RowDefinition Height="26"></RowDefinition>
+			<RowDefinition Height="1*"></RowDefinition>
+        </Grid.RowDefinitions>
+		<DockPanel Grid.Row="0">
 			<Label>Shot Version Template</Label>
-			<Button x:Name="AddFileSourceButton" HorizontalAlignment="Right" VerticalAlignment="Top" Height="21" Width="40" Click="AddFileSourceButton_Click">Add</Button>
+			<Button x:Name="AddFileSourceButton" HorizontalAlignment="Right" VerticalAlignment="Center" Height="21" Width="40" Click="AddFileSourceButton_Click">Add</Button>
         </DockPanel>
-        <StackPanel x:Name="FileSourceControl">
-        </StackPanel>
-    </StackPanel>
+		<ScrollViewer VerticalScrollBarVisibility="Auto" Grid.Row="1">
+			<StackPanel x:Name="FileSourceControl">
+			</StackPanel>
+		</ScrollViewer>
+    </Grid>
 </UserControl>

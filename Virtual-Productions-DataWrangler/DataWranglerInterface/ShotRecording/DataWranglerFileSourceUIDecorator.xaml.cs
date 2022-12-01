@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
+using DataWranglerCommon;
 
 namespace DataWranglerInterface.ShotRecording
 {
@@ -26,6 +27,20 @@ namespace DataWranglerInterface.ShotRecording
 			{
 				FileSourceMeta.Content = titleProvider.FileSourceTitle;
 			}
+		}
+
+		public static UserControl CreateEditorForMeta(DataWranglerFileSourceMeta a_meta)
+		{
+			if (a_meta is DataWranglerFileSourceMetaBlackmagicUrsa ursaSource)
+			{
+				return new DataWranglerFileSourceUIBlackmagicUrsa(ursaSource);
+			}
+			else if (a_meta is DataWranglerFileSourceMetaTascam tascam)
+			{
+				return new DataWranglerFileSourceUITascam(tascam);
+			}
+
+			throw new Exception($"Unknown meta source type {a_meta.GetType()}");
 		}
 	}
 }

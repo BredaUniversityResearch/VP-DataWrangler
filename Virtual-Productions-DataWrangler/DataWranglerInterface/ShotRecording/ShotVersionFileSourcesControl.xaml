@@ -6,9 +6,9 @@
              xmlns:local="clr-namespace:DataWranglerInterface.ShotRecording"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
-	<StackPanel>
-		<Label>Shot Data</Label>
+	<DockPanel>
+		<Label DockPanel.Dock="Top">Shot Data</Label>
 		<StackPanel x:Name="FileSourceControl">
         </StackPanel>
-    </StackPanel>
+    </DockPanel>
 </UserControl>

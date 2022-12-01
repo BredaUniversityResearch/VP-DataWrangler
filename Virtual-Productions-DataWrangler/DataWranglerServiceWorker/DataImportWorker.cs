@@ -38,7 +38,7 @@ namespace DataWranglerServiceWorker
 		private const int DefaultCopyBufferSize = 32 * 1024 * 1024;
 
 		public delegate void CopyStartedDelegate(ShotVersionIdentifier shotVersion, FileCopyMetaData metaData);
-		public delegate void CopyProgressUpdate(ShotVersionIdentifier shotVersion, FileCopyMetaData metaData, float progressPercent);
+		public delegate void CopyProgressUpdate(ShotVersionIdentifier shotVersion, FileCopyMetaData metaData, FileCopyProgress progress);
 		public delegate void CopyFinishedDelegate(ShotVersionIdentifier shotVersion, FileCopyMetaData metaData, ECopyResult result);
 
 		public event CopyStartedDelegate OnCopyStarted = delegate { };
@@ -191,7 +191,7 @@ namespace DataWranglerServiceWorker
 
 			}
 
-			/*byte[] copyBuffer = new byte[DefaultCopyBufferSize];
+			byte[] copyBuffer = new byte[DefaultCopyBufferSize];
 
 			using FileStream sourceStream = new FileStream(a_copyMetaData.SourceFilePath.LocalPath, FileMode.Open, FileAccess.Read);
 			using FileStream targetStream = new FileStream(a_copyMetaData.DestinationFullFilePath.LocalPath, FileMode.Create, FileAccess.Write);
@@ -200,14 +200,26 @@ namespace DataWranglerServiceWorker
 			long bytesCopied = 0;
 
 			int currentBlockSize = 0;
+			Stopwatch sw = new Stopwatch();
+			sw.Start();
 			while ((currentBlockSize = sourceStream.Read(copyBuffer, 0, copyBuffer.Length)) > 0)
 			{
 				targetStream.Write(copyBuffer, 0, currentBlockSize);
 				bytesCopied += currentBlockSize;
+				TimeSpan timeElapsed = sw.Elapsed;
+				sw.Restart();
+
+				double elapsedSeconds = timeElapsed.TotalSeconds;
+				if (elapsedSeconds <= 0.0)
+				{
+					elapsedSeconds = 1.0;
+				}
+
+				long bytesPerSecond = (long)Math.Floor(currentBlockSize / elapsedSeconds);
 
 				float percentageCopied = ((float) bytesCopied / (float) sourceSize);
-				OnCopyUpdate(a_shotVersion, a_copyMetaData, percentageCopied);
-			}*/
+				OnCopyUpdate(a_shotVersion, a_copyMetaData, new FileCopyProgress(sourceSize, bytesCopied, percentageCopied, bytesPerSecond));
+			}
 
 			return ECopyResult.Success;
 		}

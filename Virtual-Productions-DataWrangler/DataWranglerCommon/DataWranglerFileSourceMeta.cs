@@ -41,6 +41,10 @@ public abstract partial class DataWranglerFileSourceMeta
 		{
 			return new DataWranglerFileSourceMetaBlackmagicUrsa();
 		}
+		else if (a_sourceTypeName == DataWranglerFileSourceMetaTascam.MetaSourceType)
+		{
+			return new DataWranglerFileSourceMetaTascam();
+		}
 
 		throw new Exception($"Unknown source meta type {a_sourceTypeName}");
 	}

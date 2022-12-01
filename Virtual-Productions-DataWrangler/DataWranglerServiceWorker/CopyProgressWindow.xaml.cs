@@ -43,15 +43,16 @@ namespace DataWranglerServiceWorker
 			CurrentFileName.Content = a_sourceFile;
 		}
 
-		public void ProgressUpdate(float a_progressPercent)
+		public void ProgressUpdate(float a_progressPercent, string a_humanReadableSpeed)
 		{
 			if (!Dispatcher.CheckAccess())
 			{
-				Dispatcher.InvokeAsync(() => { ProgressUpdate(a_progressPercent); });
+				Dispatcher.InvokeAsync(() => { ProgressUpdate(a_progressPercent, a_humanReadableSpeed); });
 				return;
 			}
 
 			CopyProgressIndicator.Value = a_progressPercent * 100.0f;
+			ProgressInformation.Content = a_humanReadableSpeed;
 		}
 
 		public void UpdateQueueLength(int a_queueLength)

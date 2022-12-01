@@ -13,7 +13,7 @@ namespace DataWranglerCommon
 			string? configuredClientSecret = configRoot.GetSection("ShotGridApiScriptKey").Value;
 			if (configuredClientSecret == null)
 			{
-				throw new KeyNotFoundException("Configuration of client secrets is incomplete, missing \"AutodeskIdentityOAuthClientSecret\"");
+				throw new KeyNotFoundException("Configuration of client secrets is incomplete, missing \"ShotGridApiScriptKey\"");
 			}
 
 			ShotGridApiScriptKey = configuredClientSecret;

@@ -58,10 +58,31 @@ namespace DataWranglerServiceWorker
 			});
 		}
 
-		private void OnFileCopyUpdate(ShotVersionIdentifier a_shotVersion, FileCopyMetaData a_copyMetaData, float a_progressPercent)
+		private void OnFileCopyUpdate(ShotVersionIdentifier a_shotVersion, FileCopyMetaData a_copyMetaData, FileCopyProgress a_progressUpdate)
 		{
-			m_copyProgress.ProgressUpdate(a_progressPercent);
+			string humanReadableCopiedAmount = FormatAsHumanReadableByteAmount(a_progressUpdate.TotalBytesCopied);
+			string humanReadableSourceSize = FormatAsHumanReadableByteAmount(a_progressUpdate.TotalFileSizeBytes);
+			string humanReadableCopySpeed = FormatAsHumanReadableByteAmount(a_progressUpdate.CurrentCopySpeedBytesPerSecond);
+
+			m_copyProgress.ProgressUpdate(a_progressUpdate.PercentageCopied, $"{humanReadableCopiedAmount} / {humanReadableSourceSize} @ {humanReadableCopySpeed}/s");
 			m_copyProgress.UpdateQueueLength(m_importWorker.ImportQueueLength);
+		}
+
+		private static string FormatAsHumanReadableByteAmount(long a_byteAmount)
+		{
+			string[] byteOrderString = new[]
+			{
+				"B", "KB", "MB", "GB", "TB", "PB"
+			};
+			int speedUnitOrder = 0;
+			double roundedByteAmount = a_byteAmount;
+			while (roundedByteAmount > 1024)
+			{
+				roundedByteAmount /= 1024;
+				++speedUnitOrder;
+			}
+
+			return $"{roundedByteAmount:0.00} {byteOrderString[speedUnitOrder]}"; ;
 		}
 
 		private void OnFileCopyFinished(ShotVersionIdentifier a_shotVersion, FileCopyMetaData a_copyMetaData, DataImportWorker.ECopyResult a_copyOperationResult)	
