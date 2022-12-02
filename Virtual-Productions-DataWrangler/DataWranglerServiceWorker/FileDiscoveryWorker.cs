@@ -1,12 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using DataWranglerCommon;
-using ShotGridIntegration;
 
 namespace DataWranglerServiceWorker
 {
@@ -16,6 +10,10 @@ namespace DataWranglerServiceWorker
 		private DriveInfo m_targetDriveInfo;
 		private ShotGridDataCache m_cache;
 		private DataImportWorker m_importWorker;
+		private FileMetaResolver[] m_metaResolvers = { 
+			new FileMetaResolverBlackmagicUrsa(), 
+			new FileMetaResolverTascam() 
+		};
 
 		public FileDiscoveryWorker(string a_rootPath, ShotGridDataCache a_cache, DataImportWorker a_importWorker)
 		{
@@ -42,19 +40,9 @@ namespace DataWranglerServiceWorker
 
 			string storageName = m_targetDriveInfo.VolumeLabel;
 
-			foreach (string filePath in Directory.EnumerateFiles(m_rootPath))
+			foreach (FileMetaResolver resolver in m_metaResolvers)
 			{
-				FileInfo fileInfo = new FileInfo(filePath);
-				if (CameraCodec.FindFromFileExtension(fileInfo.Extension, out var codec))
-				{
-					if (m_cache.FindShotVersionForFile(fileInfo.CreationTimeUtc, storageName, codec, 
-						    out ShotGridDataCache.ShotVersionMetaCacheEntry? cacheEntry))
-					{
-						Logger.LogInfo("FileDiscoveryWorker", $"Found file {filePath} for shot {cacheEntry.ShotCode} ({cacheEntry.Identifier.VersionId})");
-					
-						m_importWorker.AddFileToImport(cacheEntry.Identifier, fileInfo.FullName);
-					}
-				}
+				resolver.ProcessDirectory(m_rootPath, storageName, m_cache, m_importWorker);
 			}
 
 			Logger.LogInfo("FileDiscoveryWorker", $"Done processing files for path {m_rootPath}");

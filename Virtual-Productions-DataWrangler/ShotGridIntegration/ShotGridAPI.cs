@@ -155,6 +155,13 @@ namespace ShotGridIntegration
 				new JsonAttributeFieldEnumerator<ShotGridEntityLocalStorage.LocalStorageAttributes>().Get(), null);
 		}
 
+		public async Task<ShotGridAPIResponse<ShotGridEntityRelation[]>> GetRelations(string a_relationType)
+		{
+			ShotGridSimpleSearchFilter filter = new ShotGridSimpleSearchFilter();
+			return await FindAndParse<ShotGridEntityRelation[]>(a_relationType, filter,
+				new JsonAttributeFieldEnumerator<ShotGridEntityRelation.RelationAttributes>().Get(), null);
+		}
+
 		private ShotGridAPIResponse<TTargetType> ParseResponse<TTargetType>(HttpStatusCode a_statusCode, string a_responseString)
 			where TTargetType: class
 		{

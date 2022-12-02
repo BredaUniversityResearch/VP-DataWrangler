@@ -30,5 +30,19 @@
 
 			return null;
 		}
+
+		public TMetaType? FindFileSourceMeta<TMetaType>()
+			where TMetaType : DataWranglerFileSourceMeta
+		{
+			foreach (DataWranglerFileSourceMeta meta in FileSources)
+			{
+				if (meta is TMetaType typedMeta)
+				{
+					return typedMeta;
+				}
+			}
+
+			return null;
+		}
 	}
 }

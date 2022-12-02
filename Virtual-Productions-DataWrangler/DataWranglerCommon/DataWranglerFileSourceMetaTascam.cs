@@ -1,4 +1,5 @@
-﻿using AutoNotify;
+﻿using System.Text.RegularExpressions;
+using AutoNotify;
 
 namespace DataWranglerCommon;
 
@@ -27,8 +28,22 @@ public partial class DataWranglerFileSourceMetaTascam: DataWranglerFileSourceMet
 		};
 	}
 
-	public override bool IsSourceFor(DateTimeOffset a_fileInfoCreationTimeUtc, string a_storageName, string a_codecName)
+	public bool IsSourceFor(FileInfo a_fileInfo, string a_storageName)
 	{
-		throw new NotImplementedException();
+		//TASCAM_0040S12.wav, TASCAM_0040S34D06.wav
+		Regex filePattern = new Regex($"{m_filePrefix}([0-9]{{4}})(.*).wav");
+		Match fileNameMatch = filePattern.Match(a_fileInfo.Name);
+		if (fileNameMatch.Success)
+		{
+			if (int.TryParse(fileNameMatch.Groups[1].Value, out int targetFileIndex))
+			{
+				if (m_fileIndex == targetFileIndex)
+				{
+					return true;
+				}
+			}
+		}
+
+		return false;
 	}
 }

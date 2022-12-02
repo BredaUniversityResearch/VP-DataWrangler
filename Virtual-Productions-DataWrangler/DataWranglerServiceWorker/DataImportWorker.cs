@@ -71,11 +71,11 @@ namespace DataWranglerServiceWorker
 			m_dataImportThread.Join();
 		}
 
-		public void AddFileToImport(ShotVersionIdentifier a_shotVersionIdentifier, string a_sourceFilePath)
+		public void AddFileToImport(ShotVersionIdentifier a_shotVersionIdentifier, string a_sourceFilePath, string a_fileTag)
 		{
 			
 			if (!m_dataCache.FindEntity(a_obj => a_obj.Attributes.LocalStorageName == DefaultDataStorageName, out ShotGridEntityLocalStorage? targetStorage) ||
-			    targetStorage.Attributes.WindowsPath == null)
+			    string.IsNullOrEmpty(targetStorage.Attributes.WindowsPath))
 			{
 				Logger.LogError("DataImport", $"Could not import file at path {a_sourceFilePath}. Could not find data storage with name \"{DefaultDataStorageName}\". Importer is NOT active");
 				return;
@@ -99,6 +99,12 @@ namespace DataWranglerServiceWorker
 				return;
 			}
 
+			if (!m_dataCache.FindEntity(ShotGridEntity.TypeNames.PublishedFileType, a_relation => a_relation.Attributes.Code == a_fileTag, out ShotGridEntityRelation? fileTag))
+			{
+				Logger.LogError("DataImport", $"Could not import file at path {a_sourceFilePath}. Data references file relation ({a_fileTag}) which is not known by the cache");
+				return;
+			}
+
 
 			Dictionary<string, string> replacements = new Dictionary<string, string>
 			{
@@ -112,7 +118,7 @@ namespace DataWranglerServiceWorker
 
 			lock (m_importQueue)
 			{
-				m_importQueue.Enqueue(new ImportQueueEntry(new FileCopyMetaData(a_sourceFilePath, targetPath, targetStorage), a_shotVersionIdentifier));
+				m_importQueue.Enqueue(new ImportQueueEntry(new FileCopyMetaData(a_sourceFilePath, targetPath, targetStorage, fileTag), a_shotVersionIdentifier));
 				m_queueAddedEvent.Set();
 			}
 		}

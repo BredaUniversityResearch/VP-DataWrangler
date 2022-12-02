@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
+using System.Windows.Diagnostics;
 using DataWranglerCommon;
 using Newtonsoft.Json;
 using ShotGridIntegration;
@@ -37,89 +38,114 @@ namespace DataWranglerServiceWorker
 
 		public async Task UpdateCache()
 		{
-			ShotGridAPIResponse<ShotGridEntityLocalStorage[]> activeStores = await m_targetApi.GetLocalStorages();
-			if (activeStores.IsError)
+			try
 			{
-				Logger.LogError("MetaCache", "Failed to fetch active stores: " + activeStores.ErrorInfo);
-				return;
-			}
-
-			foreach (ShotGridEntityLocalStorage localStore in activeStores.ResultData)
-			{
-				AddOrUpdateCachedEntity(localStore);
-			}
-
-			ShotGridAPIResponse<ShotGridEntityProject[]> activeProjects = await m_targetApi.GetActiveProjects();
-			if (activeProjects.IsError)
-			{
-				Logger.LogError("MetaCache", "Failed to fetch projects: " + activeProjects.ErrorInfo);
-				return;
-			}
-
-			foreach (ShotGridEntityProject project in activeProjects.ResultData)
-			{
-				Logger.LogInfo("MetaCache", $"Fetched data for project {project.Id}");
-
-				AddOrUpdateCachedEntity(project);
-
-				ShotGridAPIResponse<ShotGridEntityShot[]> shotsInProject = await m_targetApi.GetShotsForProject(project.Id);
-				if (shotsInProject.IsError)
+				ShotGridAPIResponse<ShotGridEntityLocalStorage[]> activeStores = await m_targetApi.GetLocalStorages();
+				if (activeStores.IsError)
 				{
-					Logger.LogError("MetaCache", $"Failed to fetch shots for project {project.Id}: {activeProjects.ErrorInfo}");
-					continue;
+					Logger.LogError("MetaCache", "Failed to fetch active stores: " + activeStores.ErrorInfo);
+					return;
 				}
 
-				foreach (ShotGridEntityShot shot in shotsInProject.ResultData)
+				foreach (ShotGridEntityLocalStorage localStore in activeStores.ResultData)
 				{
-					Logger.LogInfo("MetaCache", $"Fetched data for shot {shot.Id}");
+					AddOrUpdateCachedEntity(localStore);
+				}
 
-					AddOrUpdateCachedEntity(shot);
+				ShotGridAPIResponse<ShotGridEntityRelation[]> fileTagRelations = await m_targetApi.GetRelations(ShotGridEntity.TypeNames.PublishedFileType);
+				if (fileTagRelations.IsError)
+				{
+					Logger.LogError("MetaCache", "Failed to fetch file relations: " + fileTagRelations.ErrorInfo);
+					return;
+				}
 
-					ShotGridAPIResponse<ShotGridEntityShotVersion[]> shotVersionsForShot = await m_targetApi.GetVersionsForShot(shot.Id);
-					if (shotVersionsForShot.IsError)
+				foreach (ShotGridEntityRelation fileTagRelation in fileTagRelations.ResultData)
+				{
+					AddOrUpdateCachedEntity(ShotGridEntity.TypeNames.PublishedFileType, fileTagRelation);
+				}
+
+				ShotGridAPIResponse<ShotGridEntityProject[]> activeProjects = await m_targetApi.GetActiveProjects();
+				if (activeProjects.IsError)
+				{
+					Logger.LogError("MetaCache", "Failed to fetch projects: " + activeProjects.ErrorInfo);
+					return;
+				}
+
+				foreach (ShotGridEntityProject project in activeProjects.ResultData)
+				{
+					Logger.LogInfo("MetaCache", $"Fetched data for project {project.Id}");
+
+					AddOrUpdateCachedEntity(project);
+
+					ShotGridAPIResponse<ShotGridEntityShot[]> shotsInProject = await m_targetApi.GetShotsForProject(project.Id);
+					if (shotsInProject.IsError)
 					{
-						Logger.LogError("MetaCache", $"Failed to fetch shot versions for Shot: {shot.Id} Project: {project.Id}: {activeProjects.ErrorInfo}");
+						Logger.LogError("MetaCache", $"Failed to fetch shots for project {project.Id}: {activeProjects.ErrorInfo}");
 						continue;
 					}
 
-					foreach (ShotGridEntityShotVersion version in shotVersionsForShot.ResultData)
+					foreach (ShotGridEntityShot shot in shotsInProject.ResultData)
 					{
-						AddOrUpdateCachedEntity(version);
+						Logger.LogInfo("MetaCache", $"Fetched data for shot {shot.Id}");
 
-						if (version.Attributes.DataWranglerMeta != null)
+						AddOrUpdateCachedEntity(shot);
+
+						ShotGridAPIResponse<ShotGridEntityShotVersion[]> shotVersionsForShot = await m_targetApi.GetVersionsForShot(shot.Id);
+						if (shotVersionsForShot.IsError)
 						{
-							try
+							Logger.LogError("MetaCache", $"Failed to fetch shot versions for Shot: {shot.Id} Project: {project.Id}: {activeProjects.ErrorInfo}");
+							continue;
+						}
+
+						foreach (ShotGridEntityShotVersion version in shotVersionsForShot.ResultData)
+						{
+							AddOrUpdateCachedEntity(version);
+
+							if (version.Attributes.DataWranglerMeta != null)
 							{
-								DataWranglerShotVersionMeta? decodedMeta = JsonConvert.DeserializeObject<DataWranglerShotVersionMeta>(version.Attributes.DataWranglerMeta, DataWranglerSerializationSettings.Instance);
-								if (decodedMeta != null)
+								try
 								{
-									Logger.LogInfo("MetaCache", $"Got valid meta for shot version {version.Id}");
-									AddOrUpdateMeta(new ShotVersionMetaCacheEntry(project.Id, shot.Id,
-										version.Id, version.Attributes.VersionCode, decodedMeta));
+									DataWranglerShotVersionMeta? decodedMeta = JsonConvert.DeserializeObject<DataWranglerShotVersionMeta>(version.Attributes.DataWranglerMeta, DataWranglerSerializationSettings.Instance);
+									if (decodedMeta != null)
+									{
+										Logger.LogInfo("MetaCache", $"Got valid meta for shot version {version.Id}");
+										AddOrUpdateMeta(new ShotVersionMetaCacheEntry(project.Id, shot.Id,
+											version.Id, version.Attributes.VersionCode, decodedMeta));
+									}
 								}
-							}
-							catch (JsonSerializationException ex)
-							{
-								Logger.LogError("MetaCache", $"Failed to deserialize data for shot version {version.Id}. Exception: {ex.Message}");
+								catch (JsonSerializationException ex)
+								{
+									Logger.LogError("MetaCache", $"Failed to deserialize data for shot version {version.Id}. Exception: {ex.Message}");
+								}
 							}
 						}
 					}
 				}
+
+
+				m_lastCacheUpdateTime = DateTimeOffset.UtcNow;
+				Logger.LogInfo("MetaCache", $"Cache updated. Last update time {DateTime.Now}");
 			}
-
-
-			m_lastCacheUpdateTime = DateTimeOffset.UtcNow;
-			Logger.LogInfo("MetaCache", $"Cache updated. Last update time {DateTime.Now}");
+			catch (Exception ex)
+			{
+				Logger.LogError("MetaCache", $"Exception occured during cache update: {ex.Message}");
+				throw;
+			}
 		}
 
 		private void AddOrUpdateCachedEntity<TEntityType>(TEntityType a_entry)
 			where TEntityType : ShotGridEntity
 		{
+			AddOrUpdateCachedEntity(ShotGridEntity.GetEntityName<TEntityType>(), a_entry);
+		}
+
+		private void AddOrUpdateCachedEntity(string a_entityType, ShotGridEntity a_entry)
+		{
 			Dictionary<int, ShotGridEntity>? entitiesById = null;
-			if (!m_cachedEntitiesByType.TryGetValue(ShotGridEntity.GetEntityName<TEntityType>(), out entitiesById))
+			if (!m_cachedEntitiesByType.TryGetValue(a_entityType, out entitiesById))
 			{
 				entitiesById = new Dictionary<int, ShotGridEntity>();
-				m_cachedEntitiesByType.Add(ShotGridEntity.GetEntityName<TEntityType>(), entitiesById);
+				m_cachedEntitiesByType.Add(a_entityType, entitiesById);
 			}
 
 			entitiesById[a_entry.Id] = a_entry;
@@ -153,6 +179,22 @@ namespace DataWranglerServiceWorker
 			return false;
 		}
 
+		public List<KeyValuePair<TMetaType, ShotVersionMetaCacheEntry>> FindShotVersionWithMeta<TMetaType>()
+			where TMetaType: DataWranglerFileSourceMeta
+		{
+			List<KeyValuePair<TMetaType, ShotVersionMetaCacheEntry>> result = new();
+			foreach (ShotVersionMetaCacheEntry entry in m_availableVersionMeta.Values)
+			{
+				DataWranglerFileSourceMeta? foundRelevantMeta = entry.MetaValues.FileSources.Find((a_meta) => a_meta is TMetaType);
+				if (foundRelevantMeta != null)
+				{
+					result.Add(new KeyValuePair<TMetaType, ShotVersionMetaCacheEntry>((TMetaType)foundRelevantMeta, entry));
+				}
+			}
+				
+			return result;
+		}
+
 		public bool FindEntityById<TEntityType>(int a_id, [NotNullWhen(true)] out TEntityType? a_result)
 			where TEntityType: ShotGridEntity
 		{
@@ -169,11 +211,11 @@ namespace DataWranglerServiceWorker
 			return false;
 		}
 
-		public bool FindEntity<TEntityType>(Func<TEntityType, bool> a_selector, [NotNullWhen(true)] out TEntityType? a_result)
+		public bool FindEntity<TEntityType>(string a_entityType, Func<TEntityType, bool> a_selector, [NotNullWhen(true)] out TEntityType? a_result)
 			where TEntityType: ShotGridEntity
 		{
 			a_result = null;
-			if (m_cachedEntitiesByType.TryGetValue(ShotGridEntity.GetEntityName<TEntityType>(), out var entitiesById))
+			if (m_cachedEntitiesByType.TryGetValue(a_entityType, out var entitiesById))
 			{
 				foreach (var shotGridEntity in entitiesById.Values)
 				{
@@ -186,6 +228,12 @@ namespace DataWranglerServiceWorker
 				}
 			}
 			return false;
+		}
+
+		public bool FindEntity<TEntityType>(Func<TEntityType, bool> a_selector, [NotNullWhen(true)] out TEntityType? a_result)
+			where TEntityType: ShotGridEntity
+		{
+			return FindEntity(ShotGridEntity.GetEntityName<TEntityType>(), a_selector, out a_result);
 		}
 	}
 }

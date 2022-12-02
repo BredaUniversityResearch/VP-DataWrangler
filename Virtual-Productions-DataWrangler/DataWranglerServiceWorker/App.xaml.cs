@@ -28,8 +28,7 @@ namespace DataWranglerServiceWorker
 		private USBDriveEventWatcher m_driveEventWatcher = new USBDriveEventWatcher();
 		private CopyProgressWindow m_copyProgress;
 
-		private List<string> m_importWorkerBacklog = new List<string>();
-
+		private readonly List<string> m_importWorkerBacklog = new List<string>();
 
 		public App()
 		{
@@ -45,6 +44,7 @@ namespace DataWranglerServiceWorker
 			m_copyProgress = new CopyProgressWindow();
 
 			m_driveEventWatcher.OnVolumeChanged += OnVolumeChanged;
+			m_importWorkerBacklog.Add("D:\\Projects\\VirtualProductions\\2022-11-29 Sample TASCAM SD content\\");
 		}
 
 		private void OnFileCopyStarted(ShotVersionIdentifier a_shotVersion, FileCopyMetaData a_copyMetaData)
@@ -114,17 +114,6 @@ namespace DataWranglerServiceWorker
 				return;
 			}
 
-			ShotGridEntityReference? fileTypeTagReference = null;
-			ShotGridAPIResponse<ShotGridEntityRelation?> fileTypeRelation = m_targetApi.FindRelationByCode(ShotGridEntity.TypeNames.PublishedFileType, "video").Result;
-			if (!fileTypeRelation.IsError)
-			{
-				fileTypeTagReference = ShotGridEntityReference.Create(ShotGridEntity.TypeNames.PublishedFileType, fileTypeRelation.ResultData);
-			}
-			else
-			{
-				Logger.LogError("DataImporter", $"Failed to find file type relation {a_fileTypeRelation} in shotgrid. Entity won't be linked");
-			}
-
 			string publishFileName = $"{shotData.Attributes.ShotCode}_{versionData.Attributes.VersionCode}";
 			ShotGridEntityFilePublish.FilePublishAttributes publishData = new ShotGridEntityFilePublish.FilePublishAttributes
 			{
@@ -142,11 +131,9 @@ namespace DataWranglerServiceWorker
 				//PathCache = a_copyMetaData.DestinationRelativeFilePath,
 				//PathCacheStorage = ShotGridEntityReference.Create(a_copyMetaData.StorageTarget),
 				PublishedFileName = publishFileName,
-				PublishedFileType = fileTypeTagReference,
+				PublishedFileType = ShotGridEntityReference.Create(ShotGridEntity.TypeNames.PublishedFileType, a_copyMetaData.FileTag),
 				Description = "File auto-published by Data Wrangler"
 			};
-
-			
 
 			m_targetApi.CreateFilePublish(a_shotVersion.ProjectId, a_shotVersion.ShotId, a_shotVersion.VersionId, publishData)
 				.ContinueWith(a_taskResult =>
