@@ -46,4 +46,10 @@ public partial class DataWranglerFileSourceMetaTascam: DataWranglerFileSourceMet
 
 		return false;
 	}
+
+	public override void OnTemplateMetaCloned()
+	{
+		base.OnTemplateMetaCloned();
+		++FileIndex;
+	}
 }

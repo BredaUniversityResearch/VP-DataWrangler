@@ -48,14 +48,20 @@ namespace DataWranglerCommonWPF.Login
 
 			if (!string.IsNullOrEmpty(a_credentialProvider.OAuthRefreshToken) && m_allowLoginFromRefreshToken && !Keyboard.IsKeyDown(Key.LeftShift))
 			{
-				m_runningLoginTask = a_targetAPI.TryLoginOAuth(ShotGridApiKeyProvider.ShotGridApiScriptName, ShotGridApiKeyProvider.ShotGridApiScriptKey);
-				m_runningLoginTask.ContinueWith(a_task => OnLoginAttemptCompleted(a_task.Result));
-				OnLoginAttemptStarted();
+				StartLoginAttempt();
+				//m_runningLoginTask = a_targetAPI.TryLoginOAuth(ShotGridApiKeyProvider.ShotGridApiScriptName, ShotGridApiKeyProvider.ShotGridApiScriptKey);
+				//m_runningLoginTask.ContinueWith(a_task => OnLoginAttemptCompleted(a_task.Result));
+				//OnLoginAttemptStarted();
 				m_allowLoginFromRefreshToken = false;
 			}
 		}
 
 		private void AttemptLogin(object a_sender, RoutedEventArgs a_e)
+		{
+			StartLoginAttempt();
+		}
+
+		private void StartLoginAttempt()
 		{
 			//UpdateSavedUserSettings();
 
@@ -71,29 +77,20 @@ namespace DataWranglerCommonWPF.Login
 
 			LoginErrorContainer.Visibility = Visibility.Hidden;
 
-			m_runningLoginTask = m_targetAPI.TryLoginOAuth(ShotGridApiKeyProvider.ShotGridApiScriptName, ShotGridApiKeyProvider.ShotGridApiScriptKey);
+			string apiKey;
+			if (ShotGridApiKeyProvider.ShotGridApiScriptKey != null)
+			{
+				apiKey = ShotGridApiKeyProvider.ShotGridApiScriptKey;
+			}
+			else
+			{
+				apiKey = Password.Text;
+			}
+
+			m_runningLoginTask = m_targetAPI.TryLoginOAuth(ShotGridApiKeyProvider.ShotGridApiScriptName, apiKey);
 			m_runningLoginTask.ContinueWith(a_task => OnLoginAttemptCompleted(a_task.Result));
 			OnLoginAttemptStarted();
 		}
-
-		//private void UpdateSavedUserSettings()
-		//{
-		//	UserSettings settings = UserSettings.Default;
-		//	if (RememberMeCheckbox.IsChecked ?? false)
-		//	{
-		//		settings.LastUserName = Username.Text;
-		//		settings.LastUserPassword = Password.Password;
-		//		settings.ShouldRememberUserAndPass = true;
-		//	}
-		//	else
-		//	{
-		//		settings.LastUserName = "";
-		//		settings.LastUserPassword = "";
-		//		settings.ShouldRememberUserAndPass = false;
-		//	}
-
-		//	settings.Save();
-		//}
 
 		private void OnLoginAttemptCompleted(ShotGridLoginResponse a_obj)
 		{

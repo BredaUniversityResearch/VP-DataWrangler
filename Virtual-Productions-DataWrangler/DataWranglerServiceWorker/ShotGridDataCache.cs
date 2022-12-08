@@ -163,22 +163,6 @@ namespace DataWranglerServiceWorker
 			}
 		}
 
-		public bool FindShotVersionForFile(DateTimeOffset a_fileInfoCreationTimeUtc, string a_storageName, ECameraCodec a_codec, [NotNullWhen(true)] out ShotVersionMetaCacheEntry? a_shotVersionMetaCacheEntry)
-		{
-			foreach (ShotVersionMetaCacheEntry entry in m_availableVersionMeta.Values)
-			{
-				DataWranglerFileSourceMeta? meta = entry.MetaValues.HasFileSourceForFile(a_fileInfoCreationTimeUtc, a_storageName, a_codec.ToString());
-				if (meta != null)
-				{
-					a_shotVersionMetaCacheEntry = entry;
-					return true;
-				}
-			}
-
-			a_shotVersionMetaCacheEntry = null;
-			return false;
-		}
-
 		public List<KeyValuePair<TMetaType, ShotVersionMetaCacheEntry>> FindShotVersionWithMeta<TMetaType>()
 			where TMetaType: DataWranglerFileSourceMeta
 		{

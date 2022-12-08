@@ -18,19 +18,6 @@
 			};
 		}
 
-		public DataWranglerFileSourceMeta? HasFileSourceForFile(DateTimeOffset a_fileInfoCreationTimeUtc, string a_storageName, string a_codecName)
-		{
-			foreach (DataWranglerFileSourceMeta meta in FileSources)
-			{
-				if (meta.IsSourceFor(a_fileInfoCreationTimeUtc, a_storageName, a_codecName))
-				{
-					return meta;
-				}
-			}
-
-			return null;
-		}
-
 		public TMetaType? FindFileSourceMeta<TMetaType>()
 			where TMetaType : DataWranglerFileSourceMeta
 		{

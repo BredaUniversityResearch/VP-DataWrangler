@@ -5,7 +5,7 @@ namespace DataWranglerCommon
 	public class ShotGridApiKeyProvider
 	{
 		public static readonly string ShotGridApiScriptName = "ShotGrid DataWrangler";
-		public static readonly string ShotGridApiScriptKey;
+		public static readonly string? ShotGridApiScriptKey;
 
 		static ShotGridApiKeyProvider()
 		{
@@ -13,7 +13,7 @@ namespace DataWranglerCommon
 			string? configuredClientSecret = configRoot.GetSection("ShotGridApiScriptKey").Value;
 			if (configuredClientSecret == null)
 			{
-				throw new KeyNotFoundException("Configuration of client secrets is incomplete, missing \"ShotGridApiScriptKey\"");
+				configuredClientSecret = Environment.GetEnvironmentVariable("DATAWRANGLER_KEY");
 			}
 
 			ShotGridApiScriptKey = configuredClientSecret;

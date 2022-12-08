@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
 using System.Threading;
@@ -390,16 +391,26 @@ namespace BlackmagicCameraControl
 				a_command.WriteTo(writer);
 
 				IBuffer sendBuffer = WindowsRuntimeBuffer.Create(ms.GetBuffer(), 0, (int)ms.Length, (int)ms.Length);
-				m_blackmagicServiceOutgoingCameraControl
-					.WriteValueWithResultAsync(sendBuffer, GattWriteOption.WriteWithResponse).AsTask().ContinueWith(
-						(a_sendCommand) =>
-						{
-							if (a_sendCommand.Result.Status != GattCommunicationStatus.Success)
+
+				try
+				{
+					m_blackmagicServiceOutgoingCameraControl
+						.WriteValueWithResultAsync(sendBuffer, GattWriteOption.WriteWithResponse).AsTask().ContinueWith(
+							(a_sendCommand) =>
 							{
-								IBlackmagicCameraLogInterface.LogError(
-									$"Failed to write value to outgoing camera control. Command: {commandMeta.CommandType}");
-							}
-						});
+								if (a_sendCommand.Result.Status != GattCommunicationStatus.Success)
+								{
+									IBlackmagicCameraLogInterface.LogError(
+										$"Failed to write value to outgoing camera control. Command: {commandMeta.CommandType}");
+								}
+							});
+				}
+				catch (COMException ex)
+				{
+					IBlackmagicCameraLogInterface.LogError(
+						$"Failed to write value to outgoing camera control. Command: {commandMeta.CommandType} Ex: {ex.Message}");
+
+				}
 			}
 		}
 

@@ -30,11 +30,6 @@ public abstract partial class DataWranglerFileSourceMeta
 		//return new DataWranglerFileSourceMeta(m_sourceType, m_sourceFileTag);
 	}
 
-	public virtual bool IsSourceFor(DateTimeOffset a_fileInfoCreationTimeUtc, string a_storageName, string a_codecName)
-	{
-		return false;
-	}
-
 	public static DataWranglerFileSourceMeta CreateFromTypeName(string a_sourceTypeName)
 	{
 		if (a_sourceTypeName == DataWranglerFileSourceMetaBlackmagicUrsa.MetaSourceType)
@@ -47,5 +42,9 @@ public abstract partial class DataWranglerFileSourceMeta
 		}
 
 		throw new Exception($"Unknown source meta type {a_sourceTypeName}");
+	}
+
+	public virtual void OnTemplateMetaCloned()
+	{
 	}
 }

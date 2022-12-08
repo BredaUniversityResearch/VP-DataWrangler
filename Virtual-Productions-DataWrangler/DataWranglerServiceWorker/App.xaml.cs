@@ -44,7 +44,6 @@ namespace DataWranglerServiceWorker
 			m_copyProgress = new CopyProgressWindow();
 
 			m_driveEventWatcher.OnVolumeChanged += OnVolumeChanged;
-			m_importWorkerBacklog.Add("D:\\Projects\\VirtualProductions\\2022-11-29 Sample TASCAM SD content\\");
 		}
 
 		private void OnFileCopyStarted(ShotVersionIdentifier a_shotVersion, FileCopyMetaData a_copyMetaData)
@@ -114,7 +113,8 @@ namespace DataWranglerServiceWorker
 				return;
 			}
 
-			string publishFileName = $"{shotData.Attributes.ShotCode}_{versionData.Attributes.VersionCode}";
+			//string publishFileName = $"{shotData.Attributes.ShotCode}_{versionData.Attributes.VersionCode}";
+			string publishFileName = Path.GetFileName(a_copyMetaData.SourceFilePath.LocalPath);
 			ShotGridEntityFilePublish.FilePublishAttributes publishData = new ShotGridEntityFilePublish.FilePublishAttributes
 			{
 				Path = new ShotGridEntityFilePublish.FileLink

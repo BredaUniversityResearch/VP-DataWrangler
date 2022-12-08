@@ -39,7 +39,13 @@ namespace DataWranglerInterface.ShotRecording
 
 		public DataWranglerShotVersionMeta CreateMetaFromCurrentTemplate()
 		{
-			return m_currentTemplateMeta.Clone();
+			DataWranglerShotVersionMeta meta = m_currentTemplateMeta.Clone();
+			foreach (DataWranglerFileSourceMeta fileMeta in m_currentTemplateMeta.FileSources)
+			{
+				fileMeta.OnTemplateMetaCloned();
+			}
+
+			return meta;
 		}
 
 		public void UpdateDisplayedWidgets()
