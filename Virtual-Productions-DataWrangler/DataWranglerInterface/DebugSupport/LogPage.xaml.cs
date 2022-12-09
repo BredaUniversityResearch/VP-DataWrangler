@@ -33,7 +33,6 @@ namespace DataWranglerInterface.DebugSupport
 			Logger.Instance.OnMessageLogged += OnMessageLogged;
 
 			IBlackmagicCameraLogInterface.Use(this);
-			
 		}
 
 		private void OnMessageLogged(string a_source, string a_severity, string a_message)

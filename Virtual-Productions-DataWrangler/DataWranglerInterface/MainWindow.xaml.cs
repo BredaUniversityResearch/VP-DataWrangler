@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics;
 using System.Windows;
+using System.Windows.Input;
 using DataWranglerCommonWPF.Login;
 using DataWranglerInterface.DebugSupport;
 using DataWranglerInterface.Properties;
@@ -35,7 +36,7 @@ namespace DataWranglerInterface
 		public MainWindow()
 		{
 			InitializeComponent();
-			if (true)
+			if (Debugger.IsAttached)
 			{
 				m_debugWindow = new DebugWindow();
 				m_debugWindow.Show();
@@ -43,6 +44,19 @@ namespace DataWranglerInterface
 
 			m_loginPage = new LoginPage();
 			OnRequestUserAuthentication();
+		}
+
+		protected override void OnKeyDown(KeyEventArgs e)
+		{
+			base.OnKeyDown(e);
+			if (e.IsDown && e.Key == Key.F1)
+			{
+				if (m_debugWindow == null || !m_debugWindow.IsVisible)
+				{
+					m_debugWindow = new DebugWindow();
+					m_debugWindow.Show();
+				}
+			}
 		}
 
 		private void OnLoggedIn()
