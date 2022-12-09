@@ -2,14 +2,13 @@
 
 namespace ShotGridIntegration
 {
-	[ShotGridEntityType(TypeNames.Shot)]
 	public class ShotGridEntityShot: ShotGridEntity
 	{
 		public class ShotAttributes
 		{
 			[JsonProperty("code")] public string ShotCode = "";
 			[JsonProperty("description")] public string Description = "";
-			[JsonProperty("image")] public string ImageURL = "";
+			[JsonProperty("image")] public string? ImageURL = null;
 		};
 
 		[JsonProperty("attributes")]

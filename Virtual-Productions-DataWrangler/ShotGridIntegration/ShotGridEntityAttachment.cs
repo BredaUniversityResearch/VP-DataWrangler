@@ -2,7 +2,6 @@
 
 namespace ShotGridIntegration
 {
-	[ShotGridEntityType(TypeNames.Attachment)]
 	public class ShotGridEntityAttachment : ShotGridEntity
 	{
 		public class AttachmentAttributes

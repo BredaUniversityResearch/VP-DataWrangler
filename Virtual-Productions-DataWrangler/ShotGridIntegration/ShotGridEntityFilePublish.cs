@@ -2,7 +2,6 @@
 
 namespace ShotGridIntegration
 {
-    [ShotGridEntityType(TypeNames.PublishedFile)]
 	public class ShotGridEntityFilePublish : ShotGridEntity
 	{
 		public class FileLink

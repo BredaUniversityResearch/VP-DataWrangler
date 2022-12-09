@@ -1,4 +1,5 @@
-﻿using System.Windows.Controls;
+﻿using System.Windows;
+using System.Windows.Controls;
 using ShotGridIntegration;
 
 namespace DataWranglerInterface.ShotRecording
@@ -28,6 +29,8 @@ namespace DataWranglerInterface.ShotRecording
 		public delegate void ShotSelectionChangedDelegate(ShotGridEntityShot? a_shotInfo);
 		public event ShotSelectionChangedDelegate OnSelectedShotChanged = delegate { };
 
+		public event Action OnNewShotCreatedButtonClicked = delegate { };
+
 		public int SelectedShotId { get; private set; }
 
 		public ShotSelectorControl()
@@ -47,6 +50,26 @@ namespace DataWranglerInterface.ShotRecording
 		public void AsyncRefreshShots(int a_projectId)
 		{
 			ShotSelectorDropDown.BeginAsyncDataRefresh<ShotGridEntityShot, ShotSelectorEntry>(DataWranglerServiceProvider.Instance.ShotGridAPI.GetShotsForProject(a_projectId));
+		}
+
+		public void OnNewShotCreationFinished(ShotGridEntityShot? a_resultResultData)
+		{
+			if (a_resultResultData != null)
+			{
+				ShotSelectorDropDown.AddDropdownEntry<ShotGridEntityShot, ShotSelectorEntry>(a_resultResultData, true);
+			}
+
+			ShotSelectorDropDown.SetLoading(false);
+		}
+
+		public void OnNewShotCreationStarted()
+		{
+			ShotSelectorDropDown.SetLoading(true);
+		}
+
+		private void ButtonNewShot_Click(object a_sender, RoutedEventArgs a_e)
+		{
+			OnNewShotCreatedButtonClicked?.Invoke();
 		}
 	}
 }

@@ -5,8 +5,9 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:DataWranglerInterface.ShotRecording"
              mc:Ignorable="d" 
-             d:DesignHeight="21" d:DesignWidth="120">
-	<Grid>
-		<local:RemoteDataDropDown x:Name="ShotSelectorDropDown" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
-	</Grid>
+             d:DesignHeight="21" d:DesignWidth="240">
+	<DockPanel>
+		<Button DockPanel.Dock="Right" Width="32" Click="ButtonNewShot_Click">New</Button>
+		<local:RemoteDataDropDown x:Name="ShotSelectorDropDown" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" DockPanel.Dock="Left"/>
+	</DockPanel>
 </UserControl>

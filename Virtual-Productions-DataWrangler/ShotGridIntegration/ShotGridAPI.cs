@@ -16,7 +16,10 @@ namespace ShotGridIntegration
 		private static readonly JsonSerializerSettings SerializerSettings = new JsonSerializerSettings
 		{
 			NullValueHandling = NullValueHandling.Ignore,
-			DateFormatHandling = DateFormatHandling.IsoDateFormat
+			DateFormatHandling = DateFormatHandling.IsoDateFormat,
+			Converters = new List<JsonConverter>() { 
+				new JsonConverterShotGridEntityName()
+			}
 		};
 		private static readonly JsonSerializer Serializer = JsonSerializer.Create(SerializerSettings);
 
@@ -38,7 +41,7 @@ namespace ShotGridIntegration
 			return await TryLogin(loginHeaders);
 		}
 
-		public async Task<ShotGridLoginResponse> TryLoginOAuth(string a_clientId, string a_clientSecret)
+		public async Task<ShotGridLoginResponse> TryLoginWithScriptKey(string a_clientId, string a_clientSecret)
 		{
 			Dictionary<string, string> loginHeaders = new Dictionary<string, string>
 			{
@@ -115,28 +118,28 @@ namespace ShotGridIntegration
 		{
 			ShotGridSimpleSearchFilter filter = new ShotGridSimpleSearchFilter();
 			filter.FieldIs("sg_status", "Active");
-			return await FindAndParse<ShotGridEntityProject[]>("projects", filter, new[] { "name" }, null);
+			return await FindAndParse<ShotGridEntityProject[]>(ShotGridEntityName.Project, filter, new[] { "name" }, null);
 		}
 
 		public async Task<ShotGridAPIResponse<ShotGridEntityShot[]>> GetShotsForProject(int a_projectId)
 		{
 			ShotGridSimpleSearchFilter filter = new ShotGridSimpleSearchFilter();
 			filter.FieldIs("project.Project.id", a_projectId);
-			return await FindAndParse<ShotGridEntityShot[]>("shots", filter, new[] {"code", "description", "image" }, null);
+			return await FindAndParse<ShotGridEntityShot[]>(ShotGridEntityName.Shot, filter, new[] {"code", "description", "image" }, null);
 		}
 
 		public async Task<ShotGridAPIResponse<ShotGridEntityShotVersion[]>> GetVersionsForShot(int a_shotId, ShotGridSortSpecifier? a_sort = null)
 		{
 			ShotGridSimpleSearchFilter filter = new ShotGridSimpleSearchFilter();
 			filter.FieldIs("entity.Shot.id", a_shotId);
-			return await FindAndParse<ShotGridEntityShotVersion[]>("versions", filter, new[] { "code", "description", "image", "sg_datawrangler_meta" }, a_sort);
+			return await FindAndParse<ShotGridEntityShotVersion[]>(ShotGridEntityName.ShotVersion, filter, new[] { "code", "description", "image", "sg_datawrangler_meta" }, a_sort);
 		}
 
 		public async Task<ShotGridAPIResponse<ShotGridEntityFilePublish[]>> GetPublishesForShotVersion(int a_shotVersionId)
 		{
 			ShotGridSimpleSearchFilter filter = new ShotGridSimpleSearchFilter();
 			filter.FieldIs("version.Version.id", a_shotVersionId);
-			return await FindAndParse<ShotGridEntityFilePublish[]>(ShotGridEntity.TypeNames.PublishedFile, filter, 
+			return await FindAndParse<ShotGridEntityFilePublish[]>(ShotGridEntityName.PublishedFile, filter, 
 				new JsonAttributeFieldEnumerator<ShotGridEntityFilePublish.FilePublishAttributes>().Get(), null);
 		}
 
@@ -144,18 +147,18 @@ namespace ShotGridIntegration
 		{
 			ShotGridSimpleSearchFilter filter = new ShotGridSimpleSearchFilter();
 			//filter.FieldIs("project.Project.id", a_projectId);
-			return await FindAndParse<ShotGridEntityRelation[]>(ShotGridEntity.TypeNames.PublishedFileType, filter, 
+			return await FindAndParse<ShotGridEntityRelation[]>(ShotGridEntityName.PublishedFileType, filter, 
 				new JsonAttributeFieldEnumerator<ShotGridEntityRelation.RelationAttributes>().Get(), null);
 		}
 
 		public async Task<ShotGridAPIResponse<ShotGridEntityLocalStorage[]>> GetLocalStorages()
 		{
 			ShotGridSimpleSearchFilter filter = new ShotGridSimpleSearchFilter();
-			return await FindAndParse<ShotGridEntityLocalStorage[]>(ShotGridEntity.TypeNames.LocalStorage, filter,
+			return await FindAndParse<ShotGridEntityLocalStorage[]>(ShotGridEntityName.LocalStorage, filter,
 				new JsonAttributeFieldEnumerator<ShotGridEntityLocalStorage.LocalStorageAttributes>().Get(), null);
 		}
 
-		public async Task<ShotGridAPIResponse<ShotGridEntityRelation[]>> GetRelations(string a_relationType)
+		public async Task<ShotGridAPIResponse<ShotGridEntityRelation[]>> GetRelations(ShotGridEntityName a_relationType)
 		{
 			ShotGridSimpleSearchFilter filter = new ShotGridSimpleSearchFilter();
 			return await FindAndParse<ShotGridEntityRelation[]>(a_relationType, filter,
@@ -168,14 +171,14 @@ namespace ShotGridIntegration
 			ShotGridErrorResponse? error = null;
 			TTargetType? data = null;
 
-			JObject parsedResult = JObject.Parse(a_responseString);
+			JObject parsedResult = JsonConvert.DeserializeObject<JObject>(a_responseString, SerializerSettings)!;
 
 			if (((int)a_statusCode >= 200) && ((int)a_statusCode <= 299))
 			{
 				JToken? dataNode = parsedResult["data"];
 				if (dataNode != null)
 				{
-					data = dataNode.ToObject<TTargetType>();
+					data = dataNode.ToObject<TTargetType>(Serializer);
 				}
 				else
 				{
@@ -208,7 +211,7 @@ namespace ShotGridIntegration
 			throw new Exception(a_errorResponse.ToString());
 		}
 
-		private async Task<ShotGridAPIResponse<TTargetType>> FindAndParse<TTargetType>(string a_entityType, ShotGridSimpleSearchFilter a_filters, string[] a_fields, ShotGridSortSpecifier? a_sort)
+		private async Task<ShotGridAPIResponse<TTargetType>> FindAndParse<TTargetType>(ShotGridEntityName a_entityType, ShotGridSimpleSearchFilter a_filters, string[] a_fields, ShotGridSortSpecifier? a_sort)
 			where TTargetType : class
 		{
 			HttpResponseMessage result = await Find(a_entityType, a_filters, a_fields, a_sort);
@@ -216,11 +219,11 @@ namespace ShotGridIntegration
 			return ParseResponse<TTargetType>(result.StatusCode, resultBody);
 		}
 
-		private async Task<HttpResponseMessage> Find(string a_entityType, ShotGridSimpleSearchFilter a_filters, string[] a_fields, ShotGridSortSpecifier? a_sortSpecifier)
+		private async Task<HttpResponseMessage> Find(ShotGridEntityName a_entityType, ShotGridSimpleSearchFilter a_filters, string[] a_fields, ShotGridSortSpecifier? a_sortSpecifier)
 		{
 			ShotGridSearchQuery query = new ShotGridSearchQuery(a_filters, a_fields, a_sortSpecifier);
 			string queryAsString = JsonConvert.SerializeObject(query, SerializerSettings);
-			return await SendApiRequest(new Uri($"{BaseUrl}entity/{a_entityType}/_search"), HttpMethod.Post, new ByteArrayContent(Encoding.UTF8.GetBytes(queryAsString)));
+			return await SendApiRequest(new Uri($"{BaseUrl}entity/{a_entityType.SnakeCasePlural}/_search"), HttpMethod.Post, new ByteArrayContent(Encoding.UTF8.GetBytes(queryAsString)));
 		}
 
 		private async Task<HttpResponseMessage> SendApiRequest(Uri a_url, HttpMethod a_method, ByteArrayContent a_content, bool a_allowReAuthenticate = true)
@@ -271,31 +274,54 @@ namespace ShotGridIntegration
 			return m_authentication;
 		}
 
+		public async Task<ShotGridAPIResponse<ShotGridEntityShot>> CreateNewShot(int a_projectId, ShotGridEntityShot.ShotAttributes a_attributes)
+		{
+			return await CreateNewEntity<ShotGridEntityShot, ShotGridEntityShot.ShotAttributes>(a_projectId, a_attributes, null);
+		}
+
 		public async Task<ShotGridAPIResponse<ShotGridEntityShotVersion>> CreateNewShotVersion(int a_projectId, int a_parentShotId, ShotGridEntityShotVersion.ShotVersionAttributes a_versionAttributes)
 		{
-			ShotGridEntityCreateBaseData baseData = new ShotGridEntityCreateBaseData(a_projectId, ShotGridEntity.TypeNames.Shot, a_parentShotId);
+			return await CreateNewEntity<ShotGridEntityShotVersion, ShotGridEntityShotVersion.ShotVersionAttributes>(a_projectId, a_versionAttributes, new ShotGridEntityReference(ShotGridEntityName.Shot, a_parentShotId));
+			//ShotGridEntityCreateBaseData baseData = new ShotGridEntityCreateBaseData(a_projectId, ShotGridEntity.TypeNames.Shot, a_parentShotId);
+			//JObject baseDataToken = JObject.FromObject(baseData, Serializer);
+			//JObject encodedToken = JObject.FromObject(a_versionAttributes, Serializer);
+			//encodedToken.Merge(baseDataToken);
+
+			//string requestBody = encodedToken.ToString();
+
+			//HttpResponseMessage response = await Create("version", requestBody);
+			//string responseBody = await response.Content.ReadAsStringAsync();
+
+			//return ParseResponse<ShotGridEntityShotVersion>(response.StatusCode, responseBody);
+		}
+
+		public async Task<ShotGridAPIResponse<TEntityType>> CreateNewEntity<TEntityType, TAttributesType>(int a_projectId, TAttributesType a_attributes, ShotGridEntityReference? a_parent)
+			where TEntityType: ShotGridEntity
+			where TAttributesType: notnull
+		{
+			ShotGridEntityCreateBaseData baseData = new ShotGridEntityCreateBaseData(a_projectId, a_parent);
 			JObject baseDataToken = JObject.FromObject(baseData, Serializer);
-			JObject encodedToken = JObject.FromObject(a_versionAttributes, Serializer);
+			JObject encodedToken = JObject.FromObject(a_attributes, Serializer);
 			encodedToken.Merge(baseDataToken);
 
 			string requestBody = encodedToken.ToString();
 
-			HttpResponseMessage response = await Create("version", requestBody);
+			HttpResponseMessage response = await Create(ShotGridEntityName.FromType<TEntityType>(), requestBody);
 			string responseBody = await response.Content.ReadAsStringAsync();
 
-			return ParseResponse<ShotGridEntityShotVersion>(response.StatusCode, responseBody);
+			return ParseResponse<TEntityType>(response.StatusCode, responseBody);
 		}
 
 		public async Task<ShotGridAPIResponse<ShotGridEntityFilePublish>> CreateFilePublish(int a_projectId, int a_shotId, int a_versionId, ShotGridEntityFilePublish.FilePublishAttributes a_publishAttributes)
 		{
-			ShotGridEntityCreateBaseData baseData = new ShotGridEntityCreateBaseData(a_projectId, ShotGridEntity.TypeNames.Shot, a_shotId);
+			ShotGridEntityCreateBaseData baseData = new ShotGridEntityCreateBaseData(a_projectId, new ShotGridEntityReference(ShotGridEntityName.Shot, a_shotId));
 			JObject baseDataToken = JObject.FromObject(baseData, Serializer);
 			JObject encodedToken = JObject.FromObject(a_publishAttributes, Serializer);
 			encodedToken.Merge(baseDataToken);
 
 			string requestBody = encodedToken.ToString();
 
-			HttpResponseMessage response = await Create(ShotGridEntity.TypeNames.PublishedFile, requestBody);
+			HttpResponseMessage response = await Create(ShotGridEntityName.PublishedFile, requestBody);
 			string responseBody = await response.Content.ReadAsStringAsync();
 
 			return ParseResponse<ShotGridEntityFilePublish>(response.StatusCode, responseBody);
@@ -303,20 +329,20 @@ namespace ShotGridIntegration
 
 		public async Task<ShotGridAPIResponse<ShotGridEntityAttachment>> CreateFileAttachment(int a_projectId, int a_publishId, ShotGridEntityAttachment a_attachmentAttributes)
 		{
-			ShotGridEntityCreateBaseData baseData = new ShotGridEntityCreateBaseData(a_projectId, ShotGridEntity.TypeNames.PublishedFile, a_publishId);
+			ShotGridEntityCreateBaseData baseData = new ShotGridEntityCreateBaseData(a_projectId, new ShotGridEntityReference(ShotGridEntityName.PublishedFile, a_publishId));
 			JObject baseDataToken = JObject.FromObject(baseData, Serializer);
 			JObject encodedToken = JObject.FromObject(a_attachmentAttributes, Serializer);
 			encodedToken.Merge(baseDataToken);
 
 			string requestBody = encodedToken.ToString();
 
-			HttpResponseMessage response = await Create(ShotGridEntity.TypeNames.Attachment, requestBody);
+			HttpResponseMessage response = await Create(ShotGridEntityName.Attachment, requestBody);
 			string responseBody = await response.Content.ReadAsStringAsync();
 
 			return ParseResponse<ShotGridEntityAttachment>(response.StatusCode, responseBody);
 		}
 
-		private async Task<HttpResponseMessage> Create(string a_entityType, string a_entityDataAsString)
+		private async Task<HttpResponseMessage> Create(ShotGridEntityName a_entityType, string a_entityDataAsString)
 		{
 			if (m_authentication == null)
 			{
@@ -326,7 +352,7 @@ namespace ShotGridIntegration
 			HttpRequestMessage request = new HttpRequestMessage
 			{
 				Method = HttpMethod.Post,
-				RequestUri = new Uri($"{BaseUrl}entity/{a_entityType}"),
+				RequestUri = new Uri($"{BaseUrl}entity/{a_entityType.SnakeCasePlural}"),
 				Headers = {
 					{ HttpRequestHeader.Accept.ToString(), "application/json" },
 					{ HttpRequestHeader.AcceptEncoding.ToString(), "gzip, deflate, br" },
@@ -343,7 +369,7 @@ namespace ShotGridIntegration
 		public async Task<ShotGridAPIResponse<TEntityType>> UpdateEntityProperties<TEntityType>(int a_entityId, Dictionary<string, object> a_propertiesToSet)
 			where TEntityType: ShotGridEntity
 		{
-			string entityType = ShotGridEntity.GetEntityName<TEntityType>();
+			ShotGridEntityName entityType = ShotGridEntityName.FromType<TEntityType>();
 
 			if (m_authentication == null)
 			{
@@ -355,7 +381,7 @@ namespace ShotGridIntegration
 			HttpRequestMessage request = new HttpRequestMessage
 			{
 				Method = HttpMethod.Put,
-				RequestUri = new Uri($"{BaseUrl}entity/{entityType}/{a_entityId}"),
+				RequestUri = new Uri($"{BaseUrl}entity/{entityType.SnakeCasePlural}/{a_entityId}"),
 				Headers = {
 					{ HttpRequestHeader.Accept.ToString(), "application/json" },
 					{ HttpRequestHeader.AcceptEncoding.ToString(), "gzip, deflate, br" },
@@ -395,7 +421,7 @@ namespace ShotGridIntegration
 			return ParseResponse<ShotGridEntityFieldSchema[]>(response.StatusCode, responseBody);
 		}
 
-		public async Task<ShotGridAPIResponse<ShotGridEntityRelation?>> FindRelationByCode(string a_relationType, string a_code)
+		public async Task<ShotGridAPIResponse<ShotGridEntityRelation?>> FindRelationByCode(ShotGridEntityName a_relationType, string a_code)
 		{
 			ShotGridAPIResponse<ShotGridEntityRelation[]> relations = await FindAndParse<ShotGridEntityRelation[]>(a_relationType, new ShotGridSimpleSearchFilter(), 
 				new JsonAttributeFieldEnumerator<ShotGridEntityRelation.RelationAttributes>().Get(), null);
@@ -471,7 +497,7 @@ namespace ShotGridIntegration
 
 		public async Task<ShotGridAPIResponse<ShotGridEntityActivityStreamResponse>> GetProjectActivityStream(int a_targetProjectId)
 		{
-			HttpResponseMessage result = await SendApiRequest(new Uri($"{BaseUrl}entity/{ShotGridEntity.TypeNames.Project}/{a_targetProjectId}/activity_stream"), HttpMethod.Get, new ByteArrayContent(Array.Empty<byte>()));
+			HttpResponseMessage result = await SendApiRequest(new Uri($"{BaseUrl}entity/{ShotGridEntityName.Project.SnakeCasePlural}/{a_targetProjectId}/activity_stream"), HttpMethod.Get, new ByteArrayContent(Array.Empty<byte>()));
 			string resultBody = await result.Content.ReadAsStringAsync();
 			return ParseResponse<ShotGridEntityActivityStreamResponse>(result.StatusCode, resultBody);
 		}

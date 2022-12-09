@@ -49,7 +49,7 @@ namespace DataWranglerCommonWPF.Login
 			if (!string.IsNullOrEmpty(a_credentialProvider.OAuthRefreshToken) && m_allowLoginFromRefreshToken && !Keyboard.IsKeyDown(Key.LeftShift))
 			{
 				StartLoginAttempt();
-				//m_runningLoginTask = a_targetAPI.TryLoginOAuth(ShotGridApiKeyProvider.ShotGridApiScriptName, ShotGridApiKeyProvider.ShotGridApiScriptKey);
+				//m_runningLoginTask = a_targetAPI.TryLoginWithScriptKey(ShotGridApiKeyProvider.ShotGridApiScriptName, ShotGridApiKeyProvider.ShotGridApiScriptKey);
 				//m_runningLoginTask.ContinueWith(a_task => OnLoginAttemptCompleted(a_task.Result));
 				//OnLoginAttemptStarted();
 				m_allowLoginFromRefreshToken = false;
@@ -87,7 +87,7 @@ namespace DataWranglerCommonWPF.Login
 				apiKey = Password.Text;
 			}
 
-			m_runningLoginTask = m_targetAPI.TryLoginOAuth(ShotGridApiKeyProvider.ShotGridApiScriptName, apiKey);
+			m_runningLoginTask = m_targetAPI.TryLoginWithScriptKey(ShotGridApiKeyProvider.ShotGridApiScriptName, apiKey);
 			m_runningLoginTask.ContinueWith(a_task => OnLoginAttemptCompleted(a_task.Result));
 			OnLoginAttemptStarted();
 		}

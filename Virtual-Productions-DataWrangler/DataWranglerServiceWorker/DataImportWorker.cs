@@ -99,7 +99,7 @@ namespace DataWranglerServiceWorker
 				return;
 			}
 
-			if (!m_dataCache.FindEntity(ShotGridEntity.TypeNames.PublishedFileType, a_relation => a_relation.Attributes.Code == a_fileTag, out ShotGridEntityRelation? fileTag))
+			if (!m_dataCache.FindEntity(ShotGridEntityName.PublishedFileType, a_relation => a_relation.Attributes.Code == a_fileTag, out ShotGridEntityRelation? fileTag))
 			{
 				Logger.LogError("DataImport", $"Could not import file at path {a_sourceFilePath}. Data references file relation ({a_fileTag}) which is not known by the cache");
 				return;

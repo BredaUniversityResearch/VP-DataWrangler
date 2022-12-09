@@ -131,7 +131,7 @@ namespace DataWranglerServiceWorker
 				//PathCache = a_copyMetaData.DestinationRelativeFilePath,
 				//PathCacheStorage = ShotGridEntityReference.Create(a_copyMetaData.StorageTarget),
 				PublishedFileName = publishFileName,
-				PublishedFileType = ShotGridEntityReference.Create(ShotGridEntity.TypeNames.PublishedFileType, a_copyMetaData.FileTag),
+				PublishedFileType = ShotGridEntityReference.Create(ShotGridEntityName.PublishedFileType, a_copyMetaData.FileTag),
 				Description = "File auto-published by Data Wrangler"
 			};
 

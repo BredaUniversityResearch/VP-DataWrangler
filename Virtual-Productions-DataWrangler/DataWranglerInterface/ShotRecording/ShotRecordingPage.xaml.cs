@@ -2,6 +2,7 @@
 using System.Windows.Controls;
 using System.Windows.Threading;
 using BlackmagicCameraControl;
+using DataWranglerCommon;
 using ShotGridIntegration;
 
 namespace DataWranglerInterface.ShotRecording
@@ -11,7 +12,7 @@ namespace DataWranglerInterface.ShotRecording
 	/// </summary>
 	public partial class ShotRecordingPage : Page, IDisposable
 	{
-		private BlackmagicBluetoothCameraAPIController m_apiController;
+		private BlackmagicBluetoothCameraAPIController m_cameraApiController;
 		private ActiveCameraHandler m_activeCameraHandler;
 
 		public delegate void ShotVersionCreationDelegate(int a_shotId);
@@ -20,17 +21,16 @@ namespace DataWranglerInterface.ShotRecording
 		public delegate void ShotVersionCreatedDelegate(ShotGridEntityShotVersion a_data);
 		public event ShotVersionCreatedDelegate? OnNewShotVersionCreated;
 
-
 		public ShotRecordingPage()
 		{
 			InitializeComponent();
 		
-			m_apiController = new BlackmagicBluetoothCameraAPIController();
-			m_activeCameraHandler = new ActiveCameraHandler(m_apiController);
+			m_cameraApiController = new BlackmagicBluetoothCameraAPIController();
+			m_activeCameraHandler = new ActiveCameraHandler(m_cameraApiController);
 			m_activeCameraHandler.OnCameraConnected += OnCameraConnected;
 			m_activeCameraHandler.OnCameraDisconnected += OnCameraDisconnected;
 
-			CameraInfoDebug.CameraApiController = m_apiController;
+			CameraInfoDebug.CameraApiController = m_cameraApiController;
 
 			ProjectSelector.AsyncRefreshProjects();
 
@@ -40,13 +40,16 @@ namespace DataWranglerInterface.ShotRecording
 
 			ShotTemplateDisplay.SetParentControls(this, ProjectSelector, ShotSelector);
 			ShotVersionInfoDisplay.SetParentControls(this);
+
+			ShotSelector.OnNewShotCreatedButtonClicked += ShowShotCreationUI;
+			ShotCreationControl.OnRequestCreateNewShot += OnRequestCreateNewShot;
 		}
 
 		public void Dispose()
 		{
 			m_activeCameraHandler.OnCameraConnected -= OnCameraConnected;
 			m_activeCameraHandler.OnCameraDisconnected -= OnCameraDisconnected;
-			m_apiController.Dispose();
+			m_cameraApiController.Dispose();
 		}
 
 		private void OnCameraConnected(ActiveCameraInfo a_camera)
@@ -83,6 +86,25 @@ namespace DataWranglerInterface.ShotRecording
 		public void CompleteAddShotVersion(ShotGridEntityShotVersion a_data)
 		{
 			OnNewShotVersionCreated?.Invoke(a_data);
+		}
+
+		private void ShowShotCreationUI()
+		{
+			ShotCreationControl.Show();
+		}
+
+		private void OnRequestCreateNewShot(ShotGridEntityShot.ShotAttributes a_attributes)
+		{
+			int projectId = ProjectSelector.SelectedProjectId;
+			ShotSelector.OnNewShotCreationStarted();
+			DataWranglerServiceProvider.Instance.ShotGridAPI.CreateNewShot(projectId, a_attributes).ContinueWith(a_task =>
+			{
+				if (a_task.Result.IsError)
+				{
+					Logger.LogError("ShotRecording", $"Failed to create new shot, error response: {a_task.Result.ErrorInfo}");
+				}
+				ShotSelector.OnNewShotCreationFinished(a_task.Result.ResultData);
+			});
 		}
 	}
 }

@@ -26,7 +26,7 @@ namespace DataWranglerServiceWorker
 		};
 
 		private Dictionary<ShotVersionIdentifier, ShotVersionMetaCacheEntry> m_availableVersionMeta = new();
-		private Dictionary<string, Dictionary<int, ShotGridEntity>> m_cachedEntitiesByType = new();
+		private Dictionary<ShotGridEntityName, Dictionary<int, ShotGridEntity>> m_cachedEntitiesByType = new(new ShotGridEntityName.NameTypeEqualityComparer());
 
 		private ShotGridAPI m_targetApi;
 		private DateTimeOffset m_lastCacheUpdateTime = DateTimeOffset.MinValue;
@@ -52,7 +52,7 @@ namespace DataWranglerServiceWorker
 					AddOrUpdateCachedEntity(localStore);
 				}
 
-				ShotGridAPIResponse<ShotGridEntityRelation[]> fileTagRelations = await m_targetApi.GetRelations(ShotGridEntity.TypeNames.PublishedFileType);
+				ShotGridAPIResponse<ShotGridEntityRelation[]> fileTagRelations = await m_targetApi.GetRelations(ShotGridEntityName.PublishedFileType);
 				if (fileTagRelations.IsError)
 				{
 					Logger.LogError("MetaCache", "Failed to fetch file relations: " + fileTagRelations.ErrorInfo);
@@ -61,7 +61,7 @@ namespace DataWranglerServiceWorker
 
 				foreach (ShotGridEntityRelation fileTagRelation in fileTagRelations.ResultData)
 				{
-					AddOrUpdateCachedEntity(ShotGridEntity.TypeNames.PublishedFileType, fileTagRelation);
+					AddOrUpdateCachedEntity(ShotGridEntityName.PublishedFileType, fileTagRelation);
 				}
 
 				ShotGridAPIResponse<ShotGridEntityProject[]> activeProjects = await m_targetApi.GetActiveProjects();
@@ -136,10 +136,10 @@ namespace DataWranglerServiceWorker
 		private void AddOrUpdateCachedEntity<TEntityType>(TEntityType a_entry)
 			where TEntityType : ShotGridEntity
 		{
-			AddOrUpdateCachedEntity(ShotGridEntity.GetEntityName<TEntityType>(), a_entry);
+			AddOrUpdateCachedEntity(ShotGridEntityName.FromType<TEntityType>(), a_entry);
 		}
 
-		private void AddOrUpdateCachedEntity(string a_entityType, ShotGridEntity a_entry)
+		private void AddOrUpdateCachedEntity(ShotGridEntityName a_entityType, ShotGridEntity a_entry)
 		{
 			Dictionary<int, ShotGridEntity>? entitiesById = null;
 			if (!m_cachedEntitiesByType.TryGetValue(a_entityType, out entitiesById))
@@ -183,7 +183,7 @@ namespace DataWranglerServiceWorker
 			where TEntityType: ShotGridEntity
 		{
 			a_result = null;
-			if (m_cachedEntitiesByType.TryGetValue(ShotGridEntity.GetEntityName<TEntityType>(), out var entitiesById))
+			if (m_cachedEntitiesByType.TryGetValue(ShotGridEntityName.FromType<TEntityType>(), out var entitiesById))
 			{
 				if (entitiesById.TryGetValue(a_id, out var entity))
 				{
@@ -195,7 +195,7 @@ namespace DataWranglerServiceWorker
 			return false;
 		}
 
-		public bool FindEntity<TEntityType>(string a_entityType, Func<TEntityType, bool> a_selector, [NotNullWhen(true)] out TEntityType? a_result)
+		public bool FindEntity<TEntityType>(ShotGridEntityName a_entityType, Func<TEntityType, bool> a_selector, [NotNullWhen(true)] out TEntityType? a_result)
 			where TEntityType: ShotGridEntity
 		{
 			a_result = null;
@@ -217,7 +217,7 @@ namespace DataWranglerServiceWorker
 		public bool FindEntity<TEntityType>(Func<TEntityType, bool> a_selector, [NotNullWhen(true)] out TEntityType? a_result)
 			where TEntityType: ShotGridEntity
 		{
-			return FindEntity(ShotGridEntity.GetEntityName<TEntityType>(), a_selector, out a_result);
+			return FindEntity(ShotGridEntityName.FromType<TEntityType>(), a_selector, out a_result);
 		}
 	}
 }

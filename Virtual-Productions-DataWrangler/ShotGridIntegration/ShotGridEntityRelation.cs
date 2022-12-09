@@ -25,9 +25,9 @@ namespace ShotGridIntegration
 		[JsonProperty("code")]
 		public string Code;
 		[JsonProperty("type")]
-		public string RelationType;
+		public ShotGridEntityName RelationType;
 
-		public ShotGridEntityRelationCreateData(int a_relationId, string a_code, string a_relationType)
+		public ShotGridEntityRelationCreateData(int a_relationId, string a_code, ShotGridEntityName a_relationType)
 		{
 			RelationId = a_relationId;
 			Code = a_code;
@@ -38,7 +38,12 @@ namespace ShotGridIntegration
 		{
 			RelationId = a_relation.Id;
 			Code = a_relation.Attributes.Code;
-			RelationType = a_relation.ShotGridType;
+			if (a_relation.ShotGridType == null)
+			{
+				throw new Exception("Could not setup relation creation data from relation with null type");
+			}
+
+			RelationType = a_relation.ShotGridType!;
 		}
 	};
 }

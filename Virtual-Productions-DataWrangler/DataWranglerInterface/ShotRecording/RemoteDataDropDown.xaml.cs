@@ -66,30 +66,6 @@ namespace DataWranglerInterface.ShotRecording
 			});
 		}
 
-		//public void BeginAsyncDataRefresh<TResultDataType>(Task<TResultDataType[]> a_task)
-		//{
-		//	if (m_itemEntryRefreshTask == null)
-		//	{
-		//		Dispatcher.Invoke(() =>
-		//		{
-		//			LoadingSpinner.Visibility = Visibility.Visible;
-		//			DropDown.Items.Clear();
-		//			DropDown.IsEnabled = false;
-		//		});
-		//	}
-
-		//	m_itemEntryRefreshTask = a_task;
-		//	a_task.ContinueWith(OnRefreshCompleted);
-		//}
-
-		//public void OnRefreshCompleted<TResultDataType>(Task<TResultDataType[]> a_resultTask)
-		//{
-		//	if (a_resultTask != m_itemEntryRefreshTask)
-		//	{
-		//		return;
-		//	}
-
-		//}
 		public void SetLoading(bool a_isLoading)
 		{
 			if (Dispatcher.CheckAccess())
@@ -100,6 +76,25 @@ namespace DataWranglerInterface.ShotRecording
 			else
 			{
 				Dispatcher.InvokeAsync(() => SetLoading(a_isLoading));
+			}
+		}
+
+		public void AddDropdownEntry<TEntityType, TDropDownType>(TEntityType a_entityData, bool a_selectNewEntry)
+		{
+			if (Dispatcher.CheckAccess())
+			{
+				TDropDownType? dropDownType = (TDropDownType?)Activator.CreateInstance(typeof(TDropDownType), a_entityData);
+				if (dropDownType == null)
+				{
+					throw new Exception($"Failed to create object {typeof(TDropDownType).Name} with {typeof(TEntityType).Name} as first argument");
+				}
+
+				DropDown.Items.Add(dropDownType);
+				DropDown.SelectedIndex = DropDown.Items.Count - 1;
+			}
+			else
+			{
+				Dispatcher.InvokeAsync(() => AddDropdownEntry<TEntityType, TDropDownType>(a_entityData, a_selectNewEntry));
 			}
 		}
 	}

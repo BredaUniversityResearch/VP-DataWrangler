@@ -16,7 +16,6 @@ namespace ShotGridIntegration
 		Delete
 	}
 
-	[ShotGridEntityType(TypeNames.ActivityStream)]
 	public class ShotGridEntityActivityStreamResponse : ShotGridEntity
 	{
 		public class ShotGridActivityUpdate

@@ -26,7 +26,20 @@ namespace DataWranglerInterface.ShotRecording
 
 			public void OnCameraPropertyChanged(object? a_sender, CameraPropertyChangedEventArgs a_e)
 			{
-				throw new NotImplementedException();
+				if (a_e.PropertyName != nameof(CameraTarget.CurrentStorageTarget) &&
+				    a_e.PropertyName != nameof(CameraTarget.SelectedCodec))
+				{
+					return;
+				}
+
+				foreach (DataWranglerFileSourceMeta source in Meta.FileSources)
+				{
+					if (source is DataWranglerFileSourceMetaBlackmagicUrsa ursaSource)
+					{
+						ursaSource.StorageTarget = CameraTarget.CurrentStorageTarget;
+						ursaSource.CodecName = CameraTarget.SelectedCodec;
+					}
+				}
 			}
 		};
 
@@ -40,6 +53,7 @@ namespace DataWranglerInterface.ShotRecording
 
 		private bool m_shouldCreateNewShotOnRecord = true;
 
+		//Subscriber for hooking into StorageTargetChanged / CodecChanged messages during recording.
 		private CameraPropertyChangedSubscriber? m_subscriber = null;
 
 		public ShotVersionTemplateDisplay()
@@ -59,7 +73,7 @@ namespace DataWranglerInterface.ShotRecording
 			m_shotSelectorControl = a_shotSelector;
 		}
 
-		private void CreateNewShot(DataWranglerShotVersionMeta a_meta)
+		private void CreateNewShotVersion(DataWranglerShotVersionMeta a_meta)
 		{
 			if (m_shotSelectorControl == null || m_projectSelector == null)
 			{
@@ -127,6 +141,7 @@ namespace DataWranglerInterface.ShotRecording
 					}
 
 					m_subscriber = new CameraPropertyChangedSubscriber(targetMeta, a_camera);
+					a_camera.CameraPropertyChanged += m_subscriber.OnCameraPropertyChanged;
 
 					foreach (DataWranglerFileSourceMeta source in targetMeta.FileSources)
 					{
@@ -138,9 +153,8 @@ namespace DataWranglerInterface.ShotRecording
 
 						}
 					} 
-					a_camera.CameraPropertyChanged += m_subscriber.OnCameraPropertyChanged;
 
-					CreateNewShot(targetMeta);
+					CreateNewShotVersion(targetMeta);
 				}
 			}
 			else

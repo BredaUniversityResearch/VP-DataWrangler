@@ -2,7 +2,6 @@
 
 namespace ShotGridIntegration
 {
-	[ShotGridEntityType(TypeNames.LocalStorage)]
 	public class ShotGridEntityLocalStorage : ShotGridEntity
 	{
 		public class LocalStorageAttributes

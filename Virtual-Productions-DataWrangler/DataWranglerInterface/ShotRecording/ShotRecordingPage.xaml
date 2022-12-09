@@ -18,9 +18,14 @@
 			<ColumnDefinition Width="*"></ColumnDefinition>
 		</Grid.ColumnDefinitions>
 
-		<ShotRecordingPage:ProjectSelectorControl x:Name="ProjectSelector" Margin="9,10,11,0" VerticalAlignment="Top" Grid.Column="0"/>
-		<ShotRecordingPage:ShotSelectorControl x:Name="ShotSelector" Margin="10,40,10,0" VerticalAlignment="Top" Grid.Column="0"/>
-		<ShotRecordingPage:ShotInfoDisplay x:Name="ShotInfoDisplay" Margin="10, 70, 10, 0" VerticalAlignment="Top"  Grid.Column="0"/>
+		<DockPanel Margin="10, 10, 10, 10" Grid.Column="0">
+			<ShotRecordingPage:ProjectSelectorControl x:Name="ProjectSelector" DockPanel.Dock="Top"/>
+			<ShotRecordingPage:ShotSelectorControl x:Name="ShotSelector" DockPanel.Dock="Top"/>
+			<Grid>
+				<ShotRecordingPage:ShotInfoDisplay x:Name="ShotInfoDisplay"/>
+				<ShotRecordingPage:ShotCreationControl x:Name="ShotCreationControl" Visibility="Hidden"/>
+			</Grid>
+		</DockPanel>
 		<ShotRecordingPage:ShotVersionInfoDisplay x:Name="ShotVersionInfoDisplay" Margin="10,10,10,0" VerticalAlignment="Top" Grid.Column="1" />
 		<DockPanel Grid.Column="2" Grid.Row="0">
 			<ShotRecordingPage:CameraInfoControl x:Name="CameraInfo" DockPanel.Dock="Top"/>

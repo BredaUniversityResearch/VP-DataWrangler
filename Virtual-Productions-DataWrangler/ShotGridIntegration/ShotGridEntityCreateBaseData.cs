@@ -12,12 +12,12 @@ namespace ShotGridIntegration
 		[JsonProperty("project")]
 		public ShotGridEntityReference Project;
 		[JsonProperty("entity")]
-		public ShotGridEntityReference ParentShotGridEntity;
+		public ShotGridEntityReference? ParentShotGridEntity = null;
 
-		public ShotGridEntityCreateBaseData(int a_projectId, string a_parentEntityType, int a_parentEntityId)
+		public ShotGridEntityCreateBaseData(int a_projectId, ShotGridEntityReference? a_parentEntity)
 		{
-			Project = new ShotGridEntityReference(ShotGridEntity.TypeNames.Project, a_projectId);
-			ParentShotGridEntity = new ShotGridEntityReference(a_parentEntityType, a_parentEntityId);
+			Project = new ShotGridEntityReference(ShotGridEntityName.Project, a_projectId);
+			ParentShotGridEntity = a_parentEntity;
 		}
 	}
 }
