@@ -81,7 +81,7 @@ namespace DataWranglerInterface.ShotRecording
 			}
 			else if (a_e.PropertyName == nameof(ActiveCameraInfo.CurrentStorageTarget))
 			{
-				Dispatcher.InvokeAsync(() => CameraStorageTarget.Content = m_targetCamera.CurrentStorageTarget.ToString());
+				Dispatcher.InvokeAsync(() => CameraStorageTarget.Content = m_targetCamera.CurrentStorageTarget);
 			}
 		}
 	}

@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Diagnostics;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using DataWranglerCommon;
@@ -12,6 +13,23 @@ namespace DataWranglerInterface.ShotRecording
 	/// </summary>
 	public partial class ShotVersionTemplateDisplay : UserControl
 	{
+		private class CameraPropertyChangedSubscriber
+		{
+			public DataWranglerShotVersionMeta Meta;
+			public ActiveCameraInfo CameraTarget;
+
+			public CameraPropertyChangedSubscriber(DataWranglerShotVersionMeta a_meta, ActiveCameraInfo a_cameraInfo)
+			{
+				Meta = a_meta;
+				CameraTarget = a_cameraInfo;
+			}
+
+			public void OnCameraPropertyChanged(object? a_sender, CameraPropertyChangedEventArgs a_e)
+			{
+				throw new NotImplementedException();
+			}
+		};
+
 		private const string ShotNameTemplate = "Take {0:D2}";
 		private static readonly Regex ShotNameTemplateMatcher = new Regex("Take ([0-9]{2})");
 
@@ -21,6 +39,8 @@ namespace DataWranglerInterface.ShotRecording
 		private ShotSelectorControl? m_shotSelectorControl = null;
 
 		private bool m_shouldCreateNewShotOnRecord = true;
+
+		private CameraPropertyChangedSubscriber? m_subscriber = null;
 
 		public ShotVersionTemplateDisplay()
 		{
@@ -78,7 +98,7 @@ namespace DataWranglerInterface.ShotRecording
 
 		private int FindNextTakeIdFromShotVersions(ShotGridEntityShotVersion[] a_resultData)
 		{
-			int nextShotId = 1;
+			int nextShotId = 0;
 			foreach (ShotGridEntityShotVersion shotVersion in a_resultData)
 			{
 				Match nameMatch = ShotNameTemplateMatcher.Match(shotVersion.Attributes.VersionCode);
@@ -99,6 +119,14 @@ namespace DataWranglerInterface.ShotRecording
 				if (m_shouldCreateNewShotOnRecord)
 				{
 					DataWranglerShotVersionMeta targetMeta = VersionTemplateFileSourcesControl.CreateMetaFromCurrentTemplate();
+					if (m_subscriber != null)
+					{
+						Logger.LogError("ShotVersionTemplate", "Expected target subscriber to be null, was not null. Did we miss a message?");
+						m_subscriber.CameraTarget.CameraPropertyChanged -= m_subscriber.OnCameraPropertyChanged;
+						m_subscriber = null;
+					}
+
+					m_subscriber = new CameraPropertyChangedSubscriber(targetMeta, a_camera);
 
 					foreach (DataWranglerFileSourceMeta source in targetMeta.FileSources)
 					{
@@ -107,10 +135,25 @@ namespace DataWranglerInterface.ShotRecording
 							ursaSource.RecordingStart = a_stateChangeTime;
 							ursaSource.StorageTarget = a_camera.CurrentStorageTarget;
 							ursaSource.CodecName = a_camera.SelectedCodec;
+
 						}
-					}
+					} 
+					a_camera.CameraPropertyChanged += m_subscriber.OnCameraPropertyChanged;
 
 					CreateNewShot(targetMeta);
+				}
+			}
+			else
+			{
+				if (m_subscriber != null)
+				{
+					if (m_subscriber.CameraTarget != a_camera)
+					{
+						throw new Exception("Multiple cameras?");
+					}
+
+					a_camera.CameraPropertyChanged -= m_subscriber.OnCameraPropertyChanged;
+					m_subscriber = null;
 				}
 			}
 		}
