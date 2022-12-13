@@ -284,54 +284,9 @@ namespace BlackmagicCameraControl
 		}
 
 		private void ProcessCommandsFromStream(Stream a_inputData, DateTimeOffset a_receivedTime)
-		{
-			CommandReader reader = new CommandReader(a_inputData);
-			while (reader.BytesRemaining >= PacketHeader.ByteSize)
-			{
-				PacketHeader packetHeader = reader.ReadPacketHeader();
-				if (reader.BytesRemaining > packetHeader.PacketSize && reader.BytesRemaining < byte.MaxValue)
-				{
-					throw new Exception();
-				}
-
-				while (reader.BytesRemaining > CommandHeader.ByteSize)
-				{
-					CommandHeader header = reader.ReadCommandHeader();
-
-					CommandMeta? commandMeta = CommandPacketFactory.FindCommandMeta(header.CommandIdentifier);
-					if (commandMeta == null)
-					{
-						IBlackmagicCameraLogInterface.LogWarning(
-							$"Received unknown packet with identifier {header.CommandIdentifier}. Size: {reader.BytesRemaining}, Type: {header.DataType}");
-						a_inputData.Seek(packetHeader.PacketSize - CommandHeader.ByteSize, SeekOrigin.Current);
-						break;
-					}
-
-					int possiblePadding = packetHeader.PacketSize -
-					                      ((int) CommandHeader.ByteSize + commandMeta.SerializedSizeBytes);
-
-					if (header.DataType != commandMeta.DataType ||
-					    ((reader.BytesRemaining - commandMeta.SerializedSizeBytes) > possiblePadding &&
-					     header.DataType != ECommandDataType.Utf8String))
-					{
-						throw new Exception(
-							$"Command meta data wrong: Bytes (Expected / Got) {commandMeta.SerializedSizeBytes} / {reader.BytesRemaining}, DataType: {commandMeta.DataType} / {header.DataType}");
-					}
-
-					ICommandPacketBase? packetInstance = CommandPacketFactory.CreatePacket(header.CommandIdentifier, reader);
-					if (packetInstance != null)
-					{
-						IBlackmagicCameraLogInterface.LogVerbose(
-							$"Received Packet {header.CommandIdentifier}. {packetInstance}");
-						m_dispatcher.NotifyDataReceived(CameraHandle, a_receivedTime, packetInstance);
-					}
-					else
-					{
-						throw new Exception("Failed to deserialize command with known meta");
-					}
-				}
-			}
-		}
+        {
+            CommandReader.DecodeStream(a_inputData, (a_packet) => { m_dispatcher.NotifyDataReceived(CameraHandle, a_receivedTime, a_packet); });
+        }
 
 		public Task<string> AsyncRequestCameraModel()
 		{

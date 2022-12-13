@@ -1,4 +1,6 @@
-﻿namespace BlackmagicCameraControl.CommandPackets
+﻿using System.Reflection.PortableExecutable;
+
+namespace BlackmagicCameraControl.CommandPackets
 {
 	public class CommandReader
 	{
@@ -12,8 +14,64 @@
 		{
 			m_targetStream = a_stream;
 		}
-		
-		public CommandIdentifier ReadIdentifier()
+
+        public static void DecodeStream(Stream a_stream, Action<ICommandPacketBase> a_onPacketDecoded)
+        {
+            CommandReader reader = new CommandReader(a_stream);
+            while (reader.BytesRemaining >= PacketHeader.ByteSize)
+            {
+                PacketHeader packetHeader = reader.ReadPacketHeader();
+                if (reader.BytesRemaining > packetHeader.PacketSize && reader.BytesRemaining < byte.MaxValue)
+                {
+                    throw new Exception();
+                }
+
+                reader.DecodeCommandStream(packetHeader, a_onPacketDecoded);
+            }
+        }
+
+        public void DecodeCommandStream(PacketHeader a_header, Action<ICommandPacketBase> a_onPacketDecoded)
+        {
+			while (BytesRemaining > CommandHeader.ByteSize)
+			{
+				CommandHeader header = ReadCommandHeader();
+
+				CommandMeta? commandMeta = CommandPacketFactory.FindCommandMeta(header.CommandIdentifier);
+				if (commandMeta == null)
+				{
+					IBlackmagicCameraLogInterface.LogWarning(
+						$"Received unknown packet with identifier {header.CommandIdentifier}. Size: {BytesRemaining}, Type: {header.DataType}");
+					m_targetStream.Seek(a_header.PacketSize - CommandHeader.ByteSize, SeekOrigin.Current);
+					break;
+				}
+
+				int possiblePadding = a_header.PacketSize -
+				                      ((int)CommandHeader.ByteSize + commandMeta.SerializedSizeBytes);
+
+				if (header.DataType != commandMeta.DataType ||
+					((BytesRemaining - commandMeta.SerializedSizeBytes) > possiblePadding &&
+					 header.DataType != ECommandDataType.Utf8String))
+				{
+					throw new Exception(
+						$"Command meta data wrong: Bytes (Expected / Got) {commandMeta.SerializedSizeBytes} / {BytesRemaining}, DataType: {commandMeta.DataType} / {header.DataType}");
+				}
+
+				ICommandPacketBase? packetInstance = CommandPacketFactory.CreatePacket(header.CommandIdentifier, this);
+				if (packetInstance != null)
+				{
+					IBlackmagicCameraLogInterface.LogVerbose(
+						$"Received Packet {header.CommandIdentifier}. {packetInstance}");
+					a_onPacketDecoded.Invoke(packetInstance);
+				}
+				else
+				{
+					throw new Exception("Failed to deserialize command with known meta");
+				}
+
+			}
+		}
+
+        public CommandIdentifier ReadIdentifier()
 		{
 			int readCount = m_targetStream.Read(m_smallReadBuffer, 0, 2);
 			if (readCount != 2)
@@ -87,6 +145,17 @@
 			return BitConverter.ToInt32(m_smallReadBuffer, 0);
 		}
 
+		public uint ReadUInt32()
+		{
+			int readCount = m_targetStream.Read(m_smallReadBuffer, 0, 4);
+			if (readCount != 4)
+			{
+				throw new Exception("Failed to read 4 bytes for int32");
+			}
+
+			return BitConverter.ToUInt32(m_smallReadBuffer, 0);
+		}
+
 		public string ReadString()
 		{
 			byte[] stringData = new byte[BytesRemaining];
@@ -98,5 +167,6 @@
 
 			return System.Text.Encoding.UTF8.GetString(stringData);
 		}
+
 	}
 }

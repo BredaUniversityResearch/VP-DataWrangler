@@ -4,7 +4,12 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BlackMagicCameraControlData\BlackMagicCameraControlData.csproj" />
+  </ItemGroup>
 
   <ItemGroup>
     <Reference Include="DeckLinkAPI">
