@@ -46,7 +46,7 @@ namespace DataWranglerCommonWPF.Login
 			m_targetAPI = a_targetAPI;
 			m_credentialProvider = a_credentialProvider;
 
-			if (!string.IsNullOrEmpty(a_credentialProvider.OAuthRefreshToken) && m_allowLoginFromRefreshToken && !Keyboard.IsKeyDown(Key.LeftShift))
+			if (m_allowLoginFromRefreshToken && !Keyboard.IsKeyDown(Key.LeftShift))
 			{
 				StartLoginAttempt();
 				//m_runningLoginTask = a_targetAPI.TryLoginWithScriptKey(ShotGridApiKeyProvider.ShotGridApiScriptName, ShotGridApiKeyProvider.ShotGridApiScriptKey);
