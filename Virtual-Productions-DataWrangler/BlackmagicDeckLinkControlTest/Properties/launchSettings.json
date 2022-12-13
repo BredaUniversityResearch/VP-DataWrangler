@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "BlackmagicDeckLinkControlTest": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}

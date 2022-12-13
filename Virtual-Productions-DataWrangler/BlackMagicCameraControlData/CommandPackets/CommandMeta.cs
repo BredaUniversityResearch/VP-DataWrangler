@@ -2,7 +2,7 @@
 
 namespace BlackmagicCameraControl.CommandPackets;
 
-internal class CommandMeta
+public class CommandMeta
 {
 	public Type CommandType;
 	public CommandIdentifier Identifier;

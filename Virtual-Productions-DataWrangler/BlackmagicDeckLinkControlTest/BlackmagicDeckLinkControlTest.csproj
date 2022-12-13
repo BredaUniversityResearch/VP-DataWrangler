@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFramework>net6.0-windows10.0.19041.0</TargetFramework>
@@ -21,7 +21,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\BlackmagicCameraControlBluetooth\BlackmagicCameraControlBluetooth.csproj" />
+	  <ProjectReference Include="..\BlackmagicDeckLinkControl\BlackmagicDeckLinkControl.csproj" />
 	</ItemGroup>
+
+	<ProjectExtensions><VisualStudio><UserProperties testenvironments_1json__JsonSchema="test environ" /></VisualStudio></ProjectExtensions>
 
 </Project>

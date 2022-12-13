@@ -1,8 +1,4 @@
-﻿using System;
-using System.IO;
-using Windows.Storage.Streams;
-
-namespace BlackmagicCameraControl.CommandPackets
+﻿namespace BlackmagicCameraControl.CommandPackets
 {
 	public class CommandReader
 	{
