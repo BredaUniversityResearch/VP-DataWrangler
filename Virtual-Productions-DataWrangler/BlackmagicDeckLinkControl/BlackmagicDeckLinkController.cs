@@ -16,8 +16,10 @@ namespace BlackmagicDeckLinkControl
 		{
 			[FieldOffset(0)]
 			public uint zero;
+
 			[FieldOffset(4)]
 			public uint magic;
+
 			[FieldOffset(8)]
 			public uint DIDSDIDFieldLength;
 		};
@@ -25,57 +27,58 @@ namespace BlackmagicDeckLinkControl
 		class DeviceInputNotificationCallback : IDeckLinkInputCallback
 		{
 			private const int RemoteControlVANCLineId = 16; // Ursa Mini Manual SDK 1.4, pg 271 "Blanking Encoding"
-            private const int MaxVANCLineByteSize = 255;
+			private const int MaxVANCLineByteSize = 255;
 
-            private IDeckLinkInput m_targetDevice;
-            private _BMDDisplayMode m_targetDisplayMode = _BMDDisplayMode.bmdModeHD1080p6000;
-            private _BMDPixelFormat m_targetPixelFormat = _BMDPixelFormat.bmdFormat10BitYUV;
+			private IDeckLinkInput m_targetDevice;
+			private _BMDDisplayMode m_targetDisplayMode = _BMDDisplayMode.bmdModeHD1080p6000;
+			private _BMDPixelFormat m_targetPixelFormat = _BMDPixelFormat.bmdFormat10BitYUV;
 
-            public DeviceInputNotificationCallback(IDeckLinkInput a_targetDevice)
-            {
-                m_targetDevice = a_targetDevice;
-            }
+			public DeviceInputNotificationCallback(IDeckLinkInput a_targetDevice)
+			{
+				m_targetDevice = a_targetDevice;
+			}
 
-            public void VideoInputFormatChanged(_BMDVideoInputFormatChangedEvents notificationEvents, IDeckLinkDisplayMode newDisplayMode, _BMDDetectedVideoInputFormatFlags detectedSignalFlags)
-            {
-                _BMDDisplayMode targetMode = m_targetDisplayMode;
-                _BMDPixelFormat pixelFormat = m_targetPixelFormat;
+			public void VideoInputFormatChanged(_BMDVideoInputFormatChangedEvents notificationEvents, IDeckLinkDisplayMode newDisplayMode, _BMDDetectedVideoInputFormatFlags detectedSignalFlags)
+			{
+				_BMDDisplayMode targetMode = m_targetDisplayMode;
+				_BMDPixelFormat pixelFormat = m_targetPixelFormat;
 
 				if ((notificationEvents & _BMDVideoInputFormatChangedEvents.bmdVideoInputDisplayModeChanged) != 0)
-                {
-                    targetMode = newDisplayMode.GetDisplayMode();
-                }
+				{
+					targetMode = newDisplayMode.GetDisplayMode();
+				}
+
 				if ((notificationEvents & _BMDVideoInputFormatChangedEvents.bmdVideoInputColorspaceChanged) != 0)
 				{
 					//switch(detectedSignalFlags)
 					//{
 					//	case _BMDDetectedVideoInputFormatFlags.bmdDetectedVideoInput8BitDepth:
-     //                       pixelFormat = _BMDPixelFormat.bmdFormat8BitARGB;
-     //                       break;
+					//                       pixelFormat = _BMDPixelFormat.bmdFormat8BitARGB;
+					//                       break;
 					//	case _BMDDetectedVideoInputFormatFlags.bmdDetectedVideoInput10BitDepth:
-     //                       pixelFormat = _BMDPixelFormat.bmdFormat10BitRGB;
-     //                       break;
+					//                       pixelFormat = _BMDPixelFormat.bmdFormat10BitRGB;
+					//                       break;
 					//	case _BMDDetectedVideoInputFormatFlags.bmdDetectedVideoInput12BitDepth:
-     //                       pixelFormat = _BMDPixelFormat.bmdFormat12BitRGB;
-     //                       break;
+					//                       pixelFormat = _BMDPixelFormat.bmdFormat12BitRGB;
+					//                       break;
 					//	default:
-     //                       pixelFormat = m_targetPixelFormat;
-     //                       break;
-     //               };
+					//                       pixelFormat = m_targetPixelFormat;
+					//                       break;
+					//               };
 					pixelFormat = _BMDPixelFormat.bmdFormat10BitYUV;
 				}
 
 				if (m_targetDisplayMode != targetMode || m_targetPixelFormat != pixelFormat)
-                {
-                    m_targetDisplayMode = targetMode;
-                    m_targetPixelFormat = pixelFormat;
+				{
+					m_targetDisplayMode = targetMode;
+					m_targetPixelFormat = pixelFormat;
 
 					m_targetDevice.PauseStreams();
 					m_targetDevice.EnableVideoInput(targetMode, pixelFormat, _BMDVideoInputFlags.bmdVideoInputEnableFormatDetection);
 					m_targetDevice.FlushStreams();
-					m_targetDevice.StartStreams(); 
+					m_targetDevice.StartStreams();
 				}
-            }
+			}
 
 			public void VideoInputFrameArrived(IDeckLinkVideoInputFrame videoFrame, IDeckLinkAudioInputPacket audioPacket)
 			{
@@ -87,17 +90,17 @@ namespace BlackmagicDeckLinkControl
 
 				int frameWidth = videoFrame.GetWidth();
 				int frameHeight = videoFrame.GetHeight();
-                //videoFrame.GetAncillaryData(out IDeckLinkVideoFrameAncillary ancillaryData);
+				//videoFrame.GetAncillaryData(out IDeckLinkVideoFrameAncillary ancillaryData);
 				//_BMDDisplayMode mode = ancillaryData.GetDisplayMode();
 
-				IDeckLinkVideoFrameAncillaryPackets ancillaryData = (IDeckLinkVideoFrameAncillaryPackets)videoFrame;
+				IDeckLinkVideoFrameAncillaryPackets ancillaryData = (IDeckLinkVideoFrameAncillaryPackets) videoFrame;
 				ancillaryData.GetPacketIterator(out IDeckLinkAncillaryPacketIterator it);
-				
+
 				it.Next(out IDeckLinkAncillaryPacket packet);
-				while(packet != null)
+				while (packet != null)
 				{
 					byte did = packet.GetDID(); //0x51
-					byte sdid = packet.GetSDID();  //0x53
+					byte sdid = packet.GetSDID(); //0x53
 					if (did == 0x51 && sdid == 0x52)
 					{
 						//Tally packet, don't care...
@@ -107,11 +110,16 @@ namespace BlackmagicDeckLinkControl
 						uint line = packet.GetLineNumber();
 
 						packet.GetBytes(_BMDAncillaryPacketFormat.bmdAncillaryPacketFormatUInt8, out IntPtr packetData, out uint size);
-						byte[] bytes = new byte[size];
 						unsafe
 						{
-							using Stream ms = new UnmanagedMemoryStream((byte*)packetData.ToPointer(), size);
-							int read = ms.Read(bytes);
+							using Stream ms = new UnmanagedMemoryStream((byte*) packetData.ToPointer(), size);
+							byte[] data = new byte[size];
+							ms.Read(data, 0, (int)size);
+							ms.Seek(0, SeekOrigin.Begin);
+							CommandReader.DecodeStream(ms, (a_packet) =>
+							{
+								int b = 9001;
+							});
 						}
 					}
 					else
@@ -156,7 +164,7 @@ namespace BlackmagicDeckLinkControl
 
 		class DeviceNotificationCallback : IDeckLinkDeviceNotificationCallback
 		{
- 			private DeviceInputNotificationCallback? m_deviceInputNotificationCallback = null;
+			private DeviceInputNotificationCallback? m_deviceInputNotificationCallback = null;
 
 			public void DeckLinkDeviceArrived(IDeckLink a_deckLinkDevice)
 			{
@@ -167,15 +175,16 @@ namespace BlackmagicDeckLinkControl
 				}
 
 				if (a_deckLinkDevice is IDeckLinkInput input)
-                {
+				{
 					if (m_deviceInputNotificationCallback != null)
-                    {
-                        throw new Exception("Input device not properly released");
-                    }
-                    m_deviceInputNotificationCallback = new DeviceInputNotificationCallback(input); 
-                    input.SetCallback(m_deviceInputNotificationCallback);
-                    input.EnableAudioInput(_BMDAudioSampleRate.bmdAudioSampleRate48kHz, _BMDAudioSampleType.bmdAudioSampleType16bitInteger, 2);
-					input.EnableVideoInput(_BMDDisplayMode.bmdModeHD1080p25, _BMDPixelFormat.bmdFormat10BitYUV, _BMDVideoInputFlags.bmdVideoInputFlagDefault);
+					{
+						throw new Exception("Input device not properly released");
+					}
+
+					m_deviceInputNotificationCallback = new DeviceInputNotificationCallback(input);
+					input.SetCallback(m_deviceInputNotificationCallback);
+					//input.EnableAudioInput(_BMDAudioSampleRate.bmdAudioSampleRate48kHz, _BMDAudioSampleType.bmdAudioSampleType16bitInteger, 2);
+					input.EnableVideoInput(_BMDDisplayMode.bmdModeHD1080p25, _BMDPixelFormat.bmdFormat10BitYUV, _BMDVideoInputFlags.bmdVideoInputEnableFormatDetection);
 					input.StartStreams();
 				}
 			}

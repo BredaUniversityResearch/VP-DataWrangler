@@ -4,6 +4,23 @@ namespace BlackmagicCameraControl.CommandPackets
 {
 	public class CommandReader
 	{
+		private struct StreamSpan
+		{
+			public long ByteStart;
+			public long ByteLength;
+
+			public StreamSpan(long a_byteStart, long a_byteLength)
+			{
+				ByteStart = a_byteStart;
+				ByteLength = a_byteLength;
+			}
+
+			public long GetBytesRemaining(Stream a_stream)
+			{
+				return ByteLength - (a_stream.Position - ByteStart);
+			}
+		};
+
 		private Stream m_targetStream;
 		private byte[] m_smallReadBuffer = new byte[32];
 
@@ -21,18 +38,31 @@ namespace BlackmagicCameraControl.CommandPackets
             while (reader.BytesRemaining >= PacketHeader.ByteSize)
             {
                 PacketHeader packetHeader = reader.ReadPacketHeader();
-                if (reader.BytesRemaining > packetHeader.PacketSize && reader.BytesRemaining < byte.MaxValue)
+                if (reader.BytesRemaining < packetHeader.PacketSize && reader.BytesRemaining < byte.MaxValue)
                 {
                     throw new Exception();
                 }
 
-                reader.DecodeCommandStream(packetHeader, a_onPacketDecoded);
+				StreamSpan commandSpan = new StreamSpan(reader.m_targetStream.Position, packetHeader.PacketSize);
+				reader.DecodeCommandStream(commandSpan, a_onPacketDecoded);
+
+				if (reader.m_targetStream.Position != commandSpan.ByteStart + commandSpan.ByteLength)
+				{
+					throw new Exception("Reader read too much or too little");
+				}
+
+				long packetStreamSize = ((packetHeader.PacketSize + 3) & ~3); //Packets are aligned on a 4 byte boundary, pad if needed.
+				long padding = packetStreamSize - packetHeader.PacketSize;
+				if (padding > 0)
+				{
+					reader.m_targetStream.Seek(padding, SeekOrigin.Current);
+				}
             }
         }
 
-        public void DecodeCommandStream(PacketHeader a_header, Action<ICommandPacketBase> a_onPacketDecoded)
+        private void DecodeCommandStream(StreamSpan a_streamSection, Action<ICommandPacketBase> a_onPacketDecoded)
         {
-			while (BytesRemaining > CommandHeader.ByteSize)
+			while (a_streamSection.GetBytesRemaining(m_targetStream) > CommandHeader.ByteSize)
 			{
 				CommandHeader header = ReadCommandHeader();
 
@@ -41,19 +71,16 @@ namespace BlackmagicCameraControl.CommandPackets
 				{
 					IBlackmagicCameraLogInterface.LogWarning(
 						$"Received unknown packet with identifier {header.CommandIdentifier}. Size: {BytesRemaining}, Type: {header.DataType}");
-					m_targetStream.Seek(a_header.PacketSize - CommandHeader.ByteSize, SeekOrigin.Current);
+					m_targetStream.Seek(a_streamSection.ByteLength - CommandHeader.ByteSize, SeekOrigin.Current);
 					break;
 				}
 
-				int possiblePadding = a_header.PacketSize -
-				                      ((int)CommandHeader.ByteSize + commandMeta.SerializedSizeBytes);
-
 				if (header.DataType != commandMeta.DataType ||
-					((BytesRemaining - commandMeta.SerializedSizeBytes) > possiblePadding &&
-					 header.DataType != ECommandDataType.Utf8String))
+				    ((a_streamSection.GetBytesRemaining(m_targetStream) - commandMeta.SerializedSizeBytes) != 0 &&
+				     header.DataType != ECommandDataType.Utf8String))
 				{
 					throw new Exception(
-						$"Command meta data wrong: Bytes (Expected / Got) {commandMeta.SerializedSizeBytes} / {BytesRemaining}, DataType: {commandMeta.DataType} / {header.DataType}");
+						$"Command meta data wrong: Bytes (Expected / Got) {commandMeta.SerializedSizeBytes} / {a_streamSection.GetBytesRemaining(m_targetStream)}, DataType: {commandMeta.DataType} / {header.DataType}");
 				}
 
 				ICommandPacketBase? packetInstance = CommandPacketFactory.CreatePacket(header.CommandIdentifier, this);
