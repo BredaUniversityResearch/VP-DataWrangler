@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Threading;
 using BlackmagicCameraControl.CommandPackets;
+using BlackmagicCameraControlBluetooth;
+using BlackmagicCameraControlData;
 
 namespace BlackmagicCameraControl
 {

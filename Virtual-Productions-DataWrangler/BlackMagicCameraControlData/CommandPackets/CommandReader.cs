@@ -1,5 +1,6 @@
 ﻿using BlackmagicCameraControlData;
 using System.Reflection.PortableExecutable;
+using BlackmagicCameraControlData.CommandPackets;
 
 namespace BlackmagicCameraControl.CommandPackets
 {

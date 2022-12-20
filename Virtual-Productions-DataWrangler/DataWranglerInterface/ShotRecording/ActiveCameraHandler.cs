@@ -1,5 +1,7 @@
 ﻿using BlackmagicCameraControl;
 using BlackmagicCameraControl.CommandPackets;
+using BlackmagicCameraControlBluetooth;
+using BlackmagicCameraControlData;
 using BlackmagicDeckLinkControl;
 using CommonLogging;
 using DataWranglerCommon;
@@ -21,9 +23,9 @@ namespace DataWranglerInterface.ShotRecording
 		public ActiveCameraHandler(BlackmagicBluetoothCameraAPIController a_apiController)
 		{
 			m_apiController = a_apiController;
-			m_apiController.OnCameraConnected += OnApiControllerCameraConnected;
+			m_apiController.OnCameraConnected += OnBluetoothCameraConnected;
 			m_apiController.OnCameraDataReceived += OnCameraDataReceived;
-			m_apiController.OnCameraDisconnected += OnApiControllerCameraDisconnected;
+			m_apiController.OnCameraDisconnected += OnBluetoothCameraDisconnected;
 
 			m_deckLinkController = BlackmagicDeckLinkController.Create(out string? errorMessage);
 			if (m_deckLinkController != null)
@@ -48,7 +50,7 @@ namespace DataWranglerInterface.ShotRecording
 			}
 		}
 
-		private void OnApiControllerCameraConnected(CameraHandle a_handle)
+		private void OnBluetoothCameraConnected(CameraHandle a_handle)
 		{
 			if (m_apiController == null)
 			{
@@ -61,7 +63,7 @@ namespace DataWranglerInterface.ShotRecording
 			OnCameraConnected(info);
 		}
 
-		private void OnApiControllerCameraDisconnected(CameraHandle a_handle)
+		private void OnBluetoothCameraDisconnected(CameraHandle a_handle)
 		{
 			if (m_activeCameras.TryGetValue(a_handle, out ActiveCameraInfo? info))
 			{

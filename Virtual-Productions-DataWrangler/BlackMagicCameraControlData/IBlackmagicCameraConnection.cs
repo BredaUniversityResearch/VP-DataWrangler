@@ -1,7 +1,6 @@
-﻿using System;
-using BlackmagicCameraControl.CommandPackets;
+﻿using BlackmagicCameraControl.CommandPackets;
 
-namespace BlackmagicCameraControl
+namespace BlackmagicCameraControlData
 {
 	public interface IBlackmagicCameraConnection: IDisposable
 	{

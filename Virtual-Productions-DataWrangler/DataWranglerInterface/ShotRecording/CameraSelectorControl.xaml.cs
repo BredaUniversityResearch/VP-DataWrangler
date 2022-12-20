@@ -1,6 +1,7 @@
 ﻿using System.Windows.Controls;
 using System.Windows.Threading;
 using BlackmagicCameraControl;
+using BlackmagicCameraControlBluetooth;
 
 namespace DataWranglerInterface.ShotRecording
 {

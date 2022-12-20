@@ -1,4 +1,5 @@
 ﻿using System;
+using BlackmagicCameraControlData.CommandPackets;
 
 namespace BlackmagicCameraControl.CommandPackets
 {

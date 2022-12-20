@@ -2,6 +2,7 @@
 using System.Windows.Controls;
 using System.Windows.Threading;
 using BlackmagicCameraControl;
+using BlackmagicCameraControlBluetooth;
 using CommonLogging;
 using DataWranglerCommon;
 using ShotGridIntegration;

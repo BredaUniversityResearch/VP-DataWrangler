@@ -2,6 +2,8 @@
 using System.Runtime.CompilerServices;
 using BlackmagicCameraControl;
 using BlackmagicCameraControl.CommandPackets;
+using BlackmagicCameraControlBluetooth;
+using BlackmagicCameraControlData;
 using CommonLogging;
 using DataWranglerCommon;
 using DataWranglerInterface.DebugSupport;

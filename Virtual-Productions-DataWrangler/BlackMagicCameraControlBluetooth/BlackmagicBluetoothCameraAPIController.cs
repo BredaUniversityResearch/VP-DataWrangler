@@ -4,15 +4,16 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.Devices.Bluetooth;
+using Windows.Devices.Bluetooth.Advertisement;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
 using Windows.Devices.Enumeration;
-using Windows.Devices.Bluetooth.Advertisement;
+using BlackmagicCameraControl;
 using BlackmagicCameraControl.CommandPackets;
 using BlackmagicCameraControlData;
 
-namespace BlackmagicCameraControl
+namespace BlackmagicCameraControlBluetooth
 {
-	public class BlackmagicBluetoothCameraAPIController: IDisposable
+	public class BlackmagicBluetoothCameraAPIController: CameraControllerBase, IDisposable
 	{
 		private class RetryEntry
 		{
@@ -53,8 +54,6 @@ namespace BlackmagicCameraControl
 		private static readonly TimeSpan CameraConnectSetupTimeout = new TimeSpan(0, 1, 15);
 		private static readonly TimeSpan CameraDataReceivedTimeout = new TimeSpan(0, 0, 30);
 
-		public delegate void CameraConnectedDelegate(CameraHandle a_handle);
-		public delegate void CameraDataReceivedDelegate(CameraHandle a_handle, DateTimeOffset a_receivedTime, ICommandPacketBase a_packet);
 		public delegate string? CameraPairRequestPairingCode(string a_cameraDisplayName);
 
 		private DeviceWatcher BLEDeviceWatcher = DeviceInformation.CreateWatcher(BluetoothLEDevice.GetDeviceSelector());
@@ -67,9 +66,6 @@ namespace BlackmagicCameraControl
 		private readonly HashSet<string> m_activeConnectingSet = new HashSet<string>();
 
 		public int ConnectedCameraCount => m_activeConnections.Count;
-		public event CameraConnectedDelegate OnCameraConnected = delegate { };
-		public event CameraConnectedDelegate OnCameraDisconnected = delegate { };
-		public event CameraDataReceivedDelegate OnCameraDataReceived = delegate { };
 		public CameraPairRequestPairingCode? OnCameraRequestPairingCode = null;
 
 		private Thread m_reconnectThread;
@@ -119,7 +115,7 @@ namespace BlackmagicCameraControl
 					TimeSpan timeSinceLastDataReceived = DateTimeOffset.UtcNow - connection.LastReceivedDataTime;
 					if (timeSinceLastDataReceived > CameraDataReceivedTimeout || connection.ConnectionState == IBlackmagicCameraConnection.EConnectionState.Disconnected)
 					{
-						OnCameraDisconnected(connection.CameraHandle);
+						CameraConnected(connection.CameraHandle);
 						BlackmagicCameraLogInterface.LogInfo($"Camera \"{connection.HumanReadableName}\" ({connection.DeviceId}) disconnected due to data received timeout");
 
 						m_retryConnectionQueue.Add(new RetryEntry(connection.DeviceId));
@@ -158,7 +154,14 @@ namespace BlackmagicCameraControl
 
 		private void OnDeviceRemoved(DeviceWatcher a_sender, DeviceInformationUpdate a_args)
 		{
-			m_activeConnections.RemoveAll(a_connection => a_connection.DeviceId == a_args.Id);
+			for (int i = m_activeConnections.Count - 1; i >= 0; ++i)
+			{
+				if (m_activeConnections[i].DeviceId == a_args.Id)
+				{
+					CameraDisconnected(m_activeConnections[i].CameraHandle);
+					m_activeConnections.RemoveAt(i);
+				}
+			}
 		}
 
 		public CameraHandle GetConnectedCameraByIndex(int a_index)
@@ -241,7 +244,7 @@ namespace BlackmagicCameraControl
 							    IBlackmagicCameraConnection.EConnectionState.Connected)
 							{
 								m_activeConnections.Add(deviceConnection);
-								OnCameraConnected.Invoke(deviceConnection.CameraHandle);
+								CameraConnected(deviceConnection.CameraHandle);
 								shouldRetry = false;
 
 								BlackmagicCameraLogInterface.LogInfo($"Camera {connectedDevice.Name} Connected.");
@@ -350,7 +353,7 @@ namespace BlackmagicCameraControl
 
 		public void NotifyDataReceived(CameraHandle a_cameraHandle, DateTimeOffset a_receivedTime, ICommandPacketBase a_packetInstance)
 		{
-			OnCameraDataReceived.Invoke(a_cameraHandle, a_receivedTime, a_packetInstance);
+			CameraDataReceived(a_cameraHandle, a_receivedTime, a_packetInstance);
 		}
 
 		public void AsyncRequestCameraName(CameraHandle a_cameraHandle)
@@ -365,7 +368,7 @@ namespace BlackmagicCameraControl
 			{
 				bluetoothConnection.AsyncRequestCameraModel().ContinueWith((a_result) =>
 				{
-					OnCameraDataReceived.Invoke(a_cameraHandle, DateTimeOffset.UtcNow, new CommandPacketCameraModel(a_result.Result));
+					CameraDataReceived(a_cameraHandle, DateTimeOffset.UtcNow, new CommandPacketCameraModel(a_result.Result));
 				});
 			}
 		}
@@ -388,7 +391,7 @@ namespace BlackmagicCameraControl
 			BlackmagicCameraConnectionDebug debugConnection =
 				new BlackmagicCameraConnectionDebug(this, new CameraHandle(++m_lastUsedHandle));
 			m_activeConnections.Add(debugConnection);
-			OnCameraConnected.Invoke(debugConnection.CameraHandle);
+			CameraConnected(debugConnection.CameraHandle);
 		}
 
 		public IEnumerable<AdvertisementEntry> GetAdvertisedDevices()

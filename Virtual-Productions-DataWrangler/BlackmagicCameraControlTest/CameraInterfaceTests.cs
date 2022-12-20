@@ -2,6 +2,8 @@ using System;
 using System.Threading;
 using BlackmagicCameraControl;
 using BlackmagicCameraControl.CommandPackets;
+using BlackmagicCameraControlBluetooth;
+using BlackmagicCameraControlData;
 using Xunit;
 
 namespace BlackmagicCameraControlTest

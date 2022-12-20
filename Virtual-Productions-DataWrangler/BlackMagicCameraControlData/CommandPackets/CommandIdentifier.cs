@@ -1,6 +1,6 @@
-﻿namespace BlackmagicCameraControl.CommandPackets
+﻿namespace BlackmagicCameraControlData.CommandPackets
 {
-	public struct CommandIdentifier
+	public readonly struct CommandIdentifier : IEquatable<CommandIdentifier>
 	{
 		public readonly byte Category;
 		public readonly byte Parameter;
@@ -19,6 +19,26 @@
 		public override string ToString()
 		{
 			return $"[Command: {Category}:{Parameter}]";
+		}
+
+		public bool Equals(CommandIdentifier other)
+		{
+			return Category == other.Category && Parameter == other.Parameter;
+		}
+
+		public override bool Equals(object? obj)
+		{
+			return obj is CommandIdentifier other && Equals(other);
+		}
+
+		public static bool operator ==(CommandIdentifier left, CommandIdentifier right)
+		{
+			return left.Equals(right);
+		}
+
+		public static bool operator !=(CommandIdentifier left, CommandIdentifier right)
+		{
+			return !left.Equals(right);
 		}
 	}
 }
