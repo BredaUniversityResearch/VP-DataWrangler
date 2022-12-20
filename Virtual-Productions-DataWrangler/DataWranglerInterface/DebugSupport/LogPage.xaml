@@ -15,7 +15,13 @@
             <DataGrid.Columns>
 				<DataGridTextColumn Header="Source" Binding="{Binding Source}" Width="1*"></DataGridTextColumn>
 				<DataGridTextColumn Header="Severity" Binding="{Binding Severity}" Width="1*"></DataGridTextColumn>
-				<DataGridTextColumn Header="Message"  Binding="{Binding Message}" Width="7*"></DataGridTextColumn>
+				<DataGridTextColumn Header="Message" Binding="{Binding Message}" Width="7*">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style>
+                            <Setter Property="TextBlock.TextWrapping" Value="Wrap"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+				</DataGridTextColumn>
             </DataGrid.Columns>
         </DataGrid>
     </Grid>

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
-using System.Windows.Diagnostics;
+using CommonLogging;
 using DataWranglerCommon;
 using Newtonsoft.Json;
 using ShotGridIntegration;

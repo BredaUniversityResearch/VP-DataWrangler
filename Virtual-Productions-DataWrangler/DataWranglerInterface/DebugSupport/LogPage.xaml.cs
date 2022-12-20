@@ -1,53 +1,33 @@
 ﻿using System.Collections.ObjectModel;
 using System.Windows.Controls;
-using BlackmagicCameraControl;
-using DataWranglerCommon;
+using CommonLogging;
 
 namespace DataWranglerInterface.DebugSupport
 {
-	public class LogMessage
-	{
-		public string Source { get; }
-		public string Severity { get; }
-		public string Message { get; }
-
-		public LogMessage(string a_source, string a_severity, string a_message)
-		{
-			Source = a_source;
-			Severity = a_severity;
-			Message = a_message;
-		}
-	};
-
 	/// <summary>
 	/// Interaction logic for LogPage.xaml
 	/// </summary>
-	public partial class LogPage : Page, IBlackmagicCameraLogInterface
+	public partial class LogPage : Page
 	{
-		public ObservableCollection<LogMessage> Messages { get; } = new ObservableCollection<LogMessage>();
+		public ObservableCollection<LogMessage> Messages { get; }
 
 		public LogPage()
 		{
+			Messages = new ObservableCollection<LogMessage>(Logger.Instance.LogHistory);
+
 			InitializeComponent();
 
 			Logger.Instance.OnMessageLogged += OnMessageLogged;
-
-			IBlackmagicCameraLogInterface.Use(this);
 		}
 
-		private void OnMessageLogged(string a_source, string a_severity, string a_message)
+		private void OnMessageLogged(string a_source, ELogSeverity a_severity, string a_message)
 		{
 			Dispatcher.InvokeAsync(() => { Messages.Add(new LogMessage(a_source, a_severity, a_message)); });
 		}
 
-		public void Log(string a_severity, string a_message)
+		public ELogSeverity GetLogLevel()
 		{
-			OnMessageLogged("BMAPI", a_severity, a_message);
-		}
-
-		public IBlackmagicCameraLogInterface.ELogSeverity GetLogLevel()
-		{
-			return IBlackmagicCameraLogInterface.ELogSeverity.Verbose;
+			return ELogSeverity.Verbose;
 		}
 	}
 }

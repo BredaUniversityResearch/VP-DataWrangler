@@ -1,8 +1,7 @@
-﻿using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 using System.Text;
+using CommonLogging;
 using DataWranglerCommon;
-using ShotGridIntegration;
 
 namespace DataWranglerServiceWorker
 {

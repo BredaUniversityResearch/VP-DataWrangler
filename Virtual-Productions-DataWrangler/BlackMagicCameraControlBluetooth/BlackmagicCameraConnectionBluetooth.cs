@@ -11,6 +11,7 @@ using Windows.Devices.Bluetooth.GenericAttributeProfile;
 using Windows.Foundation;
 using Windows.Storage.Streams;
 using BlackmagicCameraControl.CommandPackets;
+using BlackmagicCameraControlData;
 
 namespace BlackmagicCameraControl
 {
@@ -63,11 +64,11 @@ namespace BlackmagicCameraControl
 
 			m_connectingTask = Task.Run(() =>
 			{
-				IBlackmagicCameraLogInterface.LogVerbose($"Querying device information service for {m_device.Name}");
+				BlackmagicCameraLogInterface.LogVerbose($"Querying device information service for {m_device.Name}");
 				IReadOnlyList<GattCharacteristic> characteristics = m_deviceInformationService.GetAllCharacteristics();
 				if (characteristics != null)
 				{
-					IBlackmagicCameraLogInterface.LogVerbose($"Device information service query succeeded for {m_device.Name}");
+					BlackmagicCameraLogInterface.LogVerbose($"Device information service query succeeded for {m_device.Name}");
 					foreach (GattCharacteristic characteristic in characteristics)
 					{
 						if (characteristic.Uuid ==
@@ -112,7 +113,7 @@ namespace BlackmagicCameraControl
 				}
 				else
 				{
-					IBlackmagicCameraLogInterface.LogVerbose($"Device information service query failed for {m_device.Name}");
+					BlackmagicCameraLogInterface.LogVerbose($"Device information service query failed for {m_device.Name}");
 				}
 
 				if (m_deviceInformationCameraManufacturer != null && 
@@ -145,7 +146,7 @@ namespace BlackmagicCameraControl
 			GattCommunicationStatus result = await m_blackmagicCameraStatus.WriteValueAsync(sendBuffer);
 			if (result != GattCommunicationStatus.Success)
 			{
-				IBlackmagicCameraLogInterface.LogError($"Initial reset failure to turn camera {HumanReadableName} off");
+				BlackmagicCameraLogInterface.LogError($"Initial reset failure to turn camera {HumanReadableName} off");
 			}
 
 			await Task.Delay(a_offTimeMs);
@@ -154,7 +155,7 @@ namespace BlackmagicCameraControl
 			result = await m_blackmagicCameraStatus.WriteValueAsync(sendBuffer);
 			if (result != GattCommunicationStatus.Success)
 			{
-				IBlackmagicCameraLogInterface.LogError($"Initial reset failure to turn camera {HumanReadableName} back on");
+				BlackmagicCameraLogInterface.LogError($"Initial reset failure to turn camera {HumanReadableName} back on");
 			}
 		}
 
@@ -207,7 +208,7 @@ namespace BlackmagicCameraControl
 					}
 					else
 					{
-						IBlackmagicCameraLogInterface.LogError("Failed to subscribe to camera timecode service");
+						BlackmagicCameraLogInterface.LogError("Failed to subscribe to camera timecode service");
 					}
 				};
 
@@ -262,7 +263,7 @@ namespace BlackmagicCameraControl
 				ConnectionState = IBlackmagicCameraConnection.EConnectionState.Disconnected;
 			}
 
-			IBlackmagicCameraLogInterface.LogInfo("Received camera status: " + cameraStatus);
+			BlackmagicCameraLogInterface.LogInfo("Received camera status: " + cameraStatus);
 		}
 
 		private void OnReceivedIncomingCameraControl(GattCharacteristic a_sender, GattValueChangedEventArgs a_args)
@@ -354,14 +355,14 @@ namespace BlackmagicCameraControl
 							{
 								if (a_sendCommand.Result.Status != GattCommunicationStatus.Success)
 								{
-									IBlackmagicCameraLogInterface.LogError(
+									BlackmagicCameraLogInterface.LogError(
 										$"Failed to write value to outgoing camera control. Command: {commandMeta.CommandType}");
 								}
 							});
 				}
 				catch (COMException ex)
 				{
-					IBlackmagicCameraLogInterface.LogError(
+					BlackmagicCameraLogInterface.LogError(
 						$"Failed to write value to outgoing camera control. Command: {commandMeta.CommandType} Ex: {ex.Message}");
 
 				}

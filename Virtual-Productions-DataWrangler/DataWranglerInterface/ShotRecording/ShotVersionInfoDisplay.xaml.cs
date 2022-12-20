@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
+using CommonLogging;
 using DataWranglerCommon;
 using DataWranglerInterface.DebugSupport;
 using Newtonsoft.Json;

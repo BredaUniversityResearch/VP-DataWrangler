@@ -4,6 +4,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
+using CommonLogging;
 using DataWranglerCommon;
 using ShotGridIntegration;
 
@@ -182,7 +183,7 @@ namespace DataWranglerServiceWorker
 				});
 		}
 
-		private void OnLoggerMessageLogged(string a_source, string a_severity, string a_message)
+		private void OnLoggerMessageLogged(string a_source, ELogSeverity a_severity, string a_message)
 		{
 			Console.WriteLine($"{a_source}\t{a_severity}\t{a_message}");
 		}

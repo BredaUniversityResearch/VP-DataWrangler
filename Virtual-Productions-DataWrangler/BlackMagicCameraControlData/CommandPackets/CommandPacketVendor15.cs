@@ -1,4 +1,6 @@
-﻿namespace BlackmagicCameraControl.CommandPackets;
+﻿using BlackmagicCameraControl.CommandPackets;
+
+namespace BlackmagicCameraControlData.CommandPackets;
 
 [CommandPacketMeta(12, 15, 0, ECommandDataType.Utf8String)]
 public class CommandPacketVendor15 : ICommandPacketBase
@@ -8,7 +10,7 @@ public class CommandPacketVendor15 : ICommandPacketBase
 	public CommandPacketVendor15(CommandReader a_reader)
 	{
 		Unknown = a_reader.ReadString();
-		IBlackmagicCameraLogInterface.LogVerbose($"\tReceived Undocumented Packet 12:15, Value {Unknown}");
+		BlackmagicCameraLogInterface.LogVerbose($"\tReceived Undocumented Packet 12:15, Value {Unknown}");
 	}
 
 	public override void WriteTo(CommandWriter a_writer)

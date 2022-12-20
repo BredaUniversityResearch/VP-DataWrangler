@@ -2,6 +2,9 @@
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Input;
+using BlackmagicCameraControl;
+using CommonLogging;
+using DataWranglerCommon;
 using DataWranglerCommonWPF.Login;
 using DataWranglerInterface.DebugSupport;
 using DataWranglerInterface.Properties;

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BlackmagicCameraControlData;
+using System;
 
 namespace BlackmagicCameraControl.CommandPackets
 {
@@ -15,7 +16,7 @@ namespace BlackmagicCameraControl.CommandPackets
 		{
 			Unknown = new Fixed16(a_reader.ReadInt16());
 
-			IBlackmagicCameraLogInterface.LogVerbose($"\tReceived Undocumented Packet 1:16, Value {Unknown.AsFloat}");
+			BlackmagicCameraLogInterface.LogVerbose($"\tReceived Undocumented Packet 1:16, Value {Unknown.AsFloat}");
 		}
 
 		public override void WriteTo(CommandWriter a_writer)

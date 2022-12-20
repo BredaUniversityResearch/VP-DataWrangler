@@ -2,6 +2,7 @@
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
+using CommonLogging;
 using DataWranglerCommon;
 using Newtonsoft.Json;
 using ShotGridIntegration;

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BlackmagicCameraControlData;
+using System;
 using System.Diagnostics;
 
 namespace BlackmagicCameraControl.CommandPackets
@@ -20,7 +21,7 @@ namespace BlackmagicCameraControl.CommandPackets
 
 			if (Unknown != 0)
 			{
-				IBlackmagicCameraLogInterface.LogVerbose(
+				BlackmagicCameraLogInterface.LogVerbose(
 					$"\tReceived Undocumented Packet 9:1, Value [{Unknown}, {IsReadyToRecord}]");
 			}
 		}

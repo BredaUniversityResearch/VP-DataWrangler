@@ -2,6 +2,7 @@
 using System.Runtime.CompilerServices;
 using BlackmagicCameraControl;
 using BlackmagicCameraControl.CommandPackets;
+using CommonLogging;
 using DataWranglerCommon;
 using DataWranglerInterface.DebugSupport;
 

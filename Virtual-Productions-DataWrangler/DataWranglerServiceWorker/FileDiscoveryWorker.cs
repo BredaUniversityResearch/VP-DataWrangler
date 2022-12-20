@@ -1,6 +1,6 @@
 ﻿using System;
 using System.IO;
-using DataWranglerCommon;
+using CommonLogging;
 
 namespace DataWranglerServiceWorker
 {

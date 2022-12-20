@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\BlackMagicCameraControlData\BlackMagicCameraControlData.csproj" />
+    <ProjectReference Include="..\BlackMagicCameraControlData\BlackmagicCameraControlData.csproj" />
   </ItemGroup>
 
 </Project>

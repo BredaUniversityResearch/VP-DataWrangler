@@ -1,28 +1,15 @@
-﻿using System;
-using System.Collections.Specialized;
-using System.Runtime.InteropServices;
-using BlackmagicCameraControl;
+﻿using System.Runtime.InteropServices;
 using BlackmagicCameraControl.CommandPackets;
 using DeckLinkAPI;
-using IntPtr = System.IntPtr;
 
 namespace BlackmagicDeckLinkControl
 {
 	public class BlackmagicDeckLinkController
 	{
-		//http://www.watersprings.org/pub/id/draft-ietf-payload-rtp-ancillary-13.html
-		[StructLayout(LayoutKind.Explicit)]
-		struct SMTPE_291M_Packet
-		{
-			[FieldOffset(0)]
-			public uint zero;
-
-			[FieldOffset(4)]
-			public uint magic;
-
-			[FieldOffset(8)]
-			public uint DIDSDIDFieldLength;
-		};
+		// Ursa Mini Manual SDK 1.4, pg 271 "Blanking Encoding"
+		private const byte DIDPacketBlackmagic = 0x51;
+		private const byte SDIDTally = 0x52;
+		private const byte SDIDCameraControl = 0x53;
 
 		class DeviceInputNotificationCallback : IDeckLinkInputCallback
 		{
@@ -88,8 +75,8 @@ namespace BlackmagicDeckLinkControl
 					return;
 				}
 
-				int frameWidth = videoFrame.GetWidth();
-				int frameHeight = videoFrame.GetHeight();
+				//int frameWidth = videoFrame.GetWidth();
+				//int frameHeight = videoFrame.GetHeight();
 				//videoFrame.GetAncillaryData(out IDeckLinkVideoFrameAncillary ancillaryData);
 				//_BMDDisplayMode mode = ancillaryData.GetDisplayMode();
 
@@ -101,11 +88,11 @@ namespace BlackmagicDeckLinkControl
 				{
 					byte did = packet.GetDID(); //0x51
 					byte sdid = packet.GetSDID(); //0x53
-					if (did == 0x51 && sdid == 0x52)
+					if (did == DIDPacketBlackmagic && sdid == SDIDTally)
 					{
 						//Tally packet, don't care...
 					}
-					else if (did == 0x51 && sdid == 0x53)
+					else if (did == DIDPacketBlackmagic && sdid == SDIDCameraControl)
 					{
 						uint line = packet.GetLineNumber();
 
@@ -113,12 +100,11 @@ namespace BlackmagicDeckLinkControl
 						unsafe
 						{
 							using Stream ms = new UnmanagedMemoryStream((byte*) packetData.ToPointer(), size);
-							byte[] data = new byte[size];
-							ms.Read(data, 0, (int)size);
-							ms.Seek(0, SeekOrigin.Begin);
 							CommandReader.DecodeStream(ms, (a_packet) =>
 							{
 								int b = 9001;
+
+								//Todo: Cache this and check for changes.
 							});
 						}
 					}

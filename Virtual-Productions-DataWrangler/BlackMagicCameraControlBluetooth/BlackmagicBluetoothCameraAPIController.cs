@@ -8,6 +8,7 @@ using Windows.Devices.Bluetooth.GenericAttributeProfile;
 using Windows.Devices.Enumeration;
 using Windows.Devices.Bluetooth.Advertisement;
 using BlackmagicCameraControl.CommandPackets;
+using BlackmagicCameraControlData;
 
 namespace BlackmagicCameraControl
 {
@@ -119,7 +120,7 @@ namespace BlackmagicCameraControl
 					if (timeSinceLastDataReceived > CameraDataReceivedTimeout || connection.ConnectionState == IBlackmagicCameraConnection.EConnectionState.Disconnected)
 					{
 						OnCameraDisconnected(connection.CameraHandle);
-						IBlackmagicCameraLogInterface.LogInfo($"Camera \"{connection.HumanReadableName}\" ({connection.DeviceId}) disconnected due to data received timeout");
+						BlackmagicCameraLogInterface.LogInfo($"Camera \"{connection.HumanReadableName}\" ({connection.DeviceId}) disconnected due to data received timeout");
 
 						m_retryConnectionQueue.Add(new RetryEntry(connection.DeviceId));
 
@@ -177,7 +178,7 @@ namespace BlackmagicCameraControl
 					}
 				}
 
-				IBlackmagicCameraLogInterface.LogVerbose($"Trying to connect to Bluetooth device {a_deviceAddress}.");
+				BlackmagicCameraLogInterface.LogVerbose($"Trying to connect to Bluetooth device {a_deviceAddress}.");
 
 				Task<BluetoothLEDevice> connectAttempt = BluetoothLEDevice.FromIdAsync(a_deviceAddress).AsTask();
 				//TODO: Filter out useless device like HIDs via the use of the Device Appearance Category / Subcategory. 
@@ -185,7 +186,7 @@ namespace BlackmagicCameraControl
 
 				if (!connectAttempt.Wait(BluetoothDeviceConnectTimeout))
 				{
-					IBlackmagicCameraLogInterface.LogVerbose($"Bluetooth device {a_deviceAddress} failed to connect.");
+					BlackmagicCameraLogInterface.LogVerbose($"Bluetooth device {a_deviceAddress} failed to connect.");
 					m_retryConnectionQueue.Add(new RetryEntry(a_deviceAddress));
 				}
 				else
@@ -243,7 +244,7 @@ namespace BlackmagicCameraControl
 								OnCameraConnected.Invoke(deviceConnection.CameraHandle);
 								shouldRetry = false;
 
-								IBlackmagicCameraLogInterface.LogInfo($"Camera {connectedDevice.Name} Connected.");
+								BlackmagicCameraLogInterface.LogInfo($"Camera {connectedDevice.Name} Connected.");
 							}
 							else
 							{
@@ -264,13 +265,13 @@ namespace BlackmagicCameraControl
 					}
 					else
 					{
-						IBlackmagicCameraLogInterface.LogWarning($"Failed to pair with device {connectedDevice.Name}.");
+						BlackmagicCameraLogInterface.LogWarning($"Failed to pair with device {connectedDevice.Name}.");
 					}
 
 					if (shouldRetry &&
 					    m_retryConnectionQueue.Find((a_obj) => a_obj.DeviceId == connectedDevice.DeviceId) == null)
 					{
-						IBlackmagicCameraLogInterface.LogVerbose(
+						BlackmagicCameraLogInterface.LogVerbose(
 							$"Bluetooth Device {connectedDevice.Name} failed to connect: {failReason}. Retrying in a bit...");
 						m_retryConnectionQueue.Add(new RetryEntry(connectedDevice.DeviceId));
 
@@ -378,7 +379,7 @@ namespace BlackmagicCameraControl
 			}
 			else
 			{
-				IBlackmagicCameraLogInterface.LogWarning($"AsyncSendCommand failed: Camera handle {a_cameraHandle} was not found");
+				BlackmagicCameraLogInterface.LogWarning($"AsyncSendCommand failed: Camera handle {a_cameraHandle} was not found");
 			}
 		}
 

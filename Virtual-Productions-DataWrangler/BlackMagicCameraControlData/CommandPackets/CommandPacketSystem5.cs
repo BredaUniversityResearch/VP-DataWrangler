@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BlackmagicCameraControlData;
+using System;
 using System.Diagnostics;
 
 namespace BlackmagicCameraControl.CommandPackets
@@ -22,7 +23,7 @@ namespace BlackmagicCameraControl.CommandPackets
 			Unknown2 = a_reader.ReadInt8();
 			Unknown3 = a_reader.ReadInt8();
 
-			IBlackmagicCameraLogInterface.LogVerbose($"\tReceived Undocumented Packet 9:5, Value [{Unknown}, {Unknown1}, {Unknown2}, {Unknown3}]");
+			BlackmagicCameraLogInterface.LogVerbose($"\tReceived Undocumented Packet 9:5, Value [{Unknown}, {Unknown1}, {Unknown2}, {Unknown3}]");
 
 		}
 

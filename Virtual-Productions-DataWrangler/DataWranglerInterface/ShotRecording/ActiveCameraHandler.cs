@@ -1,13 +1,15 @@
 ﻿using BlackmagicCameraControl;
 using BlackmagicCameraControl.CommandPackets;
+using BlackmagicDeckLinkControl;
+using CommonLogging;
 using DataWranglerCommon;
-using DataWranglerInterface.DebugSupport;
 
 namespace DataWranglerInterface.ShotRecording
 {
 	public class ActiveCameraHandler
 	{
 		private BlackmagicBluetoothCameraAPIController m_apiController;
+		private BlackmagicDeckLinkController? m_deckLinkController = null;
 		private Dictionary<CameraHandle, ActiveCameraInfo> m_activeCameras = new Dictionary<CameraHandle, ActiveCameraInfo>();
 
 		public delegate void CameraConnectedHandler(ActiveCameraInfo a_camera);
@@ -22,6 +24,15 @@ namespace DataWranglerInterface.ShotRecording
 			m_apiController.OnCameraConnected += OnApiControllerCameraConnected;
 			m_apiController.OnCameraDataReceived += OnCameraDataReceived;
 			m_apiController.OnCameraDisconnected += OnApiControllerCameraDisconnected;
+
+			m_deckLinkController = BlackmagicDeckLinkController.Create(out string? errorMessage);
+			if (m_deckLinkController != null)
+			{
+			}
+			else
+			{
+				Logger.LogWarning("ACH", $"Failed to create DeckLink controller. Reason: {errorMessage}");
+			}
 		}
 
 		private void OnCameraDataReceived(CameraHandle a_handle, DateTimeOffset a_receivedTime, ICommandPacketBase a_packet)

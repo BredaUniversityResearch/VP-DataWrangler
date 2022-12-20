@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
+using CommonLogging;
 using DataWranglerCommon;
 
 namespace DataWranglerInterface.ShotRecording

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BlackmagicCameraControlData;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,8 +17,8 @@ namespace BlackmagicCameraControl.CommandPackets
 		{
 			Unknown = a_reader.ReadInt8();
 			Unknown1 = a_reader.ReadInt8();
-		
-			IBlackmagicCameraLogInterface.LogVerbose($"\tReceived Undocumented Packet 12:3, Value [{Unknown}, {Unknown1}]");
+
+			BlackmagicCameraLogInterface.LogVerbose($"\tReceived Undocumented Packet 12:3, Value [{Unknown}, {Unknown1}]");
 		}
 
 		public override void WriteTo(CommandWriter a_writer)
