@@ -37,8 +37,8 @@ internal class DeckLinkDeviceNotificationHandler : IDeckLinkDeviceNotificationCa
 		{
 			attributes.GetInt(_BMDDeckLinkAttributeID.BMDDeckLinkPersistentID, out long persistent);
 
-			attributes.GetInt(_BMDDeckLinkAttributeID.BMDDeckLinkVANCRequires10BitYUVVideoFrames, out long requires10BitYuv);
-			string required = (requires10BitYuv == 0) ? "not" : "";
+			attributes.GetFlag(_BMDDeckLinkAttributeID.BMDDeckLinkVANCRequires10BitYUVVideoFrames, out int requires10BitYuv);
+			string required = (requires10BitYuv != 0) ? "" : "not";
 			Logger.LogInfo("DeckLinkInterface", $"DeckLink Hardware reports 10BitYUV as {required} required for VANC data");
 		}
 
@@ -55,8 +55,7 @@ internal class DeckLinkDeviceNotificationHandler : IDeckLinkDeviceNotificationCa
 			input.EnableAudioInput(_BMDAudioSampleRate.bmdAudioSampleRate48kHz, _BMDAudioSampleType.bmdAudioSampleType16bitInteger, 2);
             try
             {
-                input.EnableVideoInput(_BMDDisplayMode.bmdModeHD1080p25, _BMDPixelFormat.bmdFormat10BitYUV,
-                    _BMDVideoInputFlags.bmdVideoInputEnableFormatDetection);
+                notificationHandler.StartVideoInput();
             }
             catch (COMException ex)
             {
