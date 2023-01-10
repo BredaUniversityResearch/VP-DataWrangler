@@ -14,7 +14,7 @@ namespace DataWranglerInterface.ShotRecording
 	/// </summary>
 	public partial class ShotRecordingPage : Page, IDisposable
 	{
-		private BlackmagicBluetoothCameraAPIController m_cameraApiController;
+		private BlackmagicBluetoothCameraAPIController m_bluetoothController;
 		private ActiveCameraHandler m_activeCameraHandler;
 
 		public delegate void ShotVersionCreationDelegate(int a_shotId);
@@ -27,12 +27,12 @@ namespace DataWranglerInterface.ShotRecording
 		{
 			InitializeComponent();
 		
-			m_cameraApiController = new BlackmagicBluetoothCameraAPIController();
-			m_activeCameraHandler = new ActiveCameraHandler(m_cameraApiController);
+			m_bluetoothController = new BlackmagicBluetoothCameraAPIController();
+			m_activeCameraHandler = new ActiveCameraHandler(m_bluetoothController);
 			m_activeCameraHandler.OnCameraConnected += OnCameraConnected;
 			m_activeCameraHandler.OnCameraDisconnected += OnCameraDisconnected;
 
-			CameraInfoDebug.CameraApiController = m_cameraApiController;
+			CameraInfoDebug.CameraApiController = m_bluetoothController;
 
 			ProjectSelector.AsyncRefreshProjects();
 
@@ -51,7 +51,7 @@ namespace DataWranglerInterface.ShotRecording
 		{
 			m_activeCameraHandler.OnCameraConnected -= OnCameraConnected;
 			m_activeCameraHandler.OnCameraDisconnected -= OnCameraDisconnected;
-			m_cameraApiController.Dispose();
+			m_bluetoothController.Dispose();
 		}
 
 		private void OnCameraConnected(ActiveCameraInfo a_camera)

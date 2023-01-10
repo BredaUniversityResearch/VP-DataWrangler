@@ -10,7 +10,7 @@ namespace DataWranglerInterface.ShotRecording
 {
 	public class ActiveCameraHandler
 	{
-		private BlackmagicBluetoothCameraAPIController m_apiController;
+		private BlackmagicBluetoothCameraAPIController m_bluetoothController;
 		private BlackmagicDeckLinkController? m_deckLinkController = null;
 		private Dictionary<CameraHandle, ActiveCameraInfo> m_activeCameras = new Dictionary<CameraHandle, ActiveCameraInfo>();
 
@@ -20,16 +20,19 @@ namespace DataWranglerInterface.ShotRecording
 		public event CameraConnectedHandler OnCameraConnected = delegate { };
 		public event CameraDisconnectedHandler OnCameraDisconnected = delegate { };
 
-		public ActiveCameraHandler(BlackmagicBluetoothCameraAPIController a_apiController)
+		public ActiveCameraHandler(BlackmagicBluetoothCameraAPIController a_bluetoothController)
 		{
-			m_apiController = a_apiController;
-			m_apiController.OnCameraConnected += OnBluetoothCameraConnected;
-			m_apiController.OnCameraDataReceived += OnCameraDataReceived;
-			m_apiController.OnCameraDisconnected += OnBluetoothCameraDisconnected;
+			m_bluetoothController = a_bluetoothController;
+			m_bluetoothController.OnCameraConnected += OnBluetoothCameraConnected;
+			m_bluetoothController.OnCameraDataReceived += OnCameraDataReceived;
+			m_bluetoothController.OnCameraDisconnected += OnBluetoothCameraDisconnected;
 
 			m_deckLinkController = BlackmagicDeckLinkController.Create(out string? errorMessage);
 			if (m_deckLinkController != null)
 			{
+				m_deckLinkController.OnCameraConnected += OnBluetoothCameraConnected;
+				m_deckLinkController.OnCameraDataReceived += OnCameraDataReceived;
+				m_deckLinkController.OnCameraDisconnected += OnBluetoothCameraDisconnected;
 			}
 			else
 			{
@@ -41,7 +44,7 @@ namespace DataWranglerInterface.ShotRecording
 		{
 			if (m_activeCameras.TryGetValue(a_handle, out ActiveCameraInfo? targetCamera))
 			{
-				targetCamera.OnCameraDataReceived(m_apiController, a_receivedTime, a_packet);
+				targetCamera.OnCameraDataReceived(m_bluetoothController, a_receivedTime, a_packet);
 			}
 			else
 			{
@@ -52,13 +55,13 @@ namespace DataWranglerInterface.ShotRecording
 
 		private void OnBluetoothCameraConnected(CameraHandle a_handle)
 		{
-			if (m_apiController == null)
+			if (m_bluetoothController == null)
 			{
 				throw new Exception();
 			}
 
 			ActiveCameraInfo info = new ActiveCameraInfo(a_handle);
-			m_apiController.AsyncRequestCameraModel(a_handle);
+			m_bluetoothController.AsyncRequestCameraModel(a_handle);
 			m_activeCameras.Add(a_handle, info);
 			OnCameraConnected(info);
 		}
