@@ -19,6 +19,13 @@
 			a_writer.Write(Level);
 		}
 
+		public override bool Equals(ICommandPacketBase? a_other)
+		{
+			CommandPacketVideoSharpeningLevel? other = (CommandPacketVideoSharpeningLevel?)a_other;
+			return other != null &&
+			       other.Level == Level;
+		}
+
 		public override string ToString()
 		{
 			return $"{GetType().Name} [{Level}]";

@@ -30,6 +30,13 @@ namespace BlackmagicCameraControl.CommandPackets
 			a_writer.Write(MinutesOffsetFromUTC);
 		}
 
+		public override bool Equals(ICommandPacketBase? a_other)
+		{
+			CommandPacketConfigurationTimezone? other = (CommandPacketConfigurationTimezone?)a_other;
+			return other != null &&
+			       other.MinutesOffsetFromUTC == MinutesOffsetFromUTC;
+		}
+
 		public override string ToString()
 		{
 			return $"{GetType().Name} [{MinutesOffsetFromUTC}]";

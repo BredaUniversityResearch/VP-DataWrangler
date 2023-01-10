@@ -18,6 +18,13 @@ public class CommandPacketVendor4 : ICommandPacketBase
 		a_writer.Write((Unknown)? 1 : 0);
 	}
 
+	public override bool Equals(ICommandPacketBase? a_other)
+	{
+		CommandPacketVendor4? other = (CommandPacketVendor4?)a_other;
+		return other != null &&
+		       other.Unknown == Unknown;
+	}
+
 	public override string ToString()
 	{
 		return $"{GetType().Name} [{Unknown}]";

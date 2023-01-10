@@ -35,7 +35,7 @@ namespace DataWranglerServiceWorker
 
 		private const string DefaultDataStorageName = "CradleNas";
 		//private const string DefaultLocation = "D:/Projects/VirtualProductions/TestImportRoot/${ProjectName}/Shots/${ShotCode}/${ShotVersionCode}/";
-		private const string DefaultDataStoreFilePath = "${ProjectName}/Shots/${ShotCode}/${ShotVersionCode}/"; //Relative to DataStoreRoot
+		private const string DefaultDataStoreFilePath = "${ProjectName}/RawFootage/${ShotCode}/${ShotVersionCode}/"; //Relative to DataStoreRoot
 		private const int DefaultCopyBufferSize = 32 * 1024 * 1024;
 
 		public delegate void CopyStartedDelegate(ShotVersionIdentifier shotVersion, FileCopyMetaData metaData);

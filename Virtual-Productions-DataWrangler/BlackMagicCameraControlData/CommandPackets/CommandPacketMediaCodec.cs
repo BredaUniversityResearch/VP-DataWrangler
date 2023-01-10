@@ -30,6 +30,14 @@
 			a_writer.Write(Variant);
 		}
 
+		public override bool Equals(ICommandPacketBase? a_other)
+		{
+			CommandPacketMediaCodec? other = (CommandPacketMediaCodec?)a_other;
+			return other != null &&
+			       other.BasicCodec == BasicCodec &&
+			       other.Variant == Variant;
+		}
+
 		public override string ToString()
 		{
 			return $"{GetType().Name} [{BasicCodec}, {Variant}]";

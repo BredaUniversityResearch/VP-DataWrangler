@@ -22,6 +22,14 @@
 			a_writer.Write(Unknown.AsInt16());
 		}
 
+		public override bool Equals(ICommandPacketBase? a_other)
+		{
+			CommandPacketLensApertureFStop? other = (CommandPacketLensApertureFStop?) a_other;
+			return other != null &&
+			       other.FStop == FStop &&
+			       other.Unknown == Unknown;
+		}
+
 		public override string ToString()
 		{
 			return $"{GetType().Name} [FStop: {FStop.AsFloat} Unknown: {Unknown.AsFloat}]";

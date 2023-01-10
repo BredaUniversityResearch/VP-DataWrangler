@@ -3,7 +3,7 @@
 namespace BlackmagicCameraControl;
 
 //11:5 fixed point data
-public struct Fixed16
+public readonly struct Fixed16 : IEquatable<Fixed16>
 {
 	private const float Exponent = (1 << 11);
 
@@ -34,4 +34,30 @@ public struct Fixed16
 	{
 		return (float)m_data / Exponent;
 	}
+
+	public bool Equals(Fixed16 other)
+	{
+		return m_data == other.m_data;
+	}
+
+	public override bool Equals(object? obj)
+	{
+		return obj is Fixed16 other && Equals(other);
+	}
+
+	public override int GetHashCode()
+	{
+		return m_data.GetHashCode();
+	}
+
+	public static bool operator ==(Fixed16 left, Fixed16 right)
+	{
+		return left.Equals(right);
+	}
+
+	public static bool operator !=(Fixed16 left, Fixed16 right)
+	{
+		return !left.Equals(right);
+	}
+
 }

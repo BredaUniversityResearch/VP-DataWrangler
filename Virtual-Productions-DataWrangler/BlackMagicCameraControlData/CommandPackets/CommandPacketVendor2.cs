@@ -19,6 +19,13 @@ namespace BlackmagicCameraControl.CommandPackets
 			a_writer.Write(Unknown);
 		}
 
+		public override bool Equals(ICommandPacketBase? a_other)
+		{
+			CommandPacketVendor2? other = (CommandPacketVendor2?)a_other;
+			return other != null &&
+			       other.Unknown == Unknown;
+		}
+
 		public override string ToString()
 		{
 			return $"{GetType().Name} [{Unknown}]";

@@ -25,6 +25,15 @@
 			a_writer.Write(Unknown);
 		}
 
+		public override bool Equals(ICommandPacketBase? a_other)
+		{
+			CommandPacketSystemBatteryInfo? other = (CommandPacketSystemBatteryInfo?)a_other;
+			return other != null &&
+			       other.BatteryVoltage_mV == BatteryVoltage_mV &&
+			       other.BatteryPercentage == BatteryPercentage &&
+			       other.Unknown == Unknown;
+		}
+
 		public override string ToString()
 		{
 			return $"{GetType().Name} [{BatteryVoltage_mV}, {BatteryPercentage}, {Unknown}]";

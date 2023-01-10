@@ -29,6 +29,13 @@ namespace BlackmagicCameraControl.CommandPackets
 			a_writer.Write((short)EnabledOverlays);
 		}
 
+		public override bool Equals(ICommandPacketBase? a_other)
+		{
+			CommandPacketOutputEnables? other = (CommandPacketOutputEnables?)a_other;
+			return other != null &&
+			       other.EnabledOverlays == EnabledOverlays;
+		}
+
 		public override string ToString()
 		{
 			return $"{GetType().Name} [{EnabledOverlays}]";

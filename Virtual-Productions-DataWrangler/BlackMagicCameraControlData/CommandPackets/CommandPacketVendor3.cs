@@ -1,9 +1,4 @@
 ﻿using BlackmagicCameraControlData;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BlackmagicCameraControl.CommandPackets
 {
@@ -25,6 +20,14 @@ namespace BlackmagicCameraControl.CommandPackets
 		{
 			a_writer.Write(Unknown);
 			a_writer.Write(Unknown1);
+		}
+
+		public override bool Equals(ICommandPacketBase? a_other)
+		{
+			CommandPacketVendor3? other = (CommandPacketVendor3?)a_other;
+			return other != null &&
+			       other.Unknown == Unknown &&
+			       other.Unknown1 == Unknown1;
 		}
 
 		public override string ToString()

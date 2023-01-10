@@ -57,6 +57,17 @@ namespace BlackmagicCameraControl.CommandPackets
 			a_writer.Write((byte) Slot2StorageMedium);
 		}
 
+		public override bool Equals(ICommandPacketBase? a_other)
+		{
+			CommandPacketMediaTransportMode? other = (CommandPacketMediaTransportMode?)a_other;
+			return other != null &&
+			       other.Mode == Mode &&
+			       other.Speed == Speed &&
+			       other.Flags == Flags &&
+			       other.Slot1StorageMedium == Slot1StorageMedium &&
+			       other.Slot2StorageMedium == Slot2StorageMedium;
+		}
+
 		public override string ToString()
 		{
 			return $"{GetType().Name} [{Mode}, {Speed}, {Flags}, {Slot1StorageMedium}, {Slot2StorageMedium}]";

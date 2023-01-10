@@ -19,6 +19,13 @@
 			a_writer.Write(ISOValue);
 		}
 
+		public override bool Equals(ICommandPacketBase? a_other)
+		{
+			CommandPacketVideoISO? other = (CommandPacketVideoISO?)a_other;
+			return other != null &&
+			       other.ISOValue == ISOValue;
+		}
+
 		public override string ToString()
 		{
 			return $"{GetType().Name} [{ISOValue}]";

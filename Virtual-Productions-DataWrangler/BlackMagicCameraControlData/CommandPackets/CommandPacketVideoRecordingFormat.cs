@@ -43,6 +43,17 @@ namespace BlackmagicCameraControl.CommandPackets
 			a_writer.Write((short)Flags);
 		}
 
+		public override bool Equals(ICommandPacketBase? a_other)
+		{
+			CommandPacketVideoRecordingFormat? other = (CommandPacketVideoRecordingFormat?)a_other;
+			return other != null &&
+			       other.FileFrameRate == FileFrameRate &&
+			       other.SensorFrameRate == SensorFrameRate &&
+			       other.FrameWidth == FrameWidth &&
+			       other.FrameHeight == FrameHeight &&
+			       other.Flags == Flags;
+		}
+
 		public override string ToString()
 		{
 			return $"{GetType().Name} [{FileFrameRate}, {SensorFrameRate}, {FrameWidth}, {FrameHeight}, {Flags}]";

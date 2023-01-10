@@ -41,6 +41,18 @@ namespace BlackmagicCameraControl.CommandPackets
 			a_writer.Write(Unknown5);
 		}
 
+		public override bool Equals(ICommandPacketBase? a_other)
+		{
+			CommandPacketSystem7? other = (CommandPacketSystem7?) a_other;
+			return other != null &&
+			       other.Unknown == Unknown &&
+			       other.Unknown1 == Unknown1 &&
+			       other.Unknown2 == Unknown2 &&
+			       other.Unknown3 == Unknown3 &&
+			       other.Unknown4 == Unknown4 &&
+			       other.Unknown5 == Unknown5;
+		}
+
 		public override string ToString()
 		{
 			return $"{GetType().Name} [{Unknown}, {Unknown1}, {Unknown2}, {Unknown3}, {Unknown4}, {Unknown5}]";

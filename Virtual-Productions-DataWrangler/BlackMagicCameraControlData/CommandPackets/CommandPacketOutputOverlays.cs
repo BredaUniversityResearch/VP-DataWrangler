@@ -56,6 +56,16 @@ namespace BlackmagicCameraControl.CommandPackets
 			a_writer.Write((byte)Grid);
 		}
 
+		public override bool Equals(ICommandPacketBase? a_other)
+		{
+			CommandPacketOutputOverlays? other = (CommandPacketOutputOverlays?)a_other;
+			return other != null &&
+			       other.Style == Style &&
+			       other.Opacity == Opacity &&
+			       other.SafeArea == SafeArea &&
+			       other.Grid == Grid;
+		}
+
 		public override string ToString()
 		{
 			return $"{GetType().Name} [{Style}, {Opacity}, {SafeArea}, {Grid}]";

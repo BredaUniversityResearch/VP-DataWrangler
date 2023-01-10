@@ -31,6 +31,14 @@ namespace BlackmagicCameraControl.CommandPackets
 			a_writer.Write(BinaryDateCode);
 		}
 
+		public override bool Equals(ICommandPacketBase? a_other)
+		{
+			CommandPacketConfigurationRealTimeClock? other = (CommandPacketConfigurationRealTimeClock?) a_other;
+			return other != null &&
+			       other.BinaryTimeCode == BinaryTimeCode &&
+			       other.BinaryDateCode == BinaryDateCode;
+		}
+
 		public override string ToString()
 		{
 			return $"{GetType().Name} [0x{BinaryTimeCode:X}, 0x{BinaryDateCode:X}, Utility: {ClockTime}]";

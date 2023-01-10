@@ -32,6 +32,14 @@ namespace BlackmagicCameraControl.CommandPackets
 			a_writer.Write(IsReadyToRecord? 1 : 0);
 		}
 
+		public override bool Equals(ICommandPacketBase? a_other)
+		{
+			CommandPacketSystemReadyState? other = (CommandPacketSystemReadyState?)a_other;
+			return other != null &&
+			       other.Unknown == Unknown &&
+			       other.IsReadyToRecord == IsReadyToRecord;
+		}
+
 		public override string ToString()
 		{
 			return $"{GetType().Name} [{Unknown}, {IsReadyToRecord}]";

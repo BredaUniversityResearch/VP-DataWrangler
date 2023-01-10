@@ -24,6 +24,13 @@ namespace BlackmagicCameraControl.CommandPackets
 			a_writer.Write(Unknown.AsInt16());
 		}
 
+		public override bool Equals(ICommandPacketBase? a_other)
+		{
+			CommandPacketVideo16? other = (CommandPacketVideo16?)a_other;
+			return other != null &&
+			       other.Unknown == Unknown;
+		}
+
 		public override string ToString()
 		{
 			return $"{GetType().Name} [{Unknown.AsFloat}]";

@@ -22,6 +22,15 @@
 			a_writer.Write(Tint);
 		}
 
+		public override bool Equals(ICommandPacketBase? a_other)
+		{
+			CommandPacketVideoManualWhiteBalance? other = (CommandPacketVideoManualWhiteBalance?)a_other;
+			return other != null &&
+			       other.ColorTemperature == ColorTemperature &&
+			       other.Tint == Tint;
+
+		}
+
 		public override string ToString()
 		{
 			return $"{GetType().Name} [{ColorTemperature}, {Tint}]";

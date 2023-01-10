@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace BlackmagicCameraControl.CommandPackets
+﻿namespace BlackmagicCameraControl.CommandPackets
 {
 	[CommandPacketMeta(1, 7, 1, ECommandDataType.Int8)]
 	public class CommandPacketVideoDynamicRangeMode: ICommandPacketBase
@@ -29,6 +23,13 @@ namespace BlackmagicCameraControl.CommandPackets
 		public override void WriteTo(CommandWriter a_writer)
 		{
 			a_writer.Write((byte)Mode);
+		}
+
+		public override bool Equals(ICommandPacketBase? a_other)
+		{
+			CommandPacketVideoDynamicRangeMode? other = (CommandPacketVideoDynamicRangeMode?)a_other;
+			return other != null &&
+			       other.Mode == Mode;
 		}
 
 		public override string ToString()

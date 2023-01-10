@@ -19,6 +19,13 @@
 			a_writer.Write(FStopNormalised.AsInt16());
 		}
 
+		public override bool Equals(ICommandPacketBase? a_other)
+		{
+			CommandPacketLensApertureNormalised? other = (CommandPacketLensApertureNormalised?)a_other;
+			return other != null &&
+			       other.FStopNormalised == FStopNormalised;
+		}
+
 		public override string ToString()
 		{
 			return $"{GetType().Name} [{FStopNormalised.AsFloat}]";

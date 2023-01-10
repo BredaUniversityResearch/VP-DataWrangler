@@ -22,6 +22,13 @@
 			a_writer.Write((IsEnabled)? 0 : 1);
 		}
 
+		public override bool Equals(ICommandPacketBase? a_other)
+		{
+			CommandPacketVideoDisplayLUT? other = (CommandPacketVideoDisplayLUT?)a_other;
+			return other != null &&
+			       other.SelectedLUT == SelectedLUT;
+		}
+
 		public override string ToString()
 		{
 			return $"{GetType().Name} [{SelectedLUT}, {IsEnabled}]";

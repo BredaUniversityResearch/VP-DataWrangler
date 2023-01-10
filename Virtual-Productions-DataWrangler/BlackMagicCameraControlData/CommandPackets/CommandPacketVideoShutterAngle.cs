@@ -21,6 +21,13 @@ namespace BlackmagicCameraControl.CommandPackets
 			a_writer.Write(Angle);
 		}
 
+		public override bool Equals(ICommandPacketBase? a_other)
+		{
+			CommandPacketVideoShutterAngle? other = (CommandPacketVideoShutterAngle?)a_other;
+			return other != null &&
+			       other.Angle == Angle;
+		}
+
 		public override string ToString()
 		{
 			return $"{GetType().Name} [{Angle}]";

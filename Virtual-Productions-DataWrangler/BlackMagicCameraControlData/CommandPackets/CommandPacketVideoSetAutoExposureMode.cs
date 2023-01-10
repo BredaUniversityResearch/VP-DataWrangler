@@ -30,6 +30,13 @@ namespace BlackmagicCameraControl.CommandPackets
 			a_writer.Write((byte)Mode);
 		}
 
+		public override bool Equals(ICommandPacketBase? a_other)
+		{
+			CommandPacketVideoSetAutoExposureMode? other = (CommandPacketVideoSetAutoExposureMode?)a_other;
+			return other != null &&
+			       other.Mode == Mode;
+		}
+
 		public override string ToString()
 		{
 			return $"{GetType().Name} [{Mode}]";

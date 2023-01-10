@@ -20,6 +20,13 @@
 			a_writer.Write(StorageDriveIdentifier);
 		}
 
+		public override bool Equals(ICommandPacketBase? a_other)
+		{
+			CommandPacketVendorStorageTargetChanged? other = (CommandPacketVendorStorageTargetChanged?)a_other;
+			return other != null &&
+			       other.StorageDriveIdentifier == StorageDriveIdentifier;
+		}
+
 		public override string ToString()
 		{
 			return $"{GetType().Name} [{StorageDriveIdentifier}, Utility: {StorageTargetName}]";
