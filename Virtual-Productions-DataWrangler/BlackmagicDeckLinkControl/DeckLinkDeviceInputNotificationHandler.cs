@@ -15,7 +15,7 @@ internal class DeckLinkDeviceInputNotificationHandler : IDeckLinkInputCallback
 	private readonly BlackmagicDeckLinkController m_controller;
 	public readonly CameraHandle CameraHandle;
 	private readonly IDeckLinkInput m_targetDevice;
-	private _BMDDisplayMode m_targetDisplayMode = _BMDDisplayMode.bmdModeHD1080p6000;
+	private _BMDDisplayMode m_targetDisplayMode = _BMDDisplayMode.bmdModeHD1080p25;
 	private _BMDPixelFormat m_targetPixelFormat = _BMDPixelFormat.bmdFormat10BitYUV;
 
 	public DeckLinkDeviceInputNotificationHandler(BlackmagicDeckLinkController a_controller, CameraHandle a_cameraHandle, IDeckLinkInput a_targetDevice)

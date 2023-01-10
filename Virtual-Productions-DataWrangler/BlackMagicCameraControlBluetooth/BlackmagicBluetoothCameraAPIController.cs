@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.Devices.Bluetooth;
@@ -10,6 +11,7 @@ using Windows.Devices.Enumeration;
 using BlackmagicCameraControl;
 using BlackmagicCameraControl.CommandPackets;
 using BlackmagicCameraControlData;
+using CommonLogging;
 
 namespace BlackmagicCameraControlBluetooth
 {
@@ -78,9 +80,16 @@ namespace BlackmagicCameraControlBluetooth
 
 			m_bluetoothAdvertisementWatcher.ScanningMode = BluetoothLEScanningMode.Active;
 			m_bluetoothAdvertisementWatcher.Received += OnDeviceAdvertisementReceived;
-			m_bluetoothAdvertisementWatcher.Start();
+            try
+            {
+                m_bluetoothAdvertisementWatcher.Start();
+            }
+            catch (COMException ex)
+            {
+                BlackmagicCameraLogInterface.LogError($"Failed to start Bluetooth advertisement watcher. Exception: {ex.Message}");
+            }
 
-			m_backgroundProcessingCancellationToken = new CancellationTokenSource();
+            m_backgroundProcessingCancellationToken = new CancellationTokenSource();
 			m_reconnectThread = new Thread(BackgroundProcessingMain);
 			m_reconnectThread.Start();
 		}

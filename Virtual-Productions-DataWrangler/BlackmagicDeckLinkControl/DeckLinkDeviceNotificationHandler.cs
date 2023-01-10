@@ -1,4 +1,6 @@
-﻿using BlackmagicCameraControlData;
+﻿using System.Runtime.InteropServices;
+using BlackmagicCameraControlData;
+using CommonLogging;
 using DeckLinkAPI;
 
 namespace BlackmagicDeckLinkControl;
@@ -36,13 +38,27 @@ internal class DeckLinkDeviceNotificationHandler : IDeckLinkDeviceNotificationCa
 			attributes.GetInt(_BMDDeckLinkAttributeID.BMDDeckLinkPersistentID, out long persistent);
 		}
 
+        if (a_deckLinkDevice is IDeckLinkConfiguration config)
+        {
+			config.SetInt(_BMDDeckLinkConfigurationID.bmdDeckLinkConfigVideoInputConnection, (int)_BMDVideoConnection.bmdVideoConnectionSDI);
+        }
+
 		if (a_deckLinkDevice is IDeckLinkInput input)
 		{
 			DeckLinkDeviceInputNotificationHandler notificationHandler = new DeckLinkDeviceInputNotificationHandler(m_controller, CameraHandleGenerator.Next(), input);
-			input.SetCallback(notificationHandler);
+            input.SetCallback(notificationHandler);
 			//input.EnableAudioInput(_BMDAudioSampleRate.bmdAudioSampleRate48kHz, _BMDAudioSampleType.bmdAudioSampleType16bitInteger, 2);
-			input.EnableVideoInput(_BMDDisplayMode.bmdModeHD1080p25, _BMDPixelFormat.bmdFormat10BitYUV, _BMDVideoInputFlags.bmdVideoInputEnableFormatDetection);
-			input.StartStreams();
+            try
+            {
+                input.EnableVideoInput(_BMDDisplayMode.bmdModeHD1080p25, _BMDPixelFormat.bmdFormat10BitYUV,
+                    _BMDVideoInputFlags.bmdVideoInputEnableFormatDetection);
+            }
+            catch (COMException ex)
+            {
+				Logger.LogError("DeckLinkInterface", $"Failed to start video input. Exception: {ex.Message}");
+            }
+
+            input.StartStreams();
 
 			DeckLinkHandlePair pair = new DeckLinkHandlePair(notificationHandler.CameraHandle, a_deckLinkDevice, notificationHandler);
 			m_activeDevices.Add(pair);
