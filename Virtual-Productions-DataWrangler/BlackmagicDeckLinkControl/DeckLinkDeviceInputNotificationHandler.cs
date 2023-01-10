@@ -37,21 +37,6 @@ internal class DeckLinkDeviceInputNotificationHandler : IDeckLinkInputCallback
 
 		if ((a_notificationEvents & _BMDVideoInputFormatChangedEvents.bmdVideoInputColorspaceChanged) != 0)
 		{
-			//switch(detectedSignalFlags)
-			//{
-			//	case _BMDDetectedVideoInputFormatFlags.bmdDetectedVideoInput8BitDepth:
-			//                       pixelFormat = _BMDPixelFormat.bmdFormat8BitARGB;
-			//                       break;
-			//	case _BMDDetectedVideoInputFormatFlags.bmdDetectedVideoInput10BitDepth:
-			//                       pixelFormat = _BMDPixelFormat.bmdFormat10BitRGB;
-			//                       break;
-			//	case _BMDDetectedVideoInputFormatFlags.bmdDetectedVideoInput12BitDepth:
-			//                       pixelFormat = _BMDPixelFormat.bmdFormat12BitRGB;
-			//                       break;
-			//	default:
-			//                       pixelFormat = m_targetPixelFormat;
-			//                       break;
-			//               };
 			pixelFormat = _BMDPixelFormat.bmdFormat10BitYUV;
 		}
 
