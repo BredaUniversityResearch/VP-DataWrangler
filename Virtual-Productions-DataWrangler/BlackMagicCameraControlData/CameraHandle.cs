@@ -6,7 +6,7 @@
 
 		public readonly int ConnectionId;
 
-		public CameraHandle(int a_connectionId)
+		internal CameraHandle(int a_connectionId)
 		{
 			ConnectionId = a_connectionId;
 		}

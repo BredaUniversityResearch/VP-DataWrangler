@@ -59,7 +59,6 @@ namespace BlackmagicCameraControlBluetooth
 		private DeviceWatcher BLEDeviceWatcher = DeviceInformation.CreateWatcher(BluetoothLEDevice.GetDeviceSelector());
 		private BluetoothLEAdvertisementWatcher m_bluetoothAdvertisementWatcher = new BluetoothLEAdvertisementWatcher();
 		private Dictionary<ulong, AdvertisementEntry> m_availableDeviceAdvertisementsByBluetoothAddress = new();
-		private int m_lastUsedHandle = 0;
 
 		private readonly List<IBlackmagicCameraConnection> m_activeConnections = new List<IBlackmagicCameraConnection>();
 		private readonly List<RetryEntry> m_retryConnectionQueue = new List<RetryEntry>();
@@ -237,7 +236,7 @@ namespace BlackmagicCameraControlBluetooth
 						{
 							BlackmagicCameraConnectionBluetooth deviceConnection =
 								new BlackmagicCameraConnectionBluetooth(this,
-									new CameraHandle(++m_lastUsedHandle), connectedDevice, deviceInformationService,
+									CameraHandleGenerator.Next(), connectedDevice, deviceInformationService,
 									blackmagicService);
 							if (deviceConnection.WaitForConnection(CameraConnectSetupTimeout) &&
 							    deviceConnection.ConnectionState ==
@@ -389,7 +388,7 @@ namespace BlackmagicCameraControlBluetooth
 		public void CreateDebugCameraConnection()
 		{
 			BlackmagicCameraConnectionDebug debugConnection =
-				new BlackmagicCameraConnectionDebug(this, new CameraHandle(++m_lastUsedHandle));
+				new BlackmagicCameraConnectionDebug(this, CameraHandleGenerator.Next());
 			m_activeConnections.Add(debugConnection);
 			CameraConnected(debugConnection.CameraHandle);
 		}

@@ -287,7 +287,7 @@ namespace BlackmagicCameraControl
 
 		private void ProcessCommandsFromStream(Stream a_inputData, DateTimeOffset a_receivedTime)
         {
-            CommandReader.DecodeStream(a_inputData, (a_packet) => { m_dispatcher.NotifyDataReceived(CameraHandle, a_receivedTime, a_packet); });
+            CommandReader.DecodeStream(a_inputData, (a_id, a_packet) => { m_dispatcher.NotifyDataReceived(CameraHandle, a_receivedTime, a_packet); });
         }
 
 		public Task<string> AsyncRequestCameraModel()

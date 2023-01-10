@@ -34,7 +34,7 @@ namespace BlackmagicCameraControl.CommandPackets
 			m_targetStream = a_stream;
 		}
 
-        public static void DecodeStream(Stream a_stream, Action<ICommandPacketBase> a_onPacketDecoded)
+        public static void DecodeStream(Stream a_stream, Action<CommandIdentifier, ICommandPacketBase> a_onPacketDecoded)
         {
             CommandReader reader = new CommandReader(a_stream);
             while (reader.BytesRemaining >= PacketHeader.ByteSize)
@@ -62,7 +62,7 @@ namespace BlackmagicCameraControl.CommandPackets
             }
         }
 
-        private void DecodeCommandStream(StreamSpan a_streamSection, Action<ICommandPacketBase> a_onPacketDecoded)
+        private void DecodeCommandStream(StreamSpan a_streamSection, Action<CommandIdentifier, ICommandPacketBase> a_onPacketDecoded)
         {
 			while (a_streamSection.GetBytesRemaining(m_targetStream) > CommandHeader.ByteSize)
 			{
@@ -90,7 +90,7 @@ namespace BlackmagicCameraControl.CommandPackets
 				{
 					BlackmagicCameraLogInterface.LogVerbose(
 						$"Received Packet {header.CommandIdentifier}. {packetInstance}");
-					a_onPacketDecoded.Invoke(packetInstance);
+					a_onPacketDecoded.Invoke(header.CommandIdentifier, packetInstance);
 				}
 				else
 				{
