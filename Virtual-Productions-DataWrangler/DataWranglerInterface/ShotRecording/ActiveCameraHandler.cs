@@ -1,4 +1,5 @@
-﻿using BlackmagicCameraControl;
+﻿using System.Windows.Media;
+using BlackmagicCameraControl;
 using BlackmagicCameraControl.CommandPackets;
 using BlackmagicCameraControlBluetooth;
 using BlackmagicCameraControlData;
@@ -18,9 +19,12 @@ namespace DataWranglerInterface.ShotRecording
 		public delegate void CameraDisconnectedHandler(ActiveCameraInfo a_handle);
 
 		public event CameraConnectedHandler OnCameraConnected = delegate { };
-		public event CameraDisconnectedHandler OnCameraDisconnected = delegate { };
+        public event CameraDisconnectedHandler OnCameraDisconnected = delegate { };
 
-		public ActiveCameraHandler(BlackmagicBluetoothCameraAPIController a_bluetoothController)
+        public VideoPreviewControl? PreviewControl { get; set; }
+        private Task? PreviewUpdateTask = null;
+
+        public ActiveCameraHandler(BlackmagicBluetoothCameraAPIController a_bluetoothController)
 		{
 			m_bluetoothController = a_bluetoothController;
 			m_bluetoothController.OnCameraConnected += OnBluetoothCameraConnected;
@@ -33,14 +37,39 @@ namespace DataWranglerInterface.ShotRecording
 				m_deckLinkController.OnCameraConnected += OnBluetoothCameraConnected;
 				m_deckLinkController.OnCameraDataReceived += OnCameraDataReceived;
 				m_deckLinkController.OnCameraDisconnected += OnBluetoothCameraDisconnected;
+				m_deckLinkController.OnCameraFrameDataReceived += OnCameraFrameDataReceived;
 			}
 			else
 			{
 				Logger.LogWarning("ACH", $"Failed to create DeckLink controller. Reason: {errorMessage}");
 			}
+
+			if (m_deckLinkController != null)
+			{
+				PreviewUpdateTask = Task.Run(() =>
+				{
+					while (true)
+					{
+						if (m_deckLinkController.FrameQueue.TryDequeue(out var frame))
+						{
+							if (PreviewControl != null)
+							{
+								PreviewControl.Dispatcher.InvokeAsync(() =>
+								{
+									frame.GetBytes(out IntPtr pixelBuffer);
+									PreviewControl.OnVideoFrameUpdated(frame.GetWidth(), frame.GetHeight(),
+										PixelFormats.Bgra32, pixelBuffer, frame.GetRowBytes() * frame.GetHeight(),
+										frame.GetRowBytes());
+									frame.Dispose();
+								});
+							}
+						}
+					}
+				});
+			}
 		}
 
-		private void OnCameraDataReceived(CameraHandle a_handle, DateTimeOffset a_receivedTime, ICommandPacketBase a_packet)
+        private void OnCameraDataReceived(CameraHandle a_handle, DateTimeOffset a_receivedTime, ICommandPacketBase a_packet)
 		{
 			if (m_activeCameras.TryGetValue(a_handle, out ActiveCameraInfo? targetCamera))
 			{
@@ -74,5 +103,13 @@ namespace DataWranglerInterface.ShotRecording
 				m_activeCameras.Remove(a_handle);
 			}
 		}
-	}
+		
+        private void OnCameraFrameDataReceived(CameraHandle a_handle, int a_framewidth, int a_frameheight, IntPtr a_framepixeldata, int a_stride)
+        {
+            if (PreviewControl != null)
+            {
+				PreviewControl.OnVideoFrameUpdated(a_framewidth, a_frameheight, PixelFormats.Bgra32, a_framepixeldata, a_stride * a_frameheight, a_stride);
+            }
+        }
+    }
 }

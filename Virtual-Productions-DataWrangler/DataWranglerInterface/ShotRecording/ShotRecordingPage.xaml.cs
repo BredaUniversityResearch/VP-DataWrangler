@@ -23,7 +23,15 @@ namespace DataWranglerInterface.ShotRecording
 		public delegate void ShotVersionCreatedDelegate(ShotGridEntityShotVersion a_data);
 		public event ShotVersionCreatedDelegate? OnNewShotVersionCreated;
 
-		public ShotRecordingPage()
+        public VideoPreviewControl? PreviewControl
+        {
+            set
+            {
+                m_activeCameraHandler.PreviewControl = value;
+            }
+        }
+
+        public ShotRecordingPage()
 		{
 			InitializeComponent();
 		

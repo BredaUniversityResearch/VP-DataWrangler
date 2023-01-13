@@ -80,8 +80,7 @@ internal class DeckLinkDeviceInputNotificationHandler : IDeckLinkInputCallback
             return;
         }
 
-        int frameWidth = videoFrame.GetWidth();
-        int frameHeight = videoFrame.GetHeight();
+        
         videoFrame.GetAncillaryData(out IDeckLinkVideoFrameAncillary ancillaryFrameData);
         _BMDDisplayMode mode = ancillaryFrameData.GetDisplayMode();
         _BMDPixelFormat fmt = ancillaryFrameData.GetPixelFormat();
@@ -118,6 +117,13 @@ internal class DeckLinkDeviceInputNotificationHandler : IDeckLinkInputCallback
 
             it.Next(out packet);
         }
+
+        DecodeAndDispatchFrame(videoFrame);
+    }
+
+    private void DecodeAndDispatchFrame(IDeckLinkVideoInputFrame a_videoFrame)
+    {
+      m_controller.OnVideoFrameReceived(a_videoFrame);
     }
 
     public void StartVideoInput()

@@ -6,6 +6,7 @@ using BlackmagicCameraControl;
 using CommonLogging;
 using DataWranglerCommon;
 using DataWranglerCommonWPF.Login;
+using DataWranglerInterface.CameraPreview;
 using DataWranglerInterface.DebugSupport;
 using DataWranglerInterface.Properties;
 using DataWranglerInterface.ShotRecording;
@@ -35,6 +36,7 @@ namespace DataWranglerInterface
 		private ShotRecordingPage? m_shotRecordingPage;
 
 		private DebugWindow? m_debugWindow;
+        private CameraPreviewWindow? m_previewWindow;
 
 		public MainWindow()
 		{
@@ -45,7 +47,10 @@ namespace DataWranglerInterface
 				m_debugWindow.Show();
 			}
 
-			m_loginPage = new LoginPage();
+            m_previewWindow = new CameraPreviewWindow();
+			m_previewWindow.Show();
+
+            m_loginPage = new LoginPage();
 			OnRequestUserAuthentication();
 		}
 
@@ -67,6 +72,10 @@ namespace DataWranglerInterface
 			Dispatcher.Invoke(() =>
 			{
 				m_shotRecordingPage = new ShotRecordingPage();
+                if (m_previewWindow != null)
+                {
+                    m_shotRecordingPage.PreviewControl = m_previewWindow.PreviewControl;
+                }
 				Content = m_shotRecordingPage;
 			});
 

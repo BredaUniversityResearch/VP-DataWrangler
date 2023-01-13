@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.Collections.Concurrent;
+using System.Runtime.InteropServices;
 using BlackmagicCameraControl.CommandPackets;
 using BlackmagicCameraControlData;
 using BlackmagicCameraControlData.CommandPackets;
@@ -6,12 +7,21 @@ using DeckLinkAPI;
 
 namespace BlackmagicDeckLinkControl
 {
-	public class BlackmagicDeckLinkController: CameraControllerBase
+	public class BlackmagicDeckLinkController : CameraControllerBase
 	{
 		private DeckLinkDeviceNotificationHandler m_deckLinkDeviceNotificationHandler;
 		private IDeckLinkDiscovery m_deckLinkDiscovery = new CDeckLinkDiscoveryClass();
 
-		private Dictionary<CameraHandle, CameraPropertyCache> m_activeCameras = new Dictionary<CameraHandle, CameraPropertyCache>();
+		private Dictionary<CameraHandle, CameraPropertyCache> m_activeCameras =
+			new Dictionary<CameraHandle, CameraPropertyCache>();
+
+		public delegate void CameraFrameDataReceivedDelegate(CameraHandle a_handle, int a_frameWidth, int a_frameHeight,
+			IntPtr a_framePixelData, int a_stride);
+
+		public event CameraFrameDataReceivedDelegate OnCameraFrameDataReceived = delegate { };
+
+		public readonly ConcurrentQueue<DeckLinkVideoConversionFrame> FrameQueue = new ConcurrentQueue<DeckLinkVideoConversionFrame>();
+
 
 		private BlackmagicDeckLinkController()
 		{
@@ -52,6 +62,37 @@ namespace BlackmagicDeckLinkControl
 				{
 					CameraDataReceived(a_handle, DateTimeOffset.UtcNow, a_packet);
 				}
+			}
+		}
+
+		public void OnVideoFrameReceived(IDeckLinkVideoFrame a_videoFrame)
+		{
+			int frameWidth = a_videoFrame.GetWidth();
+			int frameHeight = a_videoFrame.GetHeight();
+			_BMDPixelFormat pixelFormat = a_videoFrame.GetPixelFormat();
+			IntPtr framePixelData;
+			a_videoFrame.GetBytes(out framePixelData);
+
+			if (pixelFormat != _BMDPixelFormat.bmdFormat8BitARGB)
+			{
+				var conversionFrame = new DeckLinkVideoConversionFrame(frameWidth, frameHeight, _BMDPixelFormat.bmdFormat8BitBGRA);
+
+				IDeckLinkVideoConversion converter = new CDeckLinkVideoConversionClass();
+				converter.ConvertFrame(a_videoFrame, conversionFrame);
+
+				FrameQueue.Enqueue(conversionFrame);
+				while (FrameQueue.Count > 4)
+				{
+					if (FrameQueue.TryDequeue(out var discardedFrame))
+					{
+						discardedFrame.Dispose();
+					}
+				}
+			}
+			else
+			{
+				throw new Exception(
+					"Invalid pixel format. Does not need conversion. This should be fine to pass through but never tested.");
 			}
 		}
 	}
