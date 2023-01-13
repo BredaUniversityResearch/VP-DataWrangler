@@ -42,24 +42,23 @@ internal class DeckLinkDeviceInputNotificationHandler : IDeckLinkInputCallback
 
         if ((a_notificationEvents & _BMDVideoInputFormatChangedEvents.bmdVideoInputColorspaceChanged) != 0)
         {
-            switch (a_detectedSignalFlags)
-            {
-                case _BMDDetectedVideoInputFormatFlags.bmdDetectedVideoInput8BitDepth:
-                    pixelFormat = _BMDPixelFormat.bmdFormat8BitARGB;
-                    break;
-                case _BMDDetectedVideoInputFormatFlags.bmdDetectedVideoInput10BitDepth:
-                    pixelFormat = _BMDPixelFormat.bmdFormat10BitRGB;
-                    break;
-                case _BMDDetectedVideoInputFormatFlags.bmdDetectedVideoInput12BitDepth:
-                    pixelFormat = _BMDPixelFormat.bmdFormat12BitRGB;
-                    break;
-                default:
-                    pixelFormat = m_targetPixelFormat;
-                    break;
-            }
+	        bool isRGB = (a_detectedSignalFlags & _BMDDetectedVideoInputFormatFlags.bmdDetectedVideoInputRGB444) != 0;
 
-            Debugger.Break(); //Todo: fix the selection of format here. Detected signal flags is actually a flag, ex. 17 for 10-bit(16) YCbCr(1)
-        }
+	        if ((a_detectedSignalFlags & _BMDDetectedVideoInputFormatFlags.bmdDetectedVideoInput8BitDepth) != 0)
+	        {
+		        pixelFormat = (isRGB)? _BMDPixelFormat.bmdFormat8BitARGB : _BMDPixelFormat.bmdFormat8BitYUV;
+	        }
+            else if ((a_detectedSignalFlags & _BMDDetectedVideoInputFormatFlags.bmdDetectedVideoInput10BitDepth) != 0)
+	        {
+		        pixelFormat = (isRGB)? _BMDPixelFormat.bmdFormat10BitRGB : _BMDPixelFormat.bmdFormat10BitYUV;
+	        }
+			else if ((a_detectedSignalFlags & _BMDDetectedVideoInputFormatFlags.bmdDetectedVideoInput12BitDepth) != 0)
+	        {
+		        if (!isRGB)
+			        throw new Exception("Invalid pixel format received, rgb & 12-bit");
+		        pixelFormat = _BMDPixelFormat.bmdFormat12BitRGB;
+	        }
+		}
 
         if (m_targetDisplayMode != targetMode || m_targetPixelFormat != pixelFormat)
         {
@@ -67,8 +66,7 @@ internal class DeckLinkDeviceInputNotificationHandler : IDeckLinkInputCallback
             m_targetPixelFormat = pixelFormat;
 
             m_targetDevice.PauseStreams();
-            m_targetDevice.EnableVideoInput(targetMode, pixelFormat,
-                _BMDVideoInputFlags.bmdVideoInputFlagDefault);
+            m_targetDevice.EnableVideoInput(targetMode, pixelFormat, _BMDVideoInputFlags.bmdVideoInputFlagDefault);
             m_targetDevice.FlushStreams();
             m_targetDevice.StartStreams();
         }

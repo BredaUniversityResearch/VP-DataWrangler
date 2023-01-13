@@ -33,15 +33,7 @@ internal class DeckLinkDeviceNotificationHandler : IDeckLinkDeviceNotificationCa
 	public void DeckLinkDeviceArrived(IDeckLink a_deckLinkDevice)
 	{
 		a_deckLinkDevice.GetModelName(out string name);
-		if (a_deckLinkDevice is IDeckLinkProfileAttributes attributes)
-		{
-			attributes.GetInt(_BMDDeckLinkAttributeID.BMDDeckLinkPersistentID, out long persistent);
-
-			attributes.GetFlag(_BMDDeckLinkAttributeID.BMDDeckLinkVANCRequires10BitYUVVideoFrames, out int requires10BitYuv);
-			string required = (requires10BitYuv != 0) ? "" : "not";
-			Logger.LogInfo("DeckLinkInterface", $"DeckLink Hardware reports 10BitYUV as {required} required for VANC data");
-		}
-
+	
         if (a_deckLinkDevice is IDeckLinkConfiguration config)
         {
 			config.SetInt(_BMDDeckLinkConfigurationID.bmdDeckLinkConfigVideoInputConnection, (int)_BMDVideoConnection.bmdVideoConnectionSDI);
@@ -62,7 +54,16 @@ internal class DeckLinkDeviceNotificationHandler : IDeckLinkDeviceNotificationCa
 				Logger.LogError("DeckLinkInterface", $"Failed to start video input. Exception: {ex.Message}");
             }
 
-            input.StartStreams();
+            if (a_deckLinkDevice is IDeckLinkProfileAttributes attributes)
+            {
+	            attributes.GetInt(_BMDDeckLinkAttributeID.BMDDeckLinkPersistentID, out long persistent);
+
+	            attributes.GetFlag(_BMDDeckLinkAttributeID.BMDDeckLinkVANCRequires10BitYUVVideoFrames, out int requires10BitYuv);
+	            string required = (requires10BitYuv != 0) ? "" : "not";
+	            Logger.LogInfo("DeckLinkInterface", $"DeckLink Hardware reports 10BitYUV as {required} required for VANC data");
+            }
+
+			input.StartStreams();
 
 			DeckLinkHandlePair pair = new DeckLinkHandlePair(notificationHandler.CameraHandle, a_deckLinkDevice, notificationHandler);
 			m_activeDevices.Add(pair);
