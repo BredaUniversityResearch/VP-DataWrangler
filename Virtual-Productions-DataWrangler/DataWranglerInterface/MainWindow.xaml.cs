@@ -2,15 +2,11 @@
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Input;
-using BlackmagicCameraControl;
-using CommonLogging;
-using DataWranglerCommon;
 using DataWranglerCommonWPF.Login;
 using DataWranglerInterface.CameraPreview;
 using DataWranglerInterface.DebugSupport;
 using DataWranglerInterface.Properties;
 using DataWranglerInterface.ShotRecording;
-using ShotGridIntegration;
 
 namespace DataWranglerInterface
 {
@@ -105,6 +101,11 @@ namespace DataWranglerInterface
 			if (m_debugWindow != null && m_debugWindow.IsVisible)
 			{
 				m_debugWindow.Close();
+			}
+
+			if (m_previewWindow != null && m_previewWindow.IsVisible)
+			{
+				m_previewWindow.Close();
 			}
 		}
 	}

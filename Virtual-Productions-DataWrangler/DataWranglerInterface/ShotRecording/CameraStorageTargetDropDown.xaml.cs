@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.Windows.Controls;
+using DataWranglerInterface.Configuration;
 
 namespace DataWranglerInterface.ShotRecording
 {
@@ -27,8 +28,10 @@ namespace DataWranglerInterface.ShotRecording
 
 		public CameraStorageTargetDropDown()
 		{
-			m_storageTargets.Add("A007");
-			m_storageTargets.Add("A023");
+			foreach(string storageTarget in DataWranglerConfig.Instance.StorageTargets)
+			{
+				m_storageTargets.Add(storageTarget);
+			}
 			InitializeComponent();
 
 			StorageTargetDropdown.ItemsSource = m_storageTargets;
