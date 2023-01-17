@@ -32,7 +32,7 @@
 
 		public override string ToString()
 		{
-			return $"{GetType().Name} [FStop: {FStop.AsFloat} Unknown: {Unknown.AsFloat}]";
+			return $"{GetType().Name} [FStop: {FStop.AsFloat} ReferenceTime: {Unknown.AsFloat}]";
 		}
 	}
 }

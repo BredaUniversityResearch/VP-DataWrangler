@@ -31,7 +31,7 @@
 	        <Label Grid.Column="0" Grid.Row="3">State</Label>
 	        <Label x:Name="CameraState" Grid.Column="1" Grid.Row="3"></Label>
 	        <Label Grid.Column="0" Grid.Row="4">Storage Target</Label>
-	        <Label x:Name="CameraStorageTarget" Grid.Column="1" Grid.Row="4"></Label>
+	        <local:CameraStorageTargetDropDown x:Name="CameraStorageTarget" Grid.Column="1" Grid.Row="4"></local:CameraStorageTargetDropDown>
 		</Grid>
 	    <Grid>
 			<dataWranglerCommonWpf:LoadingSpinner x:Name="LoadingSpinner"/>

@@ -116,5 +116,14 @@ namespace DataWranglerInterface.ShotRecording
 			PropertyChanged?.Invoke(this, evt);
 			CameraPropertyChanged?.Invoke(this, evt);
 		}
+
+		public void SetStorageTarget(string a_storageTargetName)
+		{
+			if (CurrentStorageTarget != a_storageTargetName)
+			{
+				CurrentStorageTarget = a_storageTargetName;
+				OnCameraPropertyChanged(nameof(CurrentStorageTarget), DateTimeOffset.UtcNow);
+			}
+		}
 	}
 }

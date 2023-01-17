@@ -18,6 +18,8 @@ namespace DataWranglerInterface.ShotRecording
 		public CameraInfoControl()
 		{
 			InitializeComponent();
+
+			CameraStorageTarget.OnStorageTargetChanged += OnStorageTargetChangedInUI;
 		}
 
 		public void SetTargetCameraInfo(ActiveCameraInfo? a_activeCamera)
@@ -81,7 +83,15 @@ namespace DataWranglerInterface.ShotRecording
 			}
 			else if (a_e.PropertyName == nameof(ActiveCameraInfo.CurrentStorageTarget))
 			{
-				Dispatcher.InvokeAsync(() => CameraStorageTarget.Content = m_targetCamera.CurrentStorageTarget);
+				Dispatcher.InvokeAsync(() => CameraStorageTarget.StorageTargetString = m_targetCamera.CurrentStorageTarget);
+			}
+		}
+
+		private void OnStorageTargetChangedInUI(string a_obj)
+		{
+			if (m_targetCamera != null)
+			{
+				m_targetCamera.SetStorageTarget(a_obj);
 			}
 		}
 	}

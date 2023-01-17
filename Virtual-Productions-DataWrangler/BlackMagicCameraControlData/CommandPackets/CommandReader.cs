@@ -71,7 +71,7 @@ namespace BlackmagicCameraControl.CommandPackets
 				CommandMeta? commandMeta = CommandPacketFactory.FindCommandMeta(header.CommandIdentifier);
 				if (commandMeta == null)
 				{
-					BlackmagicCameraLogInterface.LogWarning(
+					BlackmagicCameraLogInterface.LogVerbose(
 						$"Received unknown packet with identifier {header.CommandIdentifier}. Size: {BytesRemaining}, Type: {header.DataType}");
 					m_targetStream.Seek(a_streamSection.ByteLength - CommandHeader.ByteSize, SeekOrigin.Current);
 					break;
@@ -88,8 +88,8 @@ namespace BlackmagicCameraControl.CommandPackets
 				ICommandPacketBase? packetInstance = CommandPacketFactory.CreatePacket(header.CommandIdentifier, this);
 				if (packetInstance != null)
 				{
-					BlackmagicCameraLogInterface.LogVerbose(
-						$"Received Packet {header.CommandIdentifier}. {packetInstance}");
+					//BlackmagicCameraLogInterface.LogVerbose(
+					//	$"Received Packet {header.CommandIdentifier}. {packetInstance}");
 					a_onPacketDecoded.Invoke(header.CommandIdentifier, packetInstance);
 				}
 				else

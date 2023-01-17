@@ -6,12 +6,13 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:DataWranglerInterface"
       xmlns:debugSupport="clr-namespace:DataWranglerInterface.DebugSupport"
+      xmlns:commonLogging="clr-namespace:CommonLogging;assembly=CommonLogging"
       mc:Ignorable="d" 
       d:DesignHeight="450" d:DesignWidth="800"
       Title="LogPage">
 
     <Grid>
-		<DataGrid x:Name="LogOutput" VerticalScrollBarVisibility="Visible" ItemsSource="{Binding ElementName=LogPageInstance, Path=Messages}" d:DataContext="{d:DesignInstance Type={x:Type debugSupport:LogMessage}}" AutoGenerateColumns="False" CanUserResizeRows="False" CanUserDeleteRows="False" CanUserAddRows="False" AlternatingRowBackground="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}" >
+		<DataGrid x:Name="LogOutput" VerticalScrollBarVisibility="Visible" ItemsSource="{Binding ElementName=LogPageInstance, Path=Messages}" d:DataContext="{d:DesignInstance Type={x:Type commonLogging:LogMessage}}" AutoGenerateColumns="False" CanUserResizeRows="False" CanUserDeleteRows="False" CanUserAddRows="False" AlternatingRowBackground="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}" IsReadOnly="True" >
             <DataGrid.Columns>
 				<DataGridTextColumn Header="Source" Binding="{Binding Source}" Width="1*"></DataGridTextColumn>
 				<DataGridTextColumn Header="Severity" Binding="{Binding Severity}" Width="1*"></DataGridTextColumn>

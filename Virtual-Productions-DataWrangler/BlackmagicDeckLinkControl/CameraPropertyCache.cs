@@ -13,7 +13,7 @@ namespace BlackmagicDeckLinkControl
 			bool wasChanged = false;
 			if (m_currentValues.TryGetValue(a_identifier, out ICommandPacketBase? existingValue))
 			{
-				if (existingValue != a_packet)
+				if (!existingValue.Equals(a_packet))
 				{
 					m_currentValues[a_identifier] = a_packet;
 					wasChanged = true;

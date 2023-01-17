@@ -11,7 +11,6 @@ internal class DeckLinkDeviceInputNotificationHandler : IDeckLinkInputCallback
     // Ursa Mini Manual SDK 1.4, pg 271 "Blanking Encoding"
     private const byte DIDPacketBlackmagic = 0x51;
     private const byte SDIDTally = 0x52;
-
     private const byte SDIDCameraControl = 0x53;
     //private const int RemoteControlVANCLineId = 16;
 
@@ -79,7 +78,6 @@ internal class DeckLinkDeviceInputNotificationHandler : IDeckLinkInputCallback
         {
             return;
         }
-
         
         videoFrame.GetAncillaryData(out IDeckLinkVideoFrameAncillary ancillaryFrameData);
         _BMDDisplayMode mode = ancillaryFrameData.GetDisplayMode();
@@ -106,8 +104,15 @@ internal class DeckLinkDeviceInputNotificationHandler : IDeckLinkInputCallback
                 unsafe
                 {
                     using Stream ms = new UnmanagedMemoryStream((byte*)packetData.ToPointer(), size);
-                    CommandReader.DecodeStream(ms,
-                        (a_id, a_packet) => { m_controller.OnCameraPacketArrived(CameraHandle, a_id, a_packet); });
+                    try
+                    {
+                        CommandReader.DecodeStream(ms,
+                            (a_id, a_packet) => { m_controller.OnCameraPacketArrived(CameraHandle, a_id, a_packet); });
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.LogError("DeckLink", $"Failed to deserialize command stream, exception occurred: {ex.Message}");
+                    }
                 }
             }
             else

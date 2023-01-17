@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
 using BlackmagicCameraControl.CommandPackets;
 using BlackmagicCameraControlData;
@@ -60,7 +61,12 @@ namespace BlackmagicDeckLinkControl
 			{
 				if (cache.CheckPropertyChanged(a_id, a_packet))
 				{
-					CameraDataReceived(a_handle, DateTimeOffset.UtcNow, a_packet);
+					if (!(a_id.Category == 9 && a_id.Parameter == 4) && //Ignore reference time packet for now.
+						!(a_id.Category == 9 && a_id.Parameter == 0)) //And the battery info packets...
+					{
+						BlackmagicCameraLogInterface.LogInfo($"Received Packet {a_id.Category}:{a_id.Parameter}. {a_packet}");
+					}
+                    CameraDataReceived(a_handle, DateTimeOffset.UtcNow, a_packet);
 				}
 			}
 		}
