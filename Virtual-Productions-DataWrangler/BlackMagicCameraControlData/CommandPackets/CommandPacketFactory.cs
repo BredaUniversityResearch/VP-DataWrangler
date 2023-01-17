@@ -18,7 +18,20 @@ namespace BlackmagicCameraControl.CommandPackets
 				if (metaAttribute != null)
 				{
 					Debug.Assert(type.GetConstructor(new [] {typeof(CommandReader)}) != null, $"Failed to find public constructor with CommandReader as single param on type {type.Name}");
-					Debug.Assert(type.GetInterfaces().Contains(typeof(IEquatable<>)), "Type does not implement IEquatable");
+
+                    Type[] interfaces = type.GetInterfaces();
+                    Type requestedInterfaceType = typeof(IEquatable<>).GetGenericTypeDefinition();
+                    bool hasEquatable = false;
+                    foreach (Type interfaceType in interfaces)
+                    {
+                        if (interfaceType.IsGenericType && interfaceType.GetGenericTypeDefinition() == requestedInterfaceType)
+                        {
+                            hasEquatable = true;
+                            break;
+                        }
+                    }
+
+                    Debug.Assert(hasEquatable, "Type does not implement IEquatable");
 					ms_knownCommands.Add(metaAttribute.Identifier, new CommandMeta(type, metaAttribute.Identifier, metaAttribute.SerializedSizeBytes, metaAttribute.DataType));
 				}
 			}
