@@ -8,9 +8,10 @@ namespace DataWranglerInterface.ShotRecording
 	{
 		private readonly ObservableCollection<string> m_storageTargets = new ObservableCollection<string>();
 
+		private string m_storageTargetStringCached;
 		public string StorageTargetString
 		{
-			get => (string)StorageTargetDropdown.SelectedItem;
+			get => m_storageTargetStringCached;
 			set
 			{
 				int storageTargetIndex = m_storageTargets.IndexOf(value);
@@ -21,6 +22,7 @@ namespace DataWranglerInterface.ShotRecording
 				}
 
 				StorageTargetDropdown.SelectedIndex = storageTargetIndex;
+				m_storageTargetStringCached = (string)StorageTargetDropdown.SelectedValue;
 			}
 		}
 
@@ -36,12 +38,14 @@ namespace DataWranglerInterface.ShotRecording
 
 			StorageTargetDropdown.ItemsSource = m_storageTargets;
 			StorageTargetDropdown.SelectedIndex = 0;
+			m_storageTargetStringCached = (string)StorageTargetDropdown.SelectedValue;
 
 			StorageTargetDropdown.SelectionChanged += OnStorageSelectionChanged;
 		}
 
 		private void OnStorageSelectionChanged(object a_sender, SelectionChangedEventArgs a_e)
 		{
+			m_storageTargetStringCached = (string)StorageTargetDropdown.SelectedValue;
 			OnStorageTargetChanged.Invoke(StorageTargetString);
 		}
 	}

@@ -33,6 +33,11 @@ namespace DataWranglerInterface.ShotRecording
 			if (m_targetCamera != null)
 			{
 				m_targetCamera.CameraPropertyChanged += OnCameraPropertyChanged;
+
+				if (string.IsNullOrEmpty(m_targetCamera.CurrentStorageTarget))
+				{
+					m_targetCamera.SetStorageTarget(CameraStorageTarget.StorageTargetString);
+				}
 			}
 
 			Dispatcher.InvokeAsync(() =>

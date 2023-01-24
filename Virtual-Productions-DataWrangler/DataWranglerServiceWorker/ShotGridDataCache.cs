@@ -113,7 +113,7 @@ namespace DataWranglerServiceWorker
 											version.Id, version.Attributes.VersionCode, decodedMeta));
 									}
 								}
-								catch (JsonSerializationException ex)
+								catch (JsonReaderException ex)
 								{
 									Logger.LogError("MetaCache", $"Failed to deserialize data for shot version {version.Id}. Exception: {ex.Message}");
 								}
@@ -128,7 +128,7 @@ namespace DataWranglerServiceWorker
 			}
 			catch (Exception ex)
 			{
-				Logger.LogError("MetaCache", $"Exception occured during cache update: {ex.Message}");
+				Logger.LogError("MetaCache", $"Exception occurred during cache update: {ex.Message}");
 				throw;
 			}
 		}
