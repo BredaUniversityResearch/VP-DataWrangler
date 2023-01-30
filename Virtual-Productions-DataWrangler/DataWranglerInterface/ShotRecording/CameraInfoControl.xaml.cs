@@ -90,6 +90,11 @@ namespace DataWranglerInterface.ShotRecording
 			{
 				Dispatcher.InvokeAsync(() => CameraStorageTarget.StorageTargetString = m_targetCamera.CurrentStorageTarget);
 			}
+			else if (a_e.PropertyName == nameof(ActiveCameraInfo.CurrentTimeCode))
+			{
+				Dispatcher.InvokeAsync(() => CameraTimeCode.Content = m_targetCamera.CurrentTimeCode);
+			}
+
 		}
 
 		private void OnStorageTargetChangedInUI(string a_obj)

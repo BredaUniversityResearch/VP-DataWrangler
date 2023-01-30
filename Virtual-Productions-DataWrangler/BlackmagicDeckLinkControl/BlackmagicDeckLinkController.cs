@@ -10,6 +10,8 @@ namespace BlackmagicDeckLinkControl
 {
 	public class BlackmagicDeckLinkController : CameraControllerBase
 	{
+		private const int FrameQueueLength = 2;
+
 		private DeckLinkDeviceNotificationHandler m_deckLinkDeviceNotificationHandler;
 		private IDeckLinkDiscovery m_deckLinkDiscovery = new CDeckLinkDiscoveryClass();
 
@@ -87,7 +89,7 @@ namespace BlackmagicDeckLinkControl
 				converter.ConvertFrame(a_videoFrame, conversionFrame);
 
 				FrameQueue.Enqueue(conversionFrame);
-				while (FrameQueue.Count > 4)
+				while (FrameQueue.Count > FrameQueueLength)
 				{
 					if (FrameQueue.TryDequeue(out var discardedFrame))
 					{

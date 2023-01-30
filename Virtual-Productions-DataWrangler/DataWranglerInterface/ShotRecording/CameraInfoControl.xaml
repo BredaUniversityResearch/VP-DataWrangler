@@ -21,6 +21,7 @@
 				<RowDefinition Height="1*"/>
 				<RowDefinition Height="1*"/>
 				<RowDefinition Height="1*"/>
+				<RowDefinition Height="1*"/>
             </Grid.RowDefinitions>
 			<Label Grid.Column="0" Grid.Row="0">Camera</Label>
 			<Label x:Name="CameraDisplayName" Grid.Column="1" Grid.Row="0">Hello World</Label>
@@ -30,8 +31,10 @@
 			<Label x:Name="CameraBattery" Grid.Column="1" Grid.Row="2"></Label>
 	        <Label Grid.Column="0" Grid.Row="3">State</Label>
 	        <Label x:Name="CameraState" Grid.Column="1" Grid.Row="3"></Label>
-	        <Label Grid.Column="0" Grid.Row="4">Storage Target</Label>
-	        <local:CameraStorageTargetDropDown x:Name="CameraStorageTarget" Grid.Column="1" Grid.Row="4"></local:CameraStorageTargetDropDown>
+	        <Label Grid.Column="0" Grid.Row="4">Time Code</Label>
+	        <Label x:Name="CameraTimeCode" Grid.Column="1" Grid.Row="4"></Label>
+			<Label Grid.Column="0" Grid.Row="5">Storage Target</Label>
+	        <local:CameraStorageTargetDropDown x:Name="CameraStorageTarget" Grid.Column="1" Grid.Row="5"></local:CameraStorageTargetDropDown>
 		</Grid>
 	    <Grid>
 			<dataWranglerCommonWpf:LoadingSpinner x:Name="LoadingSpinner"/>

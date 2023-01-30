@@ -66,4 +66,14 @@ public class BinaryCodedDecimal
 
 		return new DateTime(year, month, day, hour, minute, second);
 	}
+
+	public static string ToFormattedTimeString(int a_time)
+	{
+		byte[] timeBuffer = BitConverter.GetBytes(a_time);
+		int hour = ReadInt8(timeBuffer, 3);
+		int minute = ReadInt8(timeBuffer, 2);
+		int second = ReadInt8(timeBuffer, 1);
+		int frame = ReadInt8(timeBuffer, 0);
+		return $"{hour:D2}:{minute:D2}:{second:D2}:{frame:D2}";
+	}
 };

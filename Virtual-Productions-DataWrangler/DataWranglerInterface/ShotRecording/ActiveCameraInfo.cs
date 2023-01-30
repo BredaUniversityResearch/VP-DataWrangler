@@ -41,7 +41,8 @@ namespace DataWranglerInterface.ShotRecording
 		public CommandPacketMediaTransportMode.EMode CurrentTransportMode { get; private set; }
 		public string CurrentStorageTarget { get; private set; } = "";
 		public string SelectedCodec { get; private set; } = ""; //String representation of the basic coded selected by camera.
-
+		public string CurrentTimeCode { get; private set; } = "";
+		
 		public ActiveCameraInfo(CameraHandle a_handle)
 		{
 			TargetCamera = a_handle;
@@ -74,7 +75,6 @@ namespace DataWranglerInterface.ShotRecording
 					a_controller.AsyncSendCommand(TargetCamera,
 						new CommandPacketMediaCodec()
 							{BasicCodec = CommandPacketMediaCodec.EBasicCodec.BlackmagicRAW, Variant = 0});
-
 				}
 
 				BatteryPercentage = batteryInfo.BatteryPercentage;
@@ -102,6 +102,11 @@ namespace DataWranglerInterface.ShotRecording
 
 				CurrentStorageTarget = storageTarget.StorageTargetName;
 				OnCameraPropertyChanged(nameof(CurrentStorageTarget), a_receivedTime);
+			}
+			else if (a_packet is CommandPacketSystemTimeCode timeCodeChanged)
+			{
+				CurrentTimeCode = timeCodeChanged.FormattedTimeCode;
+				OnCameraPropertyChanged(nameof(CurrentTimeCode), a_receivedTime);
 			}
 		}
 
