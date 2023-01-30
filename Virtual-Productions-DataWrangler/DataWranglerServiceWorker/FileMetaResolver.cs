@@ -26,7 +26,7 @@ namespace DataWranglerServiceWorker
 					foreach (var cacheEntry in relevantCacheEntries)
 					{
 						DataWranglerFileSourceMetaBlackmagicUrsa ursaMeta = cacheEntry.Key;
-						if (ursaMeta.IsSourceFor(fileInfo.CreationTimeUtc, a_storageName, codec.ToString(), out var a_reasonForRejection))
+						if (ursaMeta.IsSourceFor(fileInfo, a_storageName, codec.ToString(), out var a_reasonForRejection))
 						{
 							Logger.LogInfo("FileResolverUrsa", $"Found file {filePath} for shot {cacheEntry.Value.ShotCode} ({cacheEntry.Value.Identifier.VersionId})");
 

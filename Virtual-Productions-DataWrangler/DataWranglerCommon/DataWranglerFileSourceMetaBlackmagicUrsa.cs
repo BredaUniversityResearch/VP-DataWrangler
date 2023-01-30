@@ -16,8 +16,11 @@ public partial class DataWranglerFileSourceMetaBlackmagicUrsa: DataWranglerFileS
 	[AutoNotify]
 	private string m_codecName = "";
 
-	[AutoNotify] 
+	[AutoNotify, Obsolete("Favor start time code over recording start")] 
 	private DateTimeOffset? m_recordingStart = null;
+
+	[AutoNotify]
+	private string m_startTimeCode = "";
 
 	[AutoNotify] 
 	private string m_storageTarget = "";
@@ -34,23 +37,31 @@ public partial class DataWranglerFileSourceMetaBlackmagicUrsa: DataWranglerFileS
 			m_source = m_source, 
 			m_codecName = m_codecName, 
 			m_recordingStart = m_recordingStart,
+			m_startTimeCode = m_startTimeCode,
 			m_storageTarget = m_storageTarget
 		};
 	}
 
-	public bool IsSourceFor(DateTimeOffset a_fileInfoCreationTimeUtc, string a_storageName, string a_codecName, out string? a_reasonForRejection)
+	public bool IsSourceFor(FileInfo a_fileInfo, string a_storageName, string a_codecName, out string? a_reasonForRejection)
 	{
 		if (CodecName == a_codecName && StorageTarget == a_storageName)
 		{
-			TimeSpan? timeSinceCreation = a_fileInfoCreationTimeUtc - RecordingStart!;
-			if (timeSinceCreation > -MaxTimeOffset && timeSinceCreation < MaxTimeOffset)
+			if (!string.IsNullOrEmpty(StartTimeCode))
 			{
-				a_reasonForRejection = null;
-				return true;
+				string timeCode = GetFirstFrameTimeCodeFromFile(a_fileInfo.FullName);
 			}
 			else
 			{
-				a_reasonForRejection = $"Time offset did not match. Offset was {timeSinceCreation.Value.TotalSeconds} seconds";
+				TimeSpan? timeSinceCreation = a_fileInfo.CreationTimeUtc - RecordingStart!;
+				if (timeSinceCreation > -MaxTimeOffset && timeSinceCreation < MaxTimeOffset)
+				{
+					a_reasonForRejection = null;
+					return true;
+				}
+				else
+				{
+					a_reasonForRejection = $"Time offset did not match. Offset was {timeSinceCreation.Value.TotalSeconds} seconds";
+				}
 			}
 		}
 		else
@@ -58,5 +69,10 @@ public partial class DataWranglerFileSourceMetaBlackmagicUrsa: DataWranglerFileS
 			a_reasonForRejection = $"Expected codec/storage {CodecName}/{StorageTarget}  got {a_codecName}/{a_storageName}";
 		}
 		return false;
+	}
+
+	private string GetFirstFrameTimeCodeFromFile(string a_filePath)
+	{
+
 	}
 }
