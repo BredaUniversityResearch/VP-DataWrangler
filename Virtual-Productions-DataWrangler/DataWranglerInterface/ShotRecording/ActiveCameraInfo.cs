@@ -41,7 +41,7 @@ namespace DataWranglerInterface.ShotRecording
 		public CommandPacketMediaTransportMode.EMode CurrentTransportMode { get; private set; }
 		public string CurrentStorageTarget { get; private set; } = "";
 		public string SelectedCodec { get; private set; } = ""; //String representation of the basic coded selected by camera.
-		public string CurrentTimeCode { get; private set; } = "";
+		public TimeCode CurrentTimeCode { get; private set; }
 		
 		public ActiveCameraInfo(CameraHandle a_handle)
 		{
@@ -105,7 +105,7 @@ namespace DataWranglerInterface.ShotRecording
 			}
 			else if (a_packet is CommandPacketSystemTimeCode timeCodeChanged)
 			{
-				CurrentTimeCode = timeCodeChanged.FormattedTimeCode;
+				CurrentTimeCode = timeCodeChanged.TimeCode;
 				OnCameraPropertyChanged(nameof(CurrentTimeCode), a_receivedTime);
 			}
 		}

@@ -15,4 +15,16 @@
 	<ItemGroup>
 	  <ProjectReference Include="..\DataWranglerSourceAnalysis\DataWranglerSourceAnalysis.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 	</ItemGroup>
+
+	<ItemGroup>
+	  <Reference Include="BlackmagicRawAPIInterop">
+	    <HintPath>..\ThirdParty\Blackmagic RAW SDK\BlackmagicRawAPIInterop.dll</HintPath>
+	  </Reference>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Update="BlackmagicRawAPI.dll">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	</ItemGroup>
 </Project>

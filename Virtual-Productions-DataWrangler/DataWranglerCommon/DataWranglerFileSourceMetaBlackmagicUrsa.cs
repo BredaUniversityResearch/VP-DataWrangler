@@ -48,7 +48,8 @@ public partial class DataWranglerFileSourceMetaBlackmagicUrsa: DataWranglerFileS
 		{
 			if (!string.IsNullOrEmpty(StartTimeCode))
 			{
-				string timeCode = GetFirstFrameTimeCodeFromFile(a_fileInfo.FullName);
+				//string timeCode = GetFirstFrameTimeCodeFromFile(a_fileInfo.FullName);
+				throw new NotImplementedException();
 			}
 			else
 			{
@@ -69,10 +70,5 @@ public partial class DataWranglerFileSourceMetaBlackmagicUrsa: DataWranglerFileS
 			a_reasonForRejection = $"Expected codec/storage {CodecName}/{StorageTarget} got {a_codecName}/{a_storageName}";
 		}
 		return false;
-	}
-
-	private string GetFirstFrameTimeCodeFromFile(string a_filePath)
-	{
-
 	}
 }

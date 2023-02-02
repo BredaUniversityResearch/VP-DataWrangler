@@ -1,6 +1,4 @@
-﻿using BlackmagicCameraControlData;
-using System;
-using System.Diagnostics;
+﻿using DataWranglerCommon;
 
 namespace BlackmagicCameraControl.CommandPackets
 {
@@ -8,7 +6,7 @@ namespace BlackmagicCameraControl.CommandPackets
 	public class CommandPacketSystemTimeCode : ICommandPacketBase
 	{
 		public int BinaryCodedTimeCode = 0; //BCD
-		public string FormattedTimeCode = ""; // HH:MM:SS:FF
+		public TimeCode TimeCode = new TimeCode(0, 0, 0, 0); // HH:MM:SS:FF
 
 		public CommandPacketSystemTimeCode()
 		{
@@ -17,7 +15,7 @@ namespace BlackmagicCameraControl.CommandPackets
 		public CommandPacketSystemTimeCode(CommandReader a_reader)
 		{
 			BinaryCodedTimeCode = a_reader.ReadInt32();
-			FormattedTimeCode = BinaryCodedDecimal.ToFormattedTimeString(BinaryCodedTimeCode);
+			TimeCode = TimeCode.FromBCD(BinaryCodedTimeCode);
 		}
 
 		public override void WriteTo(CommandWriter a_writer)

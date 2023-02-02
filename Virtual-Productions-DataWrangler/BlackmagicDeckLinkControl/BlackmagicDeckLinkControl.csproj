@@ -12,6 +12,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Reference Include="BlackmagicRawAPI">
+      <HintPath>..\ThirdParty\Blackmagic RAW SDK\BlackmagicRawAPI.dll</HintPath>
+    </Reference>
     <Reference Include="DeckLinkAPI">
       <HintPath>..\ThirdParty\Blackmagic DeckLink SDK 12.4\DeckLinkAPI.dll</HintPath>
     </Reference>
