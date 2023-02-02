@@ -66,7 +66,7 @@ public partial class DataWranglerFileSourceMetaBlackmagicUrsa: DataWranglerFileS
 		}
 		else
 		{
-			a_reasonForRejection = $"Expected codec/storage {CodecName}/{StorageTarget}  got {a_codecName}/{a_storageName}";
+			a_reasonForRejection = $"Expected codec/storage {CodecName}/{StorageTarget} got {a_codecName}/{a_storageName}";
 		}
 		return false;
 	}

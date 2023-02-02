@@ -1,0 +1,716 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2639
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 LucidaGrande-Bold;\f1\fnil\fcharset0 LucidaGrande;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw12240\paperh15840\vieww22760\viewh12100\viewkind0
+\deftab720
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\tx13563\pardeftab720\partightenfactor0
+
+\f0\b\fs30 \cf0 Blackmagic RAW SDK 2.8 Changelog
+\fs28 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardeftab720\partightenfactor0
+\cf0 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardeftab720\partightenfactor0
+
+\f1\b0\fs26 \cf0 Please refer to the Blackmagic RAW SDK documentation for a detailed explanation of the available functionality.\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardeftab720\partightenfactor0
+
+\f0\b\fs24 \cf0 Changes in Blackmagic RAW 2.8
+\f1\b0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\ri-483\partightenfactor0
+\cf0 \'95 Adds support for Fujifilm X-T5 Blackmagic RAW clips.\
+\'95 Adds support for anamorphic desqueeze.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\ri-483\partightenfactor0
+
+\fs26 \cf0 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardeftab720\partightenfactor0
+\cf0 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardeftab720\partightenfactor0
+
+\f0\b\fs24 \cf0 Changes in Blackmagic RAW 2.7
+\f1\b0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\ri-483\partightenfactor0
+\cf0 \'95 Adds support for Fujifilm X-H2 Blackmagic RAW clips.\
+\'95 Adds support for ZCam E2, E2-M4, E2-S6, and E2-F6 Blackmagic RAW clips.\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardeftab720\partightenfactor0
+\cf0 \
+\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b \cf0 Changes in Blackmagic RAW 2.6
+\f1\b0\fs26 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardeftab720\partightenfactor0
+\cf0 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardeftab720\partightenfactor0
+
+\fs24 \cf0 \'95 Adds support for Fujifilm XH2s Blackmagic RAW clips captured by Blackmagic Video Assist.\
+\'95 Adds adjustable white balance and accuracy for Panasonic GH5S, BGH1.\
+\'95 Improved white balance accuracy for Panasonic S1H, S1, S5, BS1H.\
+\'95 Added per clip metadata entry \'93sensor_line_time\'94 for motion data usage.\
+\'95 Added per clip metadata entry \'93ois_enable\'94 for motion data usage.\
+\'95 Interface changes:\
+\
+ 	- Removed interface IBlackmagicRawConstants\
+\
+ 	- Added method IBlackmagicRawClipProcessingAttributes::GetClipAttributeRange()\
+ 	- Added method IBlackmagicRawClipProcessingAttributes::GetClipAttributeList()\
+	- Added method IBlackmagicRawClipProcessingAttributes::GetISOList()\
+ 	- Added method IBlackmagicRawFrameProcessingAttributes::GetFrameAttributeRange()\
+ 	- Added method IBlackmagicRawFrameProcessingAttributes::GetFrameAttributeList()\
+ 	- Added method IBlackmagicRawFrameProcessingAttributes::GetISOList()\
+ 	- Added interface IBlackmagicRawClipAccelerometerMotion\
+ 	- Added method IBlackmagicRawClipAccelerometerMotion::GetSampleRate()\
+ 	- Added method IBlackmagicRawClipAccelerometerMotion::GetSampleCount()\
+ 	- Added method IBlackmagicRawClipAccelerometerMotion::GetSampleSize()\
+ 	- Added method IBlackmagicRawClipAccelerometerMotion::GetSampleRange()\
+ 	- Added method IBlackmagicRawClipAccelerometerMotion::~IBlackmagicRawClipAccelerometerMotion()\
+ 	- Added method IBlackmagicRawClipAccelerometerMotion::IBlackmagicRawClip()\
+ 	- Added interface IBlackmagicRawClipGyroscopeMotion\
+ 	- Added method IBlackmagicRawClipGyroscopeMotion::GetSampleRate()\
+ 	- Added method IBlackmagicRawClipGyroscopeMotion::GetSampleCount()\
+ 	- Added method IBlackmagicRawClipGyroscopeMotion::GetSampleSize()\
+ 	- Added method IBlackmagicRawClipGyroscopeMotion::GetSampleRange()\
+ 	- Added method IBlackmagicRawClipGyroscopeMotion::~IBlackmagicRawClipGyroscopeMotion()\
+ 	- Added method IBlackmagicRawClipGyroscopeMotion::IBlackmagicRawClip()\
+ 	- Added method IBlackmagicRawFrame::GetSensorRate()\
+ 	- Added related interface IBlackmagicRawClip to interface IBlackmagicRawFrame\
+ 	- Added related interface IBlackmagicRawClipAccelerometerMotion to interface IBlackmagicRawClip\
+ 	- Added related interface IBlackmagicRawClipGyroscopeMotion to interface IBlackmagicRawClip
+\fs26 \
+\
+\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b\fs24 \cf0 Changes in Blackmagic RAW 2.5
+\f1\b0\fs26 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardeftab720\partightenfactor0
+\cf0 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardeftab720\partightenfactor0
+
+\fs24 \cf0 \'95 Added Blackmagic Design Pocket Cinema Camera 6K G2 support.\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardeftab720\partightenfactor0
+
+\fs26 \cf0 \
+\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b\fs24 \cf0 Changes in Blackmagic RAW 2.4
+\f1\b0\fs26 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardeftab720\partightenfactor0
+\cf0 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardeftab720\partightenfactor0
+
+\fs24 \cf0 \'95 Added support for Leica SL2-S Blackmagic RAW clips captured by Blackmagic Video Assist.\
+\'95 General performance and stability improvements.\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardeftab720\partightenfactor0
+
+\fs26 \cf0 \
+\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b\fs24 \cf0 Changes in Blackmagic RAW 2.3
+\f1\b0\fs26 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardeftab720\partightenfactor0
+\cf0 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardeftab720\partightenfactor0
+
+\fs24 \cf0 \'95 Improves Blackmagic RAW recording from the SIGMA fp and fp L. \
+\'95 Added sample code project for a command line OpenEXR transcoder.\
+\'95 Fixed black level for BMD Gammas (regression in 2.2)\
+\'95 Premiere Pro plugin performance and stability improvements.\
+\'95 General performance and stability improvements.\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardeftab720\partightenfactor0
+
+\fs26 \cf0 \
+\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b\fs24 \cf0 Changes in Blackmagic RAW 2.2.1
+\f1\b0\fs26 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardeftab720\partightenfactor0
+\cf0 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardeftab720\partightenfactor0
+
+\fs24 \cf0 \'95 Premiere Pro plugin performance and stability improvements.\
+\'95 Fixed explicit flushing of cached resources in resource manager for CPU pipeline.\
+\'95 General performance and stability improvements.\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardeftab720\partightenfactor0
+
+\fs26 \cf0 \
+\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b\fs24 \cf0 Changes in Blackmagic RAW 2.2
+\f1\b0\fs26 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardeftab720\partightenfactor0
+\cf0 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardeftab720\partightenfactor0
+
+\fs24 \cf0 \'95 Added support for Fujifilm GFX100 and GFX100S Blackmagic RAW clips captured by Blackmagic Video Assist.\
+\'95 Added support for Panasonic Lumix GH5S, BS1H and BGH1 Blackmagic RAW clips captured by Blackmagic Video Assist.\
+\'95 Blackmagic RAW Adobe Premiere Pro plugin performance and stability improvements.\
+\'95 Internal metadata key name change of \'93aspect_ratio\'94 to \'93frameguide_aspect_ratio\'94.
+\fs26 \
+\
+\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b\fs24 \cf0 Changes in Blackmagic RAW 2.1\
+\
+\pard\pardeftab720\partightenfactor0
+
+\f1\b0 \cf0 \'95 Added optimised CPU decoding for clips captured by Blackmagic URSA Mini Pro 12K.\
+\'95 Added Blackmagic Generation 5 Color Technical Reference document.\
+\'95 Added support for Panasonic Lumix S1 and S5 Blackmagic RAW clips captured by Blackmagic Video Assist.\
+\'95 Automatic working buffer management - IBlackmagicRawManualDecoderFlow2::GetWorkingSizeBytes\'a0will now always return a working buffer size of 0 indicating the SDK user need not allocate any working buffers.\
+\pard\pardeftab720\partightenfactor0
+
+\fs26 \cf0 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardeftab720\partightenfactor0
+
+\f0\b\fs24 \cf0 \
+\pard\pardeftab720\partightenfactor0
+\cf0 Changes in Blackmagic RAW 2.1 Public Beta 4\
+
+\f1\b0\fs26 \
+\pard\pardeftab720\partightenfactor0
+
+\fs24 \cf0 \'95 Added support for Panasonic S1H Blackmagic RAW clips captured by Blackmagic Video Assist.
+\fs26 \
+\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b\fs24 \cf0 \
+Changes in Blackmagic RAW 2.0
+\f1\b0\fs26 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\ri-483\partightenfactor0
+\cf0 \
+\pard\pardeftab720\partightenfactor0
+
+\fs24 \cf0 \'95 Added DaVinci Wide Gamut and DaVinci Intermediate gamma support.\
+\'95 General performance and stability improvements.
+\fs26 \
+\pard\tx720\tx1440\tx2160\tx2699\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardeftab720\partightenfactor0
+\cf0 \
+\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b\fs24 \cf0 Changes in Blackmagic RAW 2.1 Public Beta 3\
+\
+\pard\pardeftab720\partightenfactor0
+
+\f1\b0 \cf0 \'95 Added support for Nikon Z 6II and Z 7II Blackmagic RAW clips captured by Blackmagic Video Assist.\
+\'95 General performance and stability improvements.\
+\pard\pardeftab720\partightenfactor0
+
+\fs26 \cf0 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardeftab720\partightenfactor0
+\cf0 \
+\pard\pardeftab720\partightenfactor0
+
+\f0\b\fs24 \cf0 Changes in Blackmagic RAW 2.1 Public Beta 2\
+\
+\pard\pardeftab720\partightenfactor0
+
+\f1\b0 \cf0 \'95 Improvements to universal binary support in Blackmagic RAW.
+\fs26 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardeftab720\partightenfactor0
+\cf0 \
+\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b\fs24 \cf0 What\'92s new in Blackmagic RAW 2.0 Public Beta 4\
+\pard\pardeftab720\partightenfactor0
+
+\f1\b0 \cf0 \
+\'95 Improved Blackmagic Video and Blackmagic Extended Video gamma for Gen 5 color science.\
+\'95 General performance and stability improvements.
+\fs26 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardeftab720\partightenfactor0
+\cf0 \
+\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b\fs24 \cf0 Changes in Blackmagic RAW 1.8.2\
+\
+\pard\pardeftab720\partightenfactor0
+
+\f1\b0 \cf0 \'95 Added support for Nikon Z 6 and Z 7 Blackmagic RAW clips captured by Blackmagic Video Assist.\
+\'95 Added N-Log gamma support.
+\fs28 \
+\pard\pardeftab720\partightenfactor0
+
+\f0\b\fs24 \cf0 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardeftab720\partightenfactor0
+
+\f1\b0\fs26 \cf0 \
+\pard\pardeftab720\partightenfactor0
+
+\f0\b\fs24 \cf0 Changes in Blackmagic RAW 2.1 Public Beta 1\
+\
+\pard\pardeftab720\partightenfactor0
+
+\f1\b0 \cf0 \'95 Added native support for Apple Silicon on Mac.
+\fs26 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardeftab720\partightenfactor0
+\cf0 \
+\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b\fs24 \cf0 Changes in Blackmagic RAW 2.0 Public Beta 3\
+\
+\pard\pardeftab720\partightenfactor0
+
+\f1\b0 \cf0 \'95 Added support for Blackmagic RAW 2.0 on Linux.\
+\'95 General performance and stability improvements.\
+\'95 Added color gamut support for ARRI Alexa Wide Gamut and gamma support for ARRI LogC to improve compatibility with some workflows\
+\'95 Added gamut compression enable clip processing attribute (GPU only)\
+\'95 Interface changes:\
+\
+	- Added: \
+\
+ 		- Added item blackmagicRawClipProcessingAttributeGamutCompressionEnable to enum BlackmagicRawClipProcessingAttribute
+\fs26 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardeftab720\partightenfactor0
+\cf0 \
+\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b\fs24 \cf0 Changes in Blackmagic RAW 1.8.1\
+\
+\pard\pardeftab720\partightenfactor0
+
+\f1\b0 \cf0 \'95 Improved support for Sigma fp Blackmagic RAW clips captured by Blackmagic Video Assist.\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardeftab720\partightenfactor0
+
+\fs26 \cf0 \
+\pard\pardeftab720\partightenfactor0
+
+\f0\b\fs24 \cf0 Changes in Blackmagic RAW 2.0 Public Beta 2\
+\
+\pard\pardeftab720\partightenfactor0
+
+\f1\b0 \cf0 \'95 Added support for Blackmagic RAW 2.0 on Windows.
+\fs26 \
+
+\fs24 \'95 General performance and stability improvements.\
+\pard\pardeftab720\partightenfactor0
+
+\fs26 \cf0 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardeftab720\partightenfactor0
+\cf0 \
+\pard\pardeftab720\partightenfactor0
+
+\f0\b\fs24 \cf0 Changes in Blackmagic RAW 2.0 Public Beta 1\
+\
+\pard\pardeftab720\partightenfactor0
+
+\f1\b0 \cf0 \'95 Added support for Blackmagic URSA Mini Pro 12K.\
+\'95 Added support for dual card recording.\
+\'95 Updated to Blackmagic Color Science Gen 5.\
+\'95 Note: For this beta when using the manual CPU pipeline for URSA Mini Pro 12K camera images, buffers are recommended to be page aligned for best performance.\
+\'95 Interface changes:\
+\
+	- Added: \
+\
+		- Added interface IBlackmagicRawClipResolutions\
+		- Added method IBlackmagicRawClipResolutions::GetResolutionCount()\
+		- Added method IBlackmagicRawClipResolutions::GetResolution()\
+		- Added method IBlackmagicRawClipResolutions::GetClosestResolutionForScale()\
+		- Added method IBlackmagicRawClipResolutions::GetClosestScaleForResolution()\
+		- Added method IBlackmagicRawClipResolutions::~IBlackmagicRawClipResolutions()
+\fs28 \
+\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b\fs24 \cf0 \
+Changes in Blackmagic RAW SDK 1.8.2\
+\
+\pard\pardeftab720\partightenfactor0
+
+\f1\b0 \cf0 \'95 Added support for Nikon Z 6 and Z 7 Blackmagic RAW clips captured by Blackmagic Video Assist.
+\f0\b \
+\
+\
+Changes in Blackmagic RAW SDK 1.8.1\
+\
+
+\f1\b0 \'95 Improved support for Sigma fp Blackmagic RAW clips captured by Blackmagic Video Assist.\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b \cf0 \
+\
+Changes in Blackmagic RAW SDK 1.8\
+\
+\pard\pardeftab720\partightenfactor0
+
+\f1\b0 \cf0 \'95 Added support for Sigma fp Blackmagic RAW clips captured by Blackmagic Video Assist.
+\f0\b \
+\
+\
+Changes in Blackmagic RAW SDK 1.7\
+\
+
+\f1\b0 \'95 Added support for Panasonic EVA1 Blackmagic RAW clips captured by Blackmagic Video Assist.\
+\'95 Added support for Canon EOS C300 Mark II Blackmagic RAW clips captured by Blackmagic Video Assist.\
+\'95 Blackmagic RAW Adobe Premiere Pro plugin general performance and stability improvements.\
+\'95 Interface changes:\
+\
+	- Updated:\
+\
+		- Updated IBlackmagicRawConstants interface\
+		- blackmagicRawFrameProcessingAttributeISO changed from u16 to u32\
+\
+	- Added:\
+\
+		- Added item blackmagicRawResourceFormatBGRAF32 to enum BlackmagicRawResourceFormat \
+ 		- Added item blackmagicRawClipProcessingAttributeAnalogGainIsConstant to enum BlackmagicRawClipProcessingAttribute \
+		- Added item blackmagicRawFrameProcessingAttributeAnalogGain to enum BlackmagicRawFrameProcessingAttribute \
+		- Added parameter isReadOnly to method IBlackmagicRawConstants::GetClipProcessingAttributeRange()\
+ 		- Added parameter isReadOnly to method IBlackmagicRawConstants::GetClipProcessingAttributeList()\
+ 		- Added parameter isReadOnly to method IBlackmagicRawConstants::GetFrameProcessingAttributeRange()\
+ 		- Added parameter isReadOnly to method IBlackmagicRawConstants::GetFrameProcessingAttributeList()\
+ 		- Added parameter analogGainIsConstant to method IBlackmagicRawConstants::GetISOListForAnalogGain()\
+		- Added parameter isReadOnly to method IBlackmagicRawConstants::GetISOListForAnalogGain()\
+\
+	- Notes:\
+\
+		- IBlackmagicRawCallback::ReadComplete will return E_UNEXPECTED to indicate a dropped frame in the clip\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b \cf0 \
+\
+Changes in Blackmagic RAW SDK 1.6.1\
+\pard\pardeftab720\partightenfactor0
+
+\f1\b0 \cf0 \
+\'95 Blackmagic RAW Adobe Premiere Pro plugin general performance and stability improvements.\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b \cf0 \
+\
+Changes in Blackmagic RAW SDK 1.6\
+\
+\pard\pardeftab720\partightenfactor0
+
+\f1\b0 \cf0 \'95 Added Blackmagic URSA Broadcast support.\
+\'95 Blackmagic RAW Avid Media Composer plugin general performance and stability improvements.\
+\'95 Blackmagic RAW Adobe Premiere Pro plugin general performance and stability improvements.\
+\'95 Fix for RX 5700 series AMD GPU driver issue.
+\f0\b \
+\
+\
+Changes in Blackmagic RAW SDK 1.5.2\
+\
+
+\f1\b0 \'95 Fix for Catalina 10.15.1 AMD GPU driver issue.
+\f0\b \
+\
+\
+Changes in Blackmagic RAW SDK 1.5.1\
+
+\f1\b0 \
+\'95 Blackmagic RAW Avid Media Composer plugin general performance and stability improvements.\
+\'95 Blackmagic RAW Adobe Premiere Pro plugin general performance and stability improvements.\
+\'95 CUDA general performance and stability improvements.
+\f0\b \
+\
+\
+Changes in Blackmagic RAW SDK 1.5\
+\
+
+\f1\b0 \'95 Added Blackmagic RAW Speed Test application for Windows and Linux.\
+\'95 Added Blackmagic RAW Avid Media Composer plugin (Mac, Windows).\
+\'95 Added Blackmagic RAW Adobe Premiere Pro plugin (Mac, Windows).\
+\'95 Added metadata support for Mac Finder \'93Get Info\'94 inspector in the \'93More Info\'94 panel.
+\f0\b \
+
+\f1\b0 \'95 Blackmagic RAW Player general performance and stability improvements.\
+\'95 Blackmagic RAW Speed Test general performance and stability improvements.\
+\'95 Interface changes:\
+\
+	- Added:\
+\
+		- Added item blackmagicRawResourceFormatRGBAU16 to enum BlackmagicRawResourceFormat\
+		- Added item blackmagicRawResourceFormatBGRAU16 to enum BlackmagicRawResourceFormat\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b \cf0 \
+\
+Changes in Blackmagic RAW SDK 1.4\
+\
+\pard\pardeftab720\partightenfactor0
+
+\f1\b0 \cf0 \'95 Added Blackmagic Design Pocket Cinema Camera 6K support.\
+\'95 Added Blackmagic RAW cross platform player (Mac, Windows, Linux).\
+\'95 Added Blackmagic RAW Speed Test application for Mac.\
+\'95 Added thumbnails and preview pane support for Windows.\
+\'95 Added shader caching.\
+\'95 Added function to asynchronously pre-compile shaders (see IBlackmagicRaw::PreparePipeline()).\
+\'95 Added pipeline device iterators that can query for the presence and usability of CUDA, Metal, OpenCL and CPU based decoder pipelines.\
+\'95 Updated to CUDA 10 API.\
+\'95 Added RGBU16 resource format.\
+\'95 Updated sample code:\
+\
+	- Added manual flow samples (ProcessClip) for GPU and CPU\
+	- Updated ExtractMetadata sample\
+\
+\'95 Interface changes:\
+\
+	- Updated:\
+\
+		- Updated IBlackmagicRaw interface\
+		- Updated IBlackmagicRawFactory interface\
+		- Updated IBlackmagicRawConfiguration interface\
+		- Updated IBlackmagicRawResourceManager interface\
+		- Updated IBlackmagicRawCallback interface\
+\
+	- Added:\
+\
+		- Added item blackmagicRawResourceFormatRGBU16 to enum BlackmagicRawResourceFormat\
+		- Added enum BlackmagicRawInterop \
+		- Added item blackmagicRawInteropNone to enum BlackmagicRawInterop \
+		- Added item blackmagicRawInteropOpenGL to enum BlackmagicRawInterop \
+		- Added method IBlackmagicRaw::PreparePipeline()\
+		- Added method IBlackmagicRaw::PreparePipelineForDevice()\
+		- Added method IBlackmagicRawFactory::CreatePipelineIterator()\
+		- Added method IBlackmagicRawFactory::CreatePipelineDeviceIterator()\
+		- Added interface IBlackmagicRawPipelineIterator\
+		- Added method IBlackmagicRawPipelineIterator::Next()\
+		- Added method IBlackmagicRawPipelineIterator::GetName()\
+		- Added method IBlackmagicRawPipelineIterator::GetInterop()\
+		- Added method IBlackmagicRawPipelineIterator::GetPipeline()\
+		- Added method IBlackmagicRawPipelineIterator::~IBlackmagicRawPipelineIterator()\
+		- Added interface IBlackmagicRawPipelineDeviceIterator\
+		- Added method IBlackmagicRawPipelineDeviceIterator::Next()\
+		- Added method IBlackmagicRawPipelineDeviceIterator::GetPipeline()\
+		- Added method IBlackmagicRawPipelineDeviceIterator::GetInterop()\
+		- Added method IBlackmagicRawPipelineDeviceIterator::CreateDevice()\
+		- Added method IBlackmagicRawPipelineDeviceIterator::~IBlackmagicRawPipelineDeviceIterator()\
+		- Added interface IBlackmagicRawOpenGLInteropHelper\
+		- Added method IBlackmagicRawOpenGLInteropHelper::GetPreferredResourceFormat()\
+		- Added method IBlackmagicRawOpenGLInteropHelper::SetImage()\
+		- Added method IBlackmagicRawOpenGLInteropHelper::~IBlackmagicRawOpenGLInteropHelper()\
+		- Added interface IBlackmagicRawPipelineDevice\
+		- Added method IBlackmagicRawPipelineDevice::SetBestInstructionSet()\
+		- Added method IBlackmagicRawPipelineDevice::SetInstructionSet()\
+		- Added method IBlackmagicRawPipelineDevice::GetInstructionSet()\
+		- Added method IBlackmagicRawPipelineDevice::GetIndex()\
+		- Added method IBlackmagicRawPipelineDevice::GetName()\
+		- Added method IBlackmagicRawPipelineDevice::GetInterop()\
+		- Added method IBlackmagicRawPipelineDevice::GetPipeline()\
+		- Added method IBlackmagicRawPipelineDevice::GetPipelineName()\
+		- Added method IBlackmagicRawPipelineDevice::GetOpenGLInteropHelper()\
+		- Added method IBlackmagicRawPipelineDevice::~IBlackmagicRawPipelineDevice()\
+		- Added method IBlackmagicRawConfiguration::SetFromDevice()\
+		- Added method IBlackmagicRawResourceManager::CopyResource()\
+		- Added method IBlackmagicRawResourceManager::GetResourceHostPointer()\
+		- Added method IBlackmagicRawCallback::PreparePipelineComplete()
+\f0\b \
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardeftab720\partightenfactor0
+
+\f1\b0\fs28 \cf0 \
+\pard\pardeftab720\partightenfactor0
+
+\f0\b\fs24 \cf0 Changes in Blackmagic RAW SDK 1.3\
+\
+\pard\pardeftab720\partightenfactor0
+
+\f1\b0 \cf0 \'95 Added Blackmagic Design URSA Mini Pro G2 support.\
+\'95 Added clip embedded monitoring 3DLUT support.\
+\'95 Added sidecar monitoring 3DLUT support.\
+\'95 Removed BlackmagicRawAPI.dll registration as a system COM object (users are recommended to bundle in to their application).\
+\'95 Removed installation of BlackmagicRawAPI.framework (users are recommended to bundle in to their application).\
+\'95 Interface changes:\
+\
+	- Added item blackmagicRawClipProcessingAttributePost3DLUTMode to enum BlackmagicRawClipProcessingAttribute \
+	- Added item blackmagicRawClipProcessingAttributeEmbeddedPost3DLUTName to enum BlackmagicRawClipProcessingAttribute \
+	- Added item blackmagicRawClipProcessingAttributeEmbeddedPost3DLUTTitle to enum BlackmagicRawClipProcessingAttribute \
+	- Added item blackmagicRawClipProcessingAttributeEmbeddedPost3DLUTSize to enum BlackmagicRawClipProcessingAttribute \
+	- Added item blackmagicRawClipProcessingAttributeEmbeddedPost3DLUTData to enum BlackmagicRawClipProcessingAttribute \
+	- Added item blackmagicRawClipProcessingAttributeSidecarPost3DLUTName to enum BlackmagicRawClipProcessingAttribute \
+	- Added item blackmagicRawClipProcessingAttributeSidecarPost3DLUTTitle to enum BlackmagicRawClipProcessingAttribute \
+	- Added item blackmagicRawClipProcessingAttributeSidecarPost3DLUTSize to enum BlackmagicRawClipProcessingAttribute \
+	- Added item blackmagicRawClipProcessingAttributeSidecarPost3DLUTData to enum BlackmagicRawClipProcessingAttribute \
+	- Added function CreateBlackmagicRawFactoryInstance() to Windows\
+	- Added function CreateBlackmagicRawFactoryInstanceFromPath() to Windows\
+	- Added function CreateBlackmagicRawFactoryInstanceFromExeRelativePath() \
+	- Added method IBlackmagicRawClipProcessingAttributes::GetPost3DLUT()\
+	- Added interface IBlackmagicRawPost3DLUT\
+	- Added method IBlackmagicRawPost3DLUT::GetName()\
+	- Added method IBlackmagicRawPost3DLUT::GetTitle()\
+	- Added method IBlackmagicRawPost3DLUT::GetSize()\
+	- Added method IBlackmagicRawPost3DLUT::GetResourceGPU()\
+	- Added method IBlackmagicRawPost3DLUT::GetResourceCPU()\
+	- Added method IBlackmagicRawPost3DLUT::GetResourceSizeBytes()\
+	- Added method IBlackmagicRawPost3DLUT::~IBlackmagicRawPost3DLUT()\
+	- Added method IBlackmagicRawManualDecoderFlow1::GetPost3DLUTSizeBytes()\
+	- Added parameter post3DLUTBufferCPU to method IBlackmagicRawManualDecoderFlow1::CreateJobProcess()\
+	- Added method IBlackmagicRawManualDecoderFlow2::GetPost3DLUTSizeBytes()\
+	- Added parameter post3DLUTBufferGPU to method IBlackmagicRawManualDecoderFlow2::CreateJobProcess()
+\fs28 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardeftab720\partightenfactor0
+\cf0 \
+\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b\fs24 \cf0 Changes in Blackmagic RAW SDK 1.2\
+\
+\pard\pardeftab720\partightenfactor0
+
+\f1\b0 \cf0 \'95 Added Blackmagic Design Pocket Cinema Camera 4K support.\
+\'95 Added Analog Gain clip processing attribute so valid ISO list can be queried per clip.\
+\'95 Added BGRA resource format.\
+\'95 Added up-side-down image scaling support.
+\f0\b \
+
+\f1\b0 \'95 Added color gamut support:\
+\
+	- ACES AP0\
+	- ACES AP1\
+\
+\'95 Added gamma support:\
+\
+	- ACEScct
+\fs28 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardeftab720\partightenfactor0
+\cf0 \
+\pard\pardeftab720\partightenfactor0
+
+\fs24 \cf0 \'95 Fixed issue with lower bounds clamp clipping noise.\
+\'95 Interface Changes:\
+\
+	- Removed item blackmagicRawFrameProcessingAttributeAnalogGain from enum BlackmagicRawFrameProcessingAttribute \
+\
+	- Added item blackmagicRawResourceFormatBGRAU8 to enum BlackmagicRawResourceFormat \
+	- Added item blackmagicRawResolutionScaleFullUpsideDown to enum BlackmagicRawResolutionScale \
+ 	- Added item blackmagicRawResolutionScaleHalfUpsideDown to enum BlackmagicRawResolutionScale \
+ 	- Added item blackmagicRawResolutionScaleQuarterUpsideDown to enum BlackmagicRawResolutionScale \
+	- Added item blackmagicRawResolutionScaleEighthUpsideDown to enum BlackmagicRawResolutionScale \
+	- Added item blackmagicRawClipProcessingAttributeAnalogGain to enum BlackmagicRawClipProcessingAttribute 
+\fs28 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardeftab720\partightenfactor0
+\cf0 \
+\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b\fs24 \cf0 Changes in Blackmagic RAW SDK 1.1\
+\
+\pard\pardeftab720\partightenfactor0
+
+\f1\b0 \cf0 \'95 Updated sample code.\
+\'95 Added extract audio sample code.\
+\'95 Added Highlight Recovery.\
+\'95 Added custom gamma black level control.\
+\'95 Added custom gamma white level control.\
+\'95 Added ISO 3200 support for URSA Mini Pro 4.6K.
+\f0\b \
+
+\f1\b0 \'95 Added color gamut support:\
+\
+	- Rec.709\
+	- Rec.2020\
+	- DCI-P3 D65\
+	- DCI-P3 Theater\
+	- CIE 1931 XYZ D65\
+	- CIE 1931 XYZ D50 (PCS)\
+\
+\'95 Added gamma support:\
+\
+	- Linear (scene referred)\
+	- Rec.2100 Hybrid Log Gamma\
+	- Rec.2100 ST2084 (PQ)\
+\
+\'95 Fixed issue with decoder callback causing occasional crash.\
+\'95 Fixed issue handling Chinese characters in filenames on Windows.\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b \cf0 \
+\pard\pardeftab720\partightenfactor0
+
+\f1\b0 \cf0 \'95 Interface Changes:\
+\
+	- Updated:\
+\
+		- Updated IBlackmagicRawConstants interface\
+		- Updated IBlackmagicRawClipProcessingAttributes interface\
+		- Updated IBlackmagicRawFrameProcessingAttributes interface\
+		- Changed metadata \'93shutter_speed\'94 and uint32_t type to \'93shutter_value\'94 and string type\
+\
+	- Removed:\
+\
+		- removed IBlackmagicRawConstants::GetBlackmagicColorScienceGenList method\
+		- removed IBlackmagicRawConstants::GetISOList method\
+		- removed IBlackmagicRawConstants::GetExposureRange method\
+		- removed IBlackmagicRawConstants::GetGammaList method\
+		- removed IBlackmagicRawConstants::GetGamutList method\
+		- removed IBlackmagicRawConstants::GetToneCurve method\
+		- removed IBlackmagicRawConstants::GetToneCurveRange method\
+		- removed IBlackmagicRawConstants::EvaluateToneCurve method\
+		- removed IBlackmagicRawConstants::GetWhiteBalanceKelvinRange method\
+		- removed IBlackmagicRawConstants::GetWhiteBalanceTintRange method\
+		- removed IBlackmagicRawClipProcessingAttributes::GetBlackmagicColorScienceGen method\
+		- removed IBlackmagicRawClipProcessingAttributes::SetBlackmagicColorScienceGen method\
+		- removed IBlackmagicRawClipProcessingAttributes::GetGamma method\
+		- removed IBlackmagicRawClipProcessingAttributes::SetGamma method\
+		- removed IBlackmagicRawClipProcessingAttributes::GetGamut method\
+		- removed IBlackmagicRawClipProcessingAttributes::SetGamut method\
+		- removed IBlackmagicRawClipProcessingAttributes::GetToneCurveForCustomGamma method\
+		- removed IBlackmagicRawClipProcessingAttributes::SetToneCurveForCustomGamma method\
+		- removed IBlackmagicRawFrameProcessingAttributes::GetWhiteBalanceKelvin method\
+		- removed IBlackmagicRawFrameProcessingAttributes::SetWhiteBalanceKelvin method\
+		- removed IBlackmagicRawFrameProcessingAttributes::GetWhiteBalanceTint method\
+		- removed IBlackmagicRawFrameProcessingAttributes::SetWhiteBalanceTint method\
+		- removed IBlackmagicRawFrameProcessingAttributes::GetExposure method\
+		- removed IBlackmagicRawFrameProcessingAttributes::SetExposure method\
+		- removed IBlackmagicRawFrameProcessingAttributes::GetISO method\
+		- removed IBlackmagicRawFrameProcessingAttributes::SetISO method\
+\
+	- Added:\
+\
+		- added BlackmagicRawClipProcessingAttribute type\
+		- added BlackmagicRawFrameProcessingAttribute type\
+		- added IBlackmagicRawToneCurve interface\
+		- added IBlackmagicRawToneCurve::GetToneCurve method\
+		- added IBlackmagicRawToneCurve::EvaluateToneCurve method\
+		- added IBlackmagicRawConstants::GetClipProcessingAttributeRange method\
+		- added IBlackmagicRawConstants::GetClipProcessingAttributeList method\
+		- added IBlackmagicRawConstants::GetFrameProcessingAttributeRange method\
+		- added IBlackmagicRawConstants::GetFrameProcessingAttributeList method\
+		- added IBlackmagicRawConstants::GetISOListForAnalogGain method\
+		- added IBlackmagicRawClipProcessingAttributes::GetClipAttribute method\
+		- added IBlackmagicRawClipProcessingAttributes::SetClipAttribute method\
+		- added IBlackmagicRawFrameProcessingAttributes::GetFrameAttribute method\
+		- added IBlackmagicRawFrameProcessingAttributes::SetFrameAttribute method
+\fs28 \
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardeftab720\partightenfactor0
+\cf0 \
+\
+\pard\pardeftab720\partightenfactor0
+
+\f0\b\fs24 \cf0 Blackmagic RAW SDK Public Beta 1\
+\
+\pard\pardeftab720\partightenfactor0
+
+\f1\b0 \cf0 \'95 Added Blackmagic RAW player for Mac.\
+\'95 Added Blackmagic RAW QuickLook plugin.\
+\'95 Added Blackmagic RAW SDK Developer information.\
+\'95 Added support for .braw file format.\
+\'95 Added support for .sidecar files.
+\f0\b \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\pardirnatural\partightenfactor0
+
+\f1\b0 \cf0 \expnd0\expndtw0\kerning0
+Some applications may use third party code under license. For details please refer to the included "Third Party Licenses.rtf" document.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab720\pardirnatural\partightenfactor0
+
+\fs18 \cf0 \
+\'a9 2022 Blackmagic Design Pty. Ltd. All rights reserved. Blackmagic Design, Blackmagic, DeckLink, Multibridge, HDLink, Videohub, and "Leading the creative video revolution" are trademarks of Blackmagic Design Pty. Ltd., registered in the U.S.A and other countries.\
+\
+Updated November 09, 2022.}
