@@ -18,8 +18,8 @@ public partial class DataWranglerFileSourceMetaBlackmagicUrsa: DataWranglerFileS
 	[AutoNotify]
 	private string m_codecName = "";
 
-	[AutoNotify, Obsolete("Favor start time code over recording start")] 
-	private DateTimeOffset? m_recordingStart = null;
+	[AutoNotify] 
+	private DateTimeOffset m_recordingStart = DateTimeOffset.MinValue;
 
 	[AutoNotify]
 	private TimeCode m_startTimeCode = new();
@@ -39,7 +39,8 @@ public partial class DataWranglerFileSourceMetaBlackmagicUrsa: DataWranglerFileS
 	{
 		return new DataWranglerFileSourceMetaBlackmagicUrsa
 		{
-			m_source = m_source, 
+			m_source = m_source,
+			m_recordingStart = m_recordingStart,
 			m_codecName = m_codecName, 
 			m_startTimeCode = m_startTimeCode,
 			m_cameraNumber =  m_cameraNumber,
@@ -58,6 +59,12 @@ public partial class DataWranglerFileSourceMetaBlackmagicUrsa: DataWranglerFileS
 				TimeSpan timeCodeDiff = fileTimeCode - metaTimeCode;
 				if (timeCodeDiff > -MaxTimeCodeOffset && timeCodeDiff < MaxTimeCodeOffset)
 				{
+					if (a_fileMeta.DateRecorded != RecordingStart.Date)
+					{
+						a_reasonForRejection = $"Recording date: Meta: {RecordingStart.Date} File: {a_fileMeta.DateRecorded.Date}";
+						return false;
+					}
+
 					if (a_fileMeta.CameraNumber == CameraNumber)
 					{
 						a_reasonForRejection = null;
@@ -77,7 +84,7 @@ public partial class DataWranglerFileSourceMetaBlackmagicUrsa: DataWranglerFileS
 			{
 				if (StorageTarget == a_storageName)
 				{
-					TimeSpan? timeSinceCreation = a_fileInfo.CreationTimeUtc - RecordingStart!;
+					TimeSpan timeSinceCreation = a_fileInfo.CreationTimeUtc - RecordingStart;
 					if (timeSinceCreation > -MaxTimeOffset && timeSinceCreation < MaxTimeOffset)
 					{
 						a_reasonForRejection = null;
@@ -86,7 +93,7 @@ public partial class DataWranglerFileSourceMetaBlackmagicUrsa: DataWranglerFileS
 					else
 					{
 						a_reasonForRejection =
-							$"TimeCode invalid (Meta: {StartTimeCode} File: {a_fileMeta?.FirstFrameTimeCode}). File creation time offset did not match. Offset was {timeSinceCreation.Value.TotalSeconds} seconds";
+							$"TimeCode invalid (Meta: {StartTimeCode} File: {a_fileMeta?.FirstFrameTimeCode}). File creation time offset did not match. Offset was {timeSinceCreation.TotalSeconds} seconds";
 					}
 				}
 				else

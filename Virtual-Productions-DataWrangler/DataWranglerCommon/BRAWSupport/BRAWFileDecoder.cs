@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using BlackmagicRawAPIInterop;
 
 namespace DataWranglerCommon.BRAWSupport
@@ -84,6 +85,8 @@ namespace DataWranglerCommon.BRAWSupport
 
 			clip.GetMetadata("camera_number", out object cameraNumber);
 			string cameraNumberString = (string)cameraNumber;
+			clip.GetMetadata("date_recorded", out object dateRecordedMeta);
+			DateTime dateRecorded = ParseBlackmagicDate((string)dateRecordedMeta);
 
 			handler.CompletionEvent.WaitOne();
 
@@ -94,7 +97,23 @@ namespace DataWranglerCommon.BRAWSupport
 
 			handler.Frame.GetTimecode(out string timeCode);
 
-			return new BrawFileMetadata(TimeCode.FromString(timeCode), cameraNumberString);
+			return new BrawFileMetadata(TimeCode.FromString(timeCode), cameraNumberString, dateRecorded);
+		}
+
+		private static readonly Regex BlackmagicDateRegex = new Regex("([0-9]{4}):([0-9]{2}):([0-9]{2})");
+
+		private DateTime ParseBlackmagicDate(string a_dateRecorded)
+		{
+			Match match = BlackmagicDateRegex.Match(a_dateRecorded);
+			if (!match.Success)
+			{
+				throw new FormatException($"Failed to parse blackmagic date from value {a_dateRecorded}");
+			}
+
+			int year = int.Parse(match.Groups[1].ValueSpan);
+			int month = int.Parse(match.Groups[2].ValueSpan);
+			int day = int.Parse(match.Groups[3].ValueSpan);
+			return new DateTime(year, month, day);
 		}
 
 		public TimeCode GetTimeCodeFromFile(FileInfo a_file, ulong a_frameNumber = 0)

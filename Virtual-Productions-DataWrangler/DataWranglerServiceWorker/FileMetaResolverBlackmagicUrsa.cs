@@ -18,10 +18,10 @@ public class FileMetaResolverBlackmagicUrsa: FileMetaResolver
 			FileInfo fileInfo = new FileInfo(filePath);
 			if (CameraCodec.FindFromFileExtension(fileInfo.Extension, out ECameraCodec codec))
 			{
-				BrawFileMetadata? firstFrameTimeCode = null;
+				BrawFileMetadata? fileMeta = null;
 				if (codec == ECameraCodec.BlackmagicRAW)
 				{
-					firstFrameTimeCode = fileDecoder.GetMetaForFile(fileInfo);
+					fileMeta = fileDecoder.GetMetaForFile(fileInfo);
 				}
 
 				bool fileWasLinked = false;
@@ -29,7 +29,7 @@ public class FileMetaResolverBlackmagicUrsa: FileMetaResolver
 				foreach (var cacheEntry in relevantCacheEntries)
 				{
 					DataWranglerFileSourceMetaBlackmagicUrsa ursaMeta = cacheEntry.Key;
-					if (ursaMeta.IsSourceFor(fileInfo, a_storageName, codec.ToString(), firstFrameTimeCode, out var reasonForRejection))
+					if (ursaMeta.IsSourceFor(fileInfo, a_storageName, codec.ToString(), fileMeta, out var reasonForRejection))
 					{
 						Logger.LogInfo("FileResolverUrsa", $"Found file {filePath} for shot {cacheEntry.Value.ShotCode} ({cacheEntry.Value.Identifier.VersionId})");
 
