@@ -1,12 +1,17 @@
 ﻿using System.Text.RegularExpressions;
+using Newtonsoft.Json;
 
 namespace DataWranglerCommon
 {
 	//Represents a SMTPE time code formatted as HH:MM:SS:FF
 	//See: https://en.wikipedia.org/wiki/SMPTE_timecode
+	[JsonConverter(typeof(TimeCodeJsonConverter))]
 	public readonly struct TimeCode
 	{
-		public readonly int TimeCodeAsBinaryCodedDecimal;
+		public readonly int TimeCodeAsBinaryCodedDecimal = -1;
+
+		public static readonly TimeCode Invalid = new();
+
 		public byte Hour => ReadInt8(TimeCodeAsBinaryCodedDecimal, 3);
 		public byte Minute => ReadInt8(TimeCodeAsBinaryCodedDecimal, 2);
 		public byte Second => ReadInt8(TimeCodeAsBinaryCodedDecimal, 1);
@@ -26,7 +31,7 @@ namespace DataWranglerCommon
 
 		public override string ToString()
 		{
-			return $"{Hour}:{Minute}:{Second}:{Frame}";
+			return $"{Hour:D2}:{Minute:D2}:{Second:D2}:{Frame:D2}";
 		}
 
 		private static byte ReadInt8(int a_target, int a_offset)
@@ -74,6 +79,16 @@ namespace DataWranglerCommon
 		public override int GetHashCode()
 		{
 			return TimeCodeAsBinaryCodedDecimal;
+		}
+
+		public static bool operator ==(TimeCode left, TimeCode right)
+		{
+			return left.Equals(right);
+		}
+
+		public static bool operator !=(TimeCode left, TimeCode right)
+		{
+			return !left.Equals(right);
 		}
 	}
 }

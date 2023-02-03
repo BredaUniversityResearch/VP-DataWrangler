@@ -12,13 +12,13 @@ public abstract partial class DataWranglerFileSourceMeta
 
 	public abstract bool IsUniqueMeta { get; } //Does it make sense if we have multiple of these meta entries on a single shot?
 
-	public DataWranglerFileSourceMeta()
+	protected DataWranglerFileSourceMeta()
 	{
 		m_sourceType = "Unknown";
 		m_sourceFileTag = "";
 	}
 
-	public DataWranglerFileSourceMeta(string a_sourceType, string a_sourceFileTag)
+	protected DataWranglerFileSourceMeta(string a_sourceType, string a_sourceFileTag)
 	{
 		m_sourceType = a_sourceType;
 		m_sourceFileTag = a_sourceFileTag;

@@ -149,9 +149,9 @@ namespace DataWranglerInterface.ShotRecording
 						if (source is DataWranglerFileSourceMetaBlackmagicUrsa ursaSource)
 						{
 							ursaSource.RecordingStart = a_stateChangeTime;
+							ursaSource.StartTimeCode = a_camera.CurrentTimeCode;
 							ursaSource.StorageTarget = a_camera.CurrentStorageTarget;
 							ursaSource.CodecName = a_camera.SelectedCodec;
-
 						}
 					} 
 

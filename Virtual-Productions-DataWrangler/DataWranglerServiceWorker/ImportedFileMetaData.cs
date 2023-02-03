@@ -31,7 +31,7 @@ namespace DataWranglerServiceWorker
 			ShotId = a_targetShotVersion.ShotId;
 			VersionId = a_targetShotVersion.VersionId;
 
-			if (a_cache.FindEntityById(ShotId, out ShotGridEntityProject? project))
+			if (a_cache.FindEntityById(ProjectId, out ShotGridEntityProject? project))
 			{
 				ShotCode = project.Attributes.Name;
 			}
@@ -41,7 +41,7 @@ namespace DataWranglerServiceWorker
 				ShotCode = shot.Attributes.ShotCode;
 			}
 
-			if (a_cache.FindEntityById(ShotId, out ShotGridEntityShotVersion? version))
+			if (a_cache.FindEntityById(VersionId, out ShotGridEntityShotVersion? version))
 			{
 				VersionCode = version.Attributes.VersionCode;
 			}

@@ -20,7 +20,31 @@ namespace BlackmagicDeckLinkControlTest
 		public void ExtractTimeCodeFromFrame()
 		{
 			FileInfo file = new FileInfo(TestFile);
-			TimeCode timeCode = BRAWFileHelper.GetTimeCodeFromFile(file, 0);
+			Task t = new Task(() =>
+			{
+				using (BRAWFileDecoder decoder = new BRAWFileDecoder())
+				{
+					TimeCode timeCode = decoder.GetTimeCodeFromFile(file, 0);
+					Assert.True(timeCode == new TimeCode(22, 23, 40, 20));
+				}
+			});
+			t.Start();
+			Assert.True(t.Wait(new TimeSpan(0, 0, 3)));
+		}
+
+		[Fact]
+		public void DecoderReUse()
+		{
+			FileInfo file = new FileInfo(TestFile);
+			using (BRAWFileDecoder decoder = new BRAWFileDecoder())
+			{
+				TimeCode timeCode = decoder.GetTimeCodeFromFile(file, 0);
+				Assert.True(timeCode == new TimeCode(22, 23, 40, 20));
+				timeCode = decoder.GetTimeCodeFromFile(file, 0);
+				Assert.True(timeCode == new TimeCode(22, 23, 40, 20));
+				timeCode = decoder.GetTimeCodeFromFile(file, 0);
+				Assert.True(timeCode == new TimeCode(22, 23, 40, 20));
+			}
 		}
 	}
 }

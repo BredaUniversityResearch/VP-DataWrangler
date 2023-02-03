@@ -73,7 +73,7 @@ namespace DataWranglerServiceWorker
 
 				foreach (ShotGridEntityProject project in activeProjects.ResultData)
 				{
-					Logger.LogInfo("MetaCache", $"Fetched data for project {project.Id}");
+					Logger.LogInfo("MetaCache", $"Fetched data for project {project.Attributes.Name} ({project.Id})");
 
 					AddOrUpdateCachedEntity(project);
 
@@ -86,14 +86,14 @@ namespace DataWranglerServiceWorker
 
 					foreach (ShotGridEntityShot shot in shotsInProject.ResultData)
 					{
-						Logger.LogInfo("MetaCache", $"Fetched data for shot {shot.Id}");
+						Logger.LogInfo("MetaCache", $"Fetched data for shot {shot.Attributes.ShotCode} ({shot.Id})");
 
 						AddOrUpdateCachedEntity(shot);
 
 						ShotGridAPIResponse<ShotGridEntityShotVersion[]> shotVersionsForShot = await m_targetApi.GetVersionsForShot(shot.Id);
 						if (shotVersionsForShot.IsError)
 						{
-							Logger.LogError("MetaCache", $"Failed to fetch shot versions for Shot: {shot.Id} Project: {project.Id}: {activeProjects.ErrorInfo}");
+							Logger.LogError("MetaCache", $"Failed to fetch shot versions for Shot: {shot.Attributes.ShotCode} ({shot.Id}) Project: {project.Attributes.Name} ({project.Id}): {activeProjects.ErrorInfo}");
 							continue;
 						}
 
@@ -115,7 +115,12 @@ namespace DataWranglerServiceWorker
 								}
 								catch (JsonReaderException ex)
 								{
-									Logger.LogError("MetaCache", $"Failed to deserialize data for shot version {version.Id}. Exception: {ex.Message}");
+									Logger.LogError("MetaCache",
+										$"Failed to read json data for shot version {project.Attributes.Name}/{shot.Attributes.ShotCode}/{version.Attributes.VersionCode} ({version.Id}). Exception: {ex.Message}");
+								}
+								catch (JsonSerializationException ex)
+								{
+									Logger.LogError("MetaCache", $"Failed to deserialize data for shot version {project.Attributes.Name}/{shot.Attributes.ShotCode}/{version.Attributes.VersionCode} ({version.Id}). Exception: {ex.Message}");
 								}
 							}
 						}

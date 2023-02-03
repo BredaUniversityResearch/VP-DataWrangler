@@ -26,7 +26,7 @@ public class DataWranglerFileSourceMetaConverter : JsonConverter<DataWranglerFil
 			DataWranglerFileSourceMeta meta = DataWranglerFileSourceMeta.CreateFromTypeName(sourceTypeName);
 			using (var sr = rootObject.CreateReader())
 			{
-				JsonSerializer.CreateDefault().Populate(sr, meta); // Uses the system default JsonSerializerSettings
+				JsonSerializer.CreateDefault(DataWranglerSerializationSettings.Instance).Populate(sr, meta); // Uses the system default JsonSerializerSettings
 			}
 
 			return meta;

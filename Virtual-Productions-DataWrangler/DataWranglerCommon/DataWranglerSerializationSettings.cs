@@ -10,6 +10,7 @@ namespace DataWranglerCommon
 		{
 			DateFormatHandling = DateFormatHandling.IsoDateFormat;
 			Converters.Add(new DataWranglerFileSourceMetaConverter());
+			Converters.Add(new TimeCodeJsonConverter());
 		}
 	}
 }

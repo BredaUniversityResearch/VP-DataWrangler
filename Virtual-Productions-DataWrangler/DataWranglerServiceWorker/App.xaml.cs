@@ -114,7 +114,6 @@ namespace DataWranglerServiceWorker
 				return;
 			}
 
-			//string publishFileName = $"{shotData.Attributes.ShotCode}_{versionData.Attributes.VersionCode}";
 			string publishFileName = Path.GetFileName(a_copyMetaData.SourceFilePath.LocalPath);
 			ShotGridEntityFilePublish.FilePublishAttributes publishData = new ShotGridEntityFilePublish.FilePublishAttributes
 			{
@@ -123,14 +122,9 @@ namespace DataWranglerServiceWorker
 					FileName = publishFileName,
 					LinkType = "local",
 					LocalPath = a_copyMetaData.DestinationFullFilePath.LocalPath,
-					//LocalStorageTarget = ShotGridEntityReference.Create(a_copyMetaData.StorageTarget),
-					//LocalPathLinux = a_copyMetaData.DestinationDataStoreRoot + a_copyMetaData.DestinationRelativeFilePath.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar),
-					//LocalPathMac = a_copyMetaData.DestinationDataStoreRoot + a_copyMetaData.DestinationRelativeFilePath.Replace(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar),
 					LocalPathWindows = a_copyMetaData.DestinationFullFilePath.LocalPath,
 					Url = a_copyMetaData.DestinationFullFilePath.ToString()
 				},
-				//PathCache = a_copyMetaData.DestinationRelativeFilePath,
-				//PathCacheStorage = ShotGridEntityReference.Create(a_copyMetaData.StorageTarget),
 				PublishedFileName = publishFileName,
 				PublishedFileType = ShotGridEntityReference.Create(ShotGridEntityName.PublishedFileType, a_copyMetaData.FileTag),
 				Description = "File auto-published by Data Wrangler"
@@ -181,6 +175,8 @@ namespace DataWranglerServiceWorker
 						new FileDiscoveryWorker(rootPath, m_metaCache, m_importWorker).Run();
 					}
 				});
+
+			m_driveEventWatcher.DetectCurrentlyPresentUSBDrives();
 		}
 
 		private void OnLoggerMessageLogged(string a_source, ELogSeverity a_severity, string a_message)

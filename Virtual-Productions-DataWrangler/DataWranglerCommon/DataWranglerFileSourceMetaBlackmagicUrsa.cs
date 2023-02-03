@@ -7,6 +7,7 @@ public partial class DataWranglerFileSourceMetaBlackmagicUrsa: DataWranglerFileS
 	public static readonly string MetaSourceType = "BlackmagicUrsa";
 
 	public static readonly TimeSpan MaxTimeOffset = new(0, 0, 5);
+	public static readonly TimeSpan MaxTimeCodeOffset = new(0, 0, 2);
 
 	public override bool IsUniqueMeta => true;
 
@@ -20,7 +21,7 @@ public partial class DataWranglerFileSourceMetaBlackmagicUrsa: DataWranglerFileS
 	private DateTimeOffset? m_recordingStart = null;
 
 	[AutoNotify]
-	private string m_startTimeCode = "";
+	private TimeCode m_startTimeCode = new();
 
 	[AutoNotify] 
 	private string m_storageTarget = "";
@@ -42,14 +43,24 @@ public partial class DataWranglerFileSourceMetaBlackmagicUrsa: DataWranglerFileS
 		};
 	}
 
-	public bool IsSourceFor(FileInfo a_fileInfo, string a_storageName, string a_codecName, out string? a_reasonForRejection)
+	public bool IsSourceFor(FileInfo a_fileInfo, string a_storageName, string a_codecName, TimeCode a_timeCode, out string? a_reasonForRejection)
 	{
 		if (CodecName == a_codecName && StorageTarget == a_storageName)
 		{
-			if (!string.IsNullOrEmpty(StartTimeCode))
+			if (StartTimeCode != TimeCode.Invalid && a_timeCode != TimeCode.Invalid)
 			{
-				//string timeCode = GetFirstFrameTimeCodeFromFile(a_fileInfo.FullName);
-				throw new NotImplementedException();
+				TimeSpan fileTimeCode = new TimeSpan(a_timeCode.Hour, a_timeCode.Minute, a_timeCode.Second);
+				TimeSpan metaTimeCode = new TimeSpan(StartTimeCode.Hour, StartTimeCode.Minute, StartTimeCode.Second);
+				TimeSpan timeCodeDiff = fileTimeCode - metaTimeCode;
+				if (timeCodeDiff > -MaxTimeCodeOffset && timeCodeDiff < MaxTimeCodeOffset)
+				{
+					a_reasonForRejection = null;
+					return true;
+				}
+				else
+				{
+					a_reasonForRejection = $"First frame time code mismatch: Meta: {StartTimeCode} File: {a_timeCode}";
+				}
 			}
 			else
 			{
@@ -61,7 +72,7 @@ public partial class DataWranglerFileSourceMetaBlackmagicUrsa: DataWranglerFileS
 				}
 				else
 				{
-					a_reasonForRejection = $"Time offset did not match. Offset was {timeSinceCreation.Value.TotalSeconds} seconds";
+					a_reasonForRejection = $"TimeCode invalid (Meta: {StartTimeCode} File: {a_timeCode}). File creation time offset did not match. Offset was {timeSinceCreation.Value.TotalSeconds} seconds";
 				}
 			}
 		}

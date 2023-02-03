@@ -11,15 +11,19 @@
 	<StackPanel xamlUtility:Spacing.Vertical="4">
 		<DockPanel>
 			<Label Width="64">Codec</Label>
-			<TextBox Text="{Binding ElementName=VideoMetaUserControl, Path=TargetMeta.CodecName}" IsEnabled="False"/>
+			<TextBox Text="{Binding Mode=OneWay, ElementName=VideoMetaUserControl, Path=TargetMeta.CodecName}" IsEnabled="False"/>
 		</DockPanel>
 		<DockPanel>
 			<Label Width="64">Shot Start</Label>
-			<TextBox Text="{Binding ElementName=VideoMetaUserControl, Path=TargetMeta.RecordingStart}" IsEnabled="False"/>
+			<TextBox Text="{Binding Mode=OneWay, ElementName=VideoMetaUserControl, Path=TargetMeta.RecordingStart}" IsEnabled="False"/>
+		</DockPanel>
+		<DockPanel>
+			<Label Width="64">Shot Start TimeCode</Label>
+			<TextBox Text="{Binding Mode=OneWay, ElementName=VideoMetaUserControl, Path=TargetMeta.StartTimeCode}" IsEnabled="False"/>
 		</DockPanel>
 		<DockPanel>
 			<Label Width="64">Storage</Label>
-			<TextBox Text="{Binding ElementName=VideoMetaUserControl, Path=TargetMeta.StorageTarget}" IsEnabled="False"/>
+			<TextBox Text="{Binding Mode=OneWay, ElementName=VideoMetaUserControl, Path=TargetMeta.StorageTarget}" IsEnabled="False"/>
 		</DockPanel>
 	</StackPanel>
 </UserControl>
