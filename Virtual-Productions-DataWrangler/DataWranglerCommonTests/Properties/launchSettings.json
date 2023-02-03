@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "DataWranglerCommonTests": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}

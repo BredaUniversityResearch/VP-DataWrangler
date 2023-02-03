@@ -12,7 +12,7 @@ namespace DataWranglerCommon
 		public byte Second => ReadInt8(TimeCodeAsBinaryCodedDecimal, 1);
 		public byte Frame => ReadInt8(TimeCodeAsBinaryCodedDecimal, 0);
 
-		public static readonly Regex Format = new("([0-9]{2}):([0-9]:{2}):([0-9]:{2}):([0-9]:{2})");
+		public static readonly Regex Format = new("([0-9]{2}):([0-9]{2}):([0-9]{2}):([0-9]{2})");
 
 		private TimeCode(int a_timeCodeAsBinaryCodedDecimal)
 		{
@@ -54,10 +54,10 @@ namespace DataWranglerCommon
 				throw new ArgumentException($"Value of time code ({a_formattedTimeCode}) does not match expected format of HH:MM:SS:FF", nameof(a_formattedTimeCode));
 			}
 
-			int hour = int.Parse(match.Groups[0].ValueSpan);
-			int minute = int.Parse(match.Groups[1].ValueSpan);
-			int second = int.Parse(match.Groups[2].ValueSpan);
-			int frame = int.Parse(match.Groups[3].ValueSpan);
+			int hour = int.Parse(match.Groups[1].ValueSpan);
+			int minute = int.Parse(match.Groups[2].ValueSpan);
+			int second = int.Parse(match.Groups[3].ValueSpan);
+			int frame = int.Parse(match.Groups[4].ValueSpan);
 			return new TimeCode(hour, minute, second, frame);
 		}
 
