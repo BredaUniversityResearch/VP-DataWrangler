@@ -27,8 +27,7 @@ namespace BlackmagicCameraControl.CommandPackets
 			Unknown4 = a_reader.ReadInt16();
 			Unknown5 = a_reader.ReadInt16();
 
-			//BlackmagicCameraLogInterface.LogVerbose(
-			//	$"\tReceived Undocumented Packet 9:7, Value [{Unknown}, {Unknown1}, {Unknown2}, {Unknown3}, {Unknown4}, {Unknown5}]");
+			//BlackmagicCameraLogInterface.LogVerbose($"\tReceived Undocumented Packet 9:7, Value [{Unknown}, {Unknown1}, {Unknown2}, {Unknown3}, {Unknown4}, {Unknown5}]");
 		}
 
 		public override void WriteTo(CommandWriter a_writer)

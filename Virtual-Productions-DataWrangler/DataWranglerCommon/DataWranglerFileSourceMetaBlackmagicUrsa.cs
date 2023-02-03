@@ -1,4 +1,5 @@
 ﻿using AutoNotify;
+using DataWranglerCommon.BRAWSupport;
 
 namespace DataWranglerCommon;
 
@@ -23,8 +24,11 @@ public partial class DataWranglerFileSourceMetaBlackmagicUrsa: DataWranglerFileS
 	[AutoNotify]
 	private TimeCode m_startTimeCode = new();
 
-	[AutoNotify] 
+	[AutoNotify, Obsolete("Now using CameraNumber & StartTimeCode to fix up files instead of RecordingStart & StorageTarget")] 
 	private string m_storageTarget = "";
+
+	[AutoNotify]
+	private string m_cameraNumber = "-1";
 
 	public DataWranglerFileSourceMetaBlackmagicUrsa()
 		: base(MetaSourceType, "video")
@@ -37,42 +41,57 @@ public partial class DataWranglerFileSourceMetaBlackmagicUrsa: DataWranglerFileS
 		{
 			m_source = m_source, 
 			m_codecName = m_codecName, 
-			m_recordingStart = m_recordingStart,
 			m_startTimeCode = m_startTimeCode,
-			m_storageTarget = m_storageTarget
+			m_cameraNumber =  m_cameraNumber,
 		};
 	}
 
-	public bool IsSourceFor(FileInfo a_fileInfo, string a_storageName, string a_codecName, TimeCode a_timeCode, out string? a_reasonForRejection)
+	public bool IsSourceFor(FileInfo a_fileInfo, string a_storageName, string a_codecName, BrawFileMetadata? a_fileMeta, out string? a_reasonForRejection)
 	{
-		if (CodecName == a_codecName && StorageTarget == a_storageName)
+		if (CodecName == a_codecName)
 		{
-			if (StartTimeCode != TimeCode.Invalid && a_timeCode != TimeCode.Invalid)
+			if (a_fileMeta != null &&
+				StartTimeCode != TimeCode.Invalid && a_fileMeta.FirstFrameTimeCode != TimeCode.Invalid)
 			{
-				TimeSpan fileTimeCode = new TimeSpan(a_timeCode.Hour, a_timeCode.Minute, a_timeCode.Second);
+				TimeSpan fileTimeCode = new TimeSpan(a_fileMeta.FirstFrameTimeCode.Hour, a_fileMeta.FirstFrameTimeCode.Minute, a_fileMeta.FirstFrameTimeCode.Second);
 				TimeSpan metaTimeCode = new TimeSpan(StartTimeCode.Hour, StartTimeCode.Minute, StartTimeCode.Second);
 				TimeSpan timeCodeDiff = fileTimeCode - metaTimeCode;
 				if (timeCodeDiff > -MaxTimeCodeOffset && timeCodeDiff < MaxTimeCodeOffset)
 				{
-					a_reasonForRejection = null;
-					return true;
+					if (a_fileMeta.CameraNumber == CameraNumber)
+					{
+						a_reasonForRejection = null;
+						return true;
+					}
+					else
+					{
+						a_reasonForRejection = $"Wrong camera number: Meta: {CameraNumber} File: {a_fileMeta.CameraNumber}";
+					}
 				}
 				else
 				{
-					a_reasonForRejection = $"First frame time code mismatch: Meta: {StartTimeCode} File: {a_timeCode}";
+					a_reasonForRejection = $"First frame time code mismatch: Meta: {StartTimeCode} File: {a_fileMeta.FirstFrameTimeCode}";
 				}
 			}
 			else
 			{
-				TimeSpan? timeSinceCreation = a_fileInfo.CreationTimeUtc - RecordingStart!;
-				if (timeSinceCreation > -MaxTimeOffset && timeSinceCreation < MaxTimeOffset)
+				if (StorageTarget == a_storageName)
 				{
-					a_reasonForRejection = null;
-					return true;
+					TimeSpan? timeSinceCreation = a_fileInfo.CreationTimeUtc - RecordingStart!;
+					if (timeSinceCreation > -MaxTimeOffset && timeSinceCreation < MaxTimeOffset)
+					{
+						a_reasonForRejection = null;
+						return true;
+					}
+					else
+					{
+						a_reasonForRejection =
+							$"TimeCode invalid (Meta: {StartTimeCode} File: {a_fileMeta?.FirstFrameTimeCode}). File creation time offset did not match. Offset was {timeSinceCreation.Value.TotalSeconds} seconds";
+					}
 				}
 				else
 				{
-					a_reasonForRejection = $"TimeCode invalid (Meta: {StartTimeCode} File: {a_timeCode}). File creation time offset did not match. Offset was {timeSinceCreation.Value.TotalSeconds} seconds";
+					a_reasonForRejection = $"Expected codec/storage {CodecName}/{StorageTarget} got {a_codecName}/{a_storageName}";
 				}
 			}
 		}

@@ -22,8 +22,8 @@
 			<TextBox Text="{Binding Mode=OneWay, ElementName=VideoMetaUserControl, Path=TargetMeta.StartTimeCode}" IsEnabled="False"/>
 		</DockPanel>
 		<DockPanel>
-			<Label Width="64">Storage</Label>
-			<TextBox Text="{Binding Mode=OneWay, ElementName=VideoMetaUserControl, Path=TargetMeta.StorageTarget}" IsEnabled="False"/>
+			<Label Width="64">Camera Number</Label>
+			<TextBox Text="{Binding Mode=OneWay, ElementName=VideoMetaUserControl, Path=TargetMeta.CameraNumber}" IsEnabled="False"/>
 		</DockPanel>
 	</StackPanel>
 </UserControl>

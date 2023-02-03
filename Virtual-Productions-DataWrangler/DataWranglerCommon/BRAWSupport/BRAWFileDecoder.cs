@@ -74,6 +74,29 @@ namespace DataWranglerCommon.BRAWSupport
 #pragma warning restore CA1416
 		}
 
+		public BrawFileMetadata GetMetaForFile(FileInfo a_file)
+		{
+			CallbackHelper handler = new CallbackHelper();
+			m_codec.OpenClip(a_file.FullName, out IBlackmagicRawClip clip);
+
+			m_codec.SetCallback(handler);
+			SetupFrameDecodeJob(0, clip);
+
+			clip.GetMetadata("camera_number", out object cameraNumber);
+			string cameraNumberString = (string)cameraNumber;
+
+			handler.CompletionEvent.WaitOne();
+
+			if (handler.Frame == null)
+			{
+				throw new Exception();
+			}
+
+			handler.Frame.GetTimecode(out string timeCode);
+
+			return new BrawFileMetadata(TimeCode.FromString(timeCode), cameraNumberString);
+		}
+
 		public TimeCode GetTimeCodeFromFile(FileInfo a_file, ulong a_frameNumber = 0)
 		{
 			CallbackHelper handler = new CallbackHelper();
@@ -87,6 +110,8 @@ namespace DataWranglerCommon.BRAWSupport
 
 			m_codec.SetCallback(handler);
 			SetupFrameDecodeJob(a_frameNumber, clip);
+
+			clip.GetMetadataIterator(out IBlackmagicRawMetadataIterator metaIterator);
 
 			handler.CompletionEvent.WaitOne();
 			

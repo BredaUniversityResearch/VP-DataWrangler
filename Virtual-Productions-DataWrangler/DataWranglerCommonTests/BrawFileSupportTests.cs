@@ -46,5 +46,17 @@ namespace BlackmagicDeckLinkControlTest
 				Assert.True(timeCode == new TimeCode(22, 23, 40, 20));
 			}
 		}
+
+		[Fact]
+		public void DecodeMeta()
+		{
+			FileInfo file = new FileInfo(TestFile);
+			using (BRAWFileDecoder decoder = new BRAWFileDecoder())
+			{
+				BrawFileMetadata fileMeta = decoder.GetMetaForFile(file);
+				Assert.True(fileMeta.FirstFrameTimeCode == new TimeCode(22, 23, 40, 20));
+				Assert.True(fileMeta.CameraNumber == "A");
+			}
+		}
 	}
 }

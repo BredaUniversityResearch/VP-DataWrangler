@@ -18,10 +18,10 @@ public class FileMetaResolverBlackmagicUrsa: FileMetaResolver
 			FileInfo fileInfo = new FileInfo(filePath);
 			if (CameraCodec.FindFromFileExtension(fileInfo.Extension, out ECameraCodec codec))
 			{
-				TimeCode firstFrameTimeCode = new();
+				BrawFileMetadata? firstFrameTimeCode = null;
 				if (codec == ECameraCodec.BlackmagicRAW)
 				{
-					firstFrameTimeCode = fileDecoder.GetTimeCodeFromFile(fileInfo);
+					firstFrameTimeCode = fileDecoder.GetMetaForFile(fileInfo);
 				}
 
 				bool fileWasLinked = false;

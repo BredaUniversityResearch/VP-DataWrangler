@@ -19,7 +19,15 @@ namespace DataWranglerInterface.ShotRecording
 		{
 			InitializeComponent();
 
-			CameraStorageTarget.OnStorageTargetChanged += OnStorageTargetChangedInUI;
+			CameraNumber.TextChanged += OnCameraNumberChanged;
+		}
+
+		private void OnCameraNumberChanged(object a_sender, TextChangedEventArgs a_e)
+		{
+			if (m_targetCamera != null)
+			{
+				m_targetCamera.ProjectCameraNumber = CameraNumber.Text;
+			}
 		}
 
 		public void SetTargetCameraInfo(ActiveCameraInfo? a_activeCamera)
@@ -33,11 +41,6 @@ namespace DataWranglerInterface.ShotRecording
 			if (m_targetCamera != null)
 			{
 				m_targetCamera.CameraPropertyChanged += OnCameraPropertyChanged;
-
-				if (string.IsNullOrEmpty(m_targetCamera.CurrentStorageTarget))
-				{
-					m_targetCamera.SetStorageTarget(CameraStorageTarget.StorageTargetString);
-				}
 			}
 
 			Dispatcher.InvokeAsync(() =>
@@ -86,23 +89,15 @@ namespace DataWranglerInterface.ShotRecording
 				bool isNowRecording = m_targetCamera.CurrentTransportMode == CommandPacketMediaTransportMode.EMode.Record;
 				OnCameraRecordingStateChanged.Invoke(m_targetCamera, isNowRecording, a_e.ReceivedChangeTime);
 			}
-			else if (a_e.PropertyName == nameof(ActiveCameraInfo.CurrentStorageTarget))
+			else if (a_e.PropertyName == nameof(ActiveCameraInfo.ProjectCameraNumber))
 			{
-				Dispatcher.InvokeAsync(() => CameraStorageTarget.StorageTargetString = m_targetCamera.CurrentStorageTarget);
+				Dispatcher.InvokeAsync(() => CameraNumber.Text = m_targetCamera.ProjectCameraNumber);
 			}
 			else if (a_e.PropertyName == nameof(ActiveCameraInfo.CurrentTimeCode))
 			{
 				Dispatcher.InvokeAsync(() => CameraTimeCode.Content = m_targetCamera.CurrentTimeCode);
 			}
 
-		}
-
-		private void OnStorageTargetChangedInUI(string a_obj)
-		{
-			if (m_targetCamera != null)
-			{
-				m_targetCamera.SetStorageTarget(a_obj);
-			}
 		}
 	}
 }

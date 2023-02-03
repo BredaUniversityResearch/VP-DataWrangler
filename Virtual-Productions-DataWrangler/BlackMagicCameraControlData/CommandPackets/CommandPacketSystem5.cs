@@ -1,8 +1,4 @@
-﻿using BlackmagicCameraControlData;
-using System;
-using System.Diagnostics;
-
-namespace BlackmagicCameraControl.CommandPackets
+﻿namespace BlackmagicCameraControl.CommandPackets
 {
 	[CommandPacketMeta(9, 5, 4, ECommandDataType.Int8)]
 	public class CommandPacketSystem5 : ICommandPacketBase
@@ -16,7 +12,7 @@ namespace BlackmagicCameraControl.CommandPackets
 		{
 		}
 
-		public CommandPacketSystem5(CommandReader a_reader)
+		public CommandPacketSystem5(CommandReader a_reader)		
 		{
 			Unknown = a_reader.ReadInt8();
 			Unknown1 = a_reader.ReadInt8();

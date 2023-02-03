@@ -150,6 +150,7 @@ namespace DataWranglerInterface.ShotRecording
 						{
 							ursaSource.RecordingStart = a_stateChangeTime;
 							ursaSource.StartTimeCode = a_camera.CurrentTimeCode;
+							ursaSource.CameraNumber = a_camera.ProjectCameraNumber;
 							ursaSource.StorageTarget = a_camera.CurrentStorageTarget;
 							ursaSource.CodecName = a_camera.SelectedCodec;
 						}

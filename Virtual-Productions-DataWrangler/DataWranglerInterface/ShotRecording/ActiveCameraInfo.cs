@@ -42,7 +42,9 @@ namespace DataWranglerInterface.ShotRecording
 		public string CurrentStorageTarget { get; private set; } = "";
 		public string SelectedCodec { get; private set; } = ""; //String representation of the basic coded selected by camera.
 		public TimeCode CurrentTimeCode { get; private set; }
-		
+		public string ProjectCameraNumber { get; set; } = "A";
+
+
 		public ActiveCameraInfo(CameraHandle a_handle)
 		{
 			TargetCamera = a_handle;
