@@ -8,7 +8,7 @@ namespace DataWranglerCommon
 	[JsonConverter(typeof(TimeCodeJsonConverter))]
 	public readonly struct TimeCode
 	{
-		public readonly int TimeCodeAsBinaryCodedDecimal = -1;
+		public readonly uint TimeCodeAsBinaryCodedDecimal = ~0u;
 
 		public static readonly TimeCode Invalid = new();
 
@@ -19,7 +19,7 @@ namespace DataWranglerCommon
 
 		public static readonly Regex Format = new("([0-9]{2}):([0-9]{2}):([0-9]{2}):([0-9]{2})");
 
-		private TimeCode(int a_timeCodeAsBinaryCodedDecimal)
+		private TimeCode(uint a_timeCodeAsBinaryCodedDecimal)
 		{
 			TimeCodeAsBinaryCodedDecimal = a_timeCodeAsBinaryCodedDecimal;
 		}
@@ -34,7 +34,7 @@ namespace DataWranglerCommon
 			return $"{Hour:D2}:{Minute:D2}:{Second:D2}:{Frame:D2}";
 		}
 
-		private static byte ReadInt8(int a_target, int a_offset)
+		private static byte ReadInt8(uint a_target, int a_offset)
 		{
 			return ReadInt8(BitConverter.GetBytes(a_target), a_offset);
 		}
@@ -45,7 +45,7 @@ namespace DataWranglerCommon
 			return (byte)((((value & 0xF0) >> 4) * 10) + (value & 0x0F));
 		}
 
-		public static TimeCode FromBCD(int a_binaryCodedTimeCode)
+		public static TimeCode FromBCD(uint a_binaryCodedTimeCode)
 		{
 			return new TimeCode(a_binaryCodedTimeCode);
 		}
@@ -77,7 +77,7 @@ namespace DataWranglerCommon
 
 		public override int GetHashCode()
 		{
-			return TimeCodeAsBinaryCodedDecimal;
+			return (int)TimeCodeAsBinaryCodedDecimal;
 		}
 
 		public static bool operator ==(TimeCode left, TimeCode right)

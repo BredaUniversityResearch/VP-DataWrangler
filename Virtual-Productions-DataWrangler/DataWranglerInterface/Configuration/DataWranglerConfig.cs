@@ -8,8 +8,6 @@ namespace DataWranglerInterface.Configuration
 	{
 		public static DataWranglerConfig Instance { get; }
 
-		public readonly List<string> StorageTargets = new List<string>();
-
 		static DataWranglerConfig()
 		{
 			using (FileStream fs = new FileStream("Settings.json", FileMode.Open, FileAccess.Read))

@@ -28,31 +28,31 @@
 			return (short)((upper * 100) + lower);
 		}
 
-		public static int FromTime(int a_hour, int a_minute, int a_second, int a_frame)
+		public static uint FromTime(int a_hour, int a_minute, int a_second, int a_frame)
 		{
 			byte[] buffer = new byte[4];
 			WriteInt8(a_hour, buffer, 3);
 			WriteInt8(a_minute, buffer, 2);
 			WriteInt8(a_second, buffer, 1);
 			WriteInt8(a_frame, buffer, 0);
-			return BitConverter.ToInt32(buffer);
+			return BitConverter.ToUInt32(buffer);
 		}
 
-		public static int FromTime(DateTime a_time)
+		public static uint FromTime(DateTime a_time)
 		{
 			return FromTime(a_time.Hour, a_time.Minute, a_time.Second, 0);
 		}
 
-		public static int FromDate(DateTime a_time)
+		public static uint FromDate(DateTime a_time)
 		{
 			byte[] buffer = new byte[4];
 			WriteInt16(a_time.Year, buffer, 3);
 			WriteInt8(a_time.Month, buffer, 1);
 			WriteInt8(a_time.Day, buffer, 0);
-			return BitConverter.ToInt32(buffer);
+			return BitConverter.ToUInt32(buffer);
 		}
 
-		public static DateTime ToDateTime(int a_date, int a_time)
+		public static DateTime ToDateTime(uint a_date, uint a_time)
 		{
 			//BCD - Date: YYYYMMDD
 			//		Time: HHMMSSFF - Frame (FF) not used.

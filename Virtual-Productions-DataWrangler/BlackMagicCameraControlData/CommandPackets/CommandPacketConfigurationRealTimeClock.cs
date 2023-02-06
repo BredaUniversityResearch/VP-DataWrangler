@@ -5,8 +5,8 @@ namespace BlackmagicCameraControl.CommandPackets
 	[CommandPacketMeta(7, 0, 8, ECommandDataType.Int32)]
 	public class CommandPacketConfigurationRealTimeClock: ICommandPacketBase
 	{
-		public int BinaryTimeCode = 0;
-		public int BinaryDateCode = 0;
+		public uint BinaryTimeCode = 0;
+		public uint BinaryDateCode = 0;
 
 		public DateTime ClockTime;
 
@@ -18,8 +18,8 @@ namespace BlackmagicCameraControl.CommandPackets
 
 		public CommandPacketConfigurationRealTimeClock(CommandReader a_reader)
 		{
-			BinaryTimeCode = a_reader.ReadInt32();
-			BinaryDateCode = a_reader.ReadInt32();
+			BinaryTimeCode = a_reader.ReadUInt32();
+			BinaryDateCode = a_reader.ReadUInt32();
 
 			ClockTime = BinaryCodedDecimal.ToDateTime(BinaryDateCode, BinaryTimeCode);
 		}

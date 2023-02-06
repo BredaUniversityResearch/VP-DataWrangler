@@ -1,8 +1,10 @@
 ﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using BlackmagicCameraControl.CommandPackets;
 using BlackmagicCameraControlData;
 using BlackmagicCameraControlData.CommandPackets;
+using DataWranglerCommon;
 using DeckLinkAPI;
 
 namespace BlackmagicDeckLinkControl
@@ -56,8 +58,10 @@ namespace BlackmagicDeckLinkControl
 			throw new NotImplementedException();
 		}
 
-		public void OnCameraPacketArrived(CameraHandle a_handle, CommandIdentifier a_id, ICommandPacketBase a_packet)
+		public void OnCameraPacketArrived(CameraHandle a_handle, CommandIdentifier a_id, ICommandPacketBase a_packet, TimeCode a_timeCode)
 		{
+			Debugger.Break(); // Need to verify timecode.
+
 			if (m_activeCameras.TryGetValue(a_handle, out CameraPropertyCache? cache))
 			{
 				if (cache.CheckPropertyChanged(a_id, a_packet))

@@ -2,6 +2,7 @@
 using BlackmagicCameraControl.CommandPackets;
 using BlackmagicCameraControlData;
 using CommonLogging;
+using DataWranglerCommon;
 using DeckLinkAPI;
 
 namespace BlackmagicDeckLinkControl;
@@ -99,6 +100,9 @@ internal class DeckLinkDeviceInputNotificationHandler : IDeckLinkInputCallback
             {
                 uint line = packet.GetLineNumber();
 
+                videoFrame.GetTimecode(_BMDTimecodeFormat.bmdTimecodeRP188Any, out IDeckLinkTimecode timecode);
+                TimeCode convertedTimeCode = TimeCode.FromBCD(timecode.GetBCD());
+
                 packet.GetBytes(_BMDAncillaryPacketFormat.bmdAncillaryPacketFormatUInt8, out IntPtr packetData,
                     out uint size);
                 unsafe
@@ -107,7 +111,7 @@ internal class DeckLinkDeviceInputNotificationHandler : IDeckLinkInputCallback
                     try
                     {
                         CommandReader.DecodeStream(ms,
-                            (a_id, a_packet) => { m_controller.OnCameraPacketArrived(CameraHandle, a_id, a_packet); });
+                            (a_id, a_packet) => { m_controller.OnCameraPacketArrived(CameraHandle, a_id, a_packet, convertedTimeCode); });
                     }
                     catch (Exception ex)
                     {

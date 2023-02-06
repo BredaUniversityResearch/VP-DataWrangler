@@ -31,6 +31,11 @@ public class CommandWriter
 		//m_targetStream.Seek(sizeof(int), SeekOrigin.Current);
 	}
 
+	public void Write(uint a_valueToWrite)
+	{
+		m_targetStream.Write(BitConverter.GetBytes(a_valueToWrite), 0, sizeof(uint));
+	}
+
 	public void Write(string a_valueToWrite)
 	{
 		byte[] stringAsBytes = System.Text.Encoding.UTF8.GetBytes(a_valueToWrite);

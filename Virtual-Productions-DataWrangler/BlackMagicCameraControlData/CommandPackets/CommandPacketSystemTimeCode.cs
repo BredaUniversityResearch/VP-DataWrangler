@@ -15,7 +15,7 @@ namespace BlackmagicCameraControl.CommandPackets
 		public CommandPacketSystemTimeCode(CommandReader a_reader)
 		{
 			BinaryCodedTimeCode = a_reader.ReadInt32();
-			TimeCode = TimeCode.FromBCD(BinaryCodedTimeCode);
+			TimeCode = TimeCode.FromBCD((uint)BinaryCodedTimeCode);
 		}
 
 		public override void WriteTo(CommandWriter a_writer)
