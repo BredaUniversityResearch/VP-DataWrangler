@@ -18,16 +18,6 @@ namespace DataWranglerInterface.ShotRecording
 		public CameraInfoControl()
 		{
 			InitializeComponent();
-
-			CameraNumber.TextChanged += OnCameraNumberChanged;
-		}
-
-		private void OnCameraNumberChanged(object a_sender, TextChangedEventArgs a_e)
-		{
-			if (m_targetCamera != null)
-			{
-				m_targetCamera.ProjectCameraNumber = CameraNumber.Text;
-			}
 		}
 
 		public void SetTargetCameraInfo(ActiveCameraInfo? a_activeCamera)
@@ -88,10 +78,6 @@ namespace DataWranglerInterface.ShotRecording
 				Dispatcher.InvokeAsync(() => CameraState.Content = m_targetCamera.CurrentTransportMode.ToString() );
 				bool isNowRecording = m_targetCamera.CurrentTransportMode == CommandPacketMediaTransportMode.EMode.Record;
 				OnCameraRecordingStateChanged.Invoke(m_targetCamera, isNowRecording, a_e.ReceivedChangeTime);
-			}
-			else if (a_e.PropertyName == nameof(ActiveCameraInfo.ProjectCameraNumber))
-			{
-				Dispatcher.InvokeAsync(() => CameraNumber.Text = m_targetCamera.ProjectCameraNumber);
 			}
 			else if (a_e.PropertyName == nameof(ActiveCameraInfo.CurrentTimeCode))
 			{

@@ -39,11 +39,8 @@ namespace DataWranglerInterface.ShotRecording
 		// ReSharper disable once InconsistentNaming
 		public int BatteryVoltage_mV { get; private set; }
 		public CommandPacketMediaTransportMode.EMode CurrentTransportMode { get; private set; }
-		public string CurrentStorageTarget { get; private set; } = "";
 		public string SelectedCodec { get; private set; } = ""; //String representation of the basic coded selected by camera.
 		public TimeCode CurrentTimeCode { get; private set; }
-		public string ProjectCameraNumber { get; set; } = "A";
-
 
 		public ActiveCameraInfo(CameraHandle a_handle)
 		{
@@ -98,13 +95,6 @@ namespace DataWranglerInterface.ShotRecording
 				SelectedCodec = codecPacket.BasicCodec.ToString();
 				OnCameraPropertyChanged(nameof(CurrentTransportMode), a_receivedTime);
 			}
-			else if (a_packet is CommandPacketVendorStorageTargetChanged storageTarget)
-			{
-				Logger.LogInfo("CameraInfo", $"Storage target changed to: {storageTarget.StorageTargetName}");
-
-				CurrentStorageTarget = storageTarget.StorageTargetName;
-				OnCameraPropertyChanged(nameof(CurrentStorageTarget), a_receivedTime);
-			}
 			else if (a_packet is CommandPacketSystemTimeCode timeCodeChanged)
 			{
 				CurrentTimeCode = timeCodeChanged.TimeCode;
@@ -122,15 +112,6 @@ namespace DataWranglerInterface.ShotRecording
 			CameraPropertyChangedEventArgs evt = new CameraPropertyChangedEventArgs(a_propertyName, a_changeTime);
 			PropertyChanged?.Invoke(this, evt);
 			CameraPropertyChanged?.Invoke(this, evt);
-		}
-
-		public void SetStorageTarget(string a_storageTargetName)
-		{
-			if (CurrentStorageTarget != a_storageTargetName)
-			{
-				CurrentStorageTarget = a_storageTargetName;
-				OnCameraPropertyChanged(nameof(CurrentStorageTarget), DateTimeOffset.UtcNow);
-			}
 		}
 	}
 }

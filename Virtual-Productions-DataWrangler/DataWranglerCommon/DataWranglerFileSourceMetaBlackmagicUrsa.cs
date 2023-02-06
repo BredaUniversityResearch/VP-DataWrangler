@@ -28,7 +28,7 @@ public partial class DataWranglerFileSourceMetaBlackmagicUrsa: DataWranglerFileS
 	private string m_storageTarget = "";
 
 	[AutoNotify]
-	private string m_cameraNumber = "-1";
+	private string m_cameraNumber = "A";
 
 	public DataWranglerFileSourceMetaBlackmagicUrsa()
 		: base(MetaSourceType, "video")

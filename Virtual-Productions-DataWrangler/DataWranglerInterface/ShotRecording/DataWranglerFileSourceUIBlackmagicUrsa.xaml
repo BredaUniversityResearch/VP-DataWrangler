@@ -23,7 +23,7 @@
 		</DockPanel>
 		<DockPanel>
 			<Label Width="64">Camera Number</Label>
-			<TextBox Text="{Binding Mode=OneWay, ElementName=VideoMetaUserControl, Path=TargetMeta.CameraNumber}" IsEnabled="False"/>
+			<TextBox Text="{Binding ElementName=VideoMetaUserControl, Path=TargetMeta.CameraNumber}" ToolTip="Configured camera number in project settings on the camera"/>
 		</DockPanel>
 	</StackPanel>
 </UserControl>

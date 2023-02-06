@@ -27,8 +27,7 @@ namespace DataWranglerInterface.ShotRecording
 
 			public void OnCameraPropertyChanged(object? a_sender, CameraPropertyChangedEventArgs a_e)
 			{
-				if (a_e.PropertyName != nameof(CameraTarget.CurrentStorageTarget) &&
-				    a_e.PropertyName != nameof(CameraTarget.SelectedCodec))
+				if (a_e.PropertyName != nameof(CameraTarget.SelectedCodec))
 				{
 					return;
 				}
@@ -36,8 +35,7 @@ namespace DataWranglerInterface.ShotRecording
 				foreach (DataWranglerFileSourceMeta source in Meta.FileSources)
 				{
 					if (source is DataWranglerFileSourceMetaBlackmagicUrsa ursaSource)
-					{
-						ursaSource.StorageTarget = CameraTarget.CurrentStorageTarget;
+					{ 
 						ursaSource.CodecName = CameraTarget.SelectedCodec;
 					}
 				}
@@ -150,8 +148,6 @@ namespace DataWranglerInterface.ShotRecording
 						{
 							ursaSource.RecordingStart = a_stateChangeTime;
 							ursaSource.StartTimeCode = a_camera.CurrentTimeCode;
-							ursaSource.CameraNumber = a_camera.ProjectCameraNumber;
-							ursaSource.StorageTarget = a_camera.CurrentStorageTarget;
 							ursaSource.CodecName = a_camera.SelectedCodec;
 						}
 					} 

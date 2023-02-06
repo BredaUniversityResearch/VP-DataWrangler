@@ -37,7 +37,6 @@ namespace DataWranglerCommon
 		private static byte ReadInt8(int a_target, int a_offset)
 		{
 			return ReadInt8(BitConverter.GetBytes(a_target), a_offset);
-
 		}
 
 		private static byte ReadInt8(byte[] a_target, int a_offset)

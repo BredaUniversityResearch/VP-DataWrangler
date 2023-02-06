@@ -1,5 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
 using BlackmagicCameraControl.CommandPackets;
 using BlackmagicCameraControlData;
