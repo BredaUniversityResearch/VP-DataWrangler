@@ -71,7 +71,7 @@ namespace BlackmagicDeckLinkControl
 					{
 						BlackmagicCameraLogInterface.LogInfo($"Received Packet {a_id.Category}:{a_id.Parameter}. {a_packet}");
 					}
-                    CameraDataReceived(a_handle, DateTimeOffset.UtcNow, a_packet);
+                    CameraDataReceived(a_handle, a_timeCode, a_packet);
 				}
 			}
 		}

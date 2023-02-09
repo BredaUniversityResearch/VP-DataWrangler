@@ -12,12 +12,12 @@ namespace DataWranglerInterface.ShotRecording
 {
 	public class CameraPropertyChangedEventArgs: PropertyChangedEventArgs
 	{
-		public readonly DateTimeOffset ReceivedChangeTime;
+		public readonly TimeCode ReceiveTimeCode;
 
-		public CameraPropertyChangedEventArgs(string? a_propertyName, DateTimeOffset a_bluetoothChangeTime) 
+		public CameraPropertyChangedEventArgs(string? a_propertyName, TimeCode a_receiveTimeCode) 
 			: base(a_propertyName)
 		{
-			ReceivedChangeTime = a_bluetoothChangeTime;
+			ReceiveTimeCode = a_receiveTimeCode;
 		}
 	};
 
@@ -48,7 +48,7 @@ namespace DataWranglerInterface.ShotRecording
 			m_connectTime = DateTimeOffset.UtcNow;
 		}
 
-		public void OnCameraDataReceived(BlackmagicBluetoothCameraAPIController a_controller, DateTimeOffset a_receivedTime, ICommandPacketBase a_packet)
+		public void OnCameraDataReceived(BlackmagicBluetoothCameraAPIController a_controller, TimeCode a_receivedTime, ICommandPacketBase a_packet)
 		{
 			if (a_packet is CommandPacketCameraModel modelPacket)
 			{
@@ -107,7 +107,7 @@ namespace DataWranglerInterface.ShotRecording
 			throw new NotImplementedException();
 		}
 
-		private void OnCameraPropertyChanged(string a_propertyName, DateTimeOffset a_changeTime)
+		private void OnCameraPropertyChanged(string a_propertyName, TimeCode a_changeTime)
 		{
 			CameraPropertyChangedEventArgs evt = new CameraPropertyChangedEventArgs(a_propertyName, a_changeTime);
 			PropertyChanged?.Invoke(this, evt);

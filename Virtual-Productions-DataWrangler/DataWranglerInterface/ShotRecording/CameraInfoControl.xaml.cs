@@ -1,6 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 using BlackmagicCameraControl.CommandPackets;
+using DataWranglerCommon;
 
 namespace DataWranglerInterface.ShotRecording
 {
@@ -12,7 +13,7 @@ namespace DataWranglerInterface.ShotRecording
 		private ActiveCameraInfo? m_targetCamera;
 		public ActiveCameraInfo? TargetCameraInfo => m_targetCamera;
 
-		public delegate void RecordingStateChangedHandler(ActiveCameraInfo a_camera, bool a_isNowRecording, DateTimeOffset a_stateChangeTime);
+		public delegate void RecordingStateChangedHandler(ActiveCameraInfo a_camera, bool a_isNowRecording, TimeCode a_stateChangeTime);
 		public event RecordingStateChangedHandler OnCameraRecordingStateChanged = delegate { };
 
 		public CameraInfoControl()
@@ -77,7 +78,7 @@ namespace DataWranglerInterface.ShotRecording
 			{
 				Dispatcher.InvokeAsync(() => CameraState.Content = m_targetCamera.CurrentTransportMode.ToString() );
 				bool isNowRecording = m_targetCamera.CurrentTransportMode == CommandPacketMediaTransportMode.EMode.Record;
-				OnCameraRecordingStateChanged.Invoke(m_targetCamera, isNowRecording, a_e.ReceivedChangeTime);
+				OnCameraRecordingStateChanged.Invoke(m_targetCamera, isNowRecording, a_e.ReceiveTimeCode);
 			}
 			else if (a_e.PropertyName == nameof(ActiveCameraInfo.CurrentTimeCode))
 			{

@@ -12,6 +12,7 @@ using BlackmagicCameraControl;
 using BlackmagicCameraControl.CommandPackets;
 using BlackmagicCameraControlData;
 using CommonLogging;
+using DataWranglerCommon;
 
 namespace BlackmagicCameraControlBluetooth
 {
@@ -359,7 +360,7 @@ namespace BlackmagicCameraControlBluetooth
 			return null;
 		}
 
-		public void NotifyDataReceived(CameraHandle a_cameraHandle, DateTimeOffset a_receivedTime, ICommandPacketBase a_packetInstance)
+		public void NotifyDataReceived(CameraHandle a_cameraHandle, TimeCode a_receivedTime, ICommandPacketBase a_packetInstance)
 		{
 			CameraDataReceived(a_cameraHandle, a_receivedTime, a_packetInstance);
 		}
@@ -376,7 +377,7 @@ namespace BlackmagicCameraControlBluetooth
 			{
 				bluetoothConnection.AsyncRequestCameraModel().ContinueWith((a_result) =>
 				{
-					CameraDataReceived(a_cameraHandle, DateTimeOffset.UtcNow, new CommandPacketCameraModel(a_result.Result));
+					CameraDataReceived(a_cameraHandle, bluetoothConnection.LastReceivedTimeCode, new CommandPacketCameraModel(a_result.Result));
 				});
 			}
 		}

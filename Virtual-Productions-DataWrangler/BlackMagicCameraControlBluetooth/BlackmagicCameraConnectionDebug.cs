@@ -4,6 +4,7 @@ using System.Threading;
 using BlackmagicCameraControl.CommandPackets;
 using BlackmagicCameraControlBluetooth;
 using BlackmagicCameraControlData;
+using DataWranglerCommon;
 
 namespace BlackmagicCameraControl
 {
@@ -45,14 +46,15 @@ namespace BlackmagicCameraControl
 
 			while (!m_messageProducerCancellationTokenSource.IsCancellationRequested)
 			{
-				m_dispatcher.NotifyDataReceived(CameraHandle, DateTimeOffset.UtcNow,
+				DateTime timeNow = DateTime.UtcNow;
+				m_dispatcher.NotifyDataReceived(CameraHandle, new TimeCode(timeNow.Hour, timeNow.Minute, timeNow.Second, timeNow.Millisecond),
 					new CommandPacketSystemBatteryInfo() {BatteryPercentage = 69, BatteryVoltage_mV = 1337});
 				LastReceivedDataTime = DateTimeOffset.UtcNow;
 
 				while (m_packetSendQueue.Count > 0)
 				{
 					ICommandPacketBase packet = m_packetSendQueue.Dequeue();
-					m_dispatcher.NotifyDataReceived(CameraHandle, DateTimeOffset.UtcNow, packet);
+					m_dispatcher.NotifyDataReceived(CameraHandle, new TimeCode(timeNow.Hour, timeNow.Minute, timeNow.Second, timeNow.Millisecond), packet);
 				}
 
 				m_messageProducerCancellationTokenSource.Token.WaitHandle.WaitOne(new TimeSpan(0, 0, 1));

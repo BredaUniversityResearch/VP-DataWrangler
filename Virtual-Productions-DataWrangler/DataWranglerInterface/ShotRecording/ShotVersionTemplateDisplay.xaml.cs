@@ -125,7 +125,7 @@ namespace DataWranglerInterface.ShotRecording
 			return nextShotId;
 		}
 
-		public void OnActiveCameraRecordingStateChanged(ActiveCameraInfo a_camera, bool a_isNowRecording, DateTimeOffset a_stateChangeTime)
+		public void OnActiveCameraRecordingStateChanged(ActiveCameraInfo a_camera, bool a_isNowRecording, TimeCode a_stateChangeTime)
 		{
 			if (a_isNowRecording)
 			{
@@ -146,7 +146,7 @@ namespace DataWranglerInterface.ShotRecording
 					{
 						if (source is DataWranglerFileSourceMetaBlackmagicUrsa ursaSource)
 						{
-							ursaSource.RecordingStart = a_stateChangeTime;
+							ursaSource.RecordingStart = DateTimeOffset.UtcNow;
 							ursaSource.StartTimeCode = a_camera.CurrentTimeCode;
 							ursaSource.CodecName = a_camera.SelectedCodec;
 						}

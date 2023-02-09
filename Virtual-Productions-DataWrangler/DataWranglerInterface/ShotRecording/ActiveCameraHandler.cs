@@ -69,7 +69,7 @@ namespace DataWranglerInterface.ShotRecording
 			}
 		}
 
-        private void OnCameraDataReceived(CameraHandle a_handle, DateTimeOffset a_receivedTime, ICommandPacketBase a_packet)
+        private void OnCameraDataReceived(CameraHandle a_handle, TimeCode a_receivedTime, ICommandPacketBase a_packet)
 		{
 			if (m_activeCameras.TryGetValue(a_handle, out ActiveCameraInfo? targetCamera))
 			{

@@ -13,6 +13,7 @@ using Windows.Storage.Streams;
 using BlackmagicCameraControl.CommandPackets;
 using BlackmagicCameraControlBluetooth;
 using BlackmagicCameraControlData;
+using DataWranglerCommon;
 
 namespace BlackmagicCameraControl
 {
@@ -35,6 +36,7 @@ namespace BlackmagicCameraControl
 		public IBlackmagicCameraConnection.EConnectionState ConnectionState { get; private set; }
 		public CameraHandle CameraHandle { get; private set; }
 		public DateTimeOffset LastReceivedDataTime { get; private set; }
+		public TimeCode LastReceivedTimeCode { get; private set; } = TimeCode.Invalid;
 		public string HumanReadableName => GetDevice().Name;
 
 		private bool m_isInInitialReset = false;
@@ -213,19 +215,20 @@ namespace BlackmagicCameraControl
 					}
 				};
 
-			//m_blackmagicServiceTimecode
-			//		.WriteClientCharacteristicConfigurationDescriptorAsync(
-			//			GattClientCharacteristicConfigurationDescriptorValue.Notify).Completed =
-			//	(a_result, _) => {
-			//		if (a_result.Status == AsyncStatus.Completed)
-			//		{
-			//			m_blackmagicServiceTimecode.ValueChanged += OnReceivedTimecode;
-			//		}
-			//		else
-			//		{
-			//			IBlackmagicCameraLogInterface.LogError("Failed to subscribe to camera timecode service");
-			//		}
-			//	};
+			Debug.Assert(m_blackmagicServiceTimecode != null, nameof(m_blackmagicServiceTimecode) + " != null");
+			m_blackmagicServiceTimecode
+					.WriteClientCharacteristicConfigurationDescriptorAsync(
+						GattClientCharacteristicConfigurationDescriptorValue.Notify).Completed =
+				(a_result, _) => {
+					if (a_result.Status == AsyncStatus.Completed)
+					{
+						m_blackmagicServiceTimecode.ValueChanged += OnReceivedTimecode;
+					}
+					else
+					{
+						BlackmagicCameraLogInterface.LogError("Failed to subscribe to camera timecode service");
+					}
+				};
 		}
 
 		private void OnReceivedTimecode(GattCharacteristic a_sender, GattValueChangedEventArgs a_args)
@@ -235,7 +238,8 @@ namespace BlackmagicCameraControl
 				CommandReader reader = new CommandReader(inputData);
 				reader.ReadInt32();
 				reader.ReadInt32();
-				int binaryTimecode = reader.ReadInt32();
+				uint binaryTimecode = reader.ReadUInt32();
+				LastReceivedTimeCode = TimeCode.FromBCD(binaryTimecode);
 			}
 		}
 		
@@ -287,7 +291,7 @@ namespace BlackmagicCameraControl
 
 		private void ProcessCommandsFromStream(Stream a_inputData, DateTimeOffset a_receivedTime)
         {
-            CommandReader.DecodeStream(a_inputData, (a_id, a_packet) => { m_dispatcher.NotifyDataReceived(CameraHandle, a_receivedTime, a_packet); });
+            CommandReader.DecodeStream(a_inputData, (a_id, a_packet) => { m_dispatcher.NotifyDataReceived(CameraHandle, LastReceivedTimeCode, a_packet); });
         }
 
 		public Task<string> AsyncRequestCameraModel()
