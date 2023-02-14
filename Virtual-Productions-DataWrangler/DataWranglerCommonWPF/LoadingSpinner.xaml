@@ -12,7 +12,7 @@
 </UserControl.Resources>
 
 	<Grid HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="128" MaxHeight="128">
-		<Image x:Name="Spinner" RenderTransformOrigin="0.5,0.5" Source="{StaticResource SpinnerImageLongDuration}">
+		<Image x:Name="Spinner" RenderTransformOrigin="0.5,0.5" Source="{StaticResource SpinnerImageSource}">
 			<Image.RenderTransform>
 				<RotateTransform x:Name="SpinnerTransform" Angle="0"/>
 			</Image.RenderTransform>

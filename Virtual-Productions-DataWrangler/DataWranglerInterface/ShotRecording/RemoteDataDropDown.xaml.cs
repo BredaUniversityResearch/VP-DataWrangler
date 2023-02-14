@@ -71,7 +71,7 @@ namespace DataWranglerInterface.ShotRecording
 			if (Dispatcher.CheckAccess())
 			{
 				DropDown.IsEnabled = !a_isLoading;
-				LoadingSpinner.Visibility = (a_isLoading)? Visibility.Visible : Visibility.Hidden;
+				LoadingSpinner.SetIsLoading(a_isLoading);
 			}
 			else
 			{
