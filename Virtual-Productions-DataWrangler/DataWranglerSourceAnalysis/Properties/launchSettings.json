@@ -3,6 +3,10 @@
     "Roslyn Component Debug": {
       "commandName": "DebugRoslynComponent",
       "targetProject": "..\\DataWranglerCommon\\DataWranglerCommon.csproj"
+    },
+    "Debug ShotGridIntegration": {
+      "commandName": "DebugRoslynComponent",
+      "targetProject": "..\\ShotGridIntegration\\ShotGridIntegration.csproj"
     }
   }
 }

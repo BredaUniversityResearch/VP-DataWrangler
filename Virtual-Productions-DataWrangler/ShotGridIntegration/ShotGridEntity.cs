@@ -11,4 +11,11 @@ public class ShotGridEntity
 	public ShotGridEntityName? ShotGridType;
 	[JsonProperty("links")]
 	public ShotGridEntityLinks Links = new ShotGridEntityLinks();
+
+	public ShotGridEntityChangeTracker ChangeTracker;
+
+	protected ShotGridEntity()
+	{
+		ChangeTracker = new ShotGridEntityChangeTracker(this);
+	}
 }

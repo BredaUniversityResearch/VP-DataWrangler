@@ -25,10 +25,7 @@ namespace DataWranglerInterface.ShotRecording
 
         public VideoPreviewControl? PreviewControl
         {
-            set
-            {
-                m_activeCameraHandler.PreviewControl = value;
-            }
+            set => m_activeCameraHandler.PreviewControl = value;
         }
 
         public ShotRecordingPage()

@@ -5,10 +5,12 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:DataWranglerInterface.ShotRecording"
              xmlns:xamlUtility="clr-namespace:DataWranglerInterface.XamlUtility"
+             x:Name="VersionInfoDisplayControl"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
 	<StackPanel xamlUtility:Spacing.Vertical="10">
 		<local:ShotVersionSelectorControl x:Name="VersionSelectorControl" />
+		<CheckBox x:Name="GoodTakeCheckbox" IsChecked="{Binding ElementName=VersionInfoDisplayControl, Path=CurrentVersion.Attributes.Flagged, FallbackValue=false}">Good Take</CheckBox>
 		<local:ShotVersionFileSourcesControl x:Name="VersionFileSourcesControl" />
 	</StackPanel>
 </UserControl>

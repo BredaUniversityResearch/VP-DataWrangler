@@ -20,16 +20,29 @@ namespace AutoNotify
 {
     [AttributeUsage(AttributeTargets.Field, Inherited = false, AllowMultiple = false)]
     [System.Diagnostics.Conditional(""AutoNotifyGenerator_DEBUG"")]
-    sealed class AutoNotifyAttribute : Attribute
+    internal sealed class AutoNotifyAttribute : Attribute
     {
         public AutoNotifyAttribute()
         {
         }
         public string PropertyName { get; set; } = """";
     }
+
+	[AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
+    //[System.Diagnostics.Conditional(""AutoNotifyGenerator_DEBUG"")]
+    internal sealed class AutoNotifyPropertyAttribute : Attribute
+    {
+        public string BackingFieldName { get; set; }
+        public AutoNotifyPropertyAttribute(string a_backingFieldName)
+        {
+			BackingFieldName = a_backingFieldName;
+        }
+    }
 }
 ";
 
+        public DiagnosticDescriptor ClassMustBeTopLevelDiagnostic = new DiagnosticDescriptor("AN001", "AutoNotify class should be top level", "Classes containing AutoFormat parameters should be top level. Class {0}.", "Usage", DiagnosticSeverity.Error, true);
+        public DiagnosticDescriptor FieldCannotBeProcessed = new DiagnosticDescriptor("AN002", "AutoNotify field has conflicting name", "AutoNotify field could not deduce a unique property name. Class: {0} Field: {1} Chosen property name: {2}.", "Usage", DiagnosticSeverity.Error, true);
 
         public void Initialize(GeneratorInitializationContext context)
         {
@@ -72,7 +85,8 @@ namespace AutoNotify
         {
             if (!classSymbol.ContainingSymbol.Equals(classSymbol.ContainingNamespace, SymbolEqualityComparer.Default))
             {
-                return string.Empty; //TODO: issue a diagnostic that it must be top level
+	            context.ReportDiagnostic(Diagnostic.Create(ClassMustBeTopLevelDiagnostic, classSymbol.Locations[0], classSymbol.Name));
+                return string.Empty; 
             }
 
             string namespaceName = classSymbol.ContainingNamespace.ToDisplayString();
@@ -116,31 +130,32 @@ namespace {namespaceName}
             // create properties for each field 
             foreach (IFieldSymbol fieldSymbol in fields)
             {
-                ProcessField(source, fieldSymbol, attributeSymbol);
+                ProcessField(source, classSymbol.Name, fieldSymbol, attributeSymbol, context);
             }
 
             source.Append("} }");
             return source.ToString();
         }
 
-        private void ProcessField(StringBuilder source, IFieldSymbol fieldSymbol, ISymbol attributeSymbol)
+        private void ProcessField(StringBuilder a_source, string a_className, IFieldSymbol a_fieldSymbol, ISymbol a_attributeSymbol, GeneratorExecutionContext context)
         {
             // get the name and type of the field
-            string fieldName = fieldSymbol.Name;
-            ITypeSymbol fieldType = fieldSymbol.Type;
+            string fieldName = a_fieldSymbol.Name;
+            ITypeSymbol fieldType = a_fieldSymbol.Type;
 
             // get the AutoNotify attribute from the field, and any associated data
-            AttributeData attributeData = fieldSymbol.GetAttributes().Single(ad => ad.AttributeClass!.Equals(attributeSymbol, SymbolEqualityComparer.Default));
-            TypedConstant overridenNameOpt = attributeData.NamedArguments.SingleOrDefault(kvp => kvp.Key == "PropertyName").Value;
+            AttributeData attributeData = a_fieldSymbol.GetAttributes().Single(a_ad => a_ad.AttributeClass!.Equals(a_attributeSymbol, SymbolEqualityComparer.Default));
+            TypedConstant overridenNameOpt = attributeData.NamedArguments.SingleOrDefault(a_kvp => a_kvp.Key == "PropertyName").Value;
 
-            string propertyName = chooseName(fieldName, overridenNameOpt);
+            string propertyName = ChooseName(fieldName, overridenNameOpt);
             if (propertyName.Length == 0 || propertyName == fieldName)
             {
-                //TODO: issue a diagnostic that we can't process this field
-                return;
+	            context.ReportDiagnostic(Diagnostic.Create(FieldCannotBeProcessed, null, a_fieldSymbol.Locations, a_className, fieldName, propertyName));
+				return;
             }
 
-            source.Append($@"
+            a_source.Append($@"
+[AutoNotify.AutoNotifyProperty(""{fieldName}"")]
 public {fieldType} {propertyName} 
 {{
     get 
@@ -157,25 +172,25 @@ public {fieldType} {propertyName}
 
 ");
 
-            string chooseName(string fieldName, TypedConstant overridenNameOpt)
+            string ChooseName(string a_fieldName, TypedConstant a_overridenNameOpt)
             {
-                if (!overridenNameOpt.IsNull)
+                if (!a_overridenNameOpt.IsNull)
                 {
-                    return overridenNameOpt.Value!.ToString();
+                    return a_overridenNameOpt.Value!.ToString();
                 }
 
-                if (fieldName.StartsWith("m_"))
+                if (a_fieldName.StartsWith("m_"))
                 {
-	                fieldName = fieldName.Substring(2);
+	                a_fieldName = a_fieldName.Substring(2);
                 }
 
-                if (fieldName.Length == 0)
+                if (a_fieldName.Length == 0)
                     return string.Empty;
 
-                if (fieldName.Length == 1)
-                    return fieldName.ToUpper();
+                if (a_fieldName.Length == 1)
+                    return a_fieldName.ToUpper();
 
-                return fieldName.Substring(0, 1).ToUpper() + fieldName.Substring(1);
+                return a_fieldName.Substring(0, 1).ToUpper() + a_fieldName.Substring(1);
             }
 
         }

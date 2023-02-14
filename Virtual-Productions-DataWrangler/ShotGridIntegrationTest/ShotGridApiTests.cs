@@ -9,10 +9,7 @@ namespace ShotGridIntegrationTest
 	[TestClass]
 	public class ShotGridApiTests
 	{
-		private const int TargetProjectId = 285;
-		private const int TargetShotId = 1369;
-		private const int TargetShotVersionId = 8195;
-		private const int TargetPublishFile = 133;
+		
 
 		private static ShotGridAPI m_api = new ShotGridAPI();
 
@@ -55,7 +52,7 @@ namespace ShotGridIntegrationTest
 		[TestMethod]
 		public void GetShots()
 		{
-			ShotGridAPIResponse<ShotGridEntityShot[]> shots = m_api.GetShotsForProject(TargetProjectId).Result;
+			ShotGridAPIResponse<ShotGridEntityShot[]> shots = m_api.GetShotsForProject(TestConstants.TargetProjectId).Result;
 
 			Assert.IsFalse(shots.IsError);
 
@@ -69,7 +66,7 @@ namespace ShotGridIntegrationTest
 		[TestMethod]
 		public void GetVersionsForShot()
 		{
-			ShotGridAPIResponse<ShotGridEntityShotVersion[]> shotVersions = m_api.GetVersionsForShot(TargetShotId).Result;
+			ShotGridAPIResponse<ShotGridEntityShotVersion[]> shotVersions = m_api.GetVersionsForShot(TestConstants.TargetShotId).Result;
 
 			Assert.IsFalse(shotVersions.IsError);
 
@@ -83,7 +80,7 @@ namespace ShotGridIntegrationTest
 		[TestMethod]
 		public void GetSortedVersionsForShot()
 		{
-			ShotGridAPIResponse<ShotGridEntityShotVersion[]> shotVersions = m_api.GetVersionsForShot(TargetShotId, new ShotGridSortSpecifier("code", false)).Result;
+			ShotGridAPIResponse<ShotGridEntityShotVersion[]> shotVersions = m_api.GetVersionsForShot(TestConstants.TargetShotId, new ShotGridSortSpecifier("code", false)).Result;
 
 			Assert.IsFalse(shotVersions.IsError);
 
@@ -106,7 +103,7 @@ namespace ShotGridIntegrationTest
 		[TestMethod]
 		public void GetPublishesForShot()
 		{
-			ShotGridAPIResponse<ShotGridEntityFilePublish[]> shots = m_api.GetPublishesForShotVersion(TargetShotVersionId).Result;
+			ShotGridAPIResponse<ShotGridEntityFilePublish[]> shots = m_api.GetPublishesForShotVersion(TestConstants.TargetShotVersionId).Result;
 
 			Assert.IsFalse(shots.IsError);
 		}
@@ -115,7 +112,7 @@ namespace ShotGridIntegrationTest
 		public void UpdateEntityData()
 		{
 			ShotGridAPIResponse<ShotGridEntityShotVersion> response = m_api.UpdateEntityProperties<ShotGridEntityShotVersion>(
-				TargetShotVersionId, new Dictionary<string, object>{{"sg_datawrangler_meta", "test"}}).Result;
+				TestConstants.TargetShotVersionId, new Dictionary<string, object>{{"sg_datawrangler_meta", "test"}}).Result;
 
 			Assert.IsFalse(response.IsError);
 		}
@@ -139,9 +136,9 @@ namespace ShotGridIntegrationTest
 			};
 			attributes.PublishedFileName = "Testing braw File";
 			attributes.PublishedFileType = new ShotGridEntityReference(fileTypeRelation.ResultData!.ShotGridType!, fileTypeRelation.ResultData.Id);
-			attributes.ShotVersion = new ShotGridEntityReference(ShotGridEntityName.ShotVersion, TargetShotVersionId);
+			attributes.ShotVersion = new ShotGridEntityReference(ShotGridEntityName.ShotVersion, TestConstants.TargetShotVersionId);
 
-			ShotGridAPIResponse<ShotGridEntityFilePublish> response = m_api.CreateFilePublish(TargetProjectId, TargetShotId, TargetShotVersionId, attributes).Result;
+			ShotGridAPIResponse<ShotGridEntityFilePublish> response = m_api.CreateFilePublish(TestConstants.TargetProjectId, TestConstants.TargetShotId, TestConstants.TargetShotVersionId, attributes).Result;
 
 			Assert.IsFalse(response.IsError);
 
@@ -150,7 +147,7 @@ namespace ShotGridIntegrationTest
 		[TestMethod]
 		public void GetFilePublishTypes()
 		{
-			ShotGridAPIResponse<ShotGridEntityRelation[]> response = m_api.GetPublishFileTypes(TargetProjectId).Result;
+			ShotGridAPIResponse<ShotGridEntityRelation[]> response = m_api.GetPublishFileTypes(TestConstants.TargetProjectId).Result;
 
 			Assert.IsFalse(response.IsError);
 
@@ -167,7 +164,7 @@ namespace ShotGridIntegrationTest
 		[TestMethod]
 		public void GetProjectActivityStream()
 		{
-			ShotGridAPIResponse<ShotGridEntityActivityStreamResponse> activityStream = m_api.GetProjectActivityStream(TargetProjectId).Result;
+			ShotGridAPIResponse<ShotGridEntityActivityStreamResponse> activityStream = m_api.GetProjectActivityStream(TestConstants.TargetProjectId).Result;
 
 			Assert.IsFalse(activityStream.IsError);
 		}

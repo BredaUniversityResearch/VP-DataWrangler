@@ -89,8 +89,7 @@ namespace DataWranglerInterface.ShotRecording
 					{
 						int nextTakeId = FindNextTakeIdFromShotVersions(a_task.Result.ResultData) + 1;
 
-						ShotGridEntityShotVersion.ShotVersionAttributes attributes =
-							new ShotGridEntityShotVersion.ShotVersionAttributes();
+						ShotVersionAttributes attributes = new ShotVersionAttributes();
 						attributes.VersionCode = string.Format(ShotNameTemplate, nextTakeId);
 						attributes.DataWranglerMeta =
 							JsonConvert.SerializeObject(a_meta, DataWranglerSerializationSettings.Instance);

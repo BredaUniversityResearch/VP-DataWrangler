@@ -1,10 +1,9 @@
 ﻿using System.ComponentModel;
-using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
+using AutoNotify;
 using CommonLogging;
 using DataWranglerCommon;
-using DataWranglerInterface.DebugSupport;
 using Newtonsoft.Json;
 using ShotGridIntegration;
 
@@ -15,6 +14,7 @@ namespace DataWranglerInterface.ShotRecording
 	/// </summary>
 	public partial class ShotVersionInfoDisplay : UserControl
 	{
+		[AutoNotify] private ShotGridEntityShotVersion? m_currentVersion = null;
 		private DataWranglerShotVersionMeta m_currentVersionMeta = new DataWranglerShotVersionMeta();
 
 		private bool m_isInBatchMetaChange = false;
@@ -24,6 +24,7 @@ namespace DataWranglerInterface.ShotRecording
 			InitializeComponent();
 			
 			VersionSelectorControl.OnShotVersionSelected += OnShotVersionSelected;
+			GoodTakeCheckbox.Click += GoodTakeCheckbox_Clicked;
 		}
 
 		public void SetParentControls(ShotRecordingPage a_parentPage)
@@ -41,6 +42,8 @@ namespace DataWranglerInterface.ShotRecording
 		{
 			if (a_shotVersion != null)
 			{
+				CurrentVersion = a_shotVersion;
+
 				if (!string.IsNullOrEmpty(a_shotVersion.Attributes.DataWranglerMeta))
 				{
 					try
@@ -127,6 +130,33 @@ namespace DataWranglerInterface.ShotRecording
 			}
 
 			VersionFileSourcesControl.SetCurrentMeta(m_currentVersionMeta);
+		}
+
+		private void GoodTakeCheckbox_Clicked(object a_sender, RoutedEventArgs a_e)
+		{
+			//if (CurrentVersion == null)
+			//{
+			//	return;
+			//}
+
+			//bool newState = (bool)(GoodTakeCheckbox.IsChecked!);
+			//if (newState != CurrentVersion.Attributes.Flagged)
+			//{
+			//	CurrentVersion.Attributes.Flagged = newState;
+			//	
+			//}
+			if (CurrentVersion == null)
+			{
+				return;
+			}
+
+			Task<ShotGridAPIResponseGeneric> task = CurrentVersion.ChangeTracker.CommitChanges(DataWranglerServiceProvider.Instance.ShotGridAPI);
+			task.Wait();
+			if (task.Result.IsError)
+			{
+				throw new Exception("Failed to update entity");
+			}
+
 		}
 	}
 }

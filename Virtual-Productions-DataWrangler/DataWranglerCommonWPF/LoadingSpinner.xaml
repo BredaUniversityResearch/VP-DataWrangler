@@ -8,10 +8,11 @@
              d:DesignHeight="400" d:DesignWidth="800">
 <UserControl.Resources>
 		<BitmapImage x:Key="SpinnerImageSource" UriSource="/DataWranglerCommonWPF;component/Resources/Loading.png"/>
+		<BitmapImage x:Key="SpinnerImageLongDuration" UriSource="/DataWranglerCommonWPF;component/Resources/LoadingDelayed.png"/>
 </UserControl.Resources>
 
 	<Grid HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="128" MaxHeight="128">
-		<Image x:Name="Spinner" RenderTransformOrigin="0.5,0.5" Source="{StaticResource SpinnerImageSource}">
+		<Image x:Name="Spinner" RenderTransformOrigin="0.5,0.5" Source="{StaticResource SpinnerImageLongDuration}">
 			<Image.RenderTransform>
 				<RotateTransform x:Name="SpinnerTransform" Angle="0"/>
 			</Image.RenderTransform>
