@@ -305,17 +305,6 @@ namespace ShotGridIntegration
 		public async Task<ShotGridAPIResponse<ShotGridEntityShotVersion>> CreateNewShotVersion(int a_projectId, int a_parentShotId, ShotVersionAttributes a_versionAttributes)
 		{
 			return await CreateNewEntity<ShotGridEntityShotVersion, ShotVersionAttributes>(a_projectId, a_versionAttributes, new ShotGridEntityReference(ShotGridEntityName.Shot, a_parentShotId));
-			//ShotGridEntityCreateBaseData baseData = new ShotGridEntityCreateBaseData(a_projectId, ShotGridEntity.TypeNames.Shot, a_parentShotId);
-			//JObject baseDataToken = JObject.FromObject(baseData, Serializer);
-			//JObject encodedToken = JObject.FromObject(a_versionAttributes, Serializer);
-			//encodedToken.Merge(baseDataToken);
-
-			//string requestBody = encodedToken.ToString();
-
-			//HttpResponseMessage response = await Create("version", requestBody);
-			//string responseBody = await response.Content.ReadAsStringAsync();
-
-			//return ParseResponse<ShotGridEntityShotVersion>(response.StatusCode, responseBody);
 		}
 
 		public async Task<ShotGridAPIResponse<TEntityType>> CreateNewEntity<TEntityType, TAttributesType>(int a_projectId, TAttributesType a_attributes, ShotGridEntityReference? a_parent)
@@ -337,17 +326,13 @@ namespace ShotGridIntegration
 
 		public async Task<ShotGridAPIResponse<ShotGridEntityFilePublish>> CreateFilePublish(int a_projectId, int a_shotId, int a_versionId, ShotGridEntityFilePublish.FilePublishAttributes a_publishAttributes)
 		{
-			ShotGridEntityCreateBaseData baseData = new ShotGridEntityCreateBaseData(a_projectId, new ShotGridEntityReference(ShotGridEntityName.Shot, a_shotId));
-			JObject baseDataToken = JObject.FromObject(baseData, Serializer);
-			JObject encodedToken = JObject.FromObject(a_publishAttributes, Serializer);
-			encodedToken.Merge(baseDataToken);
+			if (a_publishAttributes.ShotVersion != null && a_publishAttributes.ShotVersion.Id != a_versionId)
+			{
+				throw new ShotGridAPIException("Creating file publish with a shot version link which does not match the supplied version id.");
+			}
 
-			string requestBody = encodedToken.ToString();
-
-			HttpResponseMessage response = await Create(ShotGridEntityName.PublishedFile, requestBody);
-			string responseBody = await response.Content.ReadAsStringAsync();
-
-			return ParseResponse<ShotGridEntityFilePublish>(response.StatusCode, responseBody);
+			a_publishAttributes.ShotVersion = new ShotGridEntityReference(ShotGridEntityName.ShotVersion, a_versionId);
+			return await CreateNewEntity<ShotGridEntityFilePublish, ShotGridEntityFilePublish.FilePublishAttributes>(a_projectId, a_publishAttributes, new ShotGridEntityReference(ShotGridEntityName.Shot, a_shotId));
 		}
 
 		public async Task<ShotGridAPIResponse<ShotGridEntityAttachment>> CreateFileAttachment(int a_projectId, int a_publishId, ShotGridEntityAttachment a_attachmentAttributes)
