@@ -28,7 +28,7 @@ namespace DataWranglerServiceWorker
 
 		private USBDriveEventWatcher m_driveEventWatcher = new USBDriveEventWatcher();
 		private CopyProgressWindow m_copyProgress;
-
+		
 		private readonly List<string> m_importWorkerBacklog = new List<string>();
 
 		public App()
@@ -96,11 +96,11 @@ namespace DataWranglerServiceWorker
 
 			if (a_copyOperationResult == DataImportWorker.ECopyResult.Success)
 			{
-				CreatePublishEntryForFile(a_shotVersion, a_copyMetaData, "video");
+				CreatePublishEntryForFile(a_shotVersion, a_copyMetaData);
 			}
 		}
 
-		private void CreatePublishEntryForFile(ShotVersionIdentifier a_shotVersion, FileCopyMetaData a_copyMetaData, string a_fileTypeRelation)
+		private void CreatePublishEntryForFile(ShotVersionIdentifier a_shotVersion, FileCopyMetaData a_copyMetaData)
 		{
 			if (!m_metaCache.FindEntityById(a_shotVersion.ShotId, out ShotGridEntityShot? shotData))
 			{
@@ -127,7 +127,8 @@ namespace DataWranglerServiceWorker
 				},
 				PublishedFileName = publishFileName,
 				PublishedFileType = ShotGridEntityReference.Create(ShotGridEntityName.PublishedFileType, a_copyMetaData.FileTag),
-				Description = "File auto-published by Data Wrangler"
+				Status = ServiceWorkerConfig.Instance.FilePublishDefaultStatus,
+				Description = ServiceWorkerConfig.Instance.FilePublishDescription
 			};
 
 			m_targetApi.CreateFilePublish(a_shotVersion.ProjectId, a_shotVersion.ShotId, a_shotVersion.VersionId, publishData)

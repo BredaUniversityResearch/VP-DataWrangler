@@ -40,6 +40,8 @@ namespace ShotGridIntegration
 			public ShotGridEntityReference? ShotVersion;
             [JsonProperty("description")]
 			public string Description = "";
+			[JsonProperty("sg_status_list")]
+			public string Status = ShotGridStatusListEntry.WaitingToBegin;
 		};
 
 		[JsonProperty("attributes")]

@@ -146,8 +146,7 @@ namespace DataWranglerServiceWorker
 
 		private void AddOrUpdateCachedEntity(ShotGridEntityName a_entityType, ShotGridEntity a_entry)
 		{
-			Dictionary<int, ShotGridEntity>? entitiesById = null;
-			if (!m_cachedEntitiesByType.TryGetValue(a_entityType, out entitiesById))
+			if (!m_cachedEntitiesByType.TryGetValue(a_entityType, out Dictionary<int, ShotGridEntity>? entitiesById))
 			{
 				entitiesById = new Dictionary<int, ShotGridEntity>();
 				m_cachedEntitiesByType.Add(a_entityType, entitiesById);

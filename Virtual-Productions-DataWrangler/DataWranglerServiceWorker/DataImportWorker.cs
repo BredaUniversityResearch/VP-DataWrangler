@@ -33,11 +33,6 @@ namespace DataWranglerServiceWorker
 			}
 		};
 
-		private const string DefaultDataStorageName = "CradleNas";
-		//private const string DefaultLocation = "D:/Projects/VirtualProductions/TestImportRoot/${ProjectName}/Shots/${ShotCode}/${ShotVersionCode}/";
-		private const string DefaultDataStoreFilePath = "${ProjectName}/RawFootage/${ShotCode}/${ShotVersionCode}/"; //Relative to DataStoreRoot
-		private const int DefaultCopyBufferSize = 32 * 1024 * 1024;
-
 		public delegate void CopyStartedDelegate(ShotVersionIdentifier shotVersion, FileCopyMetaData metaData);
 		public delegate void CopyProgressUpdate(ShotVersionIdentifier shotVersion, FileCopyMetaData metaData, FileCopyProgress progress);
 		public delegate void CopyFinishedDelegate(ShotVersionIdentifier shotVersion, FileCopyMetaData metaData, ECopyResult result);
@@ -75,10 +70,10 @@ namespace DataWranglerServiceWorker
 		public void AddFileToImport(ShotVersionIdentifier a_shotVersionIdentifier, string a_sourceFilePath, string a_fileTag)
 		{
 			
-			if (!m_dataCache.FindEntity(a_obj => a_obj.Attributes.LocalStorageName == DefaultDataStorageName, out ShotGridEntityLocalStorage? targetStorage) ||
+			if (!m_dataCache.FindEntity(a_obj => a_obj.Attributes.LocalStorageName == ServiceWorkerConfig.Instance.DefaultDataStorageName, out ShotGridEntityLocalStorage? targetStorage) ||
 			    string.IsNullOrEmpty(targetStorage.Attributes.WindowsPath))
 			{
-				Logger.LogError("DataImport", $"Could not import file at path {a_sourceFilePath}. Could not find data storage with name \"{DefaultDataStorageName}\". Importer is NOT active");
+				Logger.LogError("DataImport", $"Could not import file at path {a_sourceFilePath}. Could not find data storage with name \"{ServiceWorkerConfig.Instance.DefaultDataStorageName}\". Importer is NOT active");
 				return;
 			}
 
@@ -114,7 +109,7 @@ namespace DataWranglerServiceWorker
 				{"ShotVersionCode", RemoveInvalidPathCharacters(shotVersion.Attributes.VersionCode) }
 			};
 
-			string targetPath = DefaultDataStoreFilePath + Path.GetFileName(a_sourceFilePath);
+			string targetPath = ServiceWorkerConfig.Instance.DefaultDataStoreFilePath + Path.GetFileName(a_sourceFilePath);
 			targetPath = ResolvePath(targetPath, replacements);
 
 			lock (m_importQueue)
@@ -198,7 +193,7 @@ namespace DataWranglerServiceWorker
 
 			}
 
-			byte[] copyBuffer = new byte[DefaultCopyBufferSize];
+			byte[] copyBuffer = new byte[ServiceWorkerConfig.Instance.DefaultCopyBufferSize];
 
 			using FileStream sourceStream = new FileStream(a_copyMetaData.SourceFilePath.LocalPath, FileMode.Open, FileAccess.Read);
 			using FileStream targetStream = new FileStream(a_copyMetaData.DestinationFullFilePath.LocalPath, FileMode.Create, FileAccess.Write);
