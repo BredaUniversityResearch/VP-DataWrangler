@@ -531,9 +531,16 @@ namespace ShotGridIntegration
 			}
 		}
 
-		public async Task<ShotGridAPIResponse<ShotGridEntityActivityStreamResponse>> GetProjectActivityStream(int a_targetProjectId)
+		public async Task<ShotGridAPIResponse<ShotGridEntityActivityStreamResponse>> GetEntityActivityStream(ShotGridEntityName a_entity, int a_entityId, int a_updateRecordLimit = 25, int a_minUpdateId = -1, int a_maxUpdateId = -1)
 		{
-			HttpResponseMessage result = await SendApiRequest(new Uri($"{BaseUrl}entity/{ShotGridEntityName.Project.SnakeCasePlural}/{a_targetProjectId}/activity_stream"), HttpMethod.Get, new ByteArrayContent(Array.Empty<byte>()));
+			ShotGridActivityStreamQuery query = new ShotGridActivityStreamQuery()
+			{
+				MinId = a_minUpdateId < 0 ? null : a_minUpdateId,
+				MaxId = a_maxUpdateId < 0 ? null : a_maxUpdateId,
+				RecordLimit = a_updateRecordLimit
+			};
+			string queryContent = JsonConvert.SerializeObject(query, SerializerSettings);
+			HttpResponseMessage result = await SendApiRequest(new Uri($"{BaseUrl}entity/{a_entity.SnakeCasePlural}/{a_entityId}/activity_stream"), HttpMethod.Get, new ByteArrayContent(Encoding.UTF8.GetBytes(queryContent)));
 			string resultBody = await result.Content.ReadAsStringAsync();
 			return ParseResponse<ShotGridEntityActivityStreamResponse>(result.StatusCode, resultBody);
 		}
