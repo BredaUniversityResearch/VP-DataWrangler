@@ -1,4 +1,5 @@
-﻿using System.Windows.Media;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Windows.Media;
 using BlackmagicCameraControl;
 using BlackmagicCameraControl.CommandPackets;
 using BlackmagicCameraControlBluetooth;
@@ -13,7 +14,7 @@ namespace DataWranglerInterface.ShotRecording
 	{
 		private BlackmagicBluetoothCameraAPIController m_bluetoothController;
 		private BlackmagicDeckLinkController? m_deckLinkController = null;
-		private Dictionary<CameraHandle, ActiveCameraInfo> m_activeCameras = new Dictionary<CameraHandle, ActiveCameraInfo>();
+		private List<ActiveCameraInfo> m_activeCameras = new List<ActiveCameraInfo>();
 
 		public delegate void CameraConnectedHandler(ActiveCameraInfo a_camera);
 		public delegate void CameraDisconnectedHandler(ActiveCameraInfo a_handle);
@@ -29,14 +30,14 @@ namespace DataWranglerInterface.ShotRecording
 			m_bluetoothController = a_bluetoothController;
 			m_bluetoothController.OnCameraConnected += OnBluetoothCameraConnected;
 			m_bluetoothController.OnCameraDataReceived += OnCameraDataReceived;
-			m_bluetoothController.OnCameraDisconnected += OnBluetoothCameraDisconnected;
+			m_bluetoothController.OnCameraDisconnected += OnCommonCameraDisconnected;
 
 			m_deckLinkController = BlackmagicDeckLinkController.Create(out string? errorMessage);
 			if (m_deckLinkController != null)
 			{
-				m_deckLinkController.OnCameraConnected += OnBluetoothCameraConnected;
+				m_deckLinkController.OnCameraConnected += OnCommonCameraConnected;
 				m_deckLinkController.OnCameraDataReceived += OnCameraDataReceived;
-				m_deckLinkController.OnCameraDisconnected += OnBluetoothCameraDisconnected;
+				m_deckLinkController.OnCameraDisconnected += OnCommonCameraDisconnected;
 				m_deckLinkController.OnCameraFrameDataReceived += OnCameraFrameDataReceived;
 			}
 			else
@@ -69,42 +70,67 @@ namespace DataWranglerInterface.ShotRecording
 			}
 		}
 
-        private void OnCameraDataReceived(CameraHandle a_handle, TimeCode a_receivedTime, ICommandPacketBase a_packet)
+        private void OnCameraDataReceived(CameraDeviceHandle a_deviceHandle, TimeCode a_receivedTime, ICommandPacketBase a_packet)
 		{
-			if (m_activeCameras.TryGetValue(a_handle, out ActiveCameraInfo? targetCamera))
+			if (FindCameraInfoForDevice(a_deviceHandle, out ActiveCameraInfo? targetCamera))
 			{
-				targetCamera.OnCameraDataReceived(m_bluetoothController, a_receivedTime, a_packet);
+				targetCamera.OnCameraDataReceived(m_bluetoothController, a_deviceHandle, a_receivedTime, a_packet);
 			}
 			else
 			{
 				Logger.LogWarning("ACH",
-					$"Received data for camera {a_handle.ConnectionId} but camera is not actively connected");
+					$"Received data for camera {a_deviceHandle.DeviceUuid} but camera is not actively connected");
 			}
 		}
 
-		private void OnBluetoothCameraConnected(CameraHandle a_handle)
+        private bool FindCameraInfoForDevice(CameraDeviceHandle a_handle, [NotNullWhen(true)] out ActiveCameraInfo? a_cameraInfo)
+        {
+	        foreach (ActiveCameraInfo cameraInfo in m_activeCameras)
+	        {
+		        if (cameraInfo.ConnectionsForPhysicalDevice.Contains(a_handle))
+		        {
+			        a_cameraInfo = cameraInfo;
+			        return true;
+		        }
+	        }
+
+	        a_cameraInfo = null;
+	        return false;
+        }
+
+        private void OnBluetoothCameraConnected(CameraDeviceHandle a_deviceHandle)
 		{
 			if (m_bluetoothController == null)
 			{
 				throw new Exception();
 			}
 
-			ActiveCameraInfo info = new ActiveCameraInfo(a_handle);
-			m_bluetoothController.AsyncRequestCameraModel(a_handle);
-			m_activeCameras.Add(a_handle, info);
+			OnCommonCameraConnected(a_deviceHandle);
+			m_bluetoothController.AsyncRequestCameraModel(a_deviceHandle);
+		}
+
+		private void OnCommonCameraConnected(CameraDeviceHandle a_deviceHandle)
+		{
+			ActiveCameraInfo info = new ActiveCameraInfo(a_deviceHandle);
+			info.CameraName = a_deviceHandle.DeviceUuid;
+			m_activeCameras.Add(info);
 			OnCameraConnected(info);
 		}
 
-		private void OnBluetoothCameraDisconnected(CameraHandle a_handle)
+		private void OnCommonCameraDisconnected(CameraDeviceHandle a_deviceHandle)
 		{
-			if (m_activeCameras.TryGetValue(a_handle, out ActiveCameraInfo? info))
+			if (FindCameraInfoForDevice(a_deviceHandle, out ActiveCameraInfo? info))
 			{
 				OnCameraDisconnected(info);
-				m_activeCameras.Remove(a_handle);
+				m_activeCameras.Remove(info);
+			}
+			else
+			{
+				Logger.LogWarning("ACH", "Got device disconnect event, but no virtual camera was found using this handle");
 			}
 		}
 		
-        private void OnCameraFrameDataReceived(CameraHandle a_handle, int a_framewidth, int a_frameheight, IntPtr a_framepixeldata, int a_stride)
+        private void OnCameraFrameDataReceived(CameraDeviceHandle a_deviceHandle, int a_framewidth, int a_frameheight, IntPtr a_framepixeldata, int a_stride)
         {
             if (PreviewControl != null)
             {

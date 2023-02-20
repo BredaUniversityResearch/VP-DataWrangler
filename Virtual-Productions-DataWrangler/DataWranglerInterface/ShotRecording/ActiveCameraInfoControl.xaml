@@ -1,0 +1,18 @@
+﻿<UserControl x:Class="DataWranglerInterface.ShotRecording.ActiveCameraInfoControl"
+             x:Name="ActiveCameraInfoControlInstance"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:DataWranglerInterface.ShotRecording"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+	<StackPanel ToolTip="{Binding ElementName=ActiveCameraInfoControlInstance, Path=CurrentTooltip}">
+		<Label Content="{Binding ElementName=ActiveCameraInfoControlInstance, Path=TargetInfo.CameraName}"></Label>
+		<Label Content="{Binding ElementName=ActiveCameraInfoControlInstance, Path=TargetInfo.CurrentTimeCode}"></Label>
+		<Label Content="Connections:"></Label>
+        <StackPanel>
+			<ItemsControl ItemsSource="{Binding ElementName=ActiveCameraInfoControlInstance, Path=DeviceHandleControls}"></ItemsControl>
+        </StackPanel>
+	</StackPanel>
+</UserControl>

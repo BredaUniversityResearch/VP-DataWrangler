@@ -61,17 +61,14 @@ namespace DataWranglerInterface.ShotRecording
 
 		private void OnCameraConnected(ActiveCameraInfo a_camera)
 		{
-			CameraInfo.SetTargetCameraInfo(a_camera);
+			CameraInfo.AddTargetCameraInfo(a_camera);
 			CameraInfoDebug.SetTargetCamera(a_camera);
 		}
 
 		private void OnCameraDisconnected(ActiveCameraInfo a_handle)
 		{
-			if (CameraInfo.TargetCameraInfo == a_handle)
-			{
-				CameraInfo.SetTargetCameraInfo(null);
-				CameraInfoDebug.SetTargetCamera(null);
-			}
+			CameraInfo.RemoveTargetCameraInfo(a_handle);
+			CameraInfoDebug.SetTargetCamera(null);
 		}
 
 		private void OnSelectedProjectChanged(int a_projectId, string a_projectName)

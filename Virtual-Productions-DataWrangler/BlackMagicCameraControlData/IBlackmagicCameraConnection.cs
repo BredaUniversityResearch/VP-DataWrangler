@@ -11,7 +11,7 @@ namespace BlackmagicCameraControlData
 			Disconnected,
 		};
 
-		public CameraHandle CameraHandle { get; }
+		public CameraDeviceHandle CameraDeviceHandle { get; }
 		public DateTimeOffset LastReceivedDataTime { get; }
 		public EConnectionState ConnectionState { get; }
 		public string DeviceId { get; }

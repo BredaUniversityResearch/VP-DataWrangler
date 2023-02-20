@@ -10,7 +10,9 @@ namespace BlackmagicCameraControl
 {
 	public class BlackmagicCameraConnectionDebug: IBlackmagicCameraConnection
 	{
-		public CameraHandle CameraHandle { get; }
+		private static int DebugDeviceId = 0;
+
+		public CameraDeviceHandle CameraDeviceHandle { get; }
 		public DateTimeOffset LastReceivedDataTime { get; private set; }
 		public IBlackmagicCameraConnection.EConnectionState ConnectionState => IBlackmagicCameraConnection.EConnectionState.Connected;
 		public string DeviceId { get; }
@@ -22,13 +24,14 @@ namespace BlackmagicCameraControl
 
 		private Queue<ICommandPacketBase> m_packetSendQueue = new Queue<ICommandPacketBase>();
 
-		public BlackmagicCameraConnectionDebug(BlackmagicBluetoothCameraAPIController a_dispatcher, CameraHandle a_handle)
+		public BlackmagicCameraConnectionDebug(BlackmagicBluetoothCameraAPIController a_dispatcher, CameraDeviceHandle a_deviceHandle)
 		{
-			m_dispatcher = a_dispatcher;
+			++DebugDeviceId;
 
-			CameraHandle = a_handle;
-			DeviceId = "DEBUG_CONNECTION_"+a_handle.ConnectionId;
-			HumanReadableName = "Debug Connection " + a_handle.ConnectionId;
+			m_dispatcher = a_dispatcher;
+			CameraDeviceHandle = a_deviceHandle;
+			DeviceId = "DEBUG_CONNECTION_"+ DebugDeviceId;
+			HumanReadableName = "Debug Connection " + DebugDeviceId;
 			LastReceivedDataTime = DateTimeOffset.UtcNow;
 
 			m_messageProducerThread = new Thread(BackgroundProduceMessages);
@@ -47,14 +50,14 @@ namespace BlackmagicCameraControl
 			while (!m_messageProducerCancellationTokenSource.IsCancellationRequested)
 			{
 				DateTime timeNow = DateTime.UtcNow;
-				m_dispatcher.NotifyDataReceived(CameraHandle, new TimeCode(timeNow.Hour, timeNow.Minute, timeNow.Second, timeNow.Millisecond),
+				m_dispatcher.NotifyDataReceived(CameraDeviceHandle, new TimeCode(timeNow.Hour, timeNow.Minute, timeNow.Second, timeNow.Millisecond),
 					new CommandPacketSystemBatteryInfo() {BatteryPercentage = 69, BatteryVoltage_mV = 1337});
 				LastReceivedDataTime = DateTimeOffset.UtcNow;
 
 				while (m_packetSendQueue.Count > 0)
 				{
 					ICommandPacketBase packet = m_packetSendQueue.Dequeue();
-					m_dispatcher.NotifyDataReceived(CameraHandle, new TimeCode(timeNow.Hour, timeNow.Minute, timeNow.Second, timeNow.Millisecond), packet);
+					m_dispatcher.NotifyDataReceived(CameraDeviceHandle, new TimeCode(timeNow.Hour, timeNow.Minute, timeNow.Second, timeNow.Millisecond), packet);
 				}
 
 				m_messageProducerCancellationTokenSource.Token.WaitHandle.WaitOne(new TimeSpan(0, 0, 1));

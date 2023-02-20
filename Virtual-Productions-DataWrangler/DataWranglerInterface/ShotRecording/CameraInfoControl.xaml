@@ -1,4 +1,5 @@
 ﻿<UserControl x:Class="DataWranglerInterface.ShotRecording.CameraInfoControl"
+			 x:Name="CameraInfoControlInstance"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
@@ -8,34 +9,8 @@
              xmlns:dataWranglerCommonWpf="clr-namespace:DataWranglerCommonWPF;assembly=DataWranglerCommonWPF"
              mc:Ignorable="d" 
              d:DesignHeight="256" d:DesignWidth="256">
-    <Grid>
-        <Grid VerticalAlignment="Top">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition/>
-                <ColumnDefinition/>
-            </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-				<RowDefinition Height="1*"/>
-				<RowDefinition Height="1*"/>
-				<RowDefinition Height="1*"/>
-				<RowDefinition Height="1*"/>
-				<RowDefinition Height="1*"/>
-				<RowDefinition Height="1*"/>
-				<RowDefinition Height="1*"/>
-            </Grid.RowDefinitions>
-			<Label Grid.Column="0" Grid.Row="0">Camera</Label>
-			<Label x:Name="CameraDisplayName" Grid.Column="1" Grid.Row="0">Hello World</Label>
-			<Label Grid.Column="0" Grid.Row="1">Model</Label>
-			<Label x:Name="CameraModel" Grid.Column="1" Grid.Row="1">Hello World</Label>
-			<Label Grid.Column="0" Grid.Row="2">🔋</Label>
-			<Label x:Name="CameraBattery" Grid.Column="1" Grid.Row="2"></Label>
-	        <Label Grid.Column="0" Grid.Row="3">State</Label>
-	        <Label x:Name="CameraState" Grid.Column="1" Grid.Row="3"></Label>
-	        <Label Grid.Column="0" Grid.Row="4">Time Code</Label>
-	        <Label x:Name="CameraTimeCode" Grid.Column="1" Grid.Row="4"></Label>
-		</Grid>
-	    <Grid>
-			<dataWranglerCommonWpf:LoadingSpinner x:Name="LoadingSpinner"/>
-        </Grid>
-	</Grid>
+	<StackPanel>
+		<ItemsControl ItemsSource="{Binding ActiveCameras, ElementName=CameraInfoControlInstance}">
+		</ItemsControl>
+	</StackPanel>
 </UserControl>

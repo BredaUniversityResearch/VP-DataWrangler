@@ -1,12 +1,11 @@
 ﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using BlackmagicCameraControl;
+using AutoNotify;
 using BlackmagicCameraControl.CommandPackets;
 using BlackmagicCameraControlBluetooth;
 using BlackmagicCameraControlData;
 using CommonLogging;
 using DataWranglerCommon;
-using DataWranglerInterface.DebugSupport;
 
 namespace DataWranglerInterface.ShotRecording
 {
@@ -23,32 +22,38 @@ namespace DataWranglerInterface.ShotRecording
 
 	public delegate void CameraPropertyChangedEventHandler(object? sender, CameraPropertyChangedEventArgs e);
 
-	public class ActiveCameraInfo: INotifyPropertyChanged
+	//A 'virtual' camera that can be represented by multiple connections (e.g. Bluetooth and SDI) but route to the same physical device
+	public partial class ActiveCameraInfo
 	{
-		public readonly CameraHandle TargetCamera;
+		public readonly List<CameraDeviceHandle> ConnectionsForPhysicalDevice = new List<CameraDeviceHandle>();
 		private DateTimeOffset m_connectTime;
 		private DateTime m_timeSyncPoint = DateTime.MinValue;
 
 		private bool m_receivedAnyBatteryStatusPackets = false;
-		public event PropertyChangedEventHandler? PropertyChanged;
 		public event CameraPropertyChangedEventHandler? CameraPropertyChanged;
 
-		public string CameraName { get; private set; } = "";
-		public string CameraModel { get; private set; } = "";
-		public int BatteryPercentage { get; private set; }
-		// ReSharper disable once InconsistentNaming
-		public int BatteryVoltage_mV { get; private set; }
-		public CommandPacketMediaTransportMode.EMode CurrentTransportMode { get; private set; }
-		public string SelectedCodec { get; private set; } = ""; //String representation of the basic coded selected by camera.
-		public TimeCode CurrentTimeCode { get; private set; }
+		[AutoNotify]
+		private string m_cameraName = "";
+		[AutoNotify]
+		private string m_cameraModel = "";
+		[AutoNotify]
+		private int m_batteryPercentage = 0;
+		[AutoNotify]
+		private int m_batteryVoltage_mV;
+		[AutoNotify]
+		private CommandPacketMediaTransportMode.EMode m_currentTransportMode;
+		[AutoNotify]
+		private string m_selectedCodec = ""; //String representation of the basic coded selected by camera.
+		[AutoNotify]
+		private TimeCode m_currentTimeCode;
 
-		public ActiveCameraInfo(CameraHandle a_handle)
+		public ActiveCameraInfo(CameraDeviceHandle a_deviceHandle)
 		{
-			TargetCamera = a_handle;
+			ConnectionsForPhysicalDevice.Add(a_deviceHandle);
 			m_connectTime = DateTimeOffset.UtcNow;
 		}
 
-		public void OnCameraDataReceived(BlackmagicBluetoothCameraAPIController a_controller, TimeCode a_receivedTime, ICommandPacketBase a_packet)
+		public void OnCameraDataReceived(CameraControllerBase a_deviceController, CameraDeviceHandle a_deviceHandle, TimeCode a_receivedTime, ICommandPacketBase a_packet)
 		{
 			if (a_packet is CommandPacketCameraModel modelPacket)
 			{
@@ -60,18 +65,18 @@ namespace DataWranglerInterface.ShotRecording
 				if (!m_receivedAnyBatteryStatusPackets)
 				{
 					CommandPacketConfigurationTimezone tzPacket = new CommandPacketConfigurationTimezone(TimeZoneInfo.Local);
-					a_controller.AsyncSendCommand(TargetCamera, tzPacket);
+					a_deviceController.TrySendAsyncCommand(a_deviceHandle, tzPacket);
 					m_timeSyncPoint = DateTime.UtcNow;
-					a_controller.AsyncSendCommand(TargetCamera, new CommandPacketConfigurationRealTimeClock(m_timeSyncPoint));
+					a_deviceController.TrySendAsyncCommand(a_deviceHandle, new CommandPacketConfigurationRealTimeClock(m_timeSyncPoint));
 
-					Logger.LogInfo("CameraInfo", $"Synchronizing camera with handle {TargetCamera.ConnectionId} time to {DateTime.UtcNow} + {tzPacket.MinutesOffsetFromUTC} Minutes");
+					Logger.LogInfo("CameraInfo", $"Synchronizing camera with deviceHandle {a_deviceHandle.DeviceUuid} time to {DateTime.UtcNow} + {tzPacket.MinutesOffsetFromUTC} Minutes");
 
 					m_receivedAnyBatteryStatusPackets = true;
 				}
 
 				if (SelectedCodec == "" && DateTimeOffset.UtcNow - m_connectTime > new TimeSpan(0, 0, 15))
 				{
-					a_controller.AsyncSendCommand(TargetCamera,
+					a_deviceController.TrySendAsyncCommand(a_deviceHandle,
 						new CommandPacketMediaCodec()
 							{BasicCodec = CommandPacketMediaCodec.EBasicCodec.BlackmagicRAW, Variant = 0});
 				}
@@ -102,15 +107,10 @@ namespace DataWranglerInterface.ShotRecording
 			}
 		}
 
-		protected virtual void OnPropertyChanged([CallerMemberName] string? a_propertyName = null)
-		{
-			throw new NotImplementedException();
-		}
-
 		private void OnCameraPropertyChanged(string a_propertyName, TimeCode a_changeTime)
 		{
 			CameraPropertyChangedEventArgs evt = new CameraPropertyChangedEventArgs(a_propertyName, a_changeTime);
-			PropertyChanged?.Invoke(this, evt);
+			//PropertyChanged?.Invoke(this, evt);
 			CameraPropertyChanged?.Invoke(this, evt);
 		}
 	}

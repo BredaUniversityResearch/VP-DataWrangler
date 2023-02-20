@@ -34,7 +34,7 @@ namespace BlackmagicCameraControl
 		public string DeviceId => m_device.DeviceId;
 
 		public IBlackmagicCameraConnection.EConnectionState ConnectionState { get; private set; }
-		public CameraHandle CameraHandle { get; private set; }
+		public CameraDeviceHandle CameraDeviceHandle { get; private set; }
 		public DateTimeOffset LastReceivedDataTime { get; private set; }
 		public TimeCode LastReceivedTimeCode { get; private set; } = TimeCode.Invalid;
 		public string HumanReadableName => GetDevice().Name;
@@ -54,10 +54,10 @@ namespace BlackmagicCameraControl
 
 		private Task? m_connectingTask;
 
-		public BlackmagicCameraConnectionBluetooth(BlackmagicBluetoothCameraAPIController a_dispatcher, CameraHandle a_cameraHandle, BluetoothLEDevice a_target, GattDeviceService a_deviceInformationService,
+		public BlackmagicCameraConnectionBluetooth(BlackmagicBluetoothCameraAPIController a_dispatcher, CameraDeviceHandle a_cameraDeviceHandle, BluetoothLEDevice a_target, GattDeviceService a_deviceInformationService,
 			GattDeviceService a_blackmagicService)
 		{
-			CameraHandle = a_cameraHandle;
+			CameraDeviceHandle = a_cameraDeviceHandle;
 			m_dispatcher = a_dispatcher;
 			m_device = a_target;
 			m_deviceInformationService = a_deviceInformationService;
@@ -291,7 +291,7 @@ namespace BlackmagicCameraControl
 
 		private void ProcessCommandsFromStream(Stream a_inputData, DateTimeOffset a_receivedTime)
         {
-            CommandReader.DecodeStream(a_inputData, (a_id, a_packet) => { m_dispatcher.NotifyDataReceived(CameraHandle, LastReceivedTimeCode, a_packet); });
+            CommandReader.DecodeStream(a_inputData, (a_id, a_packet) => { m_dispatcher.NotifyDataReceived(CameraDeviceHandle, LastReceivedTimeCode, a_packet); });
         }
 
 		public Task<string> AsyncRequestCameraModel()

@@ -16,16 +16,15 @@ internal class DeckLinkDeviceInputNotificationHandler : IDeckLinkInputCallback
     //private const int RemoteControlVANCLineId = 16;
 
     private readonly BlackmagicDeckLinkController m_controller;
-    public readonly CameraHandle CameraHandle;
+    public readonly CameraDeviceHandle CameraDeviceHandle;
     private readonly IDeckLinkInput m_targetDevice;
     private _BMDDisplayMode m_targetDisplayMode = _BMDDisplayMode.bmdModeHD1080p25;
     private _BMDPixelFormat m_targetPixelFormat = _BMDPixelFormat.bmdFormat8BitARGB;
 
-    public DeckLinkDeviceInputNotificationHandler(BlackmagicDeckLinkController a_controller,
-        CameraHandle a_cameraHandle, IDeckLinkInput a_targetDevice)
+    public DeckLinkDeviceInputNotificationHandler(CameraDeviceHandle a_cameraDeviceHandle, IDeckLinkInput a_targetDevice)
     {
-        m_controller = a_controller;
-        CameraHandle = a_cameraHandle;
+        m_controller = (BlackmagicDeckLinkController)a_cameraDeviceHandle.TargetController!;
+        CameraDeviceHandle = a_cameraDeviceHandle;
         m_targetDevice = a_targetDevice;
     }
 
@@ -111,7 +110,7 @@ internal class DeckLinkDeviceInputNotificationHandler : IDeckLinkInputCallback
                     try
                     {
                         CommandReader.DecodeStream(ms,
-                            (a_id, a_packet) => { m_controller.OnCameraPacketArrived(CameraHandle, a_id, a_packet, convertedTimeCode); });
+                            (a_id, a_packet) => { m_controller.OnCameraPacketArrived(CameraDeviceHandle, a_id, a_packet, convertedTimeCode); });
                     }
                     catch (Exception ex)
                     {

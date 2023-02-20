@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System.Collections.ObjectModel;
+using System.Windows;
 using System.Windows.Controls;
 using BlackmagicCameraControl.CommandPackets;
 using DataWranglerCommon;
@@ -10,8 +11,7 @@ namespace DataWranglerInterface.ShotRecording
 	/// </summary>
 	public partial class CameraInfoControl : UserControl
 	{
-		private ActiveCameraInfo? m_targetCamera;
-		public ActiveCameraInfo? TargetCameraInfo => m_targetCamera;
+		public ObservableCollection<ActiveCameraInfoControl> ActiveCameras { get; private set; } = new ObservableCollection<ActiveCameraInfoControl>();
 
 		public delegate void RecordingStateChangedHandler(ActiveCameraInfo a_camera, bool a_isNowRecording, TimeCode a_stateChangeTime);
 		public event RecordingStateChangedHandler OnCameraRecordingStateChanged = delegate { };
@@ -21,70 +21,23 @@ namespace DataWranglerInterface.ShotRecording
 			InitializeComponent();
 		}
 
-		public void SetTargetCameraInfo(ActiveCameraInfo? a_activeCamera)
+		public void AddTargetCameraInfo(ActiveCameraInfo a_activeCamera)
 		{
-			if (m_targetCamera != null)
-			{
-				m_targetCamera.CameraPropertyChanged -= OnCameraPropertyChanged;
-			}
-
-			m_targetCamera = a_activeCamera;
-			if (m_targetCamera != null)
-			{
-				m_targetCamera.CameraPropertyChanged += OnCameraPropertyChanged;
-			}
-
-			Dispatcher.InvokeAsync(() =>
-				{
-					LoadingSpinner.SetIsLoading(m_targetCamera == null);
-				}
-			);
+			ActiveCameraInfoControl control = new ActiveCameraInfoControl(a_activeCamera);
+			ActiveCameras.Add(control);
+			//a_activeCamera.CameraPropertyChanged += OnCameraPropertyChanged;
 		}
 
-		private void OnCameraPropertyChanged(object? a_sender, CameraPropertyChangedEventArgs a_e)
+		public void RemoveTargetCameraInfo(ActiveCameraInfo a_handle)
 		{
-			if (m_targetCamera == null)
+			for (int i = ActiveCameras.Count - 1; i >= 0; --i)
 			{
-				throw new Exception();
-			}
-
-			if (a_e.PropertyName == nameof(ActiveCameraInfo.CameraName))
-			{
-				Dispatcher.InvokeAsync(() =>
-					{
-						CameraDisplayName.Content = m_targetCamera.CameraName;
-					}
-				);
-			}
-			else if (a_e.PropertyName == nameof(ActiveCameraInfo.CameraModel))
-			{
-				Dispatcher.InvokeAsync(() => { CameraModel.Content = m_targetCamera.CameraModel; });
-
-			}
-			else if (a_e.PropertyName == nameof(ActiveCameraInfo.BatteryPercentage))
-			{
-				Dispatcher.InvokeAsync(() =>
+				if (ActiveCameras[i].TargetInfo == a_handle)
 				{
-					if (m_targetCamera == null)
-					{
-						return;
-					}
-
-					CameraBattery.Content =
-						$"{m_targetCamera.BatteryPercentage}% ({m_targetCamera?.BatteryVoltage_mV} mV)";
-				});
+					ActiveCameras.RemoveAt(i);
+					break;
+				}
 			}
-			else if (a_e.PropertyName == nameof(ActiveCameraInfo.CurrentTransportMode))
-			{
-				Dispatcher.InvokeAsync(() => CameraState.Content = m_targetCamera.CurrentTransportMode.ToString() );
-				bool isNowRecording = m_targetCamera.CurrentTransportMode == CommandPacketMediaTransportMode.EMode.Record;
-				OnCameraRecordingStateChanged.Invoke(m_targetCamera, isNowRecording, a_e.ReceiveTimeCode);
-			}
-			else if (a_e.PropertyName == nameof(ActiveCameraInfo.CurrentTimeCode))
-			{
-				Dispatcher.InvokeAsync(() => CameraTimeCode.Content = m_targetCamera.CurrentTimeCode);
-			}
-
 		}
 	}
 }

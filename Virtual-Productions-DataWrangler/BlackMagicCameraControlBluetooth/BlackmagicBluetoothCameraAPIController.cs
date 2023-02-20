@@ -57,6 +57,8 @@ namespace BlackmagicCameraControlBluetooth
 		private static readonly TimeSpan CameraConnectSetupTimeout = new TimeSpan(0, 1, 15);
 		private static readonly TimeSpan CameraDataReceivedTimeout = new TimeSpan(0, 0, 30);
 
+		private const string DebugCameraDeviceUuid = "DEBUG_UUID_HERE";
+
 		public delegate string? CameraPairRequestPairingCode(string a_cameraDisplayName);
 
 		private DeviceWatcher BLEDeviceWatcher = DeviceInformation.CreateWatcher(BluetoothLEDevice.GetDeviceSelector());
@@ -124,7 +126,7 @@ namespace BlackmagicCameraControlBluetooth
 					TimeSpan timeSinceLastDataReceived = DateTimeOffset.UtcNow - connection.LastReceivedDataTime;
 					if (timeSinceLastDataReceived > CameraDataReceivedTimeout || connection.ConnectionState == IBlackmagicCameraConnection.EConnectionState.Disconnected)
 					{
-						CameraConnected(connection.CameraHandle);
+						CameraConnected(connection.CameraDeviceHandle);
 						BlackmagicCameraLogInterface.LogInfo($"Camera \"{connection.HumanReadableName}\" ({connection.DeviceId}) disconnected due to data received timeout");
 
 						m_retryConnectionQueue.Add(new RetryEntry(connection.DeviceId));
@@ -167,15 +169,15 @@ namespace BlackmagicCameraControlBluetooth
 			{
 				if (m_activeConnections[i].DeviceId == a_args.Id)
 				{
-					CameraDisconnected(m_activeConnections[i].CameraHandle);
+					CameraDisconnected(m_activeConnections[i].CameraDeviceHandle);
 					m_activeConnections.RemoveAt(i);
 				}
 			}
 		}
 
-		public CameraHandle GetConnectedCameraByIndex(int a_index)
+		public CameraDeviceHandle GetConnectedCameraByIndex(int a_index)
 		{
-			return m_activeConnections[a_index].CameraHandle;
+			return m_activeConnections[a_index].CameraDeviceHandle;
 		}
 
 		public void AsyncTryConnectToDevice(string a_deviceAddress)
@@ -246,14 +248,14 @@ namespace BlackmagicCameraControlBluetooth
 						{
 							BlackmagicCameraConnectionBluetooth deviceConnection =
 								new BlackmagicCameraConnectionBluetooth(this,
-									CameraHandleGenerator.Next(), connectedDevice, deviceInformationService,
+									new CameraDeviceHandle(connectedDevice.DeviceId, this), connectedDevice, deviceInformationService,
 									blackmagicService);
 							if (deviceConnection.WaitForConnection(CameraConnectSetupTimeout) &&
 							    deviceConnection.ConnectionState ==
 							    IBlackmagicCameraConnection.EConnectionState.Connected)
 							{
 								m_activeConnections.Add(deviceConnection);
-								CameraConnected(deviceConnection.CameraHandle);
+								CameraConnected(deviceConnection.CameraDeviceHandle);
 								shouldRetry = false;
 
 								BlackmagicCameraLogInterface.LogInfo($"Camera {connectedDevice.Name} Connected.");
@@ -347,11 +349,11 @@ namespace BlackmagicCameraControlBluetooth
 			}
 		}
 
-		private IBlackmagicCameraConnection? FindCameraByHandle(CameraHandle a_cameraHandle)
+		private IBlackmagicCameraConnection? FindCameraByHandle(CameraDeviceHandle a_cameraDeviceHandle)
 		{
 			foreach (IBlackmagicCameraConnection connection in m_activeConnections)
 			{
-				if (connection.CameraHandle == a_cameraHandle)
+				if (connection.CameraDeviceHandle == a_cameraDeviceHandle)
 				{
 					return connection;
 				}
@@ -360,47 +362,47 @@ namespace BlackmagicCameraControlBluetooth
 			return null;
 		}
 
-		public void NotifyDataReceived(CameraHandle a_cameraHandle, TimeCode a_receivedTime, ICommandPacketBase a_packetInstance)
+		public void NotifyDataReceived(CameraDeviceHandle a_cameraDeviceHandle, TimeCode a_receivedTime, ICommandPacketBase a_packetInstance)
 		{
-			CameraDataReceived(a_cameraHandle, a_receivedTime, a_packetInstance);
+			CameraDataReceived(a_cameraDeviceHandle, a_receivedTime, a_packetInstance);
 		}
 
-		public void AsyncRequestCameraName(CameraHandle a_cameraHandle)
+		public void AsyncRequestCameraName(CameraDeviceHandle a_cameraDeviceHandle)
 		{
 			throw new NotImplementedException();
 		}
 
-		public void AsyncRequestCameraModel(CameraHandle a_cameraHandle)
+		public void AsyncRequestCameraModel(CameraDeviceHandle a_cameraDeviceHandle)
 		{
-			IBlackmagicCameraConnection? connection = FindCameraByHandle(a_cameraHandle);
+			IBlackmagicCameraConnection? connection = FindCameraByHandle(a_cameraDeviceHandle);
 			if (connection is BlackmagicCameraConnectionBluetooth bluetoothConnection)
 			{
 				bluetoothConnection.AsyncRequestCameraModel().ContinueWith((a_result) =>
 				{
-					CameraDataReceived(a_cameraHandle, bluetoothConnection.LastReceivedTimeCode, new CommandPacketCameraModel(a_result.Result));
+					CameraDataReceived(a_cameraDeviceHandle, bluetoothConnection.LastReceivedTimeCode, new CommandPacketCameraModel(a_result.Result));
 				});
 			}
 		}
 
-		public void AsyncSendCommand(CameraHandle a_cameraHandle, ICommandPacketBase a_command, ECommandOperation a_commandOperation = ECommandOperation.Assign)
+		public void AsyncSendCommand(CameraDeviceHandle a_cameraDeviceHandle, ICommandPacketBase a_command, ECommandOperation a_commandOperation = ECommandOperation.Assign)
 		{
-			IBlackmagicCameraConnection? connection = FindCameraByHandle(a_cameraHandle);
+			IBlackmagicCameraConnection? connection = FindCameraByHandle(a_cameraDeviceHandle);
 			if (connection != null)
 			{
 				connection.AsyncSendCommand(a_command, a_commandOperation);
 			}
 			else
 			{
-				BlackmagicCameraLogInterface.LogWarning($"AsyncSendCommand failed: Camera handle {a_cameraHandle} was not found");
+				BlackmagicCameraLogInterface.LogWarning($"AsyncSendCommand failed: Camera deviceHandle {a_cameraDeviceHandle} was not found");
 			}
 		}
 
 		public void CreateDebugCameraConnection()
 		{
 			BlackmagicCameraConnectionDebug debugConnection =
-				new BlackmagicCameraConnectionDebug(this, CameraHandleGenerator.Next());
+				new BlackmagicCameraConnectionDebug(this, new CameraDeviceHandle(DebugCameraDeviceUuid, this));
 			m_activeConnections.Add(debugConnection);
-			CameraConnected(debugConnection.CameraHandle);
+			CameraConnected(debugConnection.CameraDeviceHandle);
 		}
 
 		public IEnumerable<AdvertisementEntry> GetAdvertisedDevices()

@@ -172,36 +172,37 @@ namespace ShotGridIntegrationTest
 			Assert.IsTrue(activityStream.ResultData!.Updates.Length == updateLimit);
 		}
 
-		[TestMethod]
-		public void CheckActivityStreamWithUpdate()
-		{
-			ShotGridAPIResponse<ShotGridEntityActivityStreamResponse> beginActivityStream = m_api.GetEntityActivityStream(ShotGridEntityName.Project, TestConstants.TargetProjectId, 1).Result;
-			Assert.IsFalse(beginActivityStream.IsError);
+		//PdG 2023-02-20: Disabled because Activity streams don't provide the expected functionality. Only entity creation / deletion is marked in the project.
+		//[TestMethod]
+		//public void CheckActivityStreamWithUpdate()
+		//{
+		//	ShotGridAPIResponse<ShotGridEntityActivityStreamResponse> beginActivityStream = m_api.GetEntityActivityStream(ShotGridEntityName.Project, TestConstants.TargetProjectId, 1).Result;
+		//	Assert.IsFalse(beginActivityStream.IsError);
 
-			Dictionary<string, object> valuesToChange = new Dictionary<string, object>
-			{
-				["description"] = $"Test change by unit test at {DateTime.Now.ToString(CultureInfo.InvariantCulture)}"
-			};
-			ShotGridAPIResponseGeneric changeResponse = m_api.UpdateEntityProperties(ShotGridEntityName.ShotVersion, TestConstants.TargetShotVersionId, valuesToChange).Result;
-			Assert.IsFalse(changeResponse.IsError);
+		//	Dictionary<string, object> valuesToChange = new Dictionary<string, object>
+		//	{
+		//		["description"] = $"Test change by unit test at {DateTime.Now.ToString(CultureInfo.InvariantCulture)}"
+		//	};
+		//	ShotGridAPIResponseGeneric changeResponse = m_api.UpdateEntityProperties(ShotGridEntityName.ShotVersion, TestConstants.TargetShotVersionId, valuesToChange).Result;
+		//	Assert.IsFalse(changeResponse.IsError);
 
-			ShotGridAPIResponse<ShotGridEntityActivityStreamResponse> changeActivity = m_api.GetEntityActivityStream(ShotGridEntityName.Project, TestConstants.TargetProjectId, 25, beginActivityStream.ResultData!.LatestUpdateId).Result;
-			Assert.IsFalse(changeActivity.IsError);
-			Assert.IsTrue(changeActivity.ResultData!.Updates.Length > 0);
+		//	ShotGridAPIResponse<ShotGridEntityActivityStreamResponse> changeActivity = m_api.GetEntityActivityStream(ShotGridEntityName.Project, TestConstants.TargetProjectId, 25, beginActivityStream.ResultData!.LatestUpdateId).Result;
+		//	Assert.IsFalse(changeActivity.IsError);
+		//	Assert.IsTrue(changeActivity.ResultData!.Updates.Length > 0);
 
-			bool foundUpdate = false;
-			foreach (ShotGridEntityActivityStreamResponse.ShotGridActivityUpdate update in changeActivity.ResultData.Updates)
-			{
-				if (update.PrimaryEntity!.EntityType == ShotGridEntityName.ShotVersion.CamelCase 
-				    && update.PrimaryEntity.Id == TestConstants.TargetShotVersionId 
-				    && update.UpdateType == EActivityUpdateType.Update)
-				{
-					foundUpdate = true;
-				}
-			}
+		//	bool foundUpdate = false;
+		//	foreach (ShotGridEntityActivityStreamResponse.ShotGridActivityUpdate update in changeActivity.ResultData.Updates)
+		//	{
+		//		if (update.PrimaryEntity!.EntityType == ShotGridEntityName.ShotVersion.CamelCase 
+		//		    && update.PrimaryEntity.Id == TestConstants.TargetShotVersionId 
+		//		    && update.UpdateType == EActivityUpdateType.Update)
+		//		{
+		//			foundUpdate = true;
+		//		}
+		//	}
 
-			Assert.IsTrue(foundUpdate);
-		}
+		//	Assert.IsTrue(foundUpdate);
+		//}
 
 		//[TestMethod]
 		//public void CreateAttachment()

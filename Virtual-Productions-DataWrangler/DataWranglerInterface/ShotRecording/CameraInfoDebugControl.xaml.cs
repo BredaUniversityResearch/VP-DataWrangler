@@ -37,7 +37,7 @@ namespace DataWranglerInterface.ShotRecording
 			if (m_activeCamera != null && CameraApiController != null)
 			{
 				CommandPacketMediaTransportMode.EMode currentMode = m_activeCamera.CurrentTransportMode;
-				CameraApiController.AsyncSendCommand(m_activeCamera.TargetCamera, new CommandPacketMediaTransportMode {
+				CameraApiController.AsyncSendCommand(m_activeCamera.ConnectionsForPhysicalDevice[0], new CommandPacketMediaTransportMode {
 					Mode = currentMode == CommandPacketMediaTransportMode.EMode.Record? CommandPacketMediaTransportMode.EMode.Preview : CommandPacketMediaTransportMode.EMode.Record
 				});
 			}

@@ -16,10 +16,10 @@ namespace BlackmagicDeckLinkControl
 		private DeckLinkDeviceNotificationHandler m_deckLinkDeviceNotificationHandler;
 		private IDeckLinkDiscovery m_deckLinkDiscovery = new CDeckLinkDiscoveryClass();
 
-		private Dictionary<CameraHandle, CameraPropertyCache> m_activeCameras =
-			new Dictionary<CameraHandle, CameraPropertyCache>();
+		private Dictionary<CameraDeviceHandle, CameraPropertyCache> m_activeCameras =
+			new Dictionary<CameraDeviceHandle, CameraPropertyCache>();
 
-		public delegate void CameraFrameDataReceivedDelegate(CameraHandle a_handle, int a_frameWidth, int a_frameHeight,
+		public delegate void CameraFrameDataReceivedDelegate(CameraDeviceHandle a_deviceHandle, int a_frameWidth, int a_frameHeight,
 			IntPtr a_framePixelData, int a_stride);
 
 		public event CameraFrameDataReceivedDelegate OnCameraFrameDataReceived = delegate { };
@@ -47,22 +47,22 @@ namespace BlackmagicDeckLinkControl
 			}
 		}
 
-		public void OnDeckLinkDeviceArrived(CameraHandle a_handle)
+		public void OnDeckLinkDeviceArrived(CameraDeviceHandle a_deviceHandle)
 		{
-			m_activeCameras.Add(a_handle, new CameraPropertyCache());
-			CameraConnected(a_handle);
+			m_activeCameras.Add(a_deviceHandle, new CameraPropertyCache());
+			CameraConnected(a_deviceHandle);
 		}
 
-		public void OnCameraDeviceRemoved(CameraHandle a_handle)
+		public void OnCameraDeviceRemoved(CameraDeviceHandle a_deviceHandle)
 		{
 			throw new NotImplementedException();
 		}
 
-		public void OnCameraPacketArrived(CameraHandle a_handle, CommandIdentifier a_id, ICommandPacketBase a_packet, TimeCode a_timeCode)
+		public void OnCameraPacketArrived(CameraDeviceHandle a_deviceHandle, CommandIdentifier a_id, ICommandPacketBase a_packet, TimeCode a_timeCode)
 		{
 			Debugger.Break(); // Need to verify timecode.
 
-			if (m_activeCameras.TryGetValue(a_handle, out CameraPropertyCache? cache))
+			if (m_activeCameras.TryGetValue(a_deviceHandle, out CameraPropertyCache? cache))
 			{
 				if (cache.CheckPropertyChanged(a_id, a_packet))
 				{
@@ -71,7 +71,7 @@ namespace BlackmagicDeckLinkControl
 					{
 						BlackmagicCameraLogInterface.LogInfo($"Received Packet {a_id.Category}:{a_id.Parameter}. {a_packet}");
 					}
-                    CameraDataReceived(a_handle, a_timeCode, a_packet);
+                    CameraDataReceived(a_deviceHandle, a_timeCode, a_packet);
 				}
 			}
 		}
