@@ -60,8 +60,6 @@ namespace BlackmagicDeckLinkControl
 
 		public void OnCameraPacketArrived(CameraDeviceHandle a_deviceHandle, CommandIdentifier a_id, ICommandPacketBase a_packet, TimeCode a_timeCode)
 		{
-			Debugger.Break(); // Need to verify timecode.
-
 			if (m_activeCameras.TryGetValue(a_deviceHandle, out CameraPropertyCache? cache))
 			{
 				if (cache.CheckPropertyChanged(a_id, a_packet))
