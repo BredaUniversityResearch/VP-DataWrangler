@@ -1,5 +1,6 @@
-﻿using System.Security.RightsManagement;
+﻿using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using BlackmagicCameraControlData;
 
 namespace DataWranglerInterface.ShotRecording
@@ -13,6 +14,18 @@ namespace DataWranglerInterface.ShotRecording
 		{
 			m_deviceHandle = a_handle;
 			InitializeComponent();
+		}
+
+		protected override void OnMouseMove(MouseEventArgs e)
+		{
+			base.OnMouseMove(e);
+
+			if (e.LeftButton == MouseButtonState.Pressed)
+			{
+				DataObject data = new DataObject();
+				data.SetData("SourceObject", this);
+				DragDrop.DoDragDrop(this, data, DragDropEffects.Copy | DragDropEffects.Move);
+			}
 		}
 	}
 }

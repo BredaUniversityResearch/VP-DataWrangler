@@ -12,7 +12,7 @@
 		<Label Content="{Binding ElementName=ActiveCameraInfoControlInstance, Path=TargetInfo.CurrentTimeCode}"></Label>
 		<Label Content="Connections:"></Label>
         <StackPanel>
-			<ItemsControl ItemsSource="{Binding ElementName=ActiveCameraInfoControlInstance, Path=DeviceHandleControls}"></ItemsControl>
+			<ItemsControl x:Name="DeviceHandleControl" ItemsSource="{Binding ElementName=ActiveCameraInfoControlInstance, Path=DeviceHandleControls}" AllowDrop="True"/>
         </StackPanel>
 	</StackPanel>
 </UserControl>

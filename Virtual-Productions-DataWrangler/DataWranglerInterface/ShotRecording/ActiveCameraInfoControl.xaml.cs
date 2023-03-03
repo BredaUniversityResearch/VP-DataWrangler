@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Windows;
 using System.Windows.Controls;
 using BlackmagicCameraControlData;
 
@@ -27,6 +28,8 @@ namespace DataWranglerInterface.ShotRecording
 			TargetInfo.PropertyChanged += OnTargetPropertyChanged;
 
 			InitializeComponent();
+
+			DeviceHandleControl.Drop += OnDeviceHandleDragDrop;
 		}
 
 		private void OnTargetPropertyChanged(object? a_sender, PropertyChangedEventArgs a_e)
@@ -72,6 +75,11 @@ namespace DataWranglerInterface.ShotRecording
 				//Dispatcher.InvokeAsync(() => CameraTimeCode.Content = m_targetCamera.CurrentTimeCode);
 			}
 
+		}
+
+		private void OnDeviceHandleDragDrop(object a_sender, DragEventArgs a_e)
+		{
+			throw new NotImplementedException();
 		}
 
 	}
