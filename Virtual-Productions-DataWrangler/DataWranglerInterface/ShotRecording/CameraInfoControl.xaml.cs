@@ -23,8 +23,11 @@ namespace DataWranglerInterface.ShotRecording
 
 		public void AddTargetCameraInfo(ActiveCameraInfo a_activeCamera)
 		{
-			ActiveCameraInfoControl control = new ActiveCameraInfoControl(a_activeCamera);
-			ActiveCameras.Add(control);
+			Dispatcher.Invoke(() =>
+			{
+				ActiveCameraInfoControl control = new ActiveCameraInfoControl(a_activeCamera);
+				ActiveCameras.Add(control);
+			});
 			//a_activeCamera.CameraPropertyChanged += OnCameraPropertyChanged;
 		}
 

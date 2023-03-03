@@ -19,7 +19,7 @@
 			Unknown2 = a_reader.ReadInt8();
 			Unknown3 = a_reader.ReadInt8();
 
-			//BlackmagicCameraLogInterface.LogVerbose($"\tReceived Undocumented Packet 9:5, Value [{Unknown}, {Unknown1}, {Unknown2}, {Unknown3}]");
+			//BlackmagicCameraLogInterface.LogVerbose($"\tReceived Undocumented Packet 9:5, Value [{CameraNumber}, {Unknown1}, {Unknown2}, {Unknown3}]");
 		}
 
 		public override void WriteTo(CommandWriter a_writer)

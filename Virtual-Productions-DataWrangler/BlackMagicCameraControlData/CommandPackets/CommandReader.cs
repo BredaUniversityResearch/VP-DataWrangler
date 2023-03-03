@@ -64,7 +64,7 @@ namespace BlackmagicCameraControl.CommandPackets
 
         private void DecodeCommandStream(StreamSpan a_streamSection, Action<CommandIdentifier, ICommandPacketBase> a_onPacketDecoded)
         {
-			while (a_streamSection.GetBytesRemaining(m_targetStream) > CommandHeader.ByteSize)
+			while (a_streamSection.GetBytesRemaining(m_targetStream) >= CommandHeader.ByteSize)
 			{
 				CommandHeader header = ReadCommandHeader();
 
@@ -72,7 +72,7 @@ namespace BlackmagicCameraControl.CommandPackets
 				if (commandMeta == null)
 				{
 					BlackmagicCameraLogInterface.LogVerbose(
-						$"Received unknown packet with identifier {header.CommandIdentifier}. Size: {BytesRemaining}, Type: {header.DataType}");
+						$"Received packet with no known meta. Identifier: {header.CommandIdentifier}, Size: {BytesRemaining}, Type: {header.DataType}");
 					m_targetStream.Seek(a_streamSection.ByteLength - CommandHeader.ByteSize, SeekOrigin.Current);
 					break;
 				}

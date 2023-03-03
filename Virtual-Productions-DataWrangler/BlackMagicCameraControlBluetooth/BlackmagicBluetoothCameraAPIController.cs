@@ -364,6 +364,12 @@ namespace BlackmagicCameraControlBluetooth
 
 		public void NotifyDataReceived(CameraDeviceHandle a_cameraDeviceHandle, TimeCode a_receivedTime, ICommandPacketBase a_packetInstance)
 		{
+			if (a_packetInstance is not CommandPacketSystemTimeCode &&
+			    a_packetInstance is not CommandPacketSystemBatteryInfo)
+			{
+				BlackmagicCameraLogInterface.LogInfo($"Received BT Packet {a_packetInstance}");
+			}
+
 			CameraDataReceived(a_cameraDeviceHandle, a_receivedTime, a_packetInstance);
 		}
 

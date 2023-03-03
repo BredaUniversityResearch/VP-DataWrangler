@@ -40,7 +40,7 @@ namespace DataWranglerInterface.ShotRecording
 				return new DataWranglerFileSourceUITascam(tascam);
 			}
 
-			throw new Exception($"Unknown meta source type {a_meta.GetType()}");
+			throw new Exception($"CameraNumber meta source type {a_meta.GetType()}");
 		}
 	}
 }
