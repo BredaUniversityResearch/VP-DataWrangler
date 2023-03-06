@@ -57,7 +57,7 @@ namespace BlackmagicCameraControlBluetooth
 		private static readonly TimeSpan CameraConnectSetupTimeout = new TimeSpan(0, 1, 15);
 		private static readonly TimeSpan CameraDataReceivedTimeout = new TimeSpan(0, 0, 30);
 
-		private const string DebugCameraDeviceUuid = "DEBUG_UUID_HERE";
+		private const string DebugCameraDeviceUuid = "DEBUG_";
 
 		public delegate string? CameraPairRequestPairingCode(string a_cameraDisplayName);
 
@@ -406,7 +406,7 @@ namespace BlackmagicCameraControlBluetooth
 		public void CreateDebugCameraConnection()
 		{
 			BlackmagicCameraConnectionDebug debugConnection =
-				new BlackmagicCameraConnectionDebug(this, new CameraDeviceHandle(DebugCameraDeviceUuid, this));
+				new BlackmagicCameraConnectionDebug(this, new CameraDeviceHandle(DebugCameraDeviceUuid + Guid.NewGuid().ToString(), this));
 			m_activeConnections.Add(debugConnection);
 			CameraConnected(debugConnection.CameraDeviceHandle);
 		}

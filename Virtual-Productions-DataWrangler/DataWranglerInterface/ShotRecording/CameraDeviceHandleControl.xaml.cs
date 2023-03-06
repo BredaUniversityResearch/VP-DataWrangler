@@ -7,12 +7,26 @@ namespace DataWranglerInterface.ShotRecording
 {
 	public partial class CameraDeviceHandleControl : UserControl
 	{
-		private CameraDeviceHandle m_deviceHandle;
-		public string ConnectionDeviceUuid => m_deviceHandle.DeviceUuid;
-
-		public CameraDeviceHandleControl(CameraDeviceHandle a_handle)
+		public class DragDropInfo
 		{
-			m_deviceHandle = a_handle;
+			public readonly ActiveCameraInfo SourceCameraInfo;
+			public readonly CameraDeviceHandle SourceDeviceHandle;
+
+			public DragDropInfo(ActiveCameraInfo a_sourceCameraInfo, CameraDeviceHandle a_sourceDeviceHandle)
+			{
+				SourceCameraInfo = a_sourceCameraInfo;
+				SourceDeviceHandle = a_sourceDeviceHandle;
+			}
+		};
+
+		public readonly CameraDeviceHandle DeviceHandle;
+		private ActiveCameraInfo m_parentCameraInfo;
+		public string ConnectionDeviceUuid => DeviceHandle.DeviceUuid;
+
+		public CameraDeviceHandleControl(ActiveCameraInfo a_cameraInfo, CameraDeviceHandle a_handle)
+		{
+			m_parentCameraInfo = a_cameraInfo;
+			DeviceHandle = a_handle;
 			InitializeComponent();
 		}
 
@@ -22,9 +36,7 @@ namespace DataWranglerInterface.ShotRecording
 
 			if (e.LeftButton == MouseButtonState.Pressed)
 			{
-				DataObject data = new DataObject();
-				data.SetData("SourceObject", this);
-				DragDrop.DoDragDrop(this, data, DragDropEffects.Copy | DragDropEffects.Move);
+				DragDrop.DoDragDrop(this, new DragDropInfo(m_parentCameraInfo, DeviceHandle), DragDropEffects.Copy | DragDropEffects.Move);
 			}
 		}
 	}

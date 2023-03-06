@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using BlackmagicCameraControl;
 using BlackmagicCameraControl.CommandPackets;
 using BlackmagicCameraControlBluetooth;
+using BlackmagicCameraControlData;
 
 namespace DataWranglerInterface.ShotRecording
 {
@@ -37,9 +38,13 @@ namespace DataWranglerInterface.ShotRecording
 			if (m_activeCamera != null && CameraApiController != null)
 			{
 				CommandPacketMediaTransportMode.EMode currentMode = m_activeCamera.CurrentTransportMode;
-				CameraApiController.AsyncSendCommand(m_activeCamera.ConnectionsForPhysicalDevice[0], new CommandPacketMediaTransportMode {
-					Mode = currentMode == CommandPacketMediaTransportMode.EMode.Record? CommandPacketMediaTransportMode.EMode.Preview : CommandPacketMediaTransportMode.EMode.Record
-				});
+				foreach (CameraDeviceHandle handle in m_activeCamera.ConnectionsForPhysicalDevice)
+				{
+					CameraApiController.AsyncSendCommand(handle, new CommandPacketMediaTransportMode
+					{
+						Mode = currentMode == CommandPacketMediaTransportMode.EMode.Record ? CommandPacketMediaTransportMode.EMode.Preview : CommandPacketMediaTransportMode.EMode.Record
+					});
+				}
 			}
 		}
 	}

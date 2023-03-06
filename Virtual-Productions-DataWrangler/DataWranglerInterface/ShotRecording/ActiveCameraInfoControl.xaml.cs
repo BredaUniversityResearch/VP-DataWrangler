@@ -22,10 +22,11 @@ namespace DataWranglerInterface.ShotRecording
 
 			foreach (CameraDeviceHandle handle in TargetInfo.ConnectionsForPhysicalDevice)
 			{
-				DeviceHandleControls.Add(new CameraDeviceHandleControl(handle));
+				DeviceHandleControls.Add(new CameraDeviceHandleControl(TargetInfo, handle));
 			}
 
 			TargetInfo.PropertyChanged += OnTargetPropertyChanged;
+			TargetInfo.DeviceConnectionsChanged += OnTargetDeviceConnectionsChanged;
 
 			InitializeComponent();
 
@@ -79,8 +80,42 @@ namespace DataWranglerInterface.ShotRecording
 
 		private void OnDeviceHandleDragDrop(object a_sender, DragEventArgs a_e)
 		{
-			throw new NotImplementedException();
+			if (a_e.Data.GetData(typeof(CameraDeviceHandleControl.DragDropInfo)) is CameraDeviceHandleControl.DragDropInfo deviceHandleData)
+			{
+				TargetInfo.TransferCameraHandle(deviceHandleData.SourceCameraInfo, deviceHandleData.SourceDeviceHandle);
+			}
 		}
 
+		private void OnTargetDeviceConnectionsChanged(ActiveCameraInfo a_source)
+		{
+			HashSet<CameraDeviceHandle> newConnections = new HashSet<CameraDeviceHandle>(TargetInfo.ConnectionsForPhysicalDevice);
+			HashSet<CameraDeviceHandle> oldConnections = new HashSet<CameraDeviceHandle>();
+			foreach (CameraDeviceHandleControl control in DeviceHandleControls)
+			{
+				oldConnections.Add(control.DeviceHandle);
+			}
+
+			HashSet<CameraDeviceHandle> added = new HashSet<CameraDeviceHandle>(newConnections);
+			added.ExceptWith(oldConnections);
+			foreach (CameraDeviceHandle addedHandle in added)
+			{
+				DeviceHandleControls.Add(new CameraDeviceHandleControl(TargetInfo, addedHandle));
+			}
+
+			HashSet<CameraDeviceHandle> removed = new HashSet<CameraDeviceHandle>(oldConnections);
+			removed.ExceptWith(newConnections);
+
+			foreach (CameraDeviceHandle removedHandle in removed)
+			{
+				for (int i = DeviceHandleControls.Count - 1; i >= 0; --i)
+				{
+					if (DeviceHandleControls[i].DeviceHandle == removedHandle)
+					{
+						DeviceHandleControls.RemoveAt(i);
+						break;
+					}
+				}
+			}
+		}
 	}
 }

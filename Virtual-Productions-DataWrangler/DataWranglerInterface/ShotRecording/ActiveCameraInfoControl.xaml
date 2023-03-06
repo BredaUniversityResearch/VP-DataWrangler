@@ -10,9 +10,9 @@
 	<StackPanel ToolTip="{Binding ElementName=ActiveCameraInfoControlInstance, Path=CurrentTooltip}">
 		<Label Content="{Binding ElementName=ActiveCameraInfoControlInstance, Path=TargetInfo.CameraName}"></Label>
 		<Label Content="{Binding ElementName=ActiveCameraInfoControlInstance, Path=TargetInfo.CurrentTimeCode}"></Label>
-		<Label Content="Connections:"></Label>
-        <StackPanel>
-			<ItemsControl x:Name="DeviceHandleControl" ItemsSource="{Binding ElementName=ActiveCameraInfoControlInstance, Path=DeviceHandleControls}" AllowDrop="True"/>
+		<StackPanel x:Name="DeviceHandleControl" AllowDrop="True">
+			<Label Content="Connections:"></Label>
+			<ItemsControl ItemsSource="{Binding ElementName=ActiveCameraInfoControlInstance, Path=DeviceHandleControls}"/>
         </StackPanel>
 	</StackPanel>
 </UserControl>

@@ -1,8 +1,6 @@
 ﻿using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using AutoNotify;
 using BlackmagicCameraControl.CommandPackets;
-using BlackmagicCameraControlBluetooth;
 using BlackmagicCameraControlData;
 using CommonLogging;
 using DataWranglerCommon;
@@ -25,7 +23,12 @@ namespace DataWranglerInterface.ShotRecording
 	//A 'virtual' camera that can be represented by multiple connections (e.g. Bluetooth and SDI) but route to the same physical device
 	public partial class ActiveCameraInfo
 	{
-		public readonly List<CameraDeviceHandle> ConnectionsForPhysicalDevice = new List<CameraDeviceHandle>();
+		private readonly List<CameraDeviceHandle> m_connectionsForPhysicalDevice = new List<CameraDeviceHandle>();
+		public IReadOnlyCollection<CameraDeviceHandle> ConnectionsForPhysicalDevice => m_connectionsForPhysicalDevice;
+
+		public delegate void OnConnectionCollectionChanged(ActiveCameraInfo a_source);
+		public event OnConnectionCollectionChanged DeviceConnectionsChanged = delegate { };
+
 		private DateTimeOffset m_connectTime;
 		private DateTime m_timeSyncPoint = DateTime.MinValue;
 
@@ -49,8 +52,22 @@ namespace DataWranglerInterface.ShotRecording
 
 		public ActiveCameraInfo(CameraDeviceHandle a_deviceHandle)
 		{
-			ConnectionsForPhysicalDevice.Add(a_deviceHandle);
+			m_connectionsForPhysicalDevice.Add(a_deviceHandle);
 			m_connectTime = DateTimeOffset.UtcNow;
+		}
+
+		public void TransferCameraHandle(ActiveCameraInfo a_fromCamera, CameraDeviceHandle a_deviceHandle)
+		{
+			bool success = a_fromCamera.m_connectionsForPhysicalDevice.Remove(a_deviceHandle);
+			if (!success)
+			{
+				throw new Exception("Failed to remove camera handle from source camera info");
+			}
+
+			m_connectionsForPhysicalDevice.Add(a_deviceHandle);
+
+			a_fromCamera.DeviceConnectionsChanged.Invoke(a_fromCamera);
+			DeviceConnectionsChanged.Invoke(this);
 		}
 
 		public void OnCameraDataReceived(CameraControllerBase a_deviceController, CameraDeviceHandle a_deviceHandle, TimeCode a_receivedTime, ICommandPacketBase a_packet)
