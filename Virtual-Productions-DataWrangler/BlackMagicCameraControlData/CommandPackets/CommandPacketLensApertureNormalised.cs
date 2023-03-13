@@ -1,4 +1,6 @@
-﻿namespace BlackmagicCameraControl.CommandPackets
+﻿using BlackmagicCameraControl;
+
+namespace BlackmagicCameraControlData.CommandPackets
 {
 	[CommandPacketMeta(0, 3, 2, ECommandDataType.Signed5_11FixedPoint)]
 	public class CommandPacketLensApertureNormalised : ICommandPacketBase

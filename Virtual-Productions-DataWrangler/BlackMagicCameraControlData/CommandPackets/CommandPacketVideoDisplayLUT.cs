@@ -1,4 +1,4 @@
-﻿namespace BlackmagicCameraControl.CommandPackets
+﻿namespace BlackmagicCameraControlData.CommandPackets
 {
 	[CommandPacketMeta(1, 15, 2, ECommandDataType.Int8)]
 	public class CommandPacketVideoDisplayLUT : ICommandPacketBase

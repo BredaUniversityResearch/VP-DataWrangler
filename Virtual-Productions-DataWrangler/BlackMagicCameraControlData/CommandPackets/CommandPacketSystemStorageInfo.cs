@@ -1,8 +1,4 @@
-﻿using System;
-using System.Diagnostics;
-using BlackmagicCameraControlData;
-
-namespace BlackmagicCameraControl.CommandPackets
+﻿namespace BlackmagicCameraControlData.CommandPackets
 {
 	[CommandPacketMeta(9, 2, 8, ECommandDataType.Int16)]
 	public class CommandPacketSystemStorageInfo : ICommandPacketBase

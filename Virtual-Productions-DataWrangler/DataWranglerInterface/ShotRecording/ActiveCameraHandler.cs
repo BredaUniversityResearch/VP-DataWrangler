@@ -1,9 +1,9 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Windows.Media;
 using BlackmagicCameraControl;
-using BlackmagicCameraControl.CommandPackets;
 using BlackmagicCameraControlBluetooth;
 using BlackmagicCameraControlData;
+using BlackmagicCameraControlData.CommandPackets;
 using BlackmagicDeckLinkControl;
 using CommonLogging;
 using DataWranglerCommon;
@@ -140,11 +140,11 @@ namespace DataWranglerInterface.ShotRecording
 			}
 		}
 		
-        private void OnCameraFrameDataReceived(CameraDeviceHandle a_deviceHandle, int a_framewidth, int a_frameheight, IntPtr a_framepixeldata, int a_stride)
+        private void OnCameraFrameDataReceived(CameraDeviceHandle a_deviceHandle, int a_frameWidth, int a_frameHeight, IntPtr a_framePixelData, int a_stride)
         {
             if (PreviewControl != null)
             {
-				PreviewControl.OnVideoFrameUpdated(a_framewidth, a_frameheight, PixelFormats.Bgra32, a_framepixeldata, a_stride * a_frameheight, a_stride);
+				PreviewControl.OnVideoFrameUpdated(a_frameWidth, a_frameHeight, PixelFormats.Bgra32, a_framePixelData, a_stride * a_frameHeight, a_stride);
             }
         }
     }

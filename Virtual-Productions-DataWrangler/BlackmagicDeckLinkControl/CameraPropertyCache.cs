@@ -1,5 +1,4 @@
-﻿using BlackmagicCameraControl.CommandPackets;
-using BlackmagicCameraControlData.CommandPackets;
+﻿using BlackmagicCameraControlData.CommandPackets;
 
 namespace BlackmagicDeckLinkControl
 {

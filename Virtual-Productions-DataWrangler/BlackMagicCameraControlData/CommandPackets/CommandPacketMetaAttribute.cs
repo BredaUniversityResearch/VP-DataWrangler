@@ -1,7 +1,4 @@
-﻿using System;
-using BlackmagicCameraControlData.CommandPackets;
-
-namespace BlackmagicCameraControl.CommandPackets
+﻿namespace BlackmagicCameraControlData.CommandPackets
 {
 	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct)]
 	public class CommandPacketMetaAttribute: Attribute

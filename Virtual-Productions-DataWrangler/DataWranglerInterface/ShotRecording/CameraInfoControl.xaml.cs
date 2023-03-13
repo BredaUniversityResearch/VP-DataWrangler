@@ -1,7 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
-using BlackmagicCameraControl.CommandPackets;
 using DataWranglerCommon;
 
 namespace DataWranglerInterface.ShotRecording

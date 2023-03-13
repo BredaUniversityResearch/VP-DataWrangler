@@ -1,4 +1,4 @@
-﻿namespace BlackmagicCameraControl.CommandPackets
+﻿namespace BlackmagicCameraControlData.CommandPackets
 {
 	public class PacketHeader
 	{

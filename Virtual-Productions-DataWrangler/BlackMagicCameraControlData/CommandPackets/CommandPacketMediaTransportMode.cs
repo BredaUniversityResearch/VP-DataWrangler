@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace BlackmagicCameraControl.CommandPackets
+﻿namespace BlackmagicCameraControlData.CommandPackets
 {
 	[CommandPacketMeta(10, 1, 5, ECommandDataType.Int8)]
 	public class CommandPacketMediaTransportMode: ICommandPacketBase

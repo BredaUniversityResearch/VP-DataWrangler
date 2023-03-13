@@ -1,8 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Reflection;
-using BlackmagicCameraControlData.CommandPackets;
 
-namespace BlackmagicCameraControl.CommandPackets
+namespace BlackmagicCameraControlData.CommandPackets
 {
 	public static class CommandPacketFactory
 	{

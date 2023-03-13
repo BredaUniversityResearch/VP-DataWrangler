@@ -1,4 +1,4 @@
-﻿namespace BlackmagicCameraControl.CommandPackets
+﻿namespace BlackmagicCameraControlData.CommandPackets
 {
 	[CommandPacketMeta(0, 7, 2, ECommandDataType.Int16)]
 	public class CommandPacketLensSetAbsoluteZoom : ICommandPacketBase

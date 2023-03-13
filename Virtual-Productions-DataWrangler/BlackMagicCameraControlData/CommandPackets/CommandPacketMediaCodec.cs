@@ -1,4 +1,4 @@
-﻿namespace BlackmagicCameraControl.CommandPackets
+﻿namespace BlackmagicCameraControlData.CommandPackets
 {
 	[CommandPacketMeta(10, 0, 2, ECommandDataType.Int8)]
 	public class CommandPacketMediaCodec: ICommandPacketBase

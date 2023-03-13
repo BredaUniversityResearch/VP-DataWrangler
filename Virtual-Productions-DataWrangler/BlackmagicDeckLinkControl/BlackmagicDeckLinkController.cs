@@ -1,7 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using BlackmagicCameraControl.CommandPackets;
 using BlackmagicCameraControlData;
 using BlackmagicCameraControlData.CommandPackets;
 using DataWranglerCommon;

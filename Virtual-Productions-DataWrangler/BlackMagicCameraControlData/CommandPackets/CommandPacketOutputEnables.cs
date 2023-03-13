@@ -1,7 +1,4 @@
-﻿using System;
-using System.Diagnostics;
-
-namespace BlackmagicCameraControl.CommandPackets
+﻿namespace BlackmagicCameraControlData.CommandPackets
 {
 	[CommandPacketMeta(3, 0, 2, ECommandDataType.Int16)]
 	public class CommandPacketOutputEnables: ICommandPacketBase

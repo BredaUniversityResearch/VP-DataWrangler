@@ -1,4 +1,4 @@
-﻿namespace BlackmagicCameraControl.CommandPackets
+﻿namespace BlackmagicCameraControlData.CommandPackets
 {
 	[CommandPacketMeta(1, 7, 1, ECommandDataType.Int8)]
 	public class CommandPacketVideoDynamicRangeMode: ICommandPacketBase

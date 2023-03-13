@@ -9,8 +9,8 @@ using Windows.Devices.Bluetooth.Advertisement;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
 using Windows.Devices.Enumeration;
 using BlackmagicCameraControl;
-using BlackmagicCameraControl.CommandPackets;
 using BlackmagicCameraControlData;
+using BlackmagicCameraControlData.CommandPackets;
 using CommonLogging;
 using DataWranglerCommon;
 

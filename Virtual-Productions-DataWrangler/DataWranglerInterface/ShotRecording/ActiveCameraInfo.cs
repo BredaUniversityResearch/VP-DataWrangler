@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using AutoNotify;
-using BlackmagicCameraControl.CommandPackets;
 using BlackmagicCameraControlData;
+using BlackmagicCameraControlData.CommandPackets;
 using CommonLogging;
 using DataWranglerCommon;
 

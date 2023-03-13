@@ -1,4 +1,4 @@
-﻿namespace BlackmagicCameraControl.CommandPackets
+﻿namespace BlackmagicCameraControlData.CommandPackets
 {
 	[CommandPacketMeta(12, 0, 2, ECommandDataType.Int16)]
 	public class CommandPacketVendorStorageTargetChanged: ICommandPacketBase

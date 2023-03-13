@@ -1,6 +1,4 @@
-﻿using BlackmagicCameraControl.CommandPackets;
-
-namespace BlackmagicCameraControlData.CommandPackets;
+﻿namespace BlackmagicCameraControlData.CommandPackets;
 
 [CommandPacketMeta(12, 15, 0, ECommandDataType.Utf8String)]
 public class CommandPacketVendor15 : ICommandPacketBase

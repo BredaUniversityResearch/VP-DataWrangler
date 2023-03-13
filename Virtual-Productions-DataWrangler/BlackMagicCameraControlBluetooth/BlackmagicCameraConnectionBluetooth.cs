@@ -10,9 +10,9 @@ using Windows.Devices.Bluetooth;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
 using Windows.Foundation;
 using Windows.Storage.Streams;
-using BlackmagicCameraControl.CommandPackets;
 using BlackmagicCameraControlBluetooth;
 using BlackmagicCameraControlData;
+using BlackmagicCameraControlData.CommandPackets;
 using DataWranglerCommon;
 
 namespace BlackmagicCameraControl

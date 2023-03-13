@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace BlackmagicCameraControl.CommandPackets
+﻿namespace BlackmagicCameraControlData.CommandPackets
 {
 	[CommandPacketMeta(1, 9, 10, ECommandDataType.Int16)]
 	public class CommandPacketVideoRecordingFormat : ICommandPacketBase

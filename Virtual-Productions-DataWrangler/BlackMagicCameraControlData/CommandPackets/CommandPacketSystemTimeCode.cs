@@ -1,6 +1,6 @@
 ﻿using DataWranglerCommon;
 
-namespace BlackmagicCameraControl.CommandPackets
+namespace BlackmagicCameraControlData.CommandPackets
 {
 	[CommandPacketMeta(9, 4, 4, ECommandDataType.Int32)]
 	public class CommandPacketSystemTimeCode : ICommandPacketBase

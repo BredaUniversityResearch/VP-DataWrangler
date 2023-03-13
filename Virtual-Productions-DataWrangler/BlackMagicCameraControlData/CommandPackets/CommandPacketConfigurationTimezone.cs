@@ -1,7 +1,4 @@
-﻿using System;
-using System.Text;
-
-namespace BlackmagicCameraControl.CommandPackets
+﻿namespace BlackmagicCameraControlData.CommandPackets
 {
 	[CommandPacketMeta(7, 2, 4, ECommandDataType.Int32)]
 	public class CommandPacketConfigurationTimezone: ICommandPacketBase

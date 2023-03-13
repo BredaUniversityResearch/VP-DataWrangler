@@ -1,4 +1,4 @@
-﻿namespace BlackmagicCameraControl.CommandPackets
+﻿namespace BlackmagicCameraControlData.CommandPackets
 {
 	[CommandPacketMeta(1, 2, 4, ECommandDataType.Int16)]
 	public class CommandPacketVideoManualWhiteBalance: ICommandPacketBase

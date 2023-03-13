@@ -1,4 +1,4 @@
-﻿namespace BlackmagicCameraControl.CommandPackets
+﻿namespace BlackmagicCameraControlData.CommandPackets
 {
 	[CommandPacketMeta(1, 8, 1, ECommandDataType.Int8)]
 	public class CommandPacketVideoSharpeningLevel : ICommandPacketBase

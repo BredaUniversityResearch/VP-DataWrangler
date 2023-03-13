@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace BlackmagicCameraControl.CommandPackets
+﻿namespace BlackmagicCameraControlData.CommandPackets
 {
 	[CommandPacketMeta(1, 11, 4, ECommandDataType.Int32)]
 	public class CommandPacketVideoShutterAngle : ICommandPacketBase

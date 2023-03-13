@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
-using BlackmagicCameraControl.CommandPackets;
 using BlackmagicCameraControlData;
+using BlackmagicCameraControlData.CommandPackets;
 using CommonLogging;
 using DataWranglerCommon;
 using DeckLinkAPI;

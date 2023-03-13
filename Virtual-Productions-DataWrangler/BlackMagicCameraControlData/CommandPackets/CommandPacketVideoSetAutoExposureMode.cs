@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace BlackmagicCameraControl.CommandPackets
+﻿namespace BlackmagicCameraControlData.CommandPackets
 {
 	[CommandPacketMeta(1, 10, 1, ECommandDataType.Int8)]
 	public class CommandPacketVideoSetAutoExposureMode : ICommandPacketBase

@@ -1,4 +1,4 @@
-﻿namespace BlackmagicCameraControl.CommandPackets
+﻿namespace BlackmagicCameraControlData.CommandPackets
 {
 	[CommandPacketMeta(9, 0, 6, ECommandDataType.Int16)]
 	public class CommandPacketSystemBatteryInfo : ICommandPacketBase

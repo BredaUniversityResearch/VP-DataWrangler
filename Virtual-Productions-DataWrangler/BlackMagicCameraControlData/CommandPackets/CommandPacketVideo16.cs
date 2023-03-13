@@ -1,7 +1,6 @@
-﻿using BlackmagicCameraControlData;
-using System;
+﻿using BlackmagicCameraControl;
 
-namespace BlackmagicCameraControl.CommandPackets
+namespace BlackmagicCameraControlData.CommandPackets
 {
 	[CommandPacketMeta(1, 16, 2, ECommandDataType.Signed5_11FixedPoint)]
 	public class CommandPacketVideo16: ICommandPacketBase

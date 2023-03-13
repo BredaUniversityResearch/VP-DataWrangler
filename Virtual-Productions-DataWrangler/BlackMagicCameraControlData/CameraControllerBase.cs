@@ -1,4 +1,4 @@
-﻿using BlackmagicCameraControl.CommandPackets;
+﻿using BlackmagicCameraControlData.CommandPackets;
 using DataWranglerCommon;
 
 namespace BlackmagicCameraControlData
