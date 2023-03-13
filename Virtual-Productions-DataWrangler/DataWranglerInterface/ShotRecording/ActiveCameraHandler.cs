@@ -113,8 +113,18 @@ namespace DataWranglerInterface.ShotRecording
 		{
 			ActiveCameraInfo info = new ActiveCameraInfo(a_deviceHandle);
 			info.CameraName = a_deviceHandle.DeviceUuid;
+			info.DeviceConnectionsChanged += OnCameraConnectionChanged;
 			m_activeCameras.Add(info);
 			OnCameraConnected(info);
+		}
+
+		private void OnCameraConnectionChanged(ActiveCameraInfo a_source)
+		{
+			if (a_source.ConnectionsForPhysicalDevice.Count == 0)
+			{
+				OnCameraDisconnected(a_source);
+				m_activeCameras.Remove(a_source);
+			}
 		}
 
 		private void OnCommonCameraDisconnected(CameraDeviceHandle a_deviceHandle)
