@@ -1,11 +1,16 @@
 ﻿using BlackmagicCameraControlData.CommandPackets;
 
-namespace BlackmagicDeckLinkControl
+namespace BlackmagicCameraControlData
 {
 	//Caches all camera properties, and dispatches event when data has changed.
 	public class CameraPropertyCache
 	{
 		private readonly Dictionary<CommandIdentifier, ICommandPacketBase> m_currentValues = new Dictionary<CommandIdentifier, ICommandPacketBase>();
+
+		public bool CheckPropertyChanged(ICommandPacketBase a_packet)
+		{
+			return CheckPropertyChanged(CommandIdentifier.FromInstance(a_packet), a_packet);
+		}
 
 		public bool CheckPropertyChanged(CommandIdentifier a_identifier, ICommandPacketBase a_packet)
 		{

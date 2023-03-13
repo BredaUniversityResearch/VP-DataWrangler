@@ -1,4 +1,6 @@
-﻿namespace BlackmagicCameraControlData.CommandPackets
+﻿using System.Reflection;
+
+namespace BlackmagicCameraControlData.CommandPackets
 {
 	public readonly struct CommandIdentifier : IEquatable<CommandIdentifier>
 	{
@@ -39,6 +41,17 @@
 		public static bool operator !=(CommandIdentifier left, CommandIdentifier right)
 		{
 			return !left.Equals(right);
+		}
+
+		public static CommandIdentifier FromInstance(ICommandPacketBase a_packet)
+		{
+			CommandPacketMetaAttribute? attribute = a_packet.GetType().GetCustomAttribute<CommandPacketMetaAttribute>(false);
+			if (attribute == null)
+			{
+				throw new Exception($"Failed to get the CommandPacketMetaAttribute from type {a_packet.GetType().Name}");
+			}
+
+			return attribute.Identifier;
 		}
 	}
 }

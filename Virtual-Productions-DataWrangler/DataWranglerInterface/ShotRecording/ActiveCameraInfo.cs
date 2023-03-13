@@ -34,6 +34,7 @@ namespace DataWranglerInterface.ShotRecording
 
 		private bool m_receivedAnyBatteryStatusPackets = false;
 		public event CameraPropertyChangedEventHandler? CameraPropertyChanged;
+		private CameraPropertyCache m_cameraProperties = new CameraPropertyCache();
 
 		[AutoNotify]
 		private string m_cameraName = "";
@@ -72,6 +73,11 @@ namespace DataWranglerInterface.ShotRecording
 
 		public void OnCameraDataReceived(CameraControllerBase a_deviceController, CameraDeviceHandle a_deviceHandle, TimeCode a_receivedTime, ICommandPacketBase a_packet)
 		{
+			if (!m_cameraProperties.CheckPropertyChanged(a_packet))
+			{
+				return;
+			}
+
 			if (a_packet is CommandPacketCameraModel modelPacket)
 			{
 				CameraModel = modelPacket.CameraModel;
