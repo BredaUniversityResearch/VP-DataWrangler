@@ -31,7 +31,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CommonLogging", "CommonLogg
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataWranglerCommonTests", "DataWranglerCommonTests\DataWranglerCommonTests.csproj", "{3C225B07-5558-4B2E-9A9E-833AF02CBD23}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CameraControlOverEthernet", "CameraControlOverEthernet\CameraControlOverEthernet.csproj", "{00C2E667-54CF-417C-A8ED-CB637B19BA34}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CameraControlOverEthernet", "CameraControlOverEthernet\CameraControlOverEthernet.csproj", "{00C2E667-54CF-417C-A8ED-CB637B19BA34}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlackMagicCameraControlBluetoothEthernetRelay", "BlackMagicCameraControlBluetoothEthernetRelay\BlackMagicCameraControlBluetoothEthernetRelay.csproj", "{B451D825-90D8-4B48-8D77-43CA242E32B4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -223,6 +225,18 @@ Global
 		{00C2E667-54CF-417C-A8ED-CB637B19BA34}.Release|x64.Build.0 = Release|Any CPU
 		{00C2E667-54CF-417C-A8ED-CB637B19BA34}.Release|x86.ActiveCfg = Release|Any CPU
 		{00C2E667-54CF-417C-A8ED-CB637B19BA34}.Release|x86.Build.0 = Release|Any CPU
+		{B451D825-90D8-4B48-8D77-43CA242E32B4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B451D825-90D8-4B48-8D77-43CA242E32B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B451D825-90D8-4B48-8D77-43CA242E32B4}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B451D825-90D8-4B48-8D77-43CA242E32B4}.Debug|x64.Build.0 = Debug|Any CPU
+		{B451D825-90D8-4B48-8D77-43CA242E32B4}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B451D825-90D8-4B48-8D77-43CA242E32B4}.Debug|x86.Build.0 = Debug|Any CPU
+		{B451D825-90D8-4B48-8D77-43CA242E32B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B451D825-90D8-4B48-8D77-43CA242E32B4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B451D825-90D8-4B48-8D77-43CA242E32B4}.Release|x64.ActiveCfg = Release|Any CPU
+		{B451D825-90D8-4B48-8D77-43CA242E32B4}.Release|x64.Build.0 = Release|Any CPU
+		{B451D825-90D8-4B48-8D77-43CA242E32B4}.Release|x86.ActiveCfg = Release|Any CPU
+		{B451D825-90D8-4B48-8D77-43CA242E32B4}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
