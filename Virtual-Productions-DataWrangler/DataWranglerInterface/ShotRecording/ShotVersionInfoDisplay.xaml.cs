@@ -1,9 +1,14 @@
 ﻿using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Media;
 using AutoNotify;
 using CommonLogging;
 using DataWranglerCommon;
+using DataWranglerCommonWPF;
+using Microsoft.Win32;
 using Newtonsoft.Json;
 using ShotGridIntegration;
 
@@ -24,7 +29,6 @@ namespace DataWranglerInterface.ShotRecording
 			InitializeComponent();
 			
 			VersionSelectorControl.OnShotVersionSelected += OnShotVersionSelected;
-			GoodTakeCheckbox.Click += GoodTakeCheckbox_Clicked;
 		}
 
 		public void SetParentControls(ShotRecordingPage a_parentPage)
@@ -134,29 +138,18 @@ namespace DataWranglerInterface.ShotRecording
 
 		private void GoodTakeCheckbox_Clicked(object a_sender, RoutedEventArgs a_e)
 		{
-			//if (CurrentVersion == null)
-			//{
-			//	return;
-			//}
-
-			//bool newState = (bool)(GoodTakeCheckbox.IsChecked!);
-			//if (newState != CurrentVersion.Attributes.Flagged)
-			//{
-			//	CurrentVersion.Attributes.Flagged = newState;
-			//	
-			//}
-			if (CurrentVersion == null)
+			if (CurrentVersion == null || !CurrentVersion.ChangeTracker.HasAnyUncommittedChanges())
 			{
 				return;
 			}
 
 			Task<ShotGridAPIResponseGeneric> task = CurrentVersion.ChangeTracker.CommitChanges(DataWranglerServiceProvider.Instance.ShotGridAPI);
-			task.Wait();
-			if (task.Result.IsError)
+			FrameworkElement sender = (FrameworkElement) a_sender;
+			AsyncOperationChangeFeedback? feedbackElement = AsyncOperationChangeFeedback.FindFeedbackElementFrom(sender);
+			if (feedbackElement != null)
 			{
-				throw new Exception("Failed to update entity");
+				feedbackElement.ProvideFeedback(task);
 			}
-
 		}
 	}
 }

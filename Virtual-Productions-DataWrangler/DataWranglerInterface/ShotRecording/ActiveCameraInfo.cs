@@ -29,7 +29,7 @@ namespace DataWranglerInterface.ShotRecording
 		public delegate void OnConnectionCollectionChanged(ActiveCameraInfo a_source);
 		public event OnConnectionCollectionChanged DeviceConnectionsChanged = delegate { };
 
-		private DateTimeOffset m_connectTime;
+		private DateTimeOffset m_connectTime;	
 		private DateTime m_timeSyncPoint = DateTime.MinValue;
 
 		private bool m_receivedAnyBatteryStatusPackets = false;
@@ -111,7 +111,6 @@ namespace DataWranglerInterface.ShotRecording
 			}
 			else if (a_packet is CommandPacketMediaTransportMode transportMode)
 			{
-				//Note to self: Timestamp for created and modified is just the start time. Seems to be off by ~2 seconds.
 				CurrentTransportMode = transportMode.Mode;
 				OnCameraPropertyChanged(nameof(CurrentTransportMode), a_receivedTime);
 
@@ -133,7 +132,6 @@ namespace DataWranglerInterface.ShotRecording
 		private void OnCameraPropertyChanged(string a_propertyName, TimeCode a_changeTime)
 		{
 			CameraPropertyChangedEventArgs evt = new CameraPropertyChangedEventArgs(a_propertyName, a_changeTime);
-			//PropertyChanged?.Invoke(this, evt);
 			CameraPropertyChanged?.Invoke(this, evt);
 		}
 	}

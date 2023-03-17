@@ -15,10 +15,17 @@ namespace DataWranglerCommonWPF
 		private static readonly TimeSpan LongDurationSpinTime = TimeSpan.FromSeconds(5);
 		private readonly CancellationTokenSource m_cancellationTokenSource = new CancellationTokenSource();
 
+		public double SpinnerCoverOpacity { get; set; } = 0.0;
+
 		public LoadingSpinner()
 		{
 			InitializeComponent();
 			Unloaded += LoadingSpinner_Unloaded;
+		}
+
+		protected override void OnVisualParentChanged(DependencyObject oldParent)
+		{
+			base.OnVisualParentChanged(oldParent);
 		}
 
 		public void SetIsLoading(bool a_isLoading)
