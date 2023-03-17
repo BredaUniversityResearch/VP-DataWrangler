@@ -29,7 +29,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlackmagicCameraControlData
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CommonLogging", "CommonLogging\CommonLogging.csproj", "{D3BF8AFA-1754-4E1F-ABB6-EFE9F7E00DA7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataWranglerCommonTests", "DataWranglerCommonTests\DataWranglerCommonTests.csproj", "{3C225B07-5558-4B2E-9A9E-833AF02CBD23}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataWranglerCommonTests", "DataWranglerCommonTests\DataWranglerCommonTests.csproj", "{3C225B07-5558-4B2E-9A9E-833AF02CBD23}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CameraControlOverEthernet", "CameraControlOverEthernet\CameraControlOverEthernet.csproj", "{00C2E667-54CF-417C-A8ED-CB637B19BA34}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -209,6 +211,18 @@ Global
 		{3C225B07-5558-4B2E-9A9E-833AF02CBD23}.Release|x64.Build.0 = Release|Any CPU
 		{3C225B07-5558-4B2E-9A9E-833AF02CBD23}.Release|x86.ActiveCfg = Release|Any CPU
 		{3C225B07-5558-4B2E-9A9E-833AF02CBD23}.Release|x86.Build.0 = Release|Any CPU
+		{00C2E667-54CF-417C-A8ED-CB637B19BA34}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{00C2E667-54CF-417C-A8ED-CB637B19BA34}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{00C2E667-54CF-417C-A8ED-CB637B19BA34}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{00C2E667-54CF-417C-A8ED-CB637B19BA34}.Debug|x64.Build.0 = Debug|Any CPU
+		{00C2E667-54CF-417C-A8ED-CB637B19BA34}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{00C2E667-54CF-417C-A8ED-CB637B19BA34}.Debug|x86.Build.0 = Debug|Any CPU
+		{00C2E667-54CF-417C-A8ED-CB637B19BA34}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{00C2E667-54CF-417C-A8ED-CB637B19BA34}.Release|Any CPU.Build.0 = Release|Any CPU
+		{00C2E667-54CF-417C-A8ED-CB637B19BA34}.Release|x64.ActiveCfg = Release|Any CPU
+		{00C2E667-54CF-417C-A8ED-CB637B19BA34}.Release|x64.Build.0 = Release|Any CPU
+		{00C2E667-54CF-417C-A8ED-CB637B19BA34}.Release|x86.ActiveCfg = Release|Any CPU
+		{00C2E667-54CF-417C-A8ED-CB637B19BA34}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
