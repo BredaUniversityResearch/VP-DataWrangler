@@ -114,7 +114,7 @@ internal class DeckLinkDeviceInputNotificationHandler : IDeckLinkInputCallback
                     }
                     catch (Exception ex)
                     {
-                        Logger.LogError("DeckLink", $"Failed to deserialize command stream, exception occurred: {ex.Message}");
+                        Logger.LogError("DeckLink", $"Failed to deserialize command stream, exception occurred: {ex.Message}\nInner: {ex.InnerException?.Message}");
                     }
                 }
             }

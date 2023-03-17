@@ -1,6 +1,6 @@
 ﻿namespace BlackmagicCameraControlData.CommandPackets
 {
-	[CommandPacketMeta(12, 11, 0, ECommandDataType.Utf8String)]
+	[CommandPacketMeta(12, 12, 0, ECommandDataType.Utf8String)]
 	public class CommandPacketVendorLensFocus: ICommandPacketBase
 	{
 		public string FocusDistance;	//
