@@ -5,14 +5,15 @@ using BlackmagicCameraControl;
 using BlackmagicCameraControlBluetooth;
 using CommonLogging;
 using DataWranglerCommon;
+using DataWranglerInterface.CameraHandling;
 using ShotGridIntegration;
 
 namespace DataWranglerInterface.ShotRecording
 {
-	/// <summary>
-	/// Interaction logic for ShotRecordingPage.xaml
-	/// </summary>
-	public partial class ShotRecordingPage : Page, IDisposable
+    /// <summary>
+    /// Interaction logic for ShotRecordingPage.xaml
+    /// </summary>
+    public partial class ShotRecordingPage : Page, IDisposable
 	{
 		private BlackmagicBluetoothCameraAPIController m_bluetoothController;
 		private ActiveCameraHandler m_activeCameraHandler;

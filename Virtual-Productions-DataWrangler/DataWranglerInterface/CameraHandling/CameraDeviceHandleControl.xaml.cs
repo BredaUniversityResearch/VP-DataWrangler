@@ -2,10 +2,11 @@
 using System.Windows.Controls;
 using System.Windows.Input;
 using BlackmagicCameraControlData;
+using DataWranglerInterface.CameraHandling;
 
 namespace DataWranglerInterface.ShotRecording
 {
-	public partial class CameraDeviceHandleControl : UserControl
+    public partial class CameraDeviceHandleControl : UserControl
 	{
 		public class DragDropInfo
 		{

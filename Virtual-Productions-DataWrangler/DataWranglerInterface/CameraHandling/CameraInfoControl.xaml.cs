@@ -2,13 +2,14 @@
 using System.Windows;
 using System.Windows.Controls;
 using DataWranglerCommon;
+using DataWranglerInterface.CameraHandling;
 
 namespace DataWranglerInterface.ShotRecording
 {
-	/// <summary>
-	/// Interaction logic for CameraInfoControl.xaml
-	/// </summary>
-	public partial class CameraInfoControl : UserControl
+    /// <summary>
+    /// Interaction logic for CameraInfoControl.xaml
+    /// </summary>
+    public partial class CameraInfoControl : UserControl
 	{
 		public ObservableCollection<ActiveCameraInfoControl> ActiveCameras { get; private set; } = new ObservableCollection<ActiveCameraInfoControl>();
 

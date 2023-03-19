@@ -1,18 +1,22 @@
-﻿using CameraControlOverEthernet;
+﻿using BlackMagicCameraControlBluetoothEthernetRelay;
+using CameraControlOverEthernet;
 using CommonLogging;
 
 class App
 {
-	private CameraControlServer m_server = new CameraControlServer();
-	private CameraControlClient m_client = new CameraControlClient();
+	private CameraControlNetworkServer m_networkServer = new CameraControlNetworkServer();
+	private CameraControlBluetoothRelay? m_relay; 
 
 	private void Run()
 	{
-		m_server.Start();
-		m_client.StartListenForServer();
+		m_relay = new CameraControlBluetoothRelay();
 
-		while (true)
-			continue;
+		m_networkServer.Start();
+
+		while (m_relay.ShouldKeepRunning)
+		{
+			m_relay.Update();
+		}
 	}
 
 	public static void Main()

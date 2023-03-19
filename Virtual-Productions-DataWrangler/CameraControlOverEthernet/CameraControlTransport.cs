@@ -22,7 +22,7 @@
 			{
 				uint identifier = a_reader.ReadUInt32();
 				CommandControlPacketMeta? meta = CameraControlPacketFactory.FindMeta(identifier);
-				if (meta != null && bytesRemaining >= meta.SerializedLength + PacketIdentifierSize)
+				if (meta != null)
 				{
 					packet = meta.CreateDefaultedInstance();
 					foreach (CommandControlPacketFieldMeta field in meta.Fields)

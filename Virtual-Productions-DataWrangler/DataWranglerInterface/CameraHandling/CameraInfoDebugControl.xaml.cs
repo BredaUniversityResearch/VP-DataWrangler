@@ -4,13 +4,14 @@ using BlackmagicCameraControl;
 using BlackmagicCameraControlBluetooth;
 using BlackmagicCameraControlData;
 using BlackmagicCameraControlData.CommandPackets;
+using DataWranglerInterface.CameraHandling;
 
 namespace DataWranglerInterface.ShotRecording
 {
-	/// <summary>
-	/// Interaction logic for CameraInfoDebugControl.xaml
-	/// </summary>
-	public partial class CameraInfoDebugControl : UserControl
+    /// <summary>
+    /// Interaction logic for CameraInfoDebugControl.xaml
+    /// </summary>
+    public partial class CameraInfoDebugControl : UserControl
 	{
 		public BlackmagicBluetoothCameraAPIController? CameraApiController = null;
 		private ActiveCameraInfo? m_activeCamera = null;

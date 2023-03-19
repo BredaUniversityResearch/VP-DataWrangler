@@ -9,7 +9,6 @@ internal class CommandControlPacketMeta
 	private readonly Type m_targetType;
 	private readonly List<CommandControlPacketFieldMeta> m_fieldMeta = new List<CommandControlPacketFieldMeta>();
 	public IReadOnlyCollection<CommandControlPacketFieldMeta> Fields => m_fieldMeta;
-	public readonly int SerializedLength;
 
 	public readonly uint Identifier;
 
@@ -21,7 +20,6 @@ internal class CommandControlPacketMeta
 		{
 			CommandControlPacketFieldMeta meta = new CommandControlPacketFieldMeta(fi);
 			m_fieldMeta.Add(meta);
-			SerializedLength += meta.SerializedLength;
 		}
 	}
 

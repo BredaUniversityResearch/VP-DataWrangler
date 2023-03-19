@@ -4,15 +4,16 @@ using System.Windows;
 using System.Windows.Controls;
 using CommonLogging;
 using DataWranglerCommon;
+using DataWranglerInterface.CameraHandling;
 using Newtonsoft.Json;
 using ShotGridIntegration;
 
 namespace DataWranglerInterface.ShotRecording
 {
-	/// <summary>
-	/// Interaction logic for ShotVersionTemplateDisplay.xaml
-	/// </summary>
-	public partial class ShotVersionTemplateDisplay : UserControl
+    /// <summary>
+    /// Interaction logic for ShotVersionTemplateDisplay.xaml
+    /// </summary>
+    public partial class ShotVersionTemplateDisplay : UserControl
 	{
 		private class CameraPropertyChangedSubscriber
 		{

@@ -3,13 +3,14 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using BlackmagicCameraControlData;
+using DataWranglerInterface.CameraHandling;
 
 namespace DataWranglerInterface.ShotRecording
 {
-	/// <summary>
-	/// Interaction logic for ActiveCameraInfoControl.xaml
-	/// </summary>
-	public partial class ActiveCameraInfoControl : UserControl
+    /// <summary>
+    /// Interaction logic for ActiveCameraInfoControl.xaml
+    /// </summary>
+    public partial class ActiveCameraInfoControl : UserControl
 	{
 		public ActiveCameraInfo TargetInfo { get; private set; }
 		public string CurrentTooltip => $"Virtual camera {TargetInfo.CameraModel}";

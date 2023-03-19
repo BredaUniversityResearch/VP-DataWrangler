@@ -11,7 +11,6 @@ using Windows.Devices.Enumeration;
 using BlackmagicCameraControl;
 using BlackmagicCameraControlData;
 using BlackmagicCameraControlData.CommandPackets;
-using CommonLogging;
 using DataWranglerCommon;
 
 namespace BlackmagicCameraControlBluetooth

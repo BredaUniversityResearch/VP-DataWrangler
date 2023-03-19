@@ -6,7 +6,7 @@ using CommonLogging;
 
 namespace CameraControlOverEthernet
 {
-	public class CameraControlClient
+	public class CameraControlNetworkClient
 	{
 		private class ServerConnection
 		{
@@ -21,20 +21,25 @@ namespace CameraControlOverEthernet
 		};
 
 		private static readonly TimeSpan ConnectTimeout = TimeSpan.FromSeconds(5);
+		private static readonly TimeSpan HeartbeatSendInterval = TimeSpan.FromSeconds(5);
 
 		private List<ServerConnection> m_activeClients = new List<ServerConnection>();
-		private UdpClient m_discoveryReceiver = new UdpClient(CameraControlServer.DiscoveryMulticastPort);
+		private UdpClient m_discoveryReceiver = new UdpClient(CameraControlNetworkServer.DiscoveryMulticastPort);
 
 		private CancellationTokenSource m_stopListeningToken = new CancellationTokenSource();
 		private Task? m_listenTask;
 		private Task? m_connectTask;
 
-		private ConcurrentQueue<KeyValuePair<int, IPEndPoint>> m_receivedServerBroadcastQueue = new ConcurrentQueue<KeyValuePair<int, IPEndPoint>>();
-		private AutoResetEvent m_receivedServerBroadcastEvent = new AutoResetEvent(false);
+		private ConcurrentQueue<KeyValuePair<int, IPEndPoint>> m_receivedServerBroadcastQueue = new();
+		private AutoResetEvent m_receivedServerBroadcastEvent = new(false);
+		private DateTime m_lastHeartbeatSendTime = DateTime.UtcNow;
+
+		public event Action<int> OnConnected = delegate { };
+		public event Action<int> OnDisconnected = delegate { };
 
 		public void StartListenForServer()
 		{
-			m_discoveryReceiver.JoinMulticastGroup(CameraControlServer.DiscoveryMulticastAddress);
+			m_discoveryReceiver.JoinMulticastGroup(CameraControlNetworkServer.DiscoveryMulticastAddress);
 			m_discoveryReceiver.Client.ReceiveTimeout = 1000;
 
 			m_listenTask = new Task(BackgroundListenForServer);
@@ -117,6 +122,8 @@ namespace CameraControlOverEthernet
 						m_activeClients.Add(new ServerConnection(a_serverIdentifier, client));
 						Logger.LogVerbose("CCClient", $"Successfully connected to server {a_endPointValue}");
 					}
+
+					OnConnected(a_serverIdentifier);
 				}
 				else
 				{
@@ -154,6 +161,70 @@ namespace CameraControlOverEthernet
 			}
 
 			return false;
+		}
+
+		public void SendPacket(ICameraControlPacket a_packet)
+		{
+			byte[] bufferBytes = new byte[128];
+			using MemoryStream ms = new MemoryStream(bufferBytes,true);
+			using BinaryWriter writer = new BinaryWriter(ms, Encoding.ASCII, true);
+			CameraControlTransport.Write(a_packet, writer);
+
+			CleanDisconnectedClients();
+
+			lock (m_activeClients)
+			{
+				foreach (ServerConnection connectedServer in m_activeClients)
+				{
+					try
+					{
+						if (connectedServer.Socket.Connected)
+						{
+							connectedServer.Socket.GetStream().Write(bufferBytes, 0, (int)ms.Position);
+						}
+					}
+					catch (IOException ex)
+					{
+						if (ex.InnerException != null && ex.InnerException is SocketException soEx)
+						{
+							if (soEx.SocketErrorCode == SocketError.ConnectionReset)
+							{
+								//Disconnect handle;
+								connectedServer.Socket.Close();
+							}
+						}
+						else
+						{
+							throw;
+						}
+					}
+				}
+			}
+		}
+
+		private void CleanDisconnectedClients()
+		{
+			lock (m_activeClients)
+			{
+				for (int i = m_activeClients.Count - 1; i >= 0; --i)
+				{
+					if (!m_activeClients[i].Socket.Connected)
+					{
+						OnDisconnected(m_activeClients[i].ServerIdentifier);
+						m_activeClients.RemoveAt(i);
+					}
+				}
+			}
+		}
+
+		public void Update()
+		{
+			CleanDisconnectedClients();
+			if (DateTime.UtcNow - m_lastHeartbeatSendTime > HeartbeatSendInterval)
+			{
+				SendPacket(new CameraControlHeartbeat());
+				m_lastHeartbeatSendTime = DateTime.UtcNow;
+			}
 		}
 	}
 }
