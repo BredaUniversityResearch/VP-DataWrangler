@@ -6,7 +6,7 @@ using CommonLogging;
 
 namespace CameraControlOverEthernet
 {
-	public class CameraControlNetworkClient
+	public class CameraControlNetworkTransmitter
 	{
 		private class ServerConnection
 		{
@@ -24,7 +24,7 @@ namespace CameraControlOverEthernet
 		private static readonly TimeSpan HeartbeatSendInterval = TimeSpan.FromSeconds(5);
 
 		private List<ServerConnection> m_activeClients = new List<ServerConnection>();
-		private UdpClient m_discoveryReceiver = new UdpClient(CameraControlNetworkServer.DiscoveryMulticastPort);
+		private UdpClient m_discoveryReceiver = new UdpClient(CameraControlNetworkReceiver.DiscoveryMulticastPort);
 
 		private CancellationTokenSource m_stopListeningToken = new CancellationTokenSource();
 		private Task? m_listenTask;
@@ -39,7 +39,7 @@ namespace CameraControlOverEthernet
 
 		public void StartListenForServer()
 		{
-			m_discoveryReceiver.JoinMulticastGroup(CameraControlNetworkServer.DiscoveryMulticastAddress);
+			m_discoveryReceiver.JoinMulticastGroup(CameraControlNetworkReceiver.DiscoveryMulticastAddress);
 			m_discoveryReceiver.Client.ReceiveTimeout = 1000;
 
 			m_listenTask = new Task(BackgroundListenForServer);

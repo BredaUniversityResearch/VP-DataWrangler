@@ -1,13 +1,14 @@
 ﻿using AutoNotify;
+using Newtonsoft.Json;
 
 namespace DataWranglerCommon;
 
 public abstract partial class DataWranglerFileSourceMeta
 {
-	[AutoNotify]
+	[AutoNotify, JsonProperty("SourceType")]
 	private string m_sourceType;
 
-	[AutoNotify]
+	[AutoNotify, JsonProperty("SourceFileTag")]
 	private string m_sourceFileTag;
 
 	public abstract bool IsUniqueMeta { get; } //Does it make sense if we have multiple of these meta entries on a single shot?

@@ -5,7 +5,7 @@ namespace BlackmagicCameraControlData.CommandPackets
 	[CommandPacketMeta(9, 4, 4, ECommandDataType.Int32)]
 	public class CommandPacketSystemTimeCode : ICommandPacketBase
 	{
-		public int BinaryCodedTimeCode = 0; //BCD
+		public uint BinaryCodedTimeCode = 0; //BCD
 		public TimeCode TimeCode = new TimeCode(0, 0, 0, 0); // HH:MM:SS:FF
 
 		public CommandPacketSystemTimeCode()
@@ -14,7 +14,7 @@ namespace BlackmagicCameraControlData.CommandPackets
 
 		public CommandPacketSystemTimeCode(CommandReader a_reader)
 		{
-			BinaryCodedTimeCode = a_reader.ReadInt32();
+			BinaryCodedTimeCode = a_reader.ReadUInt32();
 			TimeCode = TimeCode.FromBCD((uint)BinaryCodedTimeCode);
 		}
 

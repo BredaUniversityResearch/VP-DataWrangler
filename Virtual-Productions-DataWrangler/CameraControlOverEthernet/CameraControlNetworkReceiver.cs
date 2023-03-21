@@ -1,4 +1,6 @@
-﻿using System.Net;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
+using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Xml;
@@ -6,7 +8,7 @@ using CommonLogging;
 
 namespace CameraControlOverEthernet
 {
-	public class CameraControlNetworkServer
+	public class CameraControlNetworkReceiver
 	{
 		private class ClientConnection
 		{
@@ -37,6 +39,7 @@ namespace CameraControlOverEthernet
 		private readonly int m_serverIdentifier = Random.Shared.Next();
 
 		private List<ClientConnection> m_connectedClients = new List<ClientConnection>();
+		private BlockingCollection<ICameraControlPacket> m_receivedPacketQueue = new BlockingCollection<ICameraControlPacket>();
 
 		public void Start()
 		{
@@ -98,7 +101,24 @@ namespace CameraControlOverEthernet
 					break;
 				}
 
-				int bytesReceived = await a_client.Client.GetStream().ReadAsync(receiveBuffer, 0, (int)receiveBuffer.Length);
+				int bytesReceived = 0;
+				try
+				{
+					bytesReceived = await a_client.Client.GetStream().ReadAsync(receiveBuffer, 0, (int) receiveBuffer.Length);
+				}
+				catch (IOException ex)
+				{
+					if (ex.InnerException is SocketException soEx && 
+					    (soEx.SocketErrorCode == SocketError.ConnectionAborted ||
+					     soEx.SocketErrorCode == SocketError.ConnectionReset))
+					{
+						Logger.LogVerbose("CCServer", $"Dropping client at {a_client.Client.Client.RemoteEndPoint} due to connection abort");
+						a_client.Client.Close();
+					}
+					else
+						throw;
+				}
+
 				if (bytesReceived > 0)
 				{
 					MemoryStream ms = new MemoryStream(receiveBuffer, 0, bytesReceived, false);
@@ -109,13 +129,19 @@ namespace CameraControlOverEthernet
 							ICameraControlPacket? packet = CameraControlTransport.TryRead(reader);
 							if (packet != null)
 							{
-								Logger.LogVerbose("CCServer", $"Received Packet From Client {a_client.Client.Client.RemoteEndPoint} of type {packet.GetType()}");
+								//Logger.LogVerbose("CCServer", $"Received Packet From Client {a_client.Client.Client.RemoteEndPoint} of type {packet.GetType()}");
+								m_receivedPacketQueue.Add(packet);
 								a_client.LastActivityTime = DateTime.UtcNow;
 							}
 						}
 					}
 				}
 			}
+		}
+
+		public bool TryDequeueMessage([NotNullWhen(true)] out ICameraControlPacket? a_cameraControlPacket, TimeSpan a_timeout, CancellationToken a_cancellationToken)
+		{
+			return m_receivedPacketQueue.TryTake(out a_cameraControlPacket, (int)a_timeout.TotalMilliseconds, a_cancellationToken);
 		}
 	}
 }

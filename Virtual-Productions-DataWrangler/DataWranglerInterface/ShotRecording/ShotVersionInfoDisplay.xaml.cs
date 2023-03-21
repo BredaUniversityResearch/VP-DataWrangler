@@ -64,6 +64,11 @@ namespace DataWranglerInterface.ShotRecording
 							SetTargetMeta(new DataWranglerShotVersionMeta());
 						}
 					}
+					catch (JsonSerializationException ex)
+					{
+						Logger.LogError("Interface", $"Failed to deserialize shot version meta from value: {a_shotVersion.Attributes.DataWranglerMeta}. Exception: {ex.Message}");
+						SetTargetMeta(new DataWranglerShotVersionMeta());
+					}
 					catch (JsonReaderException ex)
 					{
 						Logger.LogError("Interface", $"Failed to deserialize shot version meta from value: {a_shotVersion.Attributes.DataWranglerMeta}. Exception: {ex.Message}");

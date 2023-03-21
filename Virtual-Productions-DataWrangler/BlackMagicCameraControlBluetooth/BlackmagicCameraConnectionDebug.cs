@@ -50,14 +50,14 @@ namespace BlackmagicCameraControl
 			while (!m_messageProducerCancellationTokenSource.IsCancellationRequested)
 			{
 				DateTime timeNow = DateTime.UtcNow;
-				m_dispatcher.NotifyDataReceived(CameraDeviceHandle, new TimeCode(timeNow.Hour, timeNow.Minute, timeNow.Second, timeNow.Millisecond),
+				m_dispatcher.NotifyDecodedDataReceived(CameraDeviceHandle, new TimeCode(timeNow.Hour, timeNow.Minute, timeNow.Second, timeNow.Millisecond),
 					new CommandPacketSystemBatteryInfo() {BatteryPercentage = 69, BatteryVoltage_mV = 1337});
 				LastReceivedDataTime = DateTimeOffset.UtcNow;
 
 				while (m_packetSendQueue.Count > 0)
 				{
 					ICommandPacketBase packet = m_packetSendQueue.Dequeue();
-					m_dispatcher.NotifyDataReceived(CameraDeviceHandle, new TimeCode(timeNow.Hour, timeNow.Minute, timeNow.Second, timeNow.Millisecond), packet);
+					m_dispatcher.NotifyDecodedDataReceived(CameraDeviceHandle, new TimeCode(timeNow.Hour, timeNow.Minute, timeNow.Second, timeNow.Millisecond), packet);
 				}
 
 				m_messageProducerCancellationTokenSource.Token.WaitHandle.WaitOne(new TimeSpan(0, 0, 1));

@@ -155,7 +155,7 @@ namespace {namespaceName}
             }
 
             a_source.Append($@"
-[AutoNotify.AutoNotifyProperty(""{fieldName}"")]
+[AutoNotify.AutoNotifyProperty(""{fieldName}""), Newtonsoft.Json.JsonIgnore]
 public {fieldType} {propertyName} 
 {{
     get 

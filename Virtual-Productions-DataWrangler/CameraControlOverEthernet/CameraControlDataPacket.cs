@@ -1,5 +1,4 @@
 ﻿using BlackmagicCameraControlData;
-using BlackmagicCameraControlData.CommandPackets;
 using DataWranglerCommon;
 
 namespace CameraControlOverEthernet;
@@ -10,15 +9,10 @@ public class CameraControlDataPacket: ICameraControlPacket
 	public uint ReceivedTimeCodeAsBCD;
 	public byte[] PacketData;
 
-	public CameraControlDataPacket(CameraDeviceHandle a_deviceHandle, TimeCode a_receivedTime, ICommandPacketBase a_packet)
+	public CameraControlDataPacket(CameraDeviceHandle a_deviceHandle, TimeCode a_receivedTime, byte[] a_packetPayload)
 	{
 		DeviceUuid = a_deviceHandle.DeviceUuid;
 		ReceivedTimeCodeAsBCD = a_receivedTime.TimeCodeAsBinaryCodedDecimal;
-		using (MemoryStream ms = new MemoryStream(128))
-		{
-			CommandWriter writer = new CommandWriter(ms);
-			a_packet.WriteTo(writer);
-			PacketData = ms.ToArray();
-		}
+		PacketData = a_packetPayload;
 	}
 }

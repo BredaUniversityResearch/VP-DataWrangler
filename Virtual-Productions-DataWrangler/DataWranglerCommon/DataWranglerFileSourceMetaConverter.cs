@@ -32,6 +32,6 @@ public class DataWranglerFileSourceMetaConverter : JsonConverter<DataWranglerFil
 			return meta;
 		}
 
-		return null;
+		throw new JsonSerializationException($"Failed to populate DataWranglerFileSourceMeta. Required field \"SourceType\" missing. Full Json: {rootObject.ToString()}");
 	}
 }

@@ -9,11 +9,13 @@ namespace DataWranglerInterface.CameraHandling
 {
     public class CameraPropertyChangedEventArgs : PropertyChangedEventArgs
     {
+        public readonly ActiveCameraInfo Source;
         public readonly TimeCode ReceiveTimeCode;
 
-        public CameraPropertyChangedEventArgs(string? a_propertyName, TimeCode a_receiveTimeCode)
+        public CameraPropertyChangedEventArgs(string? a_propertyName, ActiveCameraInfo a_source, TimeCode a_receiveTimeCode)
             : base(a_propertyName)
         {
+	        Source = a_source;
             ReceiveTimeCode = a_receiveTimeCode;
         }
     };
@@ -131,7 +133,7 @@ namespace DataWranglerInterface.CameraHandling
 
         private void OnCameraPropertyChanged(string a_propertyName, TimeCode a_changeTime)
         {
-            CameraPropertyChangedEventArgs evt = new CameraPropertyChangedEventArgs(a_propertyName, a_changeTime);
+            CameraPropertyChangedEventArgs evt = new CameraPropertyChangedEventArgs(a_propertyName, this, a_changeTime);
             CameraPropertyChanged?.Invoke(this, evt);
         }
     }

@@ -4,14 +4,14 @@ using CommonLogging;
 
 class App
 {
-	private CameraControlNetworkServer m_networkServer = new CameraControlNetworkServer();
+	//private readonly CameraControlNetworkReceiver m_networkReceiver = new CameraControlNetworkReceiver();
 	private CameraControlBluetoothRelay? m_relay; 
 
 	private void Run()
 	{
 		m_relay = new CameraControlBluetoothRelay();
 
-		m_networkServer.Start();
+		//m_networkReceiver.Start();
 
 		while (m_relay.ShouldKeepRunning)
 		{

@@ -85,6 +85,11 @@ internal class CommandControlPacketFieldMeta
 			{
 				ushort arrayLength = a_reader.ReadUInt16();
 				byte[] value = a_reader.ReadBytes(arrayLength);
+				if (value.Length != arrayLength)
+				{
+					throw new Exception("Failed to read required amount of data");
+				}
+
 				m_targetField.SetValue(a_target, value);
 				break;
 			}

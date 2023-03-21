@@ -71,10 +71,13 @@ namespace BlackmagicCameraControlBluetooth
 		public int ConnectedCameraCount => m_activeConnections.Count;
 		public CameraPairRequestPairingCode? OnCameraRequestPairingCode = null;
 
-		private Thread m_reconnectThread;
-		private CancellationTokenSource m_backgroundProcessingCancellationToken;
+		private Thread? m_reconnectThread = null;
+		private CancellationTokenSource? m_backgroundProcessingCancellationToken = null;
 
-		public BlackmagicBluetoothCameraAPIController()
+		public event Action<CameraDeviceHandle, TimeCode, byte[]> OnRawBluetoothCommandDataReceived = delegate { };
+		public event Action<CameraDeviceHandle, TimeCode> OnTimeCodeReceived = delegate { };
+
+		public void Start()
 		{
 			BLEDeviceWatcher.Added += OnDeviceAdded;
 			BLEDeviceWatcher.Removed += OnDeviceRemoved;
@@ -82,23 +85,23 @@ namespace BlackmagicCameraControlBluetooth
 
 			m_bluetoothAdvertisementWatcher.ScanningMode = BluetoothLEScanningMode.Active;
 			m_bluetoothAdvertisementWatcher.Received += OnDeviceAdvertisementReceived;
-            try
-            {
-                m_bluetoothAdvertisementWatcher.Start();
-            }
-            catch (COMException ex)
-            {
-                BlackmagicCameraLogInterface.LogError($"Failed to start Bluetooth advertisement watcher. Exception: {ex.Message}");
-            }
+			try
+			{
+				m_bluetoothAdvertisementWatcher.Start();
+			}
+			catch (COMException ex)
+			{
+				BlackmagicCameraLogInterface.LogError($"Failed to start Bluetooth advertisement watcher. Exception: {ex.Message}");
+			}
 
-            m_backgroundProcessingCancellationToken = new CancellationTokenSource();
+			m_backgroundProcessingCancellationToken = new CancellationTokenSource();
 			m_reconnectThread = new Thread(BackgroundProcessingMain);
 			m_reconnectThread.Start();
 		}
 
 		public void Dispose()
 		{
-			m_backgroundProcessingCancellationToken.Cancel();
+			m_backgroundProcessingCancellationToken?.Cancel();
 
 			foreach (IBlackmagicCameraConnection connection in m_activeConnections)
 			{
@@ -109,12 +112,12 @@ namespace BlackmagicCameraControlBluetooth
 
 			//BLEDeviceWatcher.Stop();
 			m_bluetoothAdvertisementWatcher.Stop();
-			m_reconnectThread.Join();
+			m_reconnectThread?.Join();
 		}
 
 		private void BackgroundProcessingMain()
 		{
-			while (!m_backgroundProcessingCancellationToken.IsCancellationRequested)
+			while (!(m_backgroundProcessingCancellationToken?.IsCancellationRequested??true))
 			{
 				Stopwatch sw = new Stopwatch();
 				sw.Start();
@@ -262,6 +265,7 @@ namespace BlackmagicCameraControlBluetooth
 							else
 							{
 								failReason = "Device setup failed to complete in specified timeout";
+								deviceConnection.Dispose();
 							}
 						}
 						else
@@ -361,7 +365,12 @@ namespace BlackmagicCameraControlBluetooth
 			return null;
 		}
 
-		public void NotifyDataReceived(CameraDeviceHandle a_cameraDeviceHandle, TimeCode a_receivedTime, ICommandPacketBase a_packetInstance)
+		public void NotifyRawDataReceived(CameraDeviceHandle a_cameraDeviceHandle, TimeCode a_receivedTime, byte[] a_rawData)
+		{
+			OnRawBluetoothCommandDataReceived(a_cameraDeviceHandle, a_receivedTime, a_rawData);
+		}
+
+		public void NotifyDecodedDataReceived(CameraDeviceHandle a_cameraDeviceHandle, TimeCode a_receivedTime, ICommandPacketBase a_packetInstance)
 		{
 			if (a_packetInstance is not CommandPacketSystemTimeCode &&
 			    a_packetInstance is not CommandPacketSystemBatteryInfo)
@@ -413,6 +422,22 @@ namespace BlackmagicCameraControlBluetooth
 		public IEnumerable<AdvertisementEntry> GetAdvertisedDevices()
 		{
 			return m_availableDeviceAdvertisementsByBluetoothAddress.Values;
+		}
+
+		public IReadOnlyList<string> GetConnectedCameraUuids()
+		{
+			string[] data = new string[m_activeConnections.Count];
+			for (int i = 0; i < data.Length; ++i)
+			{
+				data[i] = m_activeConnections[i].DeviceId;
+			}
+
+			return data;
+		}
+
+		public void NotifyTimeCodeReceived(CameraDeviceHandle a_handle, TimeCode a_lastReceivedTimeCode)
+		{
+			OnTimeCodeReceived.Invoke(a_handle, a_lastReceivedTimeCode);
 		}
 	}
 }

@@ -14,7 +14,7 @@ namespace DataWranglerInterface.CameraHandling
 {
     public class ActiveCameraHandler
     {
-        private BlackmagicBluetoothCameraAPIController m_bluetoothController;
+        private BlackmagicBluetoothCameraAPIController? m_bluetoothController;
         private BlackmagicDeckLinkController? m_deckLinkController = null;
         private EthernetRelayCameraController m_relayCameraControl = new EthernetRelayCameraController();
         private List<ActiveCameraInfo> m_activeCameras = new List<ActiveCameraInfo>();
@@ -28,10 +28,17 @@ namespace DataWranglerInterface.CameraHandling
         public VideoPreviewControl? PreviewControl { get; set; }
         private Task? PreviewUpdateTask = null;
 
-        public ActiveCameraHandler(BlackmagicBluetoothCameraAPIController a_bluetoothController)
+        private CancellationTokenSource m_backgroundTaskCancellationSource = new CancellationTokenSource();
+        private Task m_backgroundDispatchTask;
+
+        public ActiveCameraHandler(BlackmagicBluetoothCameraAPIController? a_bluetoothController)
         {
             m_bluetoothController = a_bluetoothController;
-            SubscribeCameraController(m_bluetoothController);
+            if (m_bluetoothController != null)
+            {
+	            SubscribeCameraController(m_bluetoothController);
+            }
+
             SubscribeCameraController(m_relayCameraControl);
 
 			m_deckLinkController = BlackmagicDeckLinkController.Create(out string? errorMessage);
@@ -49,6 +56,16 @@ namespace DataWranglerInterface.CameraHandling
             {
                 PreviewUpdateTask = Task.Run(BackgroundUpdateFramePreview);
             }
+
+            m_backgroundDispatchTask = Task.Run(BackgroundDispatchReceivedEvents);
+        }
+
+        private void BackgroundDispatchReceivedEvents()
+        {
+	        while (!m_backgroundTaskCancellationSource.IsCancellationRequested)
+	        {
+		        m_relayCameraControl.BlockingProcessReceivedMessages(TimeSpan.FromSeconds(10), m_backgroundTaskCancellationSource.Token);
+	        }
         }
 
         private void SubscribeCameraController(CameraControllerBase a_cameraController)
@@ -62,7 +79,7 @@ namespace DataWranglerInterface.CameraHandling
         {
             if (FindCameraInfoForDevice(a_deviceHandle, out ActiveCameraInfo? targetCamera))
             {
-                targetCamera.OnCameraDataReceived(m_bluetoothController, a_deviceHandle, a_receivedTime, a_packet);
+                targetCamera.OnCameraDataReceived(a_deviceHandle.TargetController, a_deviceHandle, a_receivedTime, a_packet);
             }
             else
             {

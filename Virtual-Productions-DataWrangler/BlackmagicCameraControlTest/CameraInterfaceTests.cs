@@ -14,6 +14,7 @@ namespace BlackmagicCameraControlTest
 		public void ConnectToCamera()
 		{
 			using BlackmagicBluetoothCameraAPIController iface = new BlackmagicBluetoothCameraAPIController();
+			iface.Start();
 			CreateCameraConnection(iface);
 		}
 
@@ -21,6 +22,7 @@ namespace BlackmagicCameraControlTest
 		public void ReceiveBatteryPercentage()
 		{
 			using BlackmagicBluetoothCameraAPIController iface = new BlackmagicBluetoothCameraAPIController();
+			iface.Start();
 			CameraDeviceHandle deviceHandle = CreateCameraConnection(iface);
 			ManualResetEvent waitHandle = new ManualResetEvent(false);
 			iface.OnCameraDataReceived += (a_source, a_timeReceived, a_packet) =>

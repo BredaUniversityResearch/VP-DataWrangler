@@ -1,5 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 using AutoNotify;
+using Newtonsoft.Json;
 
 namespace DataWranglerCommon;
 
@@ -9,10 +10,10 @@ public partial class DataWranglerFileSourceMetaTascam: DataWranglerFileSourceMet
 
 	public override bool IsUniqueMeta => true;
 
-	[AutoNotify]
+	[AutoNotify, JsonProperty("FilePrefix")]
 	private string m_filePrefix = "TASCAM_";
 
-	[AutoNotify]
+	[AutoNotify, JsonProperty("FileIndex")]
 	private int m_fileIndex = 0;
 
 	public DataWranglerFileSourceMetaTascam()

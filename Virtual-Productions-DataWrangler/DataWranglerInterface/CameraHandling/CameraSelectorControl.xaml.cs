@@ -65,7 +65,6 @@ namespace DataWranglerInterface.ShotRecording
 		public void SetApiController(BlackmagicBluetoothCameraAPIController a_controller)
 		{
 			m_cameraApiController = a_controller;
-			m_cameraApiController.OnCameraRequestPairingCode = OnCameraRequestedPairingCode;
 		}
 
 		private void OnUpdateDropdown(object? a_sender, EventArgs a_e)

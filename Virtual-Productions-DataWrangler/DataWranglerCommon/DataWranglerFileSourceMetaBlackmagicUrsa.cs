@@ -1,5 +1,6 @@
 ﻿using AutoNotify;
 using DataWranglerCommon.BRAWSupport;
+using Newtonsoft.Json;
 
 namespace DataWranglerCommon;
 
@@ -12,22 +13,22 @@ public partial class DataWranglerFileSourceMetaBlackmagicUrsa: DataWranglerFileS
 
 	public override bool IsUniqueMeta => true;
 
-	[AutoNotify]
+	[AutoNotify, JsonProperty("Source")]
 	private string m_source = "";
 
-	[AutoNotify]
+	[AutoNotify, JsonProperty("CodecName")]
 	private string m_codecName = "";
 
-	[AutoNotify] 
+	[AutoNotify, JsonProperty("RecordingStart")] 
 	private DateTimeOffset m_recordingStart = DateTimeOffset.MinValue;
 
-	[AutoNotify]
+	[AutoNotify, JsonProperty("StartTimeCode")]
 	private TimeCode m_startTimeCode = new();
 
-	[AutoNotify, Obsolete("Now using CameraNumber & StartTimeCode to fix up files instead of RecordingStart & StorageTarget")] 
+	[AutoNotify, JsonProperty("StorageTarget"), Obsolete("Now using CameraNumber & StartTimeCode to fix up files instead of RecordingStart & StorageTarget")] 
 	private string m_storageTarget = "";
 
-	[AutoNotify]
+	[AutoNotify, JsonProperty("CameraNumber")]
 	private string m_cameraNumber = "A";
 
 	public DataWranglerFileSourceMetaBlackmagicUrsa()

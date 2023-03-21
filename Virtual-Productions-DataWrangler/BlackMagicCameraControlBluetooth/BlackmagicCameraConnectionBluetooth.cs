@@ -85,7 +85,15 @@ namespace BlackmagicCameraControl
 							m_deviceInformationCameraModel = characteristic;
 						}
 					}
-					IReadOnlyList<GattCharacteristic> blackmagicCharacteristics = m_blackmagicService.GetAllCharacteristics();
+					IReadOnlyList<GattCharacteristic>? blackmagicCharacteristics = null;
+					try
+					{
+						blackmagicCharacteristics = m_blackmagicService.GetAllCharacteristics();
+					}
+					catch (FileLoadException)
+					{
+						BlackmagicCameraLogInterface.LogVerbose($"Failed to load characteristics for device {m_device.Name}. File descriptor in use. ");
+					}
 
 					if (blackmagicCharacteristics != null)
 					{
@@ -241,6 +249,8 @@ namespace BlackmagicCameraControl
 				uint binaryTimecode = reader.ReadUInt32();
 				LastReceivedTimeCode = TimeCode.FromBCD(binaryTimecode);
 			}
+
+			m_dispatcher.NotifyTimeCodeReceived(CameraDeviceHandle, LastReceivedTimeCode);
 		}
 		
 		private void OnConnectionStatusChanged(BluetoothLEDevice a_sender, object a_args)
@@ -277,6 +287,13 @@ namespace BlackmagicCameraControl
 
 			//Deserialize and dispatch events.
 			using Stream inputData = a_args.CharacteristicValue.AsStream();
+			{
+				using MemoryStream ms = new MemoryStream((int) inputData.Length);
+				inputData.CopyTo(ms);
+
+				m_dispatcher.NotifyRawDataReceived(CameraDeviceHandle, LastReceivedTimeCode, ms.ToArray());
+			}
+
 			ProcessCommandsFromStream(inputData, a_args.Timestamp);
 		}
 
@@ -291,7 +308,7 @@ namespace BlackmagicCameraControl
 
 		private void ProcessCommandsFromStream(Stream a_inputData, DateTimeOffset a_receivedTime)
         {
-            CommandReader.DecodeStream(a_inputData, (a_id, a_packet) => { m_dispatcher.NotifyDataReceived(CameraDeviceHandle, LastReceivedTimeCode, a_packet); });
+            CommandReader.DecodeStream(a_inputData, (a_id, a_packet) => { m_dispatcher.NotifyDecodedDataReceived(CameraDeviceHandle, LastReceivedTimeCode, a_packet); });
         }
 
 		public Task<string> AsyncRequestCameraModel()

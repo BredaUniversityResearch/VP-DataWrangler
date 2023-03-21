@@ -10,7 +10,7 @@ namespace ShotGridIntegrationTest
 	[TestClass]
 	public class ShotGridApiTests
 	{
-		
+
 
 		private static ShotGridAPI m_api = new ShotGridAPI();
 
@@ -40,7 +40,7 @@ namespace ShotGridIntegrationTest
 		public void GetProjects()
 		{
 			ShotGridAPIResponse<ShotGridEntityProject[]> projects = m_api.GetActiveProjects().Result;
-			
+
 			Assert.IsFalse(projects.IsError);
 
 			foreach (ShotGridEntityProject project in projects.ResultData!)
@@ -113,7 +113,7 @@ namespace ShotGridIntegrationTest
 		public void UpdateEntityData()
 		{
 			ShotGridAPIResponse<ShotGridEntityShotVersion> response = m_api.UpdateEntityProperties<ShotGridEntityShotVersion>(
-				TestConstants.TargetShotVersionId, new Dictionary<string, object>{{"sg_datawrangler_meta", "test"}}).Result;
+				TestConstants.TargetShotVersionId, new Dictionary<string, object> {{"sg_datawrangler_meta", "test"}}).Result;
 
 			Assert.IsFalse(response.IsError);
 		}
@@ -128,12 +128,13 @@ namespace ShotGridIntegrationTest
 
 
 			ShotGridEntityFilePublish.FilePublishAttributes attributes = new ShotGridEntityFilePublish.FilePublishAttributes();
-			attributes.Path = new ShotGridEntityFilePublish.FileLink{
+			attributes.Path = new ShotGridEntityFilePublish.FileLink
+			{
 				//Url = new UriBuilder { Scheme = Uri.UriSchemeFile, Path = targetPath, Host = "cradlenas" }.Uri.AbsoluteUri,
 				FileName = "UNIT_TEST_TEST_FILE.braw",
 				LinkType = "local",
 				LocalPath = targetPath,
-				LocalStorageTarget = new ShotGridEntityReference(ShotGridEntityName.LocalStorage,3)
+				LocalStorageTarget = new ShotGridEntityReference(ShotGridEntityName.LocalStorage, 3)
 			};
 			attributes.PublishedFileName = "Testing braw File";
 			attributes.PublishedFileType = new ShotGridEntityReference(fileTypeRelation.ResultData!.ShotGridType!, fileTypeRelation.ResultData.Id);
@@ -142,7 +143,17 @@ namespace ShotGridIntegrationTest
 			ShotGridAPIResponse<ShotGridEntityFilePublish> response = m_api.CreateFilePublish(TestConstants.TargetProjectId, TestConstants.TargetShotId, TestConstants.TargetShotVersionId, attributes).Result;
 
 			Assert.IsFalse(response.IsError);
+		}
 
+		[TestMethod]
+		public void CreateShotVersion()
+		{
+			ShotVersionAttributes attributes = new ShotVersionAttributes();
+			attributes.Flagged = false;
+			attributes.DataWranglerMeta = "{\"dummy\": \"Created by unit tests\"}";
+			attributes.VersionCode = "Unit Test Created Shot Version";
+			ShotGridAPIResponse<ShotGridEntityShotVersion> result = m_api.CreateNewShotVersion(TestConstants.TargetProjectId, TestConstants.TargetShotId, attributes).Result;
+			Assert.IsFalse(result.IsError);
 		}
 
 		[TestMethod]
