@@ -13,7 +13,7 @@ namespace DataWranglerInterface.ShotRecording
     public partial class ActiveCameraInfoControl : UserControl
 	{
 		public ActiveCameraInfo TargetInfo { get; private set; }
-		public string CurrentTooltip => $"Virtual camera {TargetInfo.CameraModel}";
+		public string CurrentTooltip => $"Virtual camera\nModel: {TargetInfo.CameraModel}\nName: {TargetInfo.CameraName}\nBattery: {TargetInfo.BatteryPercentage}({TargetInfo.BatteryVoltage_mV} mV)\nCodec: {TargetInfo.SelectedCodec}\nTransport: {TargetInfo.CurrentTransportMode}";
 
 		public ObservableCollection<CameraDeviceHandleControl> DeviceHandleControls { get; } = new ObservableCollection<CameraDeviceHandleControl>();
 
@@ -117,6 +117,11 @@ namespace DataWranglerInterface.ShotRecording
 					}
 				}
 			}
+		}
+
+		private void OnToolTipOpening(object a_sender, ToolTipEventArgs a_e)
+		{
+			((StackPanel)a_sender).ToolTip = CurrentTooltip;
 		}
 	}
 }

@@ -68,67 +68,81 @@ namespace DataWranglerInterface.CameraHandling
             }
 
             m_connectionsForPhysicalDevice.Add(a_deviceHandle);
+            foreach (var kvp in a_fromCamera.m_cameraProperties.CurrentValues)
+            {
+	            if (m_cameraProperties.CheckPropertyChanged(kvp.Key, kvp.Value.PacketData, kvp.Value.LastUpdateTime))
+	            {
+                    OnUpdatedCameraDataReceived(a_deviceHandle, kvp.Value.LastUpdateTime, kvp.Value.PacketData);
+	            }
+            }
 
             a_fromCamera.DeviceConnectionsChanged.Invoke(a_fromCamera);
             DeviceConnectionsChanged.Invoke(this);
         }
 
-        public void OnCameraDataReceived(CameraControllerBase a_deviceController, CameraDeviceHandle a_deviceHandle, TimeCode a_receivedTime, ICommandPacketBase a_packet)
+        public void OnCameraDataReceived(CameraDeviceHandle a_deviceHandle, TimeCode a_receivedTime, ICommandPacketBase a_packet)
         {
-            if (!m_cameraProperties.CheckPropertyChanged(a_packet))
+	        if (!m_cameraProperties.CheckPropertyChanged(a_packet, a_receivedTime))
             {
                 return;
             }
 
-            if (a_packet is CommandPacketCameraModel modelPacket)
-            {
-                CameraModel = modelPacket.CameraModel;
-                OnCameraPropertyChanged(nameof(CameraModel), a_receivedTime);
-            }
-            else if (a_packet is CommandPacketSystemBatteryInfo batteryInfo)
-            {
-                if (!m_receivedAnyBatteryStatusPackets)
-                {
-                    CommandPacketConfigurationTimezone tzPacket = new CommandPacketConfigurationTimezone(TimeZoneInfo.Local);
-                    a_deviceController.TrySendAsyncCommand(a_deviceHandle, tzPacket);
-                    m_timeSyncPoint = DateTime.UtcNow;
-                    a_deviceController.TrySendAsyncCommand(a_deviceHandle, new CommandPacketConfigurationRealTimeClock(m_timeSyncPoint));
+	        OnUpdatedCameraDataReceived(a_deviceHandle, a_receivedTime, a_packet);
+        }
 
-                    Logger.LogInfo("CameraInfo", $"Synchronizing camera with deviceHandle {a_deviceHandle.DeviceUuid} time to {DateTime.UtcNow} + {tzPacket.MinutesOffsetFromUTC} Minutes");
+        private void OnUpdatedCameraDataReceived(CameraDeviceHandle a_deviceHandle, TimeCode a_receivedTime, ICommandPacketBase a_packet)
+        {
+	        if (a_packet is CommandPacketCameraModel modelPacket)
+	        {
+		        CameraModel = modelPacket.CameraModel;
+		        OnCameraPropertyChanged(nameof(CameraModel), a_receivedTime);
+	        }
+	        else if (a_packet is CommandPacketSystemBatteryInfo batteryInfo)
+	        {
+		        if (!m_receivedAnyBatteryStatusPackets)
+		        {
+			        CommandPacketConfigurationTimezone tzPacket = new CommandPacketConfigurationTimezone(TimeZoneInfo.Local);
+			        a_deviceHandle.TargetController.TrySendAsyncCommand(a_deviceHandle, tzPacket);
+			        m_timeSyncPoint = DateTime.UtcNow;
+			        a_deviceHandle.TargetController.TrySendAsyncCommand(a_deviceHandle,
+				        new CommandPacketConfigurationRealTimeClock(m_timeSyncPoint));
 
-                    m_receivedAnyBatteryStatusPackets = true;
-                }
+			        Logger.LogInfo("CameraInfo",
+				        $"Synchronizing camera with deviceHandle {a_deviceHandle.DeviceUuid} time to {DateTime.UtcNow} + {tzPacket.MinutesOffsetFromUTC} Minutes");
 
-                if (SelectedCodec == "" && DateTimeOffset.UtcNow - m_connectTime > new TimeSpan(0, 0, 15))
-                {
-                    a_deviceController.TrySendAsyncCommand(a_deviceHandle,
-                        new CommandPacketMediaCodec()
-                        { BasicCodec = CommandPacketMediaCodec.EBasicCodec.BlackmagicRAW, Variant = 0 });
-                }
+			        m_receivedAnyBatteryStatusPackets = true;
+		        }
 
-                BatteryPercentage = batteryInfo.BatteryPercentage;
-                OnCameraPropertyChanged(nameof(BatteryPercentage), a_receivedTime);
-                BatteryVoltage_mV = batteryInfo.BatteryVoltage_mV;
-                OnCameraPropertyChanged(nameof(BatteryVoltage_mV), a_receivedTime);
-            }
-            else if (a_packet is CommandPacketMediaTransportMode transportMode)
-            {
-                CurrentTransportMode = transportMode.Mode;
-                OnCameraPropertyChanged(nameof(CurrentTransportMode), a_receivedTime);
+		        if (SelectedCodec == "" && DateTimeOffset.UtcNow - m_connectTime > new TimeSpan(0, 0, 15))
+		        {
+			        a_deviceHandle.TargetController.TrySendAsyncCommand(a_deviceHandle,
+				        new CommandPacketMediaCodec()
+					        { BasicCodec = CommandPacketMediaCodec.EBasicCodec.BlackmagicRAW, Variant = 0 });
+		        }
 
-                Logger.LogInfo("CameraInfo", $"Transport mode changed to {transportMode.Mode} at {a_receivedTime}");
-            }
-            else if (a_packet is CommandPacketMediaCodec codecPacket)
-            {
-                Logger.LogInfo("CameraInfo", $"Codec changed to: {codecPacket.BasicCodec}:{codecPacket.Variant}");
-                SelectedCodec = codecPacket.BasicCodec.ToString();
-                OnCameraPropertyChanged(nameof(CurrentTransportMode), a_receivedTime);
-            }
-            else if (a_packet is CommandPacketSystemTimeCode timeCodeChanged)
-            {
-                CurrentTimeCode = timeCodeChanged.TimeCode;
-                OnCameraPropertyChanged(nameof(CurrentTimeCode), a_receivedTime);
-            }
+		        BatteryPercentage = batteryInfo.BatteryPercentage;
+		        OnCameraPropertyChanged(nameof(BatteryPercentage), a_receivedTime);
+		        BatteryVoltage_mV = batteryInfo.BatteryVoltage_mV;
+		        OnCameraPropertyChanged(nameof(BatteryVoltage_mV), a_receivedTime);
+	        }
+	        else if (a_packet is CommandPacketMediaTransportMode transportMode)
+	        {
+		        CurrentTransportMode = transportMode.Mode;
+		        OnCameraPropertyChanged(nameof(CurrentTransportMode), a_receivedTime);
+
+		        Logger.LogInfo("CameraInfo", $"Transport mode changed to {transportMode.Mode} at {a_receivedTime}");
+	        }
+	        else if (a_packet is CommandPacketMediaCodec codecPacket)
+	        {
+		        Logger.LogInfo("CameraInfo", $"Codec changed to: {codecPacket.BasicCodec}:{codecPacket.Variant}");
+		        SelectedCodec = codecPacket.BasicCodec.ToString();
+		        OnCameraPropertyChanged(nameof(CurrentTransportMode), a_receivedTime);
+	        }
+	        else if (a_packet is CommandPacketSystemTimeCode timeCodeChanged)
+	        {
+		        CurrentTimeCode = timeCodeChanged.TimeCode;
+		        OnCameraPropertyChanged(nameof(CurrentTimeCode), a_receivedTime);
+	        }
         }
 
         private void OnCameraPropertyChanged(string a_propertyName, TimeCode a_changeTime)

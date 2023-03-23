@@ -61,7 +61,7 @@ namespace BlackmagicDeckLinkControl
 		{
 			if (m_activeCameras.TryGetValue(a_deviceHandle, out CameraPropertyCache? cache))
 			{
-				if (cache.CheckPropertyChanged(a_id, a_packet))
+				if (cache.CheckPropertyChanged(a_id, a_packet, a_timeCode))
 				{
 					if (!(a_id.Category == 9 && a_id.Parameter == 4) && //Ignore reference time packet for now.
 						!(a_id.Category == 9 && a_id.Parameter == 0)) //And the battery info packets...

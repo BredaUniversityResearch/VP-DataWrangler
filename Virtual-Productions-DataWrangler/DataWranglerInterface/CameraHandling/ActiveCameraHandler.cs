@@ -79,7 +79,7 @@ namespace DataWranglerInterface.CameraHandling
         {
             if (FindCameraInfoForDevice(a_deviceHandle, out ActiveCameraInfo? targetCamera))
             {
-                targetCamera.OnCameraDataReceived(a_deviceHandle.TargetController, a_deviceHandle, a_receivedTime, a_packet);
+                targetCamera.OnCameraDataReceived(a_deviceHandle, a_receivedTime, a_packet);
             }
             else
             {
