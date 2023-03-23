@@ -27,7 +27,7 @@ namespace DataWranglerInterface.ShotRecording
 			}
 
 			TargetInfo.PropertyChanged += OnTargetPropertyChanged;
-			TargetInfo.DeviceConnectionsChanged += OnTargetDeviceConnectionsChanged;
+			TargetInfo.OnDeviceConnectionsChanged += OnTargetDeviceConnectionsChanged;
 
 			InitializeComponent();
 
@@ -89,6 +89,12 @@ namespace DataWranglerInterface.ShotRecording
 
 		private void OnTargetDeviceConnectionsChanged(ActiveCameraInfo a_source)
 		{
+			if (!Dispatcher.CheckAccess())
+			{
+				Dispatcher.InvokeAsync(() => OnTargetDeviceConnectionsChanged(a_source));
+				return;
+			}
+
 			HashSet<CameraDeviceHandle> newConnections = new HashSet<CameraDeviceHandle>(TargetInfo.ConnectionsForPhysicalDevice);
 			HashSet<CameraDeviceHandle> oldConnections = new HashSet<CameraDeviceHandle>();
 			foreach (CameraDeviceHandleControl control in DeviceHandleControls)

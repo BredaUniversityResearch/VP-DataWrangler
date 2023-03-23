@@ -1,9 +1,12 @@
 ﻿using System.ComponentModel;
+using System.Text.RegularExpressions;
+using System.Windows.Automation.Peers;
 using AutoNotify;
 using BlackmagicCameraControlData;
 using BlackmagicCameraControlData.CommandPackets;
 using CommonLogging;
 using DataWranglerCommon;
+using DataWranglerInterface.Configuration;
 
 namespace DataWranglerInterface.CameraHandling
 {
@@ -25,11 +28,12 @@ namespace DataWranglerInterface.CameraHandling
     //A 'virtual' camera that can be represented by multiple connections (e.g. Bluetooth and SDI) but route to the same physical device
     public partial class ActiveCameraInfo
     {
-        private readonly List<CameraDeviceHandle> m_connectionsForPhysicalDevice = new List<CameraDeviceHandle>();
+	    private readonly List<CameraDeviceHandle> m_connectionsForPhysicalDevice = new List<CameraDeviceHandle>();
         public IReadOnlyCollection<CameraDeviceHandle> ConnectionsForPhysicalDevice => m_connectionsForPhysicalDevice;
+        public ConfigActiveCameraGrouping? Grouping = null;
 
-        public delegate void OnConnectionCollectionChanged(ActiveCameraInfo a_source);
-        public event OnConnectionCollectionChanged DeviceConnectionsChanged = delegate { };
+        public delegate void ConnectionCollectionChanged(ActiveCameraInfo a_source);
+        public event ConnectionCollectionChanged OnDeviceConnectionsChanged = delegate { };
 
         private DateTimeOffset m_connectTime;
         private DateTime m_timeSyncPoint = DateTime.MinValue;
@@ -53,32 +57,86 @@ namespace DataWranglerInterface.CameraHandling
         [AutoNotify]
         private TimeCode m_currentTimeCode;
 
-        public ActiveCameraInfo(CameraDeviceHandle a_deviceHandle)
+        public ActiveCameraInfo(ConfigActiveCameraGrouping? a_grouping)
         {
-            m_connectionsForPhysicalDevice.Add(a_deviceHandle);
+	        Grouping = a_grouping;
             m_connectTime = DateTimeOffset.UtcNow;
         }
 
-        public void TransferCameraHandle(ActiveCameraInfo a_fromCamera, CameraDeviceHandle a_deviceHandle)
+        public void TransferCameraHandle(ActiveCameraInfo? a_fromCamera, CameraDeviceHandle a_deviceHandle)
         {
-            bool success = a_fromCamera.m_connectionsForPhysicalDevice.Remove(a_deviceHandle);
-            if (!success)
-            {
-                throw new Exception("Failed to remove camera handle from source camera info");
-            }
+	        if (a_fromCamera != null)
+	        {
+		        bool success = a_fromCamera.m_connectionsForPhysicalDevice.Remove(a_deviceHandle);
+		        if (!success)
+		        {
+			        throw new Exception("Failed to remove camera handle from source camera info");
+		        }
 
-            m_connectionsForPhysicalDevice.Add(a_deviceHandle);
-            foreach (var kvp in a_fromCamera.m_cameraProperties.CurrentValues)
-            {
-	            if (m_cameraProperties.CheckPropertyChanged(kvp.Key, kvp.Value.PacketData, kvp.Value.LastUpdateTime))
-	            {
-                    OnUpdatedCameraDataReceived(a_deviceHandle, kvp.Value.LastUpdateTime, kvp.Value.PacketData);
-	            }
-            }
+		        a_fromCamera.RemoveCameraDeviceHandleFromGrouping(a_deviceHandle);
+		        
+	        }
 
-            a_fromCamera.DeviceConnectionsChanged.Invoke(a_fromCamera);
-            DeviceConnectionsChanged.Invoke(this);
+	        m_connectionsForPhysicalDevice.Add(a_deviceHandle);
+
+	        AddCameraToGrouping(a_deviceHandle);
+
+	        if (a_fromCamera != null)
+	        {
+		        foreach (var kvp in a_fromCamera.m_cameraProperties.CurrentValues)
+		        {
+			        if (m_cameraProperties.CheckPropertyChanged(kvp.Key, kvp.Value.PacketData,
+				            kvp.Value.LastUpdateTime))
+			        {
+				        OnUpdatedCameraDataReceived(a_deviceHandle, kvp.Value.LastUpdateTime, kvp.Value.PacketData);
+			        }
+		        }
+
+		        a_fromCamera.OnDeviceConnectionsChanged.Invoke(a_fromCamera);
+	        }
+
+	        OnDeviceConnectionsChanged.Invoke(this);
         }
+
+        private void AddCameraToGrouping(CameraDeviceHandle a_deviceHandle)
+        {
+			if (m_connectionsForPhysicalDevice.Count > 1)
+			{
+				if (Grouping == null)
+				{
+					Grouping = new ConfigActiveCameraGrouping
+					{
+						Name = CameraName
+					};
+					foreach (CameraDeviceHandle handle in m_connectionsForPhysicalDevice)
+					{
+						Grouping.DeviceHandleUuids.Add(handle.DeviceUuid);
+					}
+				}
+				else
+				{
+					if (!Grouping.DeviceHandleUuids.Contains(a_deviceHandle.DeviceUuid))
+					{
+						Grouping.DeviceHandleUuids.Add(a_deviceHandle.DeviceUuid);
+					}
+				}
+			}
+		}
+
+        private void RemoveCameraDeviceHandleFromGrouping(CameraDeviceHandle a_deviceHandle)
+        {
+			if (Grouping != null)
+			{
+				if (m_connectionsForPhysicalDevice.Count <= 1)
+				{
+					Grouping = null;
+				}
+				else
+				{
+					Grouping.DeviceHandleUuids.Remove(a_deviceHandle.DeviceUuid);
+				}
+			}
+		}
 
         public void OnCameraDataReceived(CameraDeviceHandle a_deviceHandle, TimeCode a_receivedTime, ICommandPacketBase a_packet)
         {
