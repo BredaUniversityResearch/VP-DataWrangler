@@ -51,7 +51,7 @@ internal class DeckLinkDeviceNotificationHandler : IDeckLinkDeviceNotificationCa
 	            Logger.LogInfo("DeckLinkInterface", $"DeckLink Hardware reports 10BitYUV as {required} required for VANC data");
  
             }
-			DeckLinkDeviceInputNotificationHandler notificationHandler = new DeckLinkDeviceInputNotificationHandler(new CameraDeviceHandle(decklinkPersistentId.ToString(), m_controller), input);
+			DeckLinkDeviceInputNotificationHandler notificationHandler = new DeckLinkDeviceInputNotificationHandler(new CameraDeviceHandle($"DeckLink#{decklinkPersistentId}", m_controller), input);
             input.SetCallback(notificationHandler);
 			//We need audio for VANC
 			input.EnableAudioInput(_BMDAudioSampleRate.bmdAudioSampleRate48kHz, _BMDAudioSampleType.bmdAudioSampleType16bitInteger, 2);
