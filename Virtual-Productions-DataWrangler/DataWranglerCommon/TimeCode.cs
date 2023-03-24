@@ -80,6 +80,16 @@ namespace DataWranglerCommon
 			return (int)TimeCodeAsBinaryCodedDecimal;
 		}
 
+		public static bool operator <(TimeCode left, TimeCode right)
+		{
+			return left.TimeCodeAsBinaryCodedDecimal < right.TimeCodeAsBinaryCodedDecimal;
+		}
+
+		public static bool operator>(TimeCode left, TimeCode right)
+		{
+			return left.TimeCodeAsBinaryCodedDecimal > right.TimeCodeAsBinaryCodedDecimal;
+		}
+
 		public static bool operator ==(TimeCode left, TimeCode right)
 		{
 			return left.Equals(right);

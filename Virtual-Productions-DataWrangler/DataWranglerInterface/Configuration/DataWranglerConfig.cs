@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Text;
 using CommonLogging;
 using Newtonsoft.Json;
 
@@ -7,6 +8,8 @@ namespace DataWranglerInterface.Configuration
 	public class DataWranglerConfig
 	{
 		public static DataWranglerConfig Instance { get; }
+
+		public List<ConfigActiveCameraGrouping> ConfiguredCameraGroupings = new List<ConfigActiveCameraGrouping>();
 
 		static DataWranglerConfig()
 		{
@@ -26,7 +29,23 @@ namespace DataWranglerInterface.Configuration
 					}
 				}
 			}
-			
 		}
+
+		public void Save()
+		{
+			using (FileStream fs = new FileStream("Settings.json", FileMode.Create, FileAccess.Write))
+			{
+				using (StreamWriter writer = new StreamWriter(fs, Encoding.UTF8))
+				{
+					writer.Write(JsonConvert.SerializeObject(this, Formatting.Indented));
+				}
+			}
+		}
+	}
+
+	public class ConfigActiveCameraGrouping
+	{
+		public string Name = "Virtual Camera";
+		public List<string> DeviceHandleUuids = new List<string>();
 	}
 }

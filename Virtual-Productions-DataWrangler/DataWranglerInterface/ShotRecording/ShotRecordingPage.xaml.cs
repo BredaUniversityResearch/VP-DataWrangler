@@ -35,7 +35,7 @@ namespace DataWranglerInterface.ShotRecording
 		
 			//m_bluetoothController = new BlackmagicBluetoothCameraAPIController();
 			m_activeCameraHandler = new ActiveCameraHandler(m_bluetoothController);
-			m_activeCameraHandler.OnCameraConnected += OnCameraConnected;
+			m_activeCameraHandler.OnVirtualCameraConnected += VirtualCameraConnected;
 			m_activeCameraHandler.OnCameraDisconnected += OnCameraDisconnected;
 
 			//m_bluetoothController.Start();
@@ -57,12 +57,12 @@ namespace DataWranglerInterface.ShotRecording
 
 		public void Dispose()
 		{
-			m_activeCameraHandler.OnCameraConnected -= OnCameraConnected;
+			m_activeCameraHandler.OnVirtualCameraConnected -= VirtualCameraConnected;
 			m_activeCameraHandler.OnCameraDisconnected -= OnCameraDisconnected;
 			m_bluetoothController?.Dispose();
 		}
 
-		private void OnCameraConnected(ActiveCameraInfo a_camera)
+		private void VirtualCameraConnected(ActiveCameraInfo a_camera)
 		{
 			CameraInfo.AddTargetCameraInfo(a_camera);
 			CameraInfoDebug.SetTargetCamera(a_camera);
