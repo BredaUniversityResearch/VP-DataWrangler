@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 using CommonLogging;
@@ -39,8 +40,8 @@ namespace CameraControlOverEthernet
 
 		public void StartListenForServer()
 		{
-			m_discoveryReceiver.JoinMulticastGroup(CameraControlNetworkReceiver.DiscoveryMulticastAddress);
 			m_discoveryReceiver.Client.ReceiveTimeout = 1000;
+			m_discoveryReceiver.JoinMulticastGroup(CameraControlNetworkReceiver.DiscoveryMulticastAddress, 16);
 
 			m_listenTask = new Task(BackgroundListenForServer);
 			m_listenTask.Start();
@@ -49,15 +50,28 @@ namespace CameraControlOverEthernet
 			m_connectTask.Start();
 		}
 
-		private async void BackgroundListenForServer()
+		private void BackgroundListenForServer()
 		{
 			while (!m_stopListeningToken.IsCancellationRequested)
 			{
-				UdpReceiveResult result = await m_discoveryReceiver.ReceiveAsync(m_stopListeningToken.Token);
-				if (!m_stopListeningToken.IsCancellationRequested)
+				IPEndPoint remoteEndPoint = new IPEndPoint(CameraControlNetworkReceiver.DiscoveryMulticastAddress, CameraControlNetworkReceiver.DiscoveryMulticastPort);
+				byte[]? buffer = null;
+				try
 				{
-					Logger.LogVerbose("CCClient", $"Received multicast packet from {result.RemoteEndPoint}");
-					using (MemoryStream ms = new MemoryStream(result.Buffer))
+					buffer = m_discoveryReceiver.Receive(ref remoteEndPoint);
+				}
+				catch (SocketException ex)
+				{
+					if (ex.SocketErrorCode != SocketError.TimedOut)
+					{
+						throw;
+					}
+				}
+
+				if (!m_stopListeningToken.IsCancellationRequested && buffer?.Length > 0)
+				{
+					Logger.LogVerbose("CCClient", $"Received multicast packet from {remoteEndPoint}");
+					using (MemoryStream ms = new MemoryStream(buffer))
 					{
 						using (BinaryReader reader = new BinaryReader(ms, Encoding.ASCII, true))
 						{
@@ -71,7 +85,7 @@ namespace CameraControlOverEthernet
 										if (discoveryPacket.MagicBits == CameraControlDiscoveryPacket.ExpectedMagicBits)
 										{
 											m_receivedServerBroadcastQueue.Enqueue(new KeyValuePair<int, IPEndPoint>(discoveryPacket.ServerIdentifier, 
-												new IPEndPoint(result.RemoteEndPoint.Address, discoveryPacket.TargetPort)));
+												new IPEndPoint(remoteEndPoint.Address, discoveryPacket.TargetPort)));
 										}
 									}
 								}

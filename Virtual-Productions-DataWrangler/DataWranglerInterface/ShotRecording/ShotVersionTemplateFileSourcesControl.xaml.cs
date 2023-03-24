@@ -20,7 +20,7 @@ namespace DataWranglerInterface.ShotRecording
 			m_addFileSourceContextMenu = new ContextMenu();
 			MenuItem item = new MenuItem
 			{
-				Header = "Blackmagic Ursa (BT)"
+				Header = "Blackmagic Ursa"
 			};
 			item.Click += (_, _) => TryAddSource(new DataWranglerFileSourceMetaBlackmagicUrsa());
 			m_addFileSourceContextMenu.Items.Add(item);
@@ -30,6 +30,13 @@ namespace DataWranglerInterface.ShotRecording
 				Header = "TASCAM DR-60 MkII"
 			};
 			item.Click += (_, _) => TryAddSource(new DataWranglerFileSourceMetaTascam());
+			m_addFileSourceContextMenu.Items.Add(item);
+
+			item = new MenuItem
+			{
+				Header = "Vicon Motion Data"
+			};
+			item.Click += (_, _) => TryAddSource(new DataWranglerFileSourceMetaViconTrackingData());
 			m_addFileSourceContextMenu.Items.Add(item);
 
 			InitializeComponent();

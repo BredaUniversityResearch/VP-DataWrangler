@@ -39,6 +39,10 @@ namespace DataWranglerInterface.ShotRecording
 			{
 				return new DataWranglerFileSourceUITascam(tascam);
 			}
+			else if (a_meta is DataWranglerFileSourceMetaViconTrackingData viconData)
+			{
+				return new DataWranglerFileSourceUIVicon(viconData);
+			}
 
 			throw new Exception($"CameraNumber meta source type {a_meta.GetType()}");
 		}

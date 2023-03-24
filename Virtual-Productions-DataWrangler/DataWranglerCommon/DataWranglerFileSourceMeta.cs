@@ -25,11 +25,7 @@ public abstract partial class DataWranglerFileSourceMeta
 		m_sourceFileTag = a_sourceFileTag;
 	}
 
-	public virtual DataWranglerFileSourceMeta Clone()
-	{
-		throw new Exception("Unknown meta type received");
-		//return new DataWranglerFileSourceMeta(m_sourceType, m_sourceFileTag);
-	}
+	public abstract DataWranglerFileSourceMeta Clone();
 
 	public static DataWranglerFileSourceMeta CreateFromTypeName(string a_sourceTypeName)
 	{
@@ -40,6 +36,10 @@ public abstract partial class DataWranglerFileSourceMeta
 		else if (a_sourceTypeName == DataWranglerFileSourceMetaTascam.MetaSourceType)
 		{
 			return new DataWranglerFileSourceMetaTascam();
+		}
+		else if (a_sourceTypeName == DataWranglerFileSourceMetaViconTrackingData.MetaSourceType)
+		{
+			return new DataWranglerFileSourceMetaViconTrackingData();
 		}
 
 		throw new Exception($"Unknown source meta type {a_sourceTypeName}");
