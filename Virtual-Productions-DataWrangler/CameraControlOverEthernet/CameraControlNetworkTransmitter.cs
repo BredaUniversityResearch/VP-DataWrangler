@@ -167,6 +167,10 @@ namespace CameraControlOverEthernet
 				{
 					Logger.LogVerbose("CCClient", $"Failed to connect to server {a_endPointValue}. Server refused connection.");
 				}
+				else if (ex.SocketErrorCode == SocketError.NetworkUnreachable)
+				{
+					Logger.LogVerbose("CCClient", $"Failed to connect to server {a_endPointValue}. Network unreachable.");
+				}
 				else
 				{
 					throw;
@@ -174,7 +178,7 @@ namespace CameraControlOverEthernet
 			}
 			catch (OperationCanceledException)
 			{
-				Logger.LogVerbose("CCClient", $"Failed to connect to server {a_endPointValue}");
+				Logger.LogVerbose("CCClient", $"Failed to connect to server {a_endPointValue}. Connection timed out.");
 			}
 		}
 

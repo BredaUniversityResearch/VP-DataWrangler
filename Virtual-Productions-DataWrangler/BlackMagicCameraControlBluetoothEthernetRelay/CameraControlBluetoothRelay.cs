@@ -3,6 +3,7 @@ using BlackmagicCameraControlBluetooth;
 using BlackmagicCameraControlData;
 using BlackmagicCameraControlData.CommandPackets;
 using CameraControlOverEthernet;
+using CommonLogging;
 using DataWranglerCommon;
 
 namespace BlackMagicCameraControlBluetoothEthernetRelay
@@ -80,6 +81,10 @@ namespace BlackMagicCameraControlBluetoothEthernetRelay
 			{
 				cache[header.CommandIdentifier] = new CommandPacketCacheEntry(a_receivedTime, a_payload);
 			}
+			else
+			{
+				Logger.LogWarning("Relay", "Command cache not found for current device handle");
+			}
 
 			m_networkTransmitter.SendPacket(new CameraControlDataPacket(a_deviceHandle, a_receivedTime, a_payload));
 		}
@@ -88,17 +93,19 @@ namespace BlackMagicCameraControlBluetoothEthernetRelay
 		{
 			m_networkTransmitter.SendPacket(new CameraControlCameraDisconnectedPacket(a_deviceHandle));
 			m_mostRecentValuesByCamera.Remove(a_deviceHandle);
+			Logger.LogInfo("Relay", $"Bluetooth Camera Disconnected with handle {a_deviceHandle.DeviceUuid}");
 		}
 
 		private void OnCameraConnected(CameraDeviceHandle a_deviceHandle)
 		{
 			if (m_mostRecentValuesByCamera.ContainsKey(a_deviceHandle))
 			{
-				OnCameraDisconnected(a_deviceHandle);
+				return; //Ignore this since it might be a 'reconnect' from bluetooth signal being temporarily lost.
 			}
 
 			m_mostRecentValuesByCamera.Add(a_deviceHandle, new Dictionary<CommandIdentifier, CommandPacketCacheEntry>());
 			m_networkTransmitter.SendPacket(new CameraControlCameraConnectedPacket(a_deviceHandle));
+			Logger.LogInfo("Relay", $"Bluetooth Camera Connected with handle {a_deviceHandle.DeviceUuid}");
 		}
 
 		private void OnTimeCodeReceived(CameraDeviceHandle a_deviceHandle, TimeCode a_timeCode)
