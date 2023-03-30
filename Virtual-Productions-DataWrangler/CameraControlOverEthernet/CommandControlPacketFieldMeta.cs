@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using System.Text;
 
 namespace CameraControlOverEthernet;
 
@@ -54,7 +55,9 @@ internal class CommandControlPacketFieldMeta
 				a_writer.Write((uint) m_targetField.GetValue(a_instance)!);
 				break;
 			case EDataType.String:
-				a_writer.Write((string)m_targetField.GetValue(a_instance)!);
+				string strVal = (string) m_targetField.GetValue(a_instance)!;
+				a_writer.Write((ushort) strVal.Length);
+				a_writer.Write(Encoding.ASCII.GetBytes(strVal));
 				break;
 			case EDataType.ByteArray:
 			{
@@ -79,7 +82,9 @@ internal class CommandControlPacketFieldMeta
 				m_targetField.SetValue(a_target, a_reader.ReadUInt32());
 				break;
 			case EDataType.String:
-				m_targetField.SetValue(a_target, a_reader.ReadString());
+				ushort stringLength = a_reader.ReadUInt16();
+				byte[] stringBytes = a_reader.ReadBytes(stringLength);
+				m_targetField.SetValue(a_target, Encoding.ASCII.GetString(stringBytes));
 				break;
 			case EDataType.ByteArray:
 			{

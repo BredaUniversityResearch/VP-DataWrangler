@@ -41,7 +41,24 @@ namespace CameraControlOverEthernet
 		public void StartListenForServer()
 		{
 			m_discoveryReceiver.Client.ReceiveTimeout = 1000;
-			m_discoveryReceiver.JoinMulticastGroup(CameraControlNetworkReceiver.DiscoveryMulticastAddress, 16);
+			NetworkInterface[] nics = NetworkInterface.GetAllNetworkInterfaces();
+			foreach (NetworkInterface adapter in nics)
+			{
+				IPInterfaceProperties ip_properties = adapter.GetIPProperties();
+				if (adapter.GetIPProperties().MulticastAddresses.Count > 0 &&
+				    adapter.SupportsMulticast &&
+				    adapter.OperationalStatus == OperationalStatus.Up)
+				{
+					foreach (UnicastIPAddressInformation addr in ip_properties.UnicastAddresses)
+					{
+						if (addr.Address.AddressFamily == AddressFamily.InterNetwork)
+						{
+							m_discoveryReceiver.JoinMulticastGroup(CameraControlNetworkReceiver.DiscoveryMulticastAddress, addr.Address);
+						}
+					}
+				}
+			} 
+
 
 			m_listenTask = new Task(BackgroundListenForServer);
 			m_listenTask.Start();

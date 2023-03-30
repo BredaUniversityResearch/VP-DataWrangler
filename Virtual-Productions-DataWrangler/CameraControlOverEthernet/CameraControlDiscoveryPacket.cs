@@ -15,18 +15,4 @@ internal class CameraControlDiscoveryPacket : ICameraControlPacket
 		ServerIdentifier = a_serverIdentifier;
 		TargetPort = a_serverPort;
 	}
-
-	public void Write(BinaryWriter a_writer)
-	{
-		a_writer.Write(ExpectedMagicBits);
-		a_writer.Write(ServerIdentifier);
-		a_writer.Write(TargetPort);
-	}
-
-	public void Read(BinaryReader a_reader)
-	{
-		MagicBits = a_reader.ReadUInt32();
-		ServerIdentifier = a_reader.ReadInt32();
-		TargetPort = a_reader.ReadInt32();
-	}
 }

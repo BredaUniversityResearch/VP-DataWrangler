@@ -92,6 +92,11 @@ namespace BlackMagicCameraControlBluetoothEthernetRelay
 
 		private void OnCameraConnected(CameraDeviceHandle a_deviceHandle)
 		{
+			if (m_mostRecentValuesByCamera.ContainsKey(a_deviceHandle))
+			{
+				OnCameraDisconnected(a_deviceHandle);
+			}
+
 			m_mostRecentValuesByCamera.Add(a_deviceHandle, new Dictionary<CommandIdentifier, CommandPacketCacheEntry>());
 			m_networkTransmitter.SendPacket(new CameraControlCameraConnectedPacket(a_deviceHandle));
 		}

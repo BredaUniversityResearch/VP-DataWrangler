@@ -26,10 +26,9 @@ namespace CameraControlOverEthernet
 		public const int DiscoveryMulticastPort = 49069;
 		public static readonly IPEndPoint DiscoveryMulticastEndpoint = new IPEndPoint(DiscoveryMulticastAddress, DiscoveryMulticastPort);
 		public static readonly TimeSpan DiscoveryMulticastInterval = TimeSpan.FromSeconds(5);
-		public const int ConnectionPort = 49070;
 		public static readonly TimeSpan InactivityDisconnectTime = TimeSpan.FromSeconds(15);
 
-		private readonly TcpListener m_connectionListener = new TcpListener(IPAddress.Any, ConnectionPort);
+		private readonly TcpListener m_connectionListener = new TcpListener(IPAddress.Any, 0);
 		private readonly UdpClient m_discoveryBroadcaster = new UdpClient();
 
 		private CancellationTokenSource m_cancellationTokenSource = new CancellationTokenSource();
@@ -43,10 +42,10 @@ namespace CameraControlOverEthernet
 
 		public void Start()
 		{
+			m_connectionListener.Start();
+			
 			m_discoveryBroadcastTask = new Task(BackgroundDiscoveryBroadcastTask);
 			m_discoveryBroadcastTask.Start();
-
-			m_connectionListener.Start();
 
 			m_connectAcceptTask = new Task(BackgroundAcceptConnections);
 			m_connectAcceptTask.Start();
@@ -61,7 +60,7 @@ namespace CameraControlOverEthernet
 				MemoryStream ms = new MemoryStream(buffer, 0, buffer.Length, true, false);
 				using (BinaryWriter writer = new BinaryWriter(ms, Encoding.ASCII, true))
 				{
-					CameraControlTransport.Write(new CameraControlDiscoveryPacket(m_serverIdentifier, ConnectionPort), writer);
+					CameraControlTransport.Write(new CameraControlDiscoveryPacket(m_serverIdentifier, ((IPEndPoint)m_connectionListener.LocalEndpoint).Port), writer);
 				}
 				m_discoveryBroadcaster.Send(new ReadOnlySpan<byte>(buffer, 0, (int)ms.Position), DiscoveryMulticastEndpoint);
 

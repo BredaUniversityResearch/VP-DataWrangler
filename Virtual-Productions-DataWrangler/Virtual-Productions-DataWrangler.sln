@@ -33,7 +33,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataWranglerCommonTests", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CameraControlOverEthernet", "CameraControlOverEthernet\CameraControlOverEthernet.csproj", "{00C2E667-54CF-417C-A8ED-CB637B19BA34}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlackMagicCameraControlBluetoothEthernetRelay", "BlackMagicCameraControlBluetoothEthernetRelay\BlackMagicCameraControlBluetoothEthernetRelay.csproj", "{B451D825-90D8-4B48-8D77-43CA242E32B4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlackMagicCameraControlBluetoothEthernetRelay", "BlackMagicCameraControlBluetoothEthernetRelay\BlackMagicCameraControlBluetoothEthernetRelay.csproj", "{B451D825-90D8-4B48-8D77-43CA242E32B4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
