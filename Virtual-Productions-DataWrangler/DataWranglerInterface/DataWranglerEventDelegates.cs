@@ -1,0 +1,20 @@
+﻿using DataWranglerCommon;
+
+namespace DataWranglerInterface;
+
+public class DataWranglerEventDelegates
+{
+    //Invoked after a recording started event has been received, but before the meta data is submitted to the backend.
+    public delegate void RecordingStartedDelegate(DataWranglerShotVersionMeta a_shotMetaData);
+    public event RecordingStartedDelegate OnRecordingStarted = delegate { };
+
+    public void NotifyRecordingStarted(DataWranglerShotVersionMeta a_shotMetaData)
+    {
+        OnRecordingStarted(a_shotMetaData);
+    }
+
+    public void NotifyShotCreated(int a_shotId)
+    {
+        throw new NotImplementedException();
+    }
+}

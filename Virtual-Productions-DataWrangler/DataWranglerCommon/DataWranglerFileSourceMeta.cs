@@ -48,4 +48,12 @@ public abstract partial class DataWranglerFileSourceMeta
 	public virtual void OnTemplateMetaCloned()
 	{
 	}
+
+    public virtual void OnRecordingStarted(TimeCode a_stateChangeTime)
+    {
+    }
+
+    public virtual void OnRecordingStopped()
+    {
+    }
 }

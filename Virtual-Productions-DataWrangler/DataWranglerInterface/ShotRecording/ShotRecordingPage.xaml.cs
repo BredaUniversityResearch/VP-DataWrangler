@@ -55,7 +55,7 @@ namespace DataWranglerInterface.ShotRecording
 			ShotCreationControl.OnRequestCreateNewShot += OnRequestCreateNewShot;
 		}
 
-		public void Dispose()
+        public void Dispose()
 		{
 			m_activeCameraHandler.OnVirtualCameraConnected -= VirtualCameraConnected;
 			m_activeCameraHandler.OnCameraDisconnected -= OnCameraDisconnected;

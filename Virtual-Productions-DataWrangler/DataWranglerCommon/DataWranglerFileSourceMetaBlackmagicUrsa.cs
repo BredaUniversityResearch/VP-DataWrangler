@@ -109,4 +109,11 @@ public partial class DataWranglerFileSourceMetaBlackmagicUrsa: DataWranglerFileS
 		}
 		return false;
 	}
+
+    public void ApplyCameraProperties(DateTimeOffset a_recordingStartMachineTime, TimeCode a_cameraTimeCode, string a_cameraCodecName)
+    {
+        RecordingStart = a_recordingStartMachineTime;
+        StartTimeCode = a_cameraTimeCode;
+        CodecName = a_cameraCodecName;
+    }
 }

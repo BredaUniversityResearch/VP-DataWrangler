@@ -102,7 +102,9 @@ namespace DataWranglerInterface.ShotRecording
 							if (!a_result.Result.IsError)
 							{
 								m_parentPage?.CompleteAddShotVersion(a_result.Result.ResultData);
-							}
+                                DataWranglerServiceProvider.Instance.EventDelegates.NotifyShotCreated(a_result.Result
+                                    .ResultData.Id);
+                            }
 						});
 					}
 				});
@@ -145,12 +147,15 @@ namespace DataWranglerInterface.ShotRecording
 					foreach (DataWranglerFileSourceMeta source in targetMeta.FileSources)
 					{
 						if (source is DataWranglerFileSourceMetaBlackmagicUrsa ursaSource)
-						{
-							ursaSource.RecordingStart = DateTimeOffset.UtcNow;
-							ursaSource.StartTimeCode = a_camera.CurrentTimeCode;
-							ursaSource.CodecName = a_camera.SelectedCodec;
-						}
-					} 
+                        {
+                            ursaSource.ApplyCameraProperties(DateTimeOffset.UtcNow, a_camera.CurrentTimeCode,
+                                a_camera.SelectedCodec);
+                        }
+
+                        source.OnRecordingStarted(a_stateChangeTime);
+                    } 
+
+					DataWranglerServiceProvider.Instance.EventDelegates.NotifyRecordingStarted(targetMeta);
 
 					CreateNewShotVersion(targetMeta);
 				}
@@ -159,6 +164,11 @@ namespace DataWranglerInterface.ShotRecording
 			{
 				if (m_subscriber != null)
 				{
+					foreach (DataWranglerFileSourceMeta meta in m_subscriber.Meta.FileSources)
+					{
+						meta.OnRecordingStopped();
+					}
+
 					if (m_subscriber.CameraTarget != a_camera)
 					{
 						throw new Exception("Multiple cameras?");

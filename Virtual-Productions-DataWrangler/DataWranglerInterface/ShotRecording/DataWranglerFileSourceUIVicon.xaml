@@ -11,7 +11,7 @@
 	<StackPanel xamlUtility:Spacing.Vertical="4">
 		<DockPanel>
 			<Label Width="64">Relative File Path</Label>
-			<TextBox Text="{Binding ElementName=TascamMetaControl, Path=TargetMeta.RelativeCapturePath}"/>
+			<TextBox Text="{Binding ElementName=TascamMetaControl, Path=TargetMeta.TempCaptureFilePath}"/>
 		</DockPanel>
 	</StackPanel>
 </UserControl>
