@@ -8,7 +8,7 @@ namespace DataWranglerCommon
 		public override bool IsUniqueMeta => true;
 
 		[AutoNotify]
-		private string m_tempCaptureFilePath = "";
+		private string m_tempCaptureLibraryPath = "";
 
 		[AutoNotify] private string m_tempCaptureFileName = "";
 
@@ -21,7 +21,7 @@ namespace DataWranglerCommon
 		{
 			return new DataWranglerFileSourceMetaViconTrackingData()
 			{
-				m_tempCaptureFilePath = m_tempCaptureFilePath,
+				m_tempCaptureLibraryPath = m_tempCaptureLibraryPath,
 				m_tempCaptureFileName = m_tempCaptureFileName
 			};
 		}

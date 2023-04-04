@@ -33,12 +33,9 @@ namespace DataWranglerInterface.ShotRecording
 		{
 			InitializeComponent();
 		
-			//m_bluetoothController = new BlackmagicBluetoothCameraAPIController();
 			m_activeCameraHandler = new ActiveCameraHandler(m_bluetoothController);
 			m_activeCameraHandler.OnVirtualCameraConnected += VirtualCameraConnected;
 			m_activeCameraHandler.OnCameraDisconnected += OnCameraDisconnected;
-
-			//m_bluetoothController.Start();
 
 			CameraInfoDebug.CameraApiController = m_bluetoothController;
 
@@ -53,6 +50,9 @@ namespace DataWranglerInterface.ShotRecording
 
 			ShotSelector.OnNewShotCreatedButtonClicked += ShowShotCreationUI;
 			ShotCreationControl.OnRequestCreateNewShot += OnRequestCreateNewShot;
+
+			DataWranglerServiceProvider.Instance.EventDelegates.OnRecordingStarted += OnRecordingStarted;
+			DataWranglerServiceProvider.Instance.EventDelegates.OnRecordingFinished+= OnRecordingFinished;
 		}
 
         public void Dispose()
@@ -112,6 +112,40 @@ namespace DataWranglerInterface.ShotRecording
 				}
 				ShotSelector.OnNewShotCreationFinished(a_task.Result.ResultData);
 			});
+		}
+
+		private void OnRecordingStarted(DataWranglerShotVersionMeta a_shotMetaData)
+		{
+			DataWranglerFileSourceMetaViconTrackingData? trackingDataMeta = a_shotMetaData.FindFileSourceMeta<DataWranglerFileSourceMetaViconTrackingData>();
+			if (trackingDataMeta != null)
+			{
+				if (DataWranglerServiceProvider.Instance.ShogunLiveService.StartCapture(trackingDataMeta.TempCaptureFileName, trackingDataMeta.TempCaptureLibraryPath, out var task))
+				{
+					task.ContinueWith((a_result) => {
+						if (!a_result.Result)
+						{
+							Logger.LogError("ShotRecording", $"Vicon failed to send a confirmation that recording of library " +
+							                                 $"{trackingDataMeta.TempCaptureLibraryPath} with file name {trackingDataMeta.TempCaptureFileName} started");
+						}
+					});
+				}
+				else
+				{
+					Logger.LogError("ShotRecording", "Failed to start shogun live recording.");
+				}
+			}
+		}
+
+		private void OnRecordingFinished(DataWranglerShotVersionMeta a_shotMetaData)
+		{
+			DataWranglerFileSourceMetaViconTrackingData? trackingDataMeta = a_shotMetaData.FindFileSourceMeta<DataWranglerFileSourceMetaViconTrackingData>();
+			if (trackingDataMeta != null)
+			{
+				if (!DataWranglerServiceProvider.Instance.ShogunLiveService.StopCapture(true, trackingDataMeta.TempCaptureFileName, trackingDataMeta.TempCaptureLibraryPath))
+				{
+					Logger.LogError("ShotRecording", $"Failed to stop shogun capture of file {trackingDataMeta.TempCaptureFileName} in library {trackingDataMeta.TempCaptureLibraryPath}");
+				}
+			}
 		}
 	}
 }

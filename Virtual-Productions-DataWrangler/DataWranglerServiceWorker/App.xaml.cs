@@ -5,7 +5,6 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
 using CommonLogging;
-using DataWranglerCommon;
 using ShotGridIntegration;
 
 namespace DataWranglerServiceWorker
@@ -28,7 +27,12 @@ namespace DataWranglerServiceWorker
 
 		private USBDriveEventWatcher m_driveEventWatcher = new USBDriveEventWatcher();
 		private CopyProgressWindow m_copyProgress;
-		
+
+		private readonly IMetaFileResolver[] m_availableMetaFileResolvers = new[]
+		{
+			new MetaFileResolverVicon()
+		};
+
 		private readonly List<string> m_importWorkerBacklog = new List<string>();
 
 		public App()
@@ -173,8 +177,10 @@ namespace DataWranglerServiceWorker
 				{
 					foreach (string rootPath in m_importWorkerBacklog)
 					{
-						new FileDiscoveryWorker(rootPath, m_metaCache, m_importWorker).Run();
+						new FileMetaResolverWorker(rootPath, m_metaCache, m_importWorker).Run();
 					}
+
+					TryImportFilesFromMeta();
 				});
 
 			m_driveEventWatcher.DetectCurrentlyPresentUSBDrives();
@@ -204,8 +210,16 @@ namespace DataWranglerServiceWorker
 				}
 				else
 				{
-					new FileDiscoveryWorker(a_e.DriveRootPath, m_metaCache, m_importWorker).Run();
+					new FileMetaResolverWorker(a_e.DriveRootPath, m_metaCache, m_importWorker).Run();
 				}
+			}
+		}
+
+		private void TryImportFilesFromMeta()
+		{
+			foreach (IMetaFileResolver metaResolver in m_availableMetaFileResolvers)
+			{
+				metaResolver.ProcessCache(m_metaCache, m_importWorker);
 			}
 		}
 	}

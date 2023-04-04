@@ -174,6 +174,8 @@ namespace DataWranglerInterface.ShotRecording
 						throw new Exception("Multiple cameras?");
 					}
 
+					DataWranglerServiceProvider.Instance.EventDelegates.NotifyRecordingFinished(m_subscriber.Meta);
+
 					a_camera.CameraPropertyChanged -= m_subscriber.OnCameraPropertyChanged;
 					m_subscriber = null;
 				}

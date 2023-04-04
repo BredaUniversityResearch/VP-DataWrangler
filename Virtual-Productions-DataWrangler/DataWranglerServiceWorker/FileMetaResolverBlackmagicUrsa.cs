@@ -6,9 +6,9 @@ using DataWranglerCommon.BRAWSupport;
 
 namespace DataWranglerServiceWorker;
 
-public class FileMetaResolverBlackmagicUrsa: FileMetaResolver
+public class FileMetaResolverBlackmagicUrsa: IFileMetaResolver
 {
-	public override void ProcessDirectory(string a_baseDirectory, string a_storageName, ShotGridDataCache a_cache, DataImportWorker a_importWorker)
+	public void ProcessDirectory(string a_baseDirectory, string a_storageName, ShotGridDataCache a_cache, DataImportWorker a_importWorker)
 	{
 		var relevantCacheEntries = a_cache.FindShotVersionWithMeta<DataWranglerFileSourceMetaBlackmagicUrsa>();
 		using BRAWFileDecoder fileDecoder = new BRAWFileDecoder();

@@ -69,7 +69,6 @@ namespace DataWranglerServiceWorker
 
 		public void AddFileToImport(ShotVersionIdentifier a_shotVersionIdentifier, string a_sourceFilePath, string a_fileTag)
 		{
-			
 			if (!m_dataCache.FindEntity(a_obj => a_obj.Attributes.LocalStorageName == ServiceWorkerConfig.Instance.DefaultDataStorageName, out ShotGridEntityLocalStorage? targetStorage) ||
 			    string.IsNullOrEmpty(targetStorage.Attributes.WindowsPath))
 			{
