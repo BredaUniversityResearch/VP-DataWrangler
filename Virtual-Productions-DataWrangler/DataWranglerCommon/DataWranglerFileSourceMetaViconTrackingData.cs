@@ -1,4 +1,5 @@
 ﻿using AutoNotify;
+using Newtonsoft.Json;
 
 namespace DataWranglerCommon
 {
@@ -7,10 +8,11 @@ namespace DataWranglerCommon
 		public static readonly string MetaSourceType = "Vicon Shogun Tracking Data";
 		public override bool IsUniqueMeta => true;
 
-		[AutoNotify]
-		private string m_tempCaptureLibraryPath = "";
+		[AutoNotify, JsonProperty("TempDataBase")]
+		private string m_tempCaptureLibraryPath = "C:/Temp/ViconTempDb/UNIT_TEST_DB";
 
-		[AutoNotify] private string m_tempCaptureFileName = "";
+		[AutoNotify, JsonProperty("TempFileName")] 
+		private string m_tempCaptureFileName = "";
 
 		public DataWranglerFileSourceMetaViconTrackingData()
 			: base(MetaSourceType, "motion-data")
@@ -31,13 +33,6 @@ namespace DataWranglerCommon
             base.OnRecordingStarted(a_stateChangeTime);
 
             m_tempCaptureFileName = "Capture_"+DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        }
-
-        public override void OnRecordingStopped()
-        {
-	        base.OnRecordingStopped();
-
-	        throw new NotImplementedException("Should notify shogun to stop recording, and queue an import job. Just shogun might not be on the same machine so we cannot copy from here...");
         }
 	}
 }

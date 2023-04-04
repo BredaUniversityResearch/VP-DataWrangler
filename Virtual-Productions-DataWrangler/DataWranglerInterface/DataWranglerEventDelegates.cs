@@ -24,6 +24,6 @@ public class DataWranglerEventDelegates
 
     public void NotifyShotCreated(int a_shotId)
     {
-        throw new NotImplementedException();
+		//Eh...
     }
 }

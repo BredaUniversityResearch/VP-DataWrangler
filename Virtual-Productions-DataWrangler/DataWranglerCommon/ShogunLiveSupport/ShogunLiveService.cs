@@ -206,6 +206,10 @@ namespace DataWranglerCommon.ShogunLiveSupport
 						OnReceivedPacket(new ShogunLivePacket(ShogunLivePacket.EType.CaptureStop,
 							captureNameMatch.Groups[1].Value));
 					}
+					else if (xmlFragment.Contains("<CaptureComplete>"))
+					{
+						//Todo: Handle this 
+					}
 					else
 					{
 						throw new NotImplementedException($"Unknown message: {xmlFragment}");
