@@ -47,7 +47,9 @@ namespace CameraControlOverEthernet
 				IPInterfaceProperties ip_properties = adapter.GetIPProperties();
 				if (adapter.GetIPProperties().MulticastAddresses.Count > 0 &&
 				    adapter.SupportsMulticast &&
-				    adapter.OperationalStatus == OperationalStatus.Up)
+				    adapter.OperationalStatus == OperationalStatus.Up &&
+				    adapter.NetworkInterfaceType != NetworkInterfaceType.Tunnel &&
+				    adapter.Name.StartsWith("vEthernet") == false)
 				{
 					foreach (UnicastIPAddressInformation addr in ip_properties.UnicastAddresses)
 					{

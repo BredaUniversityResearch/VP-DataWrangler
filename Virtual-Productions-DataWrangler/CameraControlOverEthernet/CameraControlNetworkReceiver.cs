@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 using System.Xml;
@@ -22,7 +23,7 @@ namespace CameraControlOverEthernet
 			}
 		};
 
-		public static readonly IPAddress DiscoveryMulticastAddress = IPAddress.Parse("224.0.0.69");
+		public static readonly IPAddress DiscoveryMulticastAddress = IPAddress.Parse("224.0.1.69");
 		public const int DiscoveryMulticastPort = 49069;
 		public static readonly IPEndPoint DiscoveryMulticastEndpoint = new IPEndPoint(DiscoveryMulticastAddress, DiscoveryMulticastPort);
 		public static readonly TimeSpan DiscoveryMulticastInterval = TimeSpan.FromSeconds(5);
@@ -54,6 +55,26 @@ namespace CameraControlOverEthernet
 
 		private async void BackgroundDiscoveryBroadcastTask()
 		{
+			NetworkInterface[] nics = NetworkInterface.GetAllNetworkInterfaces();
+			foreach (NetworkInterface adapter in nics)
+			{
+				IPInterfaceProperties ipProps = adapter.GetIPProperties();
+				if (adapter.GetIPProperties().MulticastAddresses.Count > 0 &&
+				    adapter.SupportsMulticast &&
+				    adapter.OperationalStatus == OperationalStatus.Up && 
+				    adapter.NetworkInterfaceType != NetworkInterfaceType.Tunnel &&
+				    adapter.Name.StartsWith("vEthernet") == false)
+				{
+					foreach (UnicastIPAddressInformation addr in ipProps.UnicastAddresses)
+					{
+						if (addr.Address.AddressFamily == AddressFamily.InterNetwork)
+						{
+							m_discoveryBroadcaster.JoinMulticastGroup(DiscoveryMulticastAddress, addr.Address);
+						}
+					}
+				}
+			}
+
 			byte[] buffer = new byte[128];
 			while (!m_cancellationTokenSource.IsCancellationRequested)
 			{
@@ -62,6 +83,7 @@ namespace CameraControlOverEthernet
 				{
 					CameraControlTransport.Write(new CameraControlDiscoveryPacket(m_serverIdentifier, ((IPEndPoint)m_connectionListener.LocalEndpoint).Port), writer);
 				}
+
 				m_discoveryBroadcaster.Send(new ReadOnlySpan<byte>(buffer, 0, (int)ms.Position), DiscoveryMulticastEndpoint);
 
 				await Task.Delay(DiscoveryMulticastInterval, m_cancellationTokenSource.Token);
@@ -80,6 +102,8 @@ namespace CameraControlOverEthernet
 					conn.ReceiveTask.Start();
 					conn.LastActivityTime = DateTime.UtcNow;
 
+					Logger.LogVerbose("CCServer", $"Client connected from {client.Client.RemoteEndPoint}");
+
 					lock (m_connectedClients)
 					{
 						m_connectedClients.Add(conn);
@@ -88,9 +112,11 @@ namespace CameraControlOverEthernet
 			}
 		}
 
-		private async void BackgroundReceiveData(ClientConnection a_client)
+		private void BackgroundReceiveData(ClientConnection a_client)
 		{
 			byte[] receiveBuffer = new byte[8192];
+			a_client.Client.GetStream().ReadTimeout = 1000;
+
 			while (a_client.Client.Connected)
 			{
 				if (DateTime.UtcNow - a_client.LastActivityTime > InactivityDisconnectTime)
@@ -103,16 +129,26 @@ namespace CameraControlOverEthernet
 				int bytesReceived = 0;
 				try
 				{
-					bytesReceived = await a_client.Client.GetStream().ReadAsync(receiveBuffer, 0, (int) receiveBuffer.Length);
+					bytesReceived = a_client.Client.GetStream().Read(receiveBuffer, 0, (int) receiveBuffer.Length);
 				}
 				catch (IOException ex)
 				{
-					if (ex.InnerException is SocketException soEx && 
-					    (soEx.SocketErrorCode == SocketError.ConnectionAborted ||
-					     soEx.SocketErrorCode == SocketError.ConnectionReset))
+					if (ex.InnerException is SocketException soEx)
 					{
-						Logger.LogVerbose("CCServer", $"Dropping client at {a_client.Client.Client.RemoteEndPoint} due to connection abort");
-						a_client.Client.Close();
+						if (soEx.SocketErrorCode == SocketError.ConnectionAborted ||
+						    soEx.SocketErrorCode == SocketError.ConnectionReset)
+						{
+							Logger.LogVerbose("CCServer", $"Dropping client at {a_client.Client.Client.RemoteEndPoint} due to connection abort");
+							a_client.Client.Close();
+						}
+						else if (soEx.SocketErrorCode == SocketError.TimedOut)
+						{
+							//Swallow this since we setup a timeout.
+						}
+						else
+						{
+							throw;
+						}
 					}
 					else
 						throw;
@@ -136,6 +172,8 @@ namespace CameraControlOverEthernet
 					}
 				}
 			}
+
+			Logger.LogVerbose("CCServer", $"Dropped client. See previous message for details.");
 		}
 
 		public bool TryDequeueMessage([NotNullWhen(true)] out ICameraControlPacket? a_cameraControlPacket, TimeSpan a_timeout, CancellationToken a_cancellationToken)
