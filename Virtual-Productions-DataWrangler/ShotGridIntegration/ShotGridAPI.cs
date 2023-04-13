@@ -128,7 +128,7 @@ namespace ShotGridIntegration
 			ShotGridSimpleSearchFilter filter = new ShotGridSimpleSearchFilter();
 			filter.FieldIs("project.Project.id", a_projectId);
 			return await FindAndParse<ShotGridEntityShot[]>(ShotGridEntityName.Shot, filter, 
-				new JsonAttributeFieldEnumerator<ShotGridEntityShot.ShotAttributes>().Get(), null);
+				new JsonAttributeFieldEnumerator<ShotGridEntityShotAttributes>().Get(), null);
 		}
 
 		public async Task<ShotGridAPIResponse<ShotGridEntityShotVersion[]>> GetVersionsForShot(int a_shotId, ShotGridSortSpecifier? a_sort = null)
@@ -297,9 +297,9 @@ namespace ShotGridIntegration
 			return m_authentication;
 		}
 
-		public async Task<ShotGridAPIResponse<ShotGridEntityShot>> CreateNewShot(int a_projectId, ShotGridEntityShot.ShotAttributes a_attributes)
+		public async Task<ShotGridAPIResponse<ShotGridEntityShot>> CreateNewShot(int a_projectId, ShotGridEntityShotAttributes a_gridEntityShotAttributes)
 		{
-			return await CreateNewEntity<ShotGridEntityShot, ShotGridEntityShot.ShotAttributes>(a_projectId, a_attributes, null);
+			return await CreateNewEntity<ShotGridEntityShot, ShotGridEntityShotAttributes>(a_projectId, a_gridEntityShotAttributes, null);
 		}
 
 		public async Task<ShotGridAPIResponse<ShotGridEntityShotVersion>> CreateNewShotVersion(int a_projectId, int a_parentShotId, ShotVersionAttributes a_versionAttributes)

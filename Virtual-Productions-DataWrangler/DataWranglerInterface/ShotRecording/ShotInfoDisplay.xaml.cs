@@ -1,5 +1,6 @@
 ﻿using System.Windows.Controls;
 using System.Windows.Media.Imaging;
+using AutoNotify;
 using ShotGridIntegration;
 
 namespace DataWranglerInterface.ShotRecording
@@ -9,18 +10,21 @@ namespace DataWranglerInterface.ShotRecording
 	/// </summary>
 	public partial class ShotInfoDisplay : UserControl
 	{
+		[AutoNotify]
+		private ShotGridEntityShotAttributes? m_displayedAttributes = null;
+
 		public ShotInfoDisplay()
 		{
 			InitializeComponent();
 		}
-
-
+		
 		public void SetDisplayedShot(ShotGridEntityShot? a_shotInfo)
 		{
 			if (a_shotInfo != null)
 			{
-				ShotCode.Content = a_shotInfo.Attributes.ShotCode;
-				Description.Text = a_shotInfo.Attributes.Description;
+				DisplayedAttributes = a_shotInfo.Attributes;
+				//ShotCode.Content = a_shotInfo.Attributes.ShotCode;
+				//Description.Text = a_shotInfo.Attributes.Description;
 				if (!string.IsNullOrEmpty(a_shotInfo.Attributes.ImageURL))
 				{
 					ShotThumbnail.Source = new BitmapImage(new Uri(a_shotInfo.Attributes.ImageURL));

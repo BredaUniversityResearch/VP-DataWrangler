@@ -100,11 +100,11 @@ namespace DataWranglerInterface.ShotRecording
 			ShotCreationControl.Show();
 		}
 
-		private void OnRequestCreateNewShot(ShotGridEntityShot.ShotAttributes a_attributes)
+		private void OnRequestCreateNewShot(ShotGridEntityShotAttributes a_gridEntityShotAttributes)
 		{
 			int projectId = ProjectSelector.SelectedProjectId;
 			ShotSelector.OnNewShotCreationStarted();
-			DataWranglerServiceProvider.Instance.ShotGridAPI.CreateNewShot(projectId, a_attributes).ContinueWith(a_task =>
+			DataWranglerServiceProvider.Instance.ShotGridAPI.CreateNewShot(projectId, a_gridEntityShotAttributes).ContinueWith(a_task =>
 			{
 				if (a_task.Result.IsError)
 				{

@@ -14,12 +14,22 @@
         <Grid.RowDefinitions>
 			<RowDefinition Height="128"></RowDefinition>
 			<RowDefinition Height="28"></RowDefinition>
-			<RowDefinition Height="*"></RowDefinition>
+			<RowDefinition Height="28"></RowDefinition>
+			<RowDefinition Height="28"></RowDefinition>
+	        <RowDefinition Height="*"></RowDefinition>
         </Grid.RowDefinitions>
 		<Image x:Name="ShotThumbnail" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"/>
+		
 		<Label Grid.Row="1" Grid.Column="0">Shot Code</Label>
-		<Label x:Name="ShotCode" Grid.Row="1" Grid.Column="1">ShotCodeHere</Label>
-		<ScrollViewer VerticalScrollBarVisibility="Auto" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" >
+		<Label x:Name="ShotCode" Grid.Row="1" Grid.Column="1" Content="{Binding DisplayedAttributes.ShotCode, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:ShotInfoDisplay}}}"/>
+
+		<Label Grid.Row="2" Grid.Column="0">Camera</Label>
+		<Label Grid.Row="2" Grid.Column="1" Content="{Binding DisplayedAttributes.Camera, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:ShotInfoDisplay}}}" />
+
+		<Label Grid.Row="3" Grid.Column="0">Lens</Label>
+		<Label Grid.Row="3" Grid.Column="1" Content="{Binding DisplayedAttributes.Lens, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:ShotInfoDisplay}}}" />
+
+		<ScrollViewer VerticalScrollBarVisibility="Auto" Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" >
 			<TextBlock x:Name="Description" TextWrapping="Wrap" >SomeDescription</TextBlock>
 		</ScrollViewer>
     </Grid>

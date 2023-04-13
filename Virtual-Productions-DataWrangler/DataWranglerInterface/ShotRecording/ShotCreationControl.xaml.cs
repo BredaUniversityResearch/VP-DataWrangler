@@ -21,7 +21,7 @@ namespace DataWranglerInterface.ShotRecording
 	/// </summary>
 	public partial class ShotCreationControl : UserControl
 	{
-		public delegate void RequestCreateNewShotDelegate(ShotGridEntityShot.ShotAttributes a_attributes);
+		public delegate void RequestCreateNewShotDelegate(ShotGridEntityShotAttributes a_gridEntityShotAttributes);
 		public event RequestCreateNewShotDelegate OnRequestCreateNewShot = delegate { };
 
 		public ShotCreationControl()
@@ -43,9 +43,9 @@ namespace DataWranglerInterface.ShotRecording
 
 		private void ButtonCreate_Click(object a_sender, RoutedEventArgs a_e)
 		{
-			ShotGridEntityShot.ShotAttributes attributes = new ShotGridEntityShot.ShotAttributes();
-			attributes.ShotCode = ShotNameInput.Text;
-			OnRequestCreateNewShot.Invoke(attributes);
+			ShotGridEntityShotAttributes gridEntityShotAttributes = new ShotGridEntityShotAttributes();
+			gridEntityShotAttributes.ShotCode = ShotNameInput.Text;
+			OnRequestCreateNewShot.Invoke(gridEntityShotAttributes);
 
 			HideAndReset();
 		}

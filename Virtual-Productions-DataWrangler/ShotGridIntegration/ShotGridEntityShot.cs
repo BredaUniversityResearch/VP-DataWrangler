@@ -1,17 +1,20 @@
-﻿using Newtonsoft.Json;
+﻿using AutoNotify;
+using Newtonsoft.Json;
 
 namespace ShotGridIntegration
 {
+	public partial class ShotGridEntityShotAttributes
+	{
+		[JsonProperty("code"), AutoNotify] private string m_shotCode = "";
+		[JsonProperty("description"), AutoNotify] private string m_description = "";
+		[JsonProperty("image"), AutoNotify] private string? m_imageURL;
+		[JsonProperty("sg_camera"), AutoNotify] private string? m_camera;
+		[JsonProperty("sg_lens"), AutoNotify] private string? m_lens;
+	};
+
 	public class ShotGridEntityShot: ShotGridEntity
 	{
-		public class ShotAttributes
-		{
-			[JsonProperty("code")] public string ShotCode = "";
-			[JsonProperty("description")] public string Description = "";
-			[JsonProperty("image")] public string? ImageURL = null;
-		};
-
 		[JsonProperty("attributes")]
-		public ShotAttributes Attributes = new ShotAttributes();
+		public readonly ShotGridEntityShotAttributes Attributes = new ShotGridEntityShotAttributes();
 	}
 }
