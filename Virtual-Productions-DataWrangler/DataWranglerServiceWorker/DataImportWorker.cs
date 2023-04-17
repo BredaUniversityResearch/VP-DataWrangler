@@ -7,6 +7,9 @@ using System.Threading;
 using CommonLogging;
 using DataWranglerCommon;
 using Newtonsoft.Json;
+using Renci.SshNet;
+using Renci.SshNet.Common;
+using Renci.SshNet.Sftp;
 using ShotGridIntegration;
 
 namespace DataWranglerServiceWorker
@@ -122,6 +125,22 @@ namespace DataWranglerServiceWorker
 		{
 			while (!m_dataImportThreadCancellationToken.IsCancellationRequested)
 			{
+				bool keyMessageSent = false;
+				while (ServiceWorkerConfig.Instance.DefaultDataStoreFtpKeyFile == null)
+				{
+					if (!keyMessageSent)
+					{
+						Logger.LogError("Config", $"Waiting for private key file at \"{ServiceWorkerConfig.Instance.DefaultDataStoreFtpKeyFilePath}\"");
+					}
+
+					if (ServiceWorkerConfig.Instance.TryReloadPrivateKey())
+					{
+						break;
+					}
+
+					Thread.Sleep(1000);
+				}
+
 				ImportQueueEntry? resultToCopy;
 				bool didDequeue;
 				lock (m_importQueue)
@@ -132,22 +151,33 @@ namespace DataWranglerServiceWorker
 				if (didDequeue && resultToCopy != null)
 				{
 					ECopyResult result = ECopyResult.UnknownFailure;
-					OnCopyStarted.Invoke(resultToCopy.TargetShotVersion, resultToCopy.CopyMetaData);
 					try
 					{
-						result = CopyFileWithProgress(resultToCopy.TargetShotVersion, resultToCopy.CopyMetaData);
+						using (SftpClient ftpClient = new SftpClient(ServiceWorkerConfig.Instance.DefaultDataStoreFtpHost, 22, ServiceWorkerConfig.Instance.DefaultDataStoreFtpUserName, ServiceWorkerConfig.Instance.DefaultDataStoreFtpKeyFile))
+						{
+							OnCopyStarted.Invoke(resultToCopy.TargetShotVersion, resultToCopy.CopyMetaData);
+
+							ftpClient.Connect();
+							if (ftpClient.IsConnected)
+							{
+								result = CopyFileWithProgress(ftpClient, resultToCopy.TargetShotVersion, resultToCopy.CopyMetaData);
+							}
+
+							ftpClient.Disconnect();
+						}
+
+						if (result == ECopyResult.Success)
+						{
+							WriteMetadata(resultToCopy);
+						}
+
+						OnCopyFinished.Invoke(resultToCopy.TargetShotVersion, resultToCopy.CopyMetaData, result);
 					}
-					catch (IOException ex)
+					catch (SshException ex)
 					{
-						Logger.LogError("DataImporter", $"Import exception occurred processing file {resultToCopy.CopyMetaData.SourceFilePath} => {resultToCopy.CopyMetaData.DestinationFullFilePath} Exception: {ex.Message}");
+						Logger.LogError("DataImporter", $"Failed to copy file. SshException occurred: {ex}");
 					}
 
-					if (result == ECopyResult.Success)
-					{
-						WriteMetadata(resultToCopy);
-					}
-
-					OnCopyFinished.Invoke(resultToCopy.TargetShotVersion, resultToCopy.CopyMetaData, result);
 				}
 				else
 				{
@@ -166,25 +196,21 @@ namespace DataWranglerServiceWorker
 			JsonSerializer.CreateDefault().Serialize(textWriter, importedMeta);
 		}
 
-		private ECopyResult CopyFileWithProgress(ShotVersionIdentifier a_shotVersion, FileCopyMetaData a_copyMetaData)
+		private ECopyResult CopyFileWithProgress(SftpClient a_client, ShotVersionIdentifier a_shotVersion, FileCopyMetaData a_copyMetaData)
 		{
-			string? targetDirectory = Path.GetDirectoryName(a_copyMetaData.DestinationFullFilePath.LocalPath);
-			if (targetDirectory == null)
+			string ftpTargetPath = Path.Combine(ServiceWorkerConfig.Instance.DefaultDataStoreFtpRelativeRoot, a_copyMetaData.DestinationRelativeFilePath);
+
+			string targetDirectory = ftpTargetPath.Substring(0, ftpTargetPath.LastIndexOf('/'));
+			if (!a_client.Exists(targetDirectory))
 			{
-				Logger.LogError("DataImporter", $"Failed to get directory from path {a_copyMetaData.DestinationFullFilePath}");
-				return ECopyResult.InvalidDestinationPath;
+				a_client.CreateDirectory(targetDirectory);
 			}
 
-			if (!Directory.Exists(targetDirectory))
+			if (a_client.Exists(ftpTargetPath))
 			{
-				new DirectoryInfo(targetDirectory).Create();
-			}
-
-			FileInfo targetFileInfo = new FileInfo(a_copyMetaData.DestinationFullFilePath.LocalPath);
-			if (targetFileInfo.Exists)
-			{
+				SftpFileAttributes targetFileInfo = a_client.GetAttributes(ftpTargetPath);
 				FileInfo sourceFileInfo = new FileInfo(a_copyMetaData.SourceFilePath.LocalPath);
-				if (sourceFileInfo.Length <= targetFileInfo.Length)
+				if (sourceFileInfo.Length == targetFileInfo.Size)
 				{
 					Logger.LogInfo("DataImporter", $"Skipped file {a_copyMetaData.SourceFilePath}. Destination file seems up to date");
 					return ECopyResult.FileAlreadyUpToDate;
@@ -192,35 +218,31 @@ namespace DataWranglerServiceWorker
 
 			}
 
-			byte[] copyBuffer = new byte[ServiceWorkerConfig.Instance.DefaultCopyBufferSize];
-
 			using FileStream sourceStream = new FileStream(a_copyMetaData.SourceFilePath.LocalPath, FileMode.Open, FileAccess.Read);
-			using FileStream targetStream = new FileStream(a_copyMetaData.DestinationFullFilePath.LocalPath, FileMode.Create, FileAccess.Write);
 
 			long sourceSize = sourceStream.Length;
-			long bytesCopied = 0;
 
-			int currentBlockSize = 0;
 			Stopwatch sw = new Stopwatch();
 			sw.Start();
-			while ((currentBlockSize = sourceStream.Read(copyBuffer, 0, copyBuffer.Length)) > 0)
-			{
-				targetStream.Write(copyBuffer, 0, currentBlockSize);
-				bytesCopied += currentBlockSize;
+			long lastBytesCopied = 0;
+
+			a_client.UploadFile(sourceStream, ftpTargetPath, true, (a_bytesCopied) => {
 				TimeSpan timeElapsed = sw.Elapsed;
-				sw.Restart();
 
 				double elapsedSeconds = timeElapsed.TotalSeconds;
-				if (elapsedSeconds <= 0.0)
+				if (elapsedSeconds > 0.5)
 				{
-					elapsedSeconds = 1.0;
+					sw.Restart();
+
+					long bytesCopied = (long) a_bytesCopied;
+					long currentBlockSize = bytesCopied - lastBytesCopied;
+					lastBytesCopied = bytesCopied;
+					long bytesPerSecond = (long)Math.Floor(currentBlockSize / elapsedSeconds);
+
+					float percentageCopied = ((float)lastBytesCopied / (float)sourceSize);
+					OnCopyUpdate(a_shotVersion, a_copyMetaData, new FileCopyProgress(sourceSize, bytesCopied, percentageCopied, bytesPerSecond));
 				}
-
-				long bytesPerSecond = (long)Math.Floor(currentBlockSize / elapsedSeconds);
-
-				float percentageCopied = ((float) bytesCopied / (float) sourceSize);
-				OnCopyUpdate(a_shotVersion, a_copyMetaData, new FileCopyProgress(sourceSize, bytesCopied, percentageCopied, bytesPerSecond));
-			}
+			});
 
 			return ECopyResult.Success;
 		}
