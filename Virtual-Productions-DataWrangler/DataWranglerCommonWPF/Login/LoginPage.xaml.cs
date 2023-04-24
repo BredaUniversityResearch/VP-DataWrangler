@@ -15,6 +15,8 @@ namespace DataWranglerCommonWPF.Login
 	/// </summary>
 	public partial class LoginPage : Page
 	{
+		private const bool AcceptInvalidCredentials = true;
+
 		private Task<ShotGridLoginResponse>? m_runningLoginTask;
 		public event Action OnSuccessfulLogin = delegate { };
 		private bool m_allowLoginFromRefreshToken = true; //Only first time. Any time after first we should not have a valid refresh token.
@@ -99,7 +101,12 @@ namespace DataWranglerCommonWPF.Login
 				throw new Exception();
 			}
 
-			if (a_obj.Success)
+			if (AcceptInvalidCredentials)
+			{
+				m_targetAPI.SetInvalidAuthentication();
+			}
+
+			if (a_obj.Success || AcceptInvalidCredentials)
 			{
 				m_credentialProvider.OAuthRefreshToken = m_targetAPI.GetCurrentCredentials().RefreshToken;
 				OnSuccessfulLogin.Invoke();

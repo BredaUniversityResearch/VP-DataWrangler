@@ -92,7 +92,7 @@ internal class CommandControlPacketFieldMeta
 				byte[] value = a_reader.ReadBytes(arrayLength);
 				if (value.Length != arrayLength)
 				{
-					throw new Exception("Failed to read required amount of data");
+					throw new EndOfStreamException("Failed to read required amount of data");
 				}
 
 				m_targetField.SetValue(a_target, value);

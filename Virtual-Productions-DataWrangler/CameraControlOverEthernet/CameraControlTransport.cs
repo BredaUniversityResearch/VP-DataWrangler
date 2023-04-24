@@ -27,7 +27,14 @@
 					packet = meta.CreateDefaultedInstance();
 					foreach (CommandControlPacketFieldMeta field in meta.Fields)
 					{
-						field.Read(a_reader, packet);
+						try
+						{
+							field.Read(a_reader, packet);
+						}
+						catch (EndOfStreamException)
+						{
+							return null;
+						}
 					}
 				}
 			}

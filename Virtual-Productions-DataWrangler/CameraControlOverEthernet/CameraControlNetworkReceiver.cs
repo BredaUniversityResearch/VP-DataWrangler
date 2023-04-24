@@ -115,6 +115,7 @@ namespace CameraControlOverEthernet
 		private void BackgroundReceiveData(ClientConnection a_client)
 		{
 			byte[] receiveBuffer = new byte[8192];
+			int bytesFromLastReceive = 0;
 			a_client.Client.GetStream().ReadTimeout = 1000;
 
 			while (a_client.Client.Connected)
@@ -129,7 +130,7 @@ namespace CameraControlOverEthernet
 				int bytesReceived = 0;
 				try
 				{
-					bytesReceived = a_client.Client.GetStream().Read(receiveBuffer, 0, (int) receiveBuffer.Length);
+					bytesReceived = a_client.Client.GetStream().Read(receiveBuffer, bytesFromLastReceive, (int) receiveBuffer.Length - bytesFromLastReceive);
 				}
 				catch (IOException ex)
 				{
@@ -156,17 +157,28 @@ namespace CameraControlOverEthernet
 
 				if (bytesReceived > 0)
 				{
-					MemoryStream ms = new MemoryStream(receiveBuffer, 0, bytesReceived, false);
+
+					MemoryStream ms = new MemoryStream(receiveBuffer, 0, bytesReceived + bytesFromLastReceive, false);
+					bytesFromLastReceive = 0;
+
 					using (BinaryReader reader = new BinaryReader(ms, Encoding.ASCII))
 					{
 						while (ms.Position < ms.Length)
 						{
+							long packetStart = ms.Position;
 							ICameraControlPacket? packet = CameraControlTransport.TryRead(reader);
 							if (packet != null)
 							{
 								//Logger.LogVerbose("CCServer", $"Received Packet From Client {a_client.Client.Client.RemoteEndPoint} of type {packet.GetType()}");
 								m_receivedPacketQueue.Add(packet);
 								a_client.LastActivityTime = DateTime.UtcNow;
+							}
+							else
+							{
+								bytesFromLastReceive = (int)packetStart;
+								Array.Copy(receiveBuffer, ms.Position, receiveBuffer, 0, ms.Length - packetStart);
+								Logger.LogVerbose("CCServer", $"Failed to deserialize data from client {a_client.Client.Client.RemoteEndPoint} discarding {ms.Length - ms.Position} bytes");
+								break;
 							}
 						}
 					}

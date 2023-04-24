@@ -36,19 +36,22 @@ namespace DataWranglerInterface.ShotRecording
 					return;
 				}
 
-				ShotGridAPIResponse<TAPIResult[]> apiResults = a_results.Result;
-				TDropDownType[] result = Array.Empty<TDropDownType>();
-				if (!apiResults.IsError)
+				if (a_results.IsCompletedSuccessfully)
 				{
-					result = new TDropDownType[apiResults.ResultData.Length];
-					for (int i = 0; i < result.Length; ++i)
+					ShotGridAPIResponse<TAPIResult[]> apiResults = a_results.Result;
+					TDropDownType[] result = Array.Empty<TDropDownType>();
+					if (!apiResults.IsError)
 					{
-						TDropDownType? dropDownType = (TDropDownType?)Activator.CreateInstance(typeof(TDropDownType), apiResults.ResultData[i]);
-						result[i] = dropDownType ?? throw new Exception($"Failed to create object {typeof(TDropDownType).Name} with {typeof(TAPIResult).Name} as first argument");
+						result = new TDropDownType[apiResults.ResultData.Length];
+						for (int i = 0; i < result.Length; ++i)
+						{
+							TDropDownType? dropDownType = (TDropDownType?)Activator.CreateInstance(typeof(TDropDownType), apiResults.ResultData[i]);
+							result[i] = dropDownType ?? throw new Exception($"Failed to create object {typeof(TDropDownType).Name} with {typeof(TAPIResult).Name} as first argument");
+						}
 					}
+					
+					AssignItemsToDropdown(result);
 				}
-				
-				AssignItemsToDropdown(result);
 				m_itemEntryRefreshTask = null;
 			});
 		}

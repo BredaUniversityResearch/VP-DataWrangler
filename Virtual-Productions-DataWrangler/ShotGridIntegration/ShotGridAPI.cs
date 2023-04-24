@@ -80,9 +80,22 @@ namespace ShotGridIntegration
 			string responseString = await responseAuth.Content.ReadAsStringAsync();
 			if (!responseAuth.IsSuccessStatusCode)
 			{
-				ShotGridErrorResponse? errorResponse = JsonConvert.DeserializeObject<ShotGridErrorResponse>(responseString, SerializerSettings);
+				try
+				{
+					ShotGridErrorResponse? errorResponse = JsonConvert.DeserializeObject<ShotGridErrorResponse>(responseString, SerializerSettings);
 
-				return new ShotGridLoginResponse(false, errorResponse, null);
+					return new ShotGridLoginResponse(false, errorResponse, null);
+				}
+				catch(JsonException ex)
+				{
+					return new ShotGridLoginResponse(false, new ShotGridErrorResponse()
+					{
+						Errors = new ShotGridErrorResponse.RequestError[]
+						{
+							new() {Detail = $"Exception occurred: {ex.Message}. Full response: {responseString}", HttpStatus = (int)responseAuth.StatusCode, Title = "Unknown Error"}
+						}
+					}, null);
+				}
 			}
 
 			APIAuthResponse? deserializedResponse = JsonConvert.DeserializeObject<APIAuthResponse>(responseString, SerializerSettings);
@@ -95,6 +108,11 @@ namespace ShotGridIntegration
 			{
 				return new ShotGridLoginResponse(false, null, deserializedResponse);
 			}
+		}
+
+		public void SetInvalidAuthentication()
+		{
+			m_authentication = new ShotGridAuthentication(new APIAuthResponse() { AccessToken = "INVALID", IdToken = "INVALID", RefreshToken = "INVALID", TokenType = "INVALID"});
 		}
 
 		public async Task<ShotGridLoginResponse> TryRefreshToken()
