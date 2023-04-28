@@ -14,12 +14,26 @@ namespace CameraControlOverEthernet
 		private class ClientConnection
 		{
 			public readonly TcpClient Client;
+			public readonly int ConnectionId;
 			public Task? ReceiveTask;
 			public DateTime LastActivityTime;
 
-			public ClientConnection(TcpClient a_client)
+			public ClientConnection(TcpClient a_client, int a_connectionId)
 			{
 				Client = a_client;
+				ConnectionId = a_connectionId;
+			}
+		};
+
+		private class QueuedPacketEntry
+		{
+			public readonly ICameraControlPacket Packet;
+			public readonly int ConnectionId;
+
+			public QueuedPacketEntry(ICameraControlPacket a_packet, int a_connectionId)
+			{
+				Packet = a_packet;
+				ConnectionId = a_connectionId;
 			}
 		};
 
@@ -34,12 +48,17 @@ namespace CameraControlOverEthernet
 
 		private CancellationTokenSource m_cancellationTokenSource = new CancellationTokenSource();
 
+		private int m_lastConnectionId = 0;
+
 		private Task? m_discoveryBroadcastTask = null;
 		private Task? m_connectAcceptTask = null;
 		private readonly int m_serverIdentifier = Random.Shared.Next();
 
 		private List<ClientConnection> m_connectedClients = new List<ClientConnection>();
-		private BlockingCollection<ICameraControlPacket> m_receivedPacketQueue = new BlockingCollection<ICameraControlPacket>();
+		private BlockingCollection<QueuedPacketEntry> m_receivedPacketQueue = new BlockingCollection<QueuedPacketEntry>();
+
+		public delegate void ClientDisconnectedDelegate(int a_connectionId);
+		public event ClientDisconnectedDelegate OnClientDisconnected = delegate { };
 
 		public void Start()
 		{
@@ -97,7 +116,7 @@ namespace CameraControlOverEthernet
 				TcpClient client = await m_connectionListener.AcceptTcpClientAsync(m_cancellationTokenSource.Token);
 				if (!m_cancellationTokenSource.IsCancellationRequested)
 				{
-					ClientConnection conn = new ClientConnection(client);
+					ClientConnection conn = new ClientConnection(client, ++m_lastConnectionId);
 					conn.ReceiveTask = new Task(() => BackgroundReceiveData(conn));
 					conn.ReceiveTask.Start();
 					conn.LastActivityTime = DateTime.UtcNow;
@@ -170,7 +189,7 @@ namespace CameraControlOverEthernet
 							if (packet != null)
 							{
 								//Logger.LogVerbose("CCServer", $"Received Packet From Client {a_client.Client.Client.RemoteEndPoint} of type {packet.GetType()}");
-								m_receivedPacketQueue.Add(packet);
+								m_receivedPacketQueue.Add(new QueuedPacketEntry(packet, a_client.ConnectionId));
 								a_client.LastActivityTime = DateTime.UtcNow;
 							}
 							else
@@ -185,12 +204,27 @@ namespace CameraControlOverEthernet
 				}
 			}
 
+			lock (m_connectedClients)
+			{
+				OnClientDisconnected(a_client.ConnectionId);
+				m_connectedClients.Remove(a_client);
+			}
+
 			Logger.LogVerbose("CCServer", $"Dropped client. See previous message for details.");
 		}
 
-		public bool TryDequeueMessage([NotNullWhen(true)] out ICameraControlPacket? a_cameraControlPacket, TimeSpan a_timeout, CancellationToken a_cancellationToken)
+		public bool TryDequeueMessage([NotNullWhen(true)] out ICameraControlPacket? a_cameraControlPacket, out int a_connectionId, TimeSpan a_timeout, CancellationToken a_cancellationToken)
 		{
-			return m_receivedPacketQueue.TryTake(out a_cameraControlPacket, (int)a_timeout.TotalMilliseconds, a_cancellationToken);
+			if (m_receivedPacketQueue.TryTake(out QueuedPacketEntry? entry, (int) a_timeout.TotalMilliseconds, a_cancellationToken))
+			{
+				a_cameraControlPacket = entry.Packet;
+				a_connectionId = entry.ConnectionId;
+				return true;
+			}
+
+			a_cameraControlPacket = null;
+			a_connectionId = -1;
+			return false;
 		}
 	}
 }

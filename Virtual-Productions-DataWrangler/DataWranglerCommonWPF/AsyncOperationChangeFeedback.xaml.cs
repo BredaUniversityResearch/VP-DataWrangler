@@ -37,12 +37,41 @@ namespace DataWranglerCommonWPF
 		{
 			if (m_targetChildElement != null)
 			{	
-				LoadingSpinnerInstance.Width = m_targetChildElement.DesiredSize.Width;
-				LoadingSpinnerInstance.Height = m_targetChildElement.DesiredSize.Height;
+				Rect targetRect = new Rect(new Point(0, 0), new Size(arrangeSize.Width, arrangeSize.Height));
+				LoadingSpinnerInstance.Arrange(targetRect);
+				LoadingSpinnerInstance.Width = arrangeSize.Width;
+				LoadingSpinnerInstance.Height = arrangeSize.Height;
+
 				//LoadingSpinnerInstance.Invalidate();
+				m_targetChildElement.Arrange(targetRect);
 			}
 
-			return base.ArrangeOverride(m_targetChildElement?.DesiredSize ?? arrangeSize);
+			return arrangeSize;
+		}
+
+		protected override Size MeasureOverride(Size constraint)
+		{
+			base.MeasureOverride(constraint);
+
+			if (m_targetChildElement == null)
+			{
+				return new Size();
+			}
+
+			double width = m_targetChildElement.DesiredSize.Width;
+			if (HorizontalAlignment == HorizontalAlignment.Stretch ||
+			    width <= 0.0)
+			{
+				width = constraint.Width;
+			}
+
+			double height = m_targetChildElement.DesiredSize.Height;
+			if (height <= 0.0f)
+			{
+				height = DesiredSize.Height;
+			}
+
+			return new Size(width, height);
 		}
 
 		public static AsyncOperationChangeFeedback? FindFeedbackElementFrom(FrameworkElement a_element)

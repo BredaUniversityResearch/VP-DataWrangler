@@ -15,7 +15,7 @@ namespace DataWranglerCommonWPF.Login
 	/// </summary>
 	public partial class LoginPage : Page
 	{
-		private const bool AcceptInvalidCredentials = true;
+		private const bool AcceptInvalidCredentials = false;
 
 		private Task<ShotGridLoginResponse>? m_runningLoginTask;
 		public event Action OnSuccessfulLogin = delegate { };

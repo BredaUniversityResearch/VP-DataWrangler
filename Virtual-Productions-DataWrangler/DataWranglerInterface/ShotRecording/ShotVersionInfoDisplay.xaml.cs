@@ -156,5 +156,21 @@ namespace DataWranglerInterface.ShotRecording
 				feedbackElement.ProvideFeedback(task);
 			}
 		}
+
+		private void OnDescriptionChanged(object a_sender, RoutedEventArgs a_routedEventArgs)
+		{
+			if (CurrentVersion == null || !CurrentVersion.ChangeTracker.HasAnyUncommittedChanges())
+			{
+				return;
+			}
+
+			Task<ShotGridAPIResponseGeneric> task = CurrentVersion.ChangeTracker.CommitChanges(DataWranglerServiceProvider.Instance.ShotGridAPI);
+			FrameworkElement sender = (FrameworkElement)a_sender;
+			AsyncOperationChangeFeedback? feedbackElement = AsyncOperationChangeFeedback.FindFeedbackElementFrom(sender);
+			if (feedbackElement != null)
+			{
+				feedbackElement.ProvideFeedback(task);
+			}
+		}
 	}
 }

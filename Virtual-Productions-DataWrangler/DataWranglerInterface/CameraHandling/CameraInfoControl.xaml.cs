@@ -42,6 +42,12 @@ namespace DataWranglerInterface.ShotRecording
 
 		public void RemoveTargetCameraInfo(ActiveCameraInfo a_handle)
 		{
+			if (!Dispatcher.CheckAccess())
+			{
+				Dispatcher.InvokeAsync(() => RemoveTargetCameraInfo(a_handle));
+				return;
+			}
+
 			for (int i = ActiveCameras.Count - 1; i >= 0; --i)
 			{
 				if (ActiveCameras[i].TargetInfo == a_handle)
