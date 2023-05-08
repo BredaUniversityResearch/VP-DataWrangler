@@ -201,10 +201,7 @@ namespace DataWranglerServiceWorker
 			string ftpTargetPath = Path.Combine(ServiceWorkerConfig.Instance.DefaultDataStoreFtpRelativeRoot, a_copyMetaData.DestinationRelativeFilePath);
 
 			string targetDirectory = ftpTargetPath.Substring(0, ftpTargetPath.LastIndexOf('/'));
-			if (!a_client.Exists(targetDirectory))
-			{
-				a_client.CreateDirectory(targetDirectory);
-			}
+			CreateRemoteDirectoryRecursively(a_client, targetDirectory);
 
 			if (a_client.Exists(ftpTargetPath))
 			{
@@ -245,6 +242,21 @@ namespace DataWranglerServiceWorker
 			});
 
 			return ECopyResult.Success;
+		}
+
+		private void CreateRemoteDirectoryRecursively(SftpClient a_client, string a_targetDirectory)
+		{
+			int lastIndex = 0;
+			do
+			{
+				lastIndex = a_targetDirectory.IndexOf('/', lastIndex + 1);
+				string path = a_targetDirectory.Substring(0, (lastIndex == -1)? a_targetDirectory.Length: lastIndex);
+				if (!a_client.Exists(path) || !a_client.GetAttributes(path).IsDirectory)
+				{
+					a_client.CreateDirectory(path);
+					Logger.LogInfo("DataImporter", $"Creating output directory {path}.");
+				}
+			} while (lastIndex != -1);
 		}
 
 		private string ResolvePath(string a_inputPath, Dictionary<string, string> a_replacementVariables)
