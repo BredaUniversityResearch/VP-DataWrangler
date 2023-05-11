@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:DataWranglerInterface.ShotRecording"
+             xmlns:dataWranglerCommonWpf="clr-namespace:DataWranglerCommonWPF;assembly=DataWranglerCommonWPF"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
@@ -30,7 +31,9 @@
 		<Label Grid.Row="3" Grid.Column="1" Content="{Binding DisplayedAttributes.Lens, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:ShotInfoDisplay}}}" />
 
 		<ScrollViewer VerticalScrollBarVisibility="Auto" Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" >
-			<TextBlock x:Name="Description" TextWrapping="Wrap" >SomeDescription</TextBlock>
+			<dataWranglerCommonWpf:AsyncOperationChangeFeedback>
+				<TextBox TextWrapping="Wrap" AcceptsReturn="True" Text="{Binding DisplayedAttributes.Description, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:ShotInfoDisplay}}}" LostFocus="OnDescriptionChanged"/>
+			</dataWranglerCommonWpf:AsyncOperationChangeFeedback>
 		</ScrollViewer>
     </Grid>
 </UserControl>

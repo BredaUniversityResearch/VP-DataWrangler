@@ -108,5 +108,11 @@ namespace DataWranglerInterface
 				m_previewWindow.Close();
 			}
 		}
+
+		private void OnWindowMouseDown(object a_sender, MouseButtonEventArgs a_e)
+		{
+			FocusManager.SetFocusedElement(this, null);
+			Keyboard.ClearFocus();
+		}
 	}
 }

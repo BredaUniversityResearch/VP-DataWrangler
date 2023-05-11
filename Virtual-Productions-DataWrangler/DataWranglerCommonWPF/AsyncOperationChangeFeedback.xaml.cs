@@ -71,7 +71,11 @@ namespace DataWranglerCommonWPF
 				height = DesiredSize.Height;
 			}
 
-			return new Size(width, height);
+			Size result = new Size(width, height);
+
+			m_targetChildElement.Measure(result);
+
+			return result;
 		}
 
 		public static AsyncOperationChangeFeedback? FindFeedbackElementFrom(FrameworkElement a_element)
