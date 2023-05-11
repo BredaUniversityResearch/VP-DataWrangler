@@ -183,7 +183,7 @@ namespace CameraControlOverEthernet
 					using (BinaryReader reader = new BinaryReader(ms, Encoding.ASCII))
 					{
 						while (ms.Position < ms.Length)
-						{
+							{
 							long packetStart = ms.Position;
 							ICameraControlPacket? packet = CameraControlTransport.TryRead(reader);
 							if (packet != null)

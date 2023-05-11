@@ -52,6 +52,8 @@ namespace DataWranglerServiceWorker
 		private Thread m_dataImportThread;
 		private CancellationTokenSource m_dataImportThreadCancellationToken = new CancellationTokenSource();
 
+		private SftpClient? m_importClient = null;
+
 		public DataImportWorker(ShotGridDataCache a_cache, ShotGridAPI a_api)
 		{
 			m_dataCache = a_cache;
@@ -153,18 +155,19 @@ namespace DataWranglerServiceWorker
 					ECopyResult result = ECopyResult.UnknownFailure;
 					try
 					{
-						using (SftpClient ftpClient = new SftpClient(ServiceWorkerConfig.Instance.DefaultDataStoreFtpHost, 22, ServiceWorkerConfig.Instance.DefaultDataStoreFtpUserName, ServiceWorkerConfig.Instance.DefaultDataStoreFtpKeyFile))
+						if (m_importClient == null)
 						{
-							OnCopyStarted.Invoke(resultToCopy.TargetShotVersion, resultToCopy.CopyMetaData);
-
-							ftpClient.Connect();
-							if (ftpClient.IsConnected)
-							{
-								result = CopyFileWithProgress(ftpClient, resultToCopy.TargetShotVersion, resultToCopy.CopyMetaData);
-							}
-
-							ftpClient.Disconnect();
+							m_importClient = new SftpClient(ServiceWorkerConfig.Instance.DefaultDataStoreFtpHost, 22, ServiceWorkerConfig.Instance.DefaultDataStoreFtpUserName, ServiceWorkerConfig.Instance.DefaultDataStoreFtpKeyFile);
 						}
+
+						if (!m_importClient.IsConnected)
+						{
+							m_importClient.Connect();
+						}
+
+						OnCopyStarted.Invoke(resultToCopy.TargetShotVersion, resultToCopy.CopyMetaData);
+
+						result = CopyFileWithProgress(m_importClient, resultToCopy.TargetShotVersion, resultToCopy.CopyMetaData);
 
 						if (result == ECopyResult.Success)
 						{
@@ -181,6 +184,11 @@ namespace DataWranglerServiceWorker
 				}
 				else
 				{
+					if (m_importClient != null && m_importClient.IsConnected)
+					{
+						m_importClient.Disconnect();
+					}
+
 					WaitHandle.WaitAny(new[] {m_dataImportThreadCancellationToken.Token.WaitHandle, m_queueAddedEvent});
 				}
 			}

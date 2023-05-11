@@ -181,8 +181,6 @@ namespace DataWranglerServiceWorker
 					}
 
 					TryImportFilesFromMeta();
-
-					m_importWorker.AddFileToImport(new ShotVersionIdentifier(285, 1369, 9350), "D:/ClickGameV2.zip", "video");
 				});
 
 			m_driveEventWatcher.DetectCurrentlyPresentUSBDrives();
