@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Text;
 using CommonLogging;
+using DataWranglerCommon;
 using Newtonsoft.Json;
 
 namespace DataWranglerInterface.Configuration
@@ -10,6 +11,7 @@ namespace DataWranglerInterface.Configuration
 		public static DataWranglerConfig Instance { get; }
 
 		public List<ConfigActiveCameraGrouping> ConfiguredCameraGroupings = new List<ConfigActiveCameraGrouping>();
+		public ConfigString ShotVersionNameTemplate = new ConfigString("Take_${ShotVersionId}");
 
 		static DataWranglerConfig()
 		{

@@ -105,16 +105,12 @@ namespace DataWranglerServiceWorker
 				return;
 			}
 
-
-			Dictionary<string, string> replacements = new Dictionary<string, string>
-			{
-				{"ProjectName", RemoveInvalidPathCharacters(project.Attributes.Name) },
-				{"ShotCode", RemoveInvalidPathCharacters(shot.Attributes.ShotCode) },
-				{"ShotVersionCode", RemoveInvalidPathCharacters(shotVersion.Attributes.VersionCode) }
-			};
-
 			string targetPath = ServiceWorkerConfig.Instance.DefaultDataStoreFilePath + Path.GetFileName(a_sourceFilePath);
-			targetPath = ResolvePath(targetPath, replacements);
+			ConfigStringBuilder sb = new ConfigStringBuilder();
+			sb.AddReplacement("ProjectName", RemoveInvalidPathCharacters(project.Attributes.Name));
+			sb.AddReplacement("ShotCode", RemoveInvalidPathCharacters(shot.Attributes.ShotCode));
+			sb.AddReplacement("ShotVersionCode", RemoveInvalidPathCharacters(shotVersion.Attributes.VersionCode));
+			targetPath = sb.Replace(targetPath);
 
 			lock (m_importQueue)
 			{
@@ -265,24 +261,6 @@ namespace DataWranglerServiceWorker
 					Logger.LogInfo("DataImporter", $"Creating output directory {path}.");
 				}
 			} while (lastIndex != -1);
-		}
-
-		private string ResolvePath(string a_inputPath, Dictionary<string, string> a_replacementVariables)
-		{
-			Regex regex = new Regex("\\$\\{([a-zA-Z0-9]+)\\}", RegexOptions.CultureInvariant);
-			MatchCollection matches = regex.Matches(a_inputPath);
-
-			string output = a_inputPath;
-			foreach (Match match in matches)
-			{
-				string targetValue = match.Groups[1].Value;
-				if (a_replacementVariables.TryGetValue(targetValue, out string? replacement))
-				{
-					output = output.Replace(match.Value, replacement);
-				}
-			}
-
-			return output;
 		}
 
 		private string RemoveInvalidPathCharacters(string a_pathVariable)

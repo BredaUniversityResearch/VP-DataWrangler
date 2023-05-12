@@ -43,9 +43,6 @@ namespace DataWranglerInterface.ShotRecording
 			}
 		};
 
-		private const string ShotNameTemplate = "Take {0:D2}";
-		private static readonly Regex ShotNameTemplateMatcher = new Regex("Take ([0-9]{2})");
-
 		private ShotRecordingPage? m_parentPage = null;
 
 		private ProjectSelectorControl? m_projectSelector = null;
@@ -90,8 +87,11 @@ namespace DataWranglerInterface.ShotRecording
 					{
 						int nextTakeId = FindNextTakeIdFromShotVersions(a_task.Result.ResultData) + 1;
 
+						ConfigStringBuilder sb = new ConfigStringBuilder();
+						sb.AddReplacement("ShotVersionId", nextTakeId.ToString());
+
 						ShotVersionAttributes attributes = new ShotVersionAttributes();
-						attributes.VersionCode = string.Format(ShotNameTemplate, nextTakeId);
+						attributes.VersionCode = Configuration.DataWranglerConfig.Instance.ShotVersionNameTemplate.Build(sb);
 						attributes.DataWranglerMeta =
 							JsonConvert.SerializeObject(a_meta, DataWranglerSerializationSettings.Instance);
 
@@ -113,10 +113,14 @@ namespace DataWranglerInterface.ShotRecording
 
 		private int FindNextTakeIdFromShotVersions(ShotGridEntityShotVersion[] a_resultData)
 		{
+			ConfigStringBuilder sb = new ConfigStringBuilder();
+			sb.AddReplacement("ShotVersionId", "([0-9]{2})");
+			Regex shotNameTemplateMatcher = new Regex(Configuration.DataWranglerConfig.Instance.ShotVersionNameTemplate.Build(sb));
+
 			int nextShotId = 0;
 			foreach (ShotGridEntityShotVersion shotVersion in a_resultData)
 			{
-				Match nameMatch = ShotNameTemplateMatcher.Match(shotVersion.Attributes.VersionCode);
+				Match nameMatch = shotNameTemplateMatcher.Match(shotVersion.Attributes.VersionCode);
 				if (nameMatch.Success && nameMatch.Groups.Count >= 1)
 				{
 					nextShotId = int.Parse(nameMatch.Groups[1].ValueSpan);
