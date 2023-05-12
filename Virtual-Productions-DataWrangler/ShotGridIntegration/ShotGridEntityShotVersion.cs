@@ -10,6 +10,7 @@ namespace ShotGridIntegration
 		[AutoNotify, JsonProperty("image")] private string? m_imageURL;
 		[AutoNotify, JsonProperty("sg_datawrangler_meta")] private string? m_dataWranglerMeta;
 		[AutoNotify, JsonProperty("flagged")] private bool m_flagged = false;
+		[AutoNotify, JsonProperty("sg_path_to_frames")] private string? m_pathToFrames; /*Full-Res file path*/
 	};
 
 	public class ShotGridEntityShotVersion: ShotGridEntity

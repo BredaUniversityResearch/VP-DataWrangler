@@ -121,14 +121,7 @@ namespace DataWranglerServiceWorker
 			string publishFileName = Path.GetFileName(a_copyMetaData.SourceFilePath.LocalPath);
 			ShotGridEntityFilePublish.FilePublishAttributes publishData = new ShotGridEntityFilePublish.FilePublishAttributes
 			{
-				Path = new ShotGridEntityFilePublish.FileLink
-				{
-					FileName = publishFileName,
-					LinkType = "local",
-					LocalPath = a_copyMetaData.DestinationFullFilePath.LocalPath,
-					LocalPathWindows = a_copyMetaData.DestinationFullFilePath.LocalPath,
-					Url = a_copyMetaData.DestinationFullFilePath.ToString()
-				},
+				Path = new ShotGridFileLink(a_copyMetaData.DestinationFullFilePath),
 				PublishedFileName = publishFileName,
 				PublishedFileType = ShotGridEntityReference.Create(ShotGridEntityName.PublishedFileType, a_copyMetaData.FileTag),
 				Status = ServiceWorkerConfig.Instance.FilePublishDefaultStatus,

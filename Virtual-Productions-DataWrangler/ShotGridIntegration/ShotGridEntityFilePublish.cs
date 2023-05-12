@@ -4,32 +4,12 @@ namespace ShotGridIntegration
 {
 	public class ShotGridEntityFilePublish : ShotGridEntity
 	{
-		public class FileLink
-		{
-            [JsonProperty("link_type")] 
-            public string LinkType = "local";
-            [JsonProperty("local_storage")]
-            public ShotGridEntityReference? LocalStorageTarget;
-            [JsonProperty("local_path")]
-            public string? LocalPath;
-            [JsonProperty("local_path_linux")]
-            public string? LocalPathLinux;
-            [JsonProperty("local_path_mac")]
-            public string? LocalPathMac;
-            [JsonProperty("local_path_windows")]
-            public string? LocalPathWindows;
-            [JsonProperty("name")]
-            public string FileName = "";
-            [JsonProperty("url")]
-            public string Url = "file:///";
-        };
-
 		public class FilePublishAttributes
 		{
 			[JsonProperty("code")]
 			public string PublishedFileName = "";
 			[JsonProperty("path")]
-			public FileLink? Path;
+			public ShotGridFileLink? Path;
             [JsonProperty("path_cache")]
             public string? PathCache;
             [JsonProperty("path_cache_storage")]

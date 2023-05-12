@@ -157,6 +157,15 @@ namespace ShotGridIntegration
 				new JsonAttributeFieldEnumerator<ShotVersionAttributes>().Get(), a_sort);
 		}
 
+		public async Task<ShotGridAPIResponse<ShotGridEntityShotVersion>> FindShotVersionById(int a_shotVersionId)
+		{
+			ShotGridSimpleSearchFilter filter = new ShotGridSimpleSearchFilter();
+			filter.FieldIs("id", a_shotVersionId);
+			ShotGridAPIResponse<ShotGridEntityShotVersion[]> response = await FindAndParse<ShotGridEntityShotVersion[]>(ShotGridEntityName.ShotVersion, filter,
+				new JsonAttributeFieldEnumerator<ShotVersionAttributes>().Get(), null);
+			return new ShotGridAPIResponse<ShotGridEntityShotVersion>(response.IsError ? null : response.ResultData[0], response.ErrorInfo);
+		}
+
 		public async Task<ShotGridAPIResponse<ShotGridEntityFilePublish[]>> GetPublishesForShotVersion(int a_shotVersionId)
 		{
 			ShotGridSimpleSearchFilter filter = new ShotGridSimpleSearchFilter();

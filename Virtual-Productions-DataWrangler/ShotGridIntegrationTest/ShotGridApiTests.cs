@@ -124,25 +124,24 @@ namespace ShotGridIntegrationTest
 			ShotGridAPIResponse<ShotGridEntityRelation?> fileTypeRelation = m_api.FindRelationByCode(ShotGridEntityName.PublishedFileType, "video").Result;
 			Assert.IsTrue(fileTypeRelation.ResultData != null);
 
-			string targetPath = "file://cradlenas/Projects/VirtualProductions/Phils VP Pipeline Testing Playground\\Shots\\Shot 01\\Take 08\\A014_05111248_C002.braw";
+			string targetPath = "\\\\cradlenas\\Virtual Productions\\Phils VP Pipeline Testing Playground\\Shots\\Shot 01\\Take 08\\A014_05111248_C002.braw";
 
 
 			ShotGridEntityFilePublish.FilePublishAttributes attributes = new ShotGridEntityFilePublish.FilePublishAttributes();
-			attributes.Path = new ShotGridEntityFilePublish.FileLink
-			{
-				//Url = new UriBuilder { Scheme = Uri.UriSchemeFile, Path = targetPath, Host = "cradlenas" }.Uri.AbsoluteUri,
-				FileName = "UNIT_TEST_TEST_FILE.braw",
-				LinkType = "local",
-				LocalPath = targetPath,
-				LocalStorageTarget = new ShotGridEntityReference(ShotGridEntityName.LocalStorage, 3)
-			};
+			attributes.Path = new ShotGridFileLink(new Uri(targetPath));
 			attributes.PublishedFileName = "Testing braw File";
 			attributes.PublishedFileType = new ShotGridEntityReference(fileTypeRelation.ResultData!.ShotGridType!, fileTypeRelation.ResultData.Id);
 			attributes.ShotVersion = new ShotGridEntityReference(ShotGridEntityName.ShotVersion, TestConstants.TargetShotVersionId);
 
 			ShotGridAPIResponse<ShotGridEntityFilePublish> response = m_api.CreateFilePublish(TestConstants.TargetProjectId, TestConstants.TargetShotId, TestConstants.TargetShotVersionId, attributes).Result;
-
 			Assert.IsFalse(response.IsError);
+
+			ShotGridAPIResponse<ShotGridEntityShotVersion> targetShot = m_api.FindShotVersionById(TestConstants.TargetShotVersionId).Result;
+			Assert.IsFalse(targetShot.IsError);
+
+			targetShot.ResultData!.Attributes.PathToFrames = targetPath;
+			ShotGridAPIResponseGeneric shotVersionUpdate = targetShot.ResultData!.ChangeTracker.CommitChanges(m_api).Result;
+			Assert.IsFalse(shotVersionUpdate.IsError);
 		}
 
 		[TestMethod]
