@@ -56,12 +56,31 @@ namespace ShotGridIntegrationTest
 			ShotGridAPIResponse<ShotGridEntityShot[]> shots = m_api.GetShotsForProject(TestConstants.TargetProjectId).Result;
 
 			Assert.IsFalse(shots.IsError);
+			Assert.IsTrue(shots.ResultData!.Length > 0);
 
 			foreach (ShotGridEntityShot shot in shots.ResultData!)
 			{
 				Assert.IsTrue(!string.IsNullOrEmpty(shot.Attributes.ShotCode));
 				Assert.IsTrue(shot.Links.Self != null);
 			}
+		}
+
+		[TestMethod]
+		public void GetShotsAndTestCache()
+		{
+			ShotGridAPIResponse<ShotGridEntityShot[]> shots = m_api.GetShotsForProject(TestConstants.TargetProjectId).Result;
+
+			Assert.IsFalse(shots.IsError);
+			Assert.IsTrue(shots.ResultData!.Length > 0);
+
+			foreach (ShotGridEntityShot shot in shots.ResultData!)
+			{
+				Assert.IsTrue(!string.IsNullOrEmpty(shot.Attributes.ShotCode));
+				Assert.IsTrue(shot.Links.Self != null);
+			}
+
+			m_api.LocalCache.FindEntities<ShotGridEntityShot>(ShotGridSimpleSearchFilter.ForProject(TestConstants.TargetProjectId));
+			throw new Exception("");
 		}
 
 		[TestMethod]
@@ -92,14 +111,13 @@ namespace ShotGridIntegrationTest
 			}
 		}
 
-		//2022-12-09 PdG: Was used as a utility function, now fails the test due to not being able to deserialize. The tested function is currently not being used other than for debugging the layout of an object.
-		//[TestMethod]
-		//public void GetPublishesSchema()
-		//{
-		//	ShotGridAPIResponse<ShotGridEntityFieldSchema[]> schemas = m_api.GetEntityFieldSchema("Attachment", TargetProjectId).Result;
-		//	Assert.IsFalse(schemas.IsError);
-		//	Assert.IsTrue(schemas.ResultData!.Length > 0);
-		//}
+		[TestMethod]
+		public void GetPublishesSchema()
+		{
+			ShotGridAPIResponse<ShotGridEntityFieldSchema[]> schemas = m_api.GetEntityFieldSchema(ShotGridEntityName.Shot.CamelCase, TestConstants.TargetProjectId).Result;
+			Assert.IsFalse(schemas.IsError);
+			Assert.IsTrue(schemas.ResultData!.Length > 0);
+		}
 
 		[TestMethod]
 		public void GetPublishesForShot()

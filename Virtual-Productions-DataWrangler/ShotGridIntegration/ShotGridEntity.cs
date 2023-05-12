@@ -8,9 +8,11 @@ public class ShotGridEntity
 	[JsonProperty("id")]
 	public int Id;
 	[JsonProperty("type")]
-	public ShotGridEntityName? ShotGridType;
+	public ShotGridEntityName ShotGridType = ShotGridEntityName.Invalid;
 	[JsonProperty("links")]
 	public ShotGridEntityLinks Links = new ShotGridEntityLinks();
+	[JsonProperty("relationships")]
+	public ShotGridEntityRelationships EntityRelationships = new ShotGridEntityRelationships();
 
 	public ShotGridEntityChangeTracker ChangeTracker;
 
@@ -18,4 +20,10 @@ public class ShotGridEntity
 	{
 		ChangeTracker = new ShotGridEntityChangeTracker(this);
 	}
+}
+
+public class ShotGridEntityRelationships
+{
+	[JsonProperty("project"), JsonConverter(typeof(JsonConverterShotGridEntityReferenceRelationships))]
+	public ShotGridEntityReference? Project;
 }

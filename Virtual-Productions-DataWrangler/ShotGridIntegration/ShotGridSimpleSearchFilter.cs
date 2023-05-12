@@ -13,6 +13,13 @@ namespace ShotGridIntegration
 		{
 			conditions.Add(new ShotGridSearchCondition(a_field, "is", a_status));
 		}
+
+		public static ShotGridSimpleSearchFilter ForProject(int a_projectId)
+		{
+			ShotGridSimpleSearchFilter filter = new ShotGridSimpleSearchFilter();
+			filter.FieldIs("project.Project.id", a_projectId);
+			return filter;
+		}
 	}
 
 	internal class ShotGridSimpleSearchFilterConverter : JsonConverter<ShotGridSimpleSearchFilter>

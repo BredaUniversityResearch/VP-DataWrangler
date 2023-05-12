@@ -26,6 +26,15 @@ namespace ShotGridIntegration
 		[MemberNotNullWhen(false, nameof(ResultData))]
 		public override bool IsError => base.IsError;
 
+		public ShotGridAPIResponse(ShotGridAPIResponseGeneric a_genericResponse)
+			: base(a_genericResponse.ResultDataGeneric, a_genericResponse.ErrorInfo)
+		{
+			if (!(ResultDataGeneric is TSuccessDataType))
+			{
+				throw new Exception($"Failed to cast type {a_genericResponse.GetType()} to type {typeof(TSuccessDataType)}");
+			}
+		}
+
 		public ShotGridAPIResponse(TSuccessDataType? a_result, ShotGridErrorResponse? a_errorResponse)
 			: base(a_result, a_errorResponse)
 		{

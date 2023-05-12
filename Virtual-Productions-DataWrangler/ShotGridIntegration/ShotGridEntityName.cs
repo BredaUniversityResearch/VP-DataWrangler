@@ -5,6 +5,8 @@ namespace ShotGridIntegration;
 
 public class ShotGridEntityName
 {
+	public static readonly ShotGridEntityName Invalid = new ShotGridEntityName(typeof(ShotGridEntity), "Invalid");
+
 	public static readonly ShotGridEntityName Project = new ShotGridEntityName(typeof(ShotGridEntityProject), "Project");
 	public static readonly ShotGridEntityName Shot = new ShotGridEntityName(typeof(ShotGridEntityShot), "Shot");
 	public static readonly ShotGridEntityName ShotVersion = new ShotGridEntityName(typeof(ShotGridEntityShotVersion), "Version");
@@ -74,6 +76,11 @@ public class ShotGridEntityName
 
 	public static ShotGridEntityName FromType(Type a_entityType)
 	{
+		if (a_entityType.IsArray)
+		{
+			return FromType(a_entityType.GetElementType()!);
+		}
+
 		if (a_entityType.IsAssignableFrom(typeof(ShotGridEntity)))
 		{
 			throw new Exception($"Shot Grid Entity {a_entityType.FullName} not derived from ShotGridEntityy");

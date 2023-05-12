@@ -10,6 +10,7 @@ namespace ShotGridIntegration
 		[JsonProperty("image"), AutoNotify] private string? m_imageURL;
 		[JsonProperty("sg_camera"), AutoNotify] private string? m_camera;
 		[JsonProperty("sg_lens"), AutoNotify] private string? m_lens;
+		[JsonProperty("project"), AutoNotify] private ShotGridEntityReference? m_project;
 	};
 
 	public class ShotGridEntityShot: ShotGridEntity
