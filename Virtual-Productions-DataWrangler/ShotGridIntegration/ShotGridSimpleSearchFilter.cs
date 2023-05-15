@@ -3,15 +3,15 @@ using Newtonsoft.Json;
 
 namespace ShotGridIntegration
 {
-	[SuppressMessage("ReSharper", "InconsistentNaming")]
 	[JsonConverter(typeof(ShotGridSimpleSearchFilterConverter))]
 	public class ShotGridSimpleSearchFilter
 	{
-		public readonly List<ShotGridSearchCondition> conditions = new List<ShotGridSearchCondition>();
+		private readonly List<ShotGridSearchCondition> m_conditions = new List<ShotGridSearchCondition>();
+		public IReadOnlyList<ShotGridSearchCondition> Conditions => m_conditions;
 
 		public void FieldIs(string a_field, object a_status)
 		{
-			conditions.Add(new ShotGridSearchCondition(a_field, "is", a_status));
+			m_conditions.Add(new ShotGridSearchCondition(a_field, "is", a_status));
 		}
 
 		public static ShotGridSimpleSearchFilter ForProject(int a_projectId)
@@ -20,20 +20,25 @@ namespace ShotGridIntegration
 			filter.FieldIs("project.Project.id", a_projectId);
 			return filter;
 		}
+
+		public ShotGridEntityCacheSearchFilter BuildCacheFilter(ShotGridEntityName a_entityType)
+		{
+			return new ShotGridEntityCacheSearchFilter(a_entityType, m_conditions);
+		}
 	}
 
 	internal class ShotGridSimpleSearchFilterConverter : JsonConverter<ShotGridSimpleSearchFilter>
 	{
-		public override void WriteJson(JsonWriter writer, ShotGridSimpleSearchFilter? value, JsonSerializer serializer)
+		public override void WriteJson(JsonWriter a_writer, ShotGridSimpleSearchFilter? a_value, JsonSerializer a_serializer)
 		{
-			if (value == null)
-				throw new ArgumentNullException("value");
+			if (a_value == null)
+				throw new ArgumentNullException("a_value");
 
-			serializer.Serialize(writer, value.conditions);
+			a_serializer.Serialize(a_writer, a_value.Conditions);
 		}
 
-		public override ShotGridSimpleSearchFilter? ReadJson(JsonReader reader, Type objectType,
-			ShotGridSimpleSearchFilter? existingValue, bool hasExistingValue, JsonSerializer serializer)
+		public override ShotGridSimpleSearchFilter? ReadJson(JsonReader a_reader, Type a_objectType,
+			ShotGridSimpleSearchFilter? a_existingValue, bool a_hasExistingValue, JsonSerializer a_serializer)
 		{
 			throw new NotImplementedException();
 		}

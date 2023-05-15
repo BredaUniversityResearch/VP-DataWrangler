@@ -45,18 +45,26 @@ namespace ShotGridIntegration
 			entitiesById[a_entity.Id] = a_entity;
 		}
 
-		public TEntityType[] FindEntities<TEntityType>(ShotGridSimpleSearchFilter a_forProject)
+		public TEntityType[] FindEntities<TEntityType>(ShotGridSimpleSearchFilter a_searchFilter)
 			where TEntityType: ShotGridEntity
 		{
-			var entitiesById = FindEntitiesByType(ShotGridEntityName.FromType<TEntityType>());
+			ShotGridEntityName targetName = ShotGridEntityName.FromType<TEntityType>();
+
+			var entitiesById = FindEntitiesByType(targetName);
 			if (entitiesById == null)
 			{
 				return Array.Empty<TEntityType>();
 			}
 
+			ShotGridEntityCacheSearchFilter cacheFilter = a_searchFilter.BuildCacheFilter(targetName);
+
 			List<TEntityType> targetEntities = new List<TEntityType>(entitiesById.Count);
 			foreach (ShotGridEntity entity in entitiesById.Values)
 			{
+				if (cacheFilter.Matches(entity))
+				{
+					targetEntities.Add((TEntityType)entity);
+				}
 			}
 
 			return targetEntities.ToArray();

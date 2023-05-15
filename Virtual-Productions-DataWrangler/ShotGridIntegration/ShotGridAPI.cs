@@ -288,7 +288,7 @@ namespace ShotGridIntegration
 
 		private async Task<HttpResponseMessage> RemoteFind(ShotGridEntityName a_entityType, ShotGridSimpleSearchFilter a_filters, string[] a_fields, ShotGridSortSpecifier? a_sortSpecifier)
 		{
-			ShotGridSearchQuery query = new ShotGridSearchQuery(a_filters, a_fields, a_sortSpecifier);
+			ShotGridDataRequestQuery query = new ShotGridDataRequestQuery(a_filters, a_fields, a_sortSpecifier);
 			string queryAsString = JsonConvert.SerializeObject(query, SerializerSettings);
 			return await SendApiRequest(new Uri($"{BaseUrl}entity/{a_entityType.SnakeCasePlural}/_search"), HttpMethod.Post, new ByteArrayContent(Encoding.UTF8.GetBytes(queryAsString)));
 		}

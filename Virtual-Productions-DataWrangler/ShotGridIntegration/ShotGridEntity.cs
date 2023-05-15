@@ -8,7 +8,7 @@ public class ShotGridEntity
 	[JsonProperty("id")]
 	public int Id;
 	[JsonProperty("type")]
-	public ShotGridEntityName ShotGridType = ShotGridEntityName.Invalid;
+	public ShotGridEntityName ShotGridType;
 	[JsonProperty("links")]
 	public ShotGridEntityLinks Links = new ShotGridEntityLinks();
 	[JsonProperty("relationships")]
@@ -19,6 +19,7 @@ public class ShotGridEntity
 	protected ShotGridEntity()
 	{
 		ChangeTracker = new ShotGridEntityChangeTracker(this);
+		ShotGridType = ShotGridEntityName.FromType(GetType());
 	}
 }
 

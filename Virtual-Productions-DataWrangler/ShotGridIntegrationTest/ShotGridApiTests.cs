@@ -79,8 +79,10 @@ namespace ShotGridIntegrationTest
 				Assert.IsTrue(shot.Links.Self != null);
 			}
 
-			m_api.LocalCache.FindEntities<ShotGridEntityShot>(ShotGridSimpleSearchFilter.ForProject(TestConstants.TargetProjectId));
-			throw new Exception("");
+			ShotGridEntityShot[] cachedShots = m_api.LocalCache.FindEntities<ShotGridEntityShot>(ShotGridSimpleSearchFilter.ForProject(TestConstants.TargetProjectId));
+			Assert.IsTrue(cachedShots.Length == shots.ResultData.Length);
+			ShotGridEntityShot[] mismatchFilterShots = m_api.LocalCache.FindEntities<ShotGridEntityShot>(ShotGridSimpleSearchFilter.ForProject(-1));
+			Assert.IsTrue(mismatchFilterShots.Length == 0);
 		}
 
 		[TestMethod]
