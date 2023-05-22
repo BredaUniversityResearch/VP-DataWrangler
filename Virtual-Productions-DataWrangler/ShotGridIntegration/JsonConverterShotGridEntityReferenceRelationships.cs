@@ -26,8 +26,6 @@ namespace ShotGridIntegration
 			}
 
 			throw new Exception("Missing data node on entity relationships relation");
-
-			return null;
 		}
 	}
 }

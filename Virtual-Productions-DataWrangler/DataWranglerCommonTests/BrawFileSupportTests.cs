@@ -1,9 +1,7 @@
-﻿using System.IO;
-using DataWranglerCommon;
+﻿using DataWranglerCommon;
 using DataWranglerCommon.BRAWSupport;
-using Xunit;
 
-namespace BlackmagicDeckLinkControlTest
+namespace DataWranglerCommonTests
 {
 	public class BrawFileSupportTests
 	{
@@ -53,7 +51,7 @@ namespace BlackmagicDeckLinkControlTest
 			FileInfo file = new FileInfo(TestFile);
 			using (BRAWFileDecoder decoder = new BRAWFileDecoder())
 			{
-				BrawFileMetadata fileMeta = decoder.GetMetaForFile(file);
+				BRAWFileMetadata fileMeta = decoder.GetMetaForFile(file);
 				Assert.True(fileMeta.FirstFrameTimeCode == new TimeCode(22, 23, 40, 20));
 				Assert.True(fileMeta.CameraNumber == "A");
 			}

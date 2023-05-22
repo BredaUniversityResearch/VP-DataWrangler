@@ -7,6 +7,7 @@ using System.Windows.Media;
 using AutoNotify;
 using CommonLogging;
 using DataWranglerCommon;
+using DataWranglerCommon.IngestDataSources;
 using DataWranglerCommonWPF;
 using Microsoft.Win32;
 using Newtonsoft.Json;
@@ -14,13 +15,13 @@ using ShotGridIntegration;
 
 namespace DataWranglerInterface.ShotRecording
 {
-	/// <summary>
-	/// Interaction logic for ShotVersionInfoDisplay.xaml
-	/// </summary>
-	public partial class ShotVersionInfoDisplay : UserControl
+    /// <summary>
+    /// Interaction logic for ShotVersionInfoDisplay.xaml
+    /// </summary>
+    public partial class ShotVersionInfoDisplay : UserControl
 	{
 		[AutoNotify] private ShotGridEntityShotVersion? m_currentVersion = null;
-		private DataWranglerShotVersionMeta m_currentVersionMeta = new DataWranglerShotVersionMeta();
+		private IngestDataShotVersionMeta m_currentVersionMeta = new IngestDataShotVersionMeta();
 
 		private bool m_isInBatchMetaChange = false;
 
@@ -52,7 +53,7 @@ namespace DataWranglerInterface.ShotRecording
 				{
 					try
 					{
-						DataWranglerShotVersionMeta? shotMeta = JsonConvert.DeserializeObject<DataWranglerShotVersionMeta>(a_shotVersion.Attributes.DataWranglerMeta, DataWranglerSerializationSettings.Instance);
+						IngestDataShotVersionMeta? shotMeta = JsonConvert.DeserializeObject<IngestDataShotVersionMeta>(a_shotVersion.Attributes.DataWranglerMeta, DataWranglerSerializationSettings.Instance);
 						if (shotMeta != null)
 						{
 							SetTargetMeta(shotMeta);
@@ -61,23 +62,23 @@ namespace DataWranglerInterface.ShotRecording
 						{
 							Logger.LogError("Interface",
 								$"Failed to deserialize shot version meta from value: {a_shotVersion.Attributes.DataWranglerMeta}");
-							SetTargetMeta(new DataWranglerShotVersionMeta());
+							SetTargetMeta(new IngestDataShotVersionMeta());
 						}
 					}
 					catch (JsonSerializationException ex)
 					{
 						Logger.LogError("Interface", $"Failed to deserialize shot version meta from value: {a_shotVersion.Attributes.DataWranglerMeta}. Exception: {ex.Message}");
-						SetTargetMeta(new DataWranglerShotVersionMeta());
+						SetTargetMeta(new IngestDataShotVersionMeta());
 					}
 					catch (JsonReaderException ex)
 					{
 						Logger.LogError("Interface", $"Failed to deserialize shot version meta from value: {a_shotVersion.Attributes.DataWranglerMeta}. Exception: {ex.Message}");
-						SetTargetMeta(new DataWranglerShotVersionMeta());
+						SetTargetMeta(new IngestDataShotVersionMeta());
 					}
 				}
 				else
 				{
-					SetTargetMeta(new DataWranglerShotVersionMeta());
+					SetTargetMeta(new IngestDataShotVersionMeta());
 				}
 			}
 		}
@@ -114,7 +115,7 @@ namespace DataWranglerInterface.ShotRecording
 					VersionSelectorControl.UpdateEntity(response.Result.ResultData!);
 					if (!string.IsNullOrEmpty(a_task.Result.ResultData.Attributes.DataWranglerMeta))
 					{
-						DataWranglerShotVersionMeta? updatedMeta = JsonConvert.DeserializeObject<DataWranglerShotVersionMeta>(a_task.Result.ResultData.Attributes.DataWranglerMeta, DataWranglerSerializationSettings.Instance);
+						IngestDataShotVersionMeta? updatedMeta = JsonConvert.DeserializeObject<IngestDataShotVersionMeta>(a_task.Result.ResultData.Attributes.DataWranglerMeta, DataWranglerSerializationSettings.Instance);
 						if (updatedMeta != null)
 						{
 							SetTargetMeta(updatedMeta);
@@ -124,21 +125,22 @@ namespace DataWranglerInterface.ShotRecording
 			});
 		}
 
-		private void SetTargetMeta(DataWranglerShotVersionMeta a_meta)
+		private void SetTargetMeta(IngestDataShotVersionMeta a_meta)
 		{
-			foreach (DataWranglerFileSourceMeta meta in m_currentVersionMeta.FileSources)
-			{
-				meta.PropertyChanged -= OnAnyMetaPropertyChanged;
-			}
+			throw new NotImplementedException(); //TODO
+			//foreach (DataWranglerFileSourceMeta meta in m_currentVersionMeta.FileSources)
+			//{
+			//	meta.PropertyChanged -= OnAnyMetaPropertyChanged;
+			//}
 
-			m_currentVersionMeta = a_meta;
+			//m_currentVersionMeta = a_meta;
 
-			foreach (DataWranglerFileSourceMeta meta in m_currentVersionMeta.FileSources)
-			{
-				meta.PropertyChanged += OnAnyMetaPropertyChanged;
-			}
+			//foreach (DataWranglerFileSourceMeta meta in m_currentVersionMeta.FileSources)
+			//{
+			//	meta.PropertyChanged += OnAnyMetaPropertyChanged;
+			//}
 
-			VersionFileSourcesControl.SetCurrentMeta(m_currentVersionMeta);
+			//VersionFileSourcesControl.SetCurrentMeta(m_currentVersionMeta);
 		}
 
 		private void GoodTakeCheckbox_Clicked(object a_sender, RoutedEventArgs a_e)

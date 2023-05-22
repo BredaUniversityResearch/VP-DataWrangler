@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using CommonLogging;
 using DataWranglerCommon;
+using DataWranglerCommon.IngestDataSources;
 using DataWranglerInterface.CameraHandling;
 using Newtonsoft.Json;
 using ShotGridIntegration;
@@ -17,10 +18,10 @@ namespace DataWranglerInterface.ShotRecording
 	{
 		private class CameraPropertyChangedSubscriber
 		{
-			public DataWranglerShotVersionMeta Meta;
+			public IngestDataShotVersionMeta Meta;
 			public ActiveCameraInfo CameraTarget;
 
-			public CameraPropertyChangedSubscriber(DataWranglerShotVersionMeta a_meta, ActiveCameraInfo a_cameraInfo)
+			public CameraPropertyChangedSubscriber(IngestDataShotVersionMeta a_meta, ActiveCameraInfo a_cameraInfo)
 			{
 				Meta = a_meta;
 				CameraTarget = a_cameraInfo;
@@ -33,9 +34,9 @@ namespace DataWranglerInterface.ShotRecording
 					return;
 				}
 
-				foreach (DataWranglerFileSourceMeta source in Meta.FileSources)
+				foreach (IngestDataSourceMeta source in Meta.FileSources)
 				{
-					if (source is DataWranglerFileSourceMetaBlackmagicUrsa ursaSource)
+					if (source is IngestDataSourceMetaBlackmagicUrsa ursaSource)
 					{ 
 						ursaSource.CodecName = CameraTarget.SelectedCodec;
 					}
@@ -70,7 +71,7 @@ namespace DataWranglerInterface.ShotRecording
 			m_shotSelectorControl = a_shotSelector;
 		}
 
-		private void CreateNewShotVersion(DataWranglerShotVersionMeta a_meta)
+		private void CreateNewShotVersion(IngestDataShotVersionMeta a_meta)
 		{
 			if (m_shotSelectorControl == null || m_projectSelector == null)
 			{
@@ -102,7 +103,7 @@ namespace DataWranglerInterface.ShotRecording
 							if (!a_result.Result.IsError)
 							{
 								m_parentPage?.CompleteAddShotVersion(a_result.Result.ResultData);
-                                DataWranglerServiceProvider.Instance.EventDelegates.NotifyShotCreated(a_result.Result
+                                DataWranglerEventDelegates.Instance.NotifyShotCreated(a_result.Result
                                     .ResultData.Id);
                             }
 						});
@@ -137,7 +138,7 @@ namespace DataWranglerInterface.ShotRecording
 			{
 				if (m_shouldCreateNewShotOnRecord)
 				{
-					DataWranglerShotVersionMeta targetMeta = VersionTemplateFileSourcesControl.CreateMetaFromCurrentTemplate();
+					IngestDataShotVersionMeta targetMeta = VersionTemplateFileSourcesControl.CreateMetaFromCurrentTemplate();
 					if (m_subscriber != null)
 					{
 						Logger.LogError("ShotVersionTemplate", "Expected target subscriber to be null, was not null. Did we miss a message?");
@@ -148,18 +149,19 @@ namespace DataWranglerInterface.ShotRecording
 					m_subscriber = new CameraPropertyChangedSubscriber(targetMeta, a_camera);
 					a_camera.CameraPropertyChanged += m_subscriber.OnCameraPropertyChanged;
 
-					foreach (DataWranglerFileSourceMeta source in targetMeta.FileSources)
-					{
-						if (source is DataWranglerFileSourceMetaBlackmagicUrsa ursaSource)
-                        {
-                            ursaSource.ApplyCameraProperties(DateTimeOffset.UtcNow, a_camera.CurrentTimeCode,
-                                a_camera.SelectedCodec);
-                        }
+					throw new NotImplementedException(); //TODO
+					//foreach (DataWranglerFileSourceMeta source in targetMeta.FileSources)
+					//{
+					//	if (source is DataWranglerFileSourceMetaBlackmagicUrsa ursaSource)
+					//	{
+					//		ursaSource.ApplyCameraProperties(DateTimeOffset.UtcNow, a_camera.CurrentTimeCode,
+					//			a_camera.SelectedCodec);
+					//	}
 
-                        source.OnRecordingStarted(a_stateChangeTime);
-                    } 
+					//	source.OnRecordingStarted(a_stateChangeTime);
+					//} 
 
-					DataWranglerServiceProvider.Instance.EventDelegates.NotifyRecordingStarted(targetMeta);
+					DataWranglerEventDelegates.Instance.NotifyRecordingStarted(targetMeta);
 
 					CreateNewShotVersion(targetMeta);
 				}
@@ -168,17 +170,18 @@ namespace DataWranglerInterface.ShotRecording
 			{
 				if (m_subscriber != null)
 				{
-					foreach (DataWranglerFileSourceMeta meta in m_subscriber.Meta.FileSources)
-					{
-						meta.OnRecordingStopped();
-					}
+					throw new NotImplementedException(); //TODO
+					//foreach (DataWranglerFileSourceMeta meta in m_subscriber.Meta.FileSources)
+					//{
+					//	meta.OnRecordingStopped();
+					//}
 
 					if (m_subscriber.CameraTarget != a_camera)
 					{
 						throw new Exception("Multiple cameras?");
 					}
 
-					DataWranglerServiceProvider.Instance.EventDelegates.NotifyRecordingFinished(m_subscriber.Meta);
+					DataWranglerEventDelegates.Instance.NotifyRecordingFinished(m_subscriber.Meta);
 
 					a_camera.CameraPropertyChanged -= m_subscriber.OnCameraPropertyChanged;
 					m_subscriber = null;

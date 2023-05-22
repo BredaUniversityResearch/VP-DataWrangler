@@ -1,6 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 using DataWranglerCommon;
+using DataWranglerCommon.IngestDataSources;
 
 namespace DataWranglerInterface.ShotRecording
 {
@@ -29,20 +30,20 @@ namespace DataWranglerInterface.ShotRecording
 			}
 		}
 
-		public static UserControl CreateEditorForMeta(DataWranglerFileSourceMeta a_meta)
+		public static UserControl CreateEditorForMeta(IngestDataSourceMeta a_meta)
 		{
-			if (a_meta is DataWranglerFileSourceMetaBlackmagicUrsa ursaSource)
+			if (a_meta is IngestDataSourceMetaBlackmagicUrsa ursaSource)
 			{
 				return new DataWranglerFileSourceUIBlackmagicUrsa(ursaSource);
 			}
-			else if (a_meta is DataWranglerFileSourceMetaTascam tascam)
-			{
-				return new DataWranglerFileSourceUITascam(tascam);
-			}
-			else if (a_meta is DataWranglerFileSourceMetaViconTrackingData viconData)
-			{
-				return new DataWranglerFileSourceUIVicon(viconData);
-			}
+			//else if (a_meta is DataWranglerFileSourceMetaTascam tascam)
+			//{
+			//	return new DataWranglerFileSourceUITascam(tascam);
+			//}
+			//else if (a_meta is DataWranglerFileSourceMetaViconTrackingData viconData)
+			//{
+			//	return new DataWranglerFileSourceUIVicon(viconData);
+			//}
 
 			throw new Exception($"CameraNumber meta source type {a_meta.GetType()}");
 		}

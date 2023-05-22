@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using DataWranglerCommon.IngestDataSources;
+using Newtonsoft.Json;
 
 namespace DataWranglerCommon
 {
@@ -9,7 +10,7 @@ namespace DataWranglerCommon
 		private DataWranglerSerializationSettings()
 		{
 			DateFormatHandling = DateFormatHandling.IsoDateFormat;
-			Converters.Add(new DataWranglerFileSourceMetaConverter());
+			Converters.Add(new IngestDataSourceMetaConverter());
 			Converters.Add(new TimeCodeJsonConverter());
 		}
 	}

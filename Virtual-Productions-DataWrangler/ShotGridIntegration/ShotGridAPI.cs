@@ -140,14 +140,14 @@ namespace ShotGridIntegration
 			ShotGridSimpleSearchFilter filter = new ShotGridSimpleSearchFilter();
 			filter.FieldIs("sg_status", "Active");
 			return await RemoteFindAndParse<ShotGridEntityProject[]>(ShotGridEntityName.Project, filter, 
-				new JsonAttributeFieldEnumerator<ShotGridEntityProject.ProjectAttributes>().Get(), null);
+				JsonAttributeFieldEnumerator.Get<ShotGridEntityProject.ProjectAttributes>(), null);
 		}
 
 		public async Task<ShotGridAPIResponse<ShotGridEntityShot[]>> GetShotsForProject(int a_projectId)
 		{
 			ShotGridSimpleSearchFilter filter = ShotGridSimpleSearchFilter.ForProject(a_projectId);
 			return await RemoteFindAndParse<ShotGridEntityShot[]>(ShotGridEntityName.Shot, filter, 
-				new JsonAttributeFieldEnumerator<ShotGridEntityShotAttributes>().Get(), null);
+				JsonAttributeFieldEnumerator.Get<ShotGridEntityShotAttributes>(), null);
 		}
 
 		public async Task<ShotGridAPIResponse<ShotGridEntityShotVersion[]>> GetVersionsForShot(int a_shotId, ShotGridSortSpecifier? a_sort = null)
@@ -155,7 +155,7 @@ namespace ShotGridIntegration
 			ShotGridSimpleSearchFilter filter = new ShotGridSimpleSearchFilter();
 			filter.FieldIs("entity.Shot.id", a_shotId);
 			return await RemoteFindAndParse<ShotGridEntityShotVersion[]>(ShotGridEntityName.ShotVersion, filter, 
-				new JsonAttributeFieldEnumerator<ShotVersionAttributes>().Get(), a_sort);
+				JsonAttributeFieldEnumerator.Get<ShotVersionAttributes>(), a_sort);
 		}
 
 		public async Task<ShotGridAPIResponse<ShotGridEntityShotVersion>> FindShotVersionById(int a_shotVersionId)
@@ -163,7 +163,7 @@ namespace ShotGridIntegration
 			ShotGridSimpleSearchFilter filter = new ShotGridSimpleSearchFilter();
 			filter.FieldIs("id", a_shotVersionId);
 			ShotGridAPIResponse<ShotGridEntityShotVersion[]> response = await RemoteFindAndParse<ShotGridEntityShotVersion[]>(ShotGridEntityName.ShotVersion, filter,
-				new JsonAttributeFieldEnumerator<ShotVersionAttributes>().Get(), null);
+				JsonAttributeFieldEnumerator.Get<ShotVersionAttributes>(), null);
 			return new ShotGridAPIResponse<ShotGridEntityShotVersion>(response.IsError ? null : response.ResultData[0], response.ErrorInfo);
 		}
 
@@ -172,29 +172,28 @@ namespace ShotGridIntegration
 			ShotGridSimpleSearchFilter filter = new ShotGridSimpleSearchFilter();
 			filter.FieldIs("version.Version.id", a_shotVersionId);
 			return await RemoteFindAndParse<ShotGridEntityFilePublish[]>(ShotGridEntityName.PublishedFile, filter, 
-				new JsonAttributeFieldEnumerator<ShotGridEntityFilePublish.FilePublishAttributes>().Get(), null);
+				JsonAttributeFieldEnumerator.Get<ShotGridEntityFilePublish.FilePublishAttributes>(), null);
 		}
 
-		public async Task<ShotGridAPIResponse<ShotGridEntityRelation[]>> GetPublishFileTypes(int a_projectId)
+		public async Task<ShotGridAPIResponse<ShotGridEntityRelation[]>> GetPublishFileTypes()
 		{
 			ShotGridSimpleSearchFilter filter = new ShotGridSimpleSearchFilter();
-			//filter.FieldIs("project.Project.id", a_projectId);
 			return await RemoteFindAndParse<ShotGridEntityRelation[]>(ShotGridEntityName.PublishedFileType, filter, 
-				new JsonAttributeFieldEnumerator<ShotGridEntityRelation.RelationAttributes>().Get(), null);
+				JsonAttributeFieldEnumerator.Get<ShotGridEntityRelation.RelationAttributes>(), null);
 		}
 
 		public async Task<ShotGridAPIResponse<ShotGridEntityLocalStorage[]>> GetLocalStorages()
 		{
 			ShotGridSimpleSearchFilter filter = new ShotGridSimpleSearchFilter();
 			return await RemoteFindAndParse<ShotGridEntityLocalStorage[]>(ShotGridEntityName.LocalStorage, filter,
-				new JsonAttributeFieldEnumerator<ShotGridEntityLocalStorage.LocalStorageAttributes>().Get(), null);
+				JsonAttributeFieldEnumerator.Get<ShotGridEntityLocalStorage.LocalStorageAttributes>(), null);
 		}
 
 		public async Task<ShotGridAPIResponse<ShotGridEntityRelation[]>> GetRelations(ShotGridEntityName a_relationType)
 		{
 			ShotGridSimpleSearchFilter filter = new ShotGridSimpleSearchFilter();
 			return await RemoteFindAndParse<ShotGridEntityRelation[]>(a_relationType, filter,
-				new JsonAttributeFieldEnumerator<ShotGridEntityRelation.RelationAttributes>().Get(), null);
+				JsonAttributeFieldEnumerator.Get<ShotGridEntityRelation.RelationAttributes>(), null);
 		}
 
 		private bool ParseResponse(HttpStatusCode a_statusCode, string a_responseString, [NotNullWhen(true)] out JToken? a_successData, [NotNullWhen(false)] out ShotGridErrorResponse? a_error)
@@ -504,7 +503,7 @@ namespace ShotGridIntegration
 		public async Task<ShotGridAPIResponse<ShotGridEntityRelation?>> FindRelationByCode(ShotGridEntityName a_relationType, string a_code)
 		{
 			ShotGridAPIResponse<ShotGridEntityRelation[]> relations = await RemoteFindAndParse<ShotGridEntityRelation[]>(a_relationType, new ShotGridSimpleSearchFilter(), 
-				new JsonAttributeFieldEnumerator<ShotGridEntityRelation.RelationAttributes>().Get(), null);
+				JsonAttributeFieldEnumerator.Get<ShotGridEntityRelation.RelationAttributes>(), null);
 			if (relations.IsError)
 			{
 				return new ShotGridAPIResponse<ShotGridEntityRelation?>(null, relations.ErrorInfo);

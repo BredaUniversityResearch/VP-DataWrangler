@@ -6,6 +6,12 @@ namespace ShotGridIntegration
 	{
 		private Dictionary<ShotGridEntityName, Dictionary<int, ShotGridEntity>> m_entitiesByNameAndId = new();
 
+		public TEntityType? FindEntity<TEntityType>(int a_entityId)
+			where TEntityType : ShotGridEntity
+		{
+			return (TEntityType?)FindEntity(ShotGridEntityName.FromType<TEntityType>(), a_entityId);
+		}
+
 		public ShotGridEntity? FindEntity(ShotGridEntityName a_entityTypeName, int a_entityId)
 		{
 			var entitiesById = FindEntitiesByType(a_entityTypeName);
@@ -68,6 +74,26 @@ namespace ShotGridIntegration
 			}
 
 			return targetEntities.ToArray();
+		}
+
+		public TEntityType[] GetEntitiesByType<TEntityType>()
+			where TEntityType: ShotGridEntity
+		{
+			var entitiesById = FindEntitiesByType(ShotGridEntityName.FromType<TEntityType>());
+			if (entitiesById == null)
+			{
+				return Array.Empty<TEntityType>();
+			}
+
+			int resultIndex = 0;
+			TEntityType[] result = new TEntityType[entitiesById.Count];
+			foreach(var entity in entitiesById.Values)
+			{
+				result[resultIndex] = (TEntityType) entity;
+				++resultIndex;
+			}
+
+			return result;
 		}
 	}
 }

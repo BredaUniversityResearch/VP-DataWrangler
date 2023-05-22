@@ -5,6 +5,7 @@ using BlackmagicCameraControl;
 using BlackmagicCameraControlBluetooth;
 using CommonLogging;
 using DataWranglerCommon;
+using DataWranglerCommon.IngestDataSources;
 using DataWranglerInterface.CameraHandling;
 using ShotGridIntegration;
 
@@ -51,8 +52,8 @@ namespace DataWranglerInterface.ShotRecording
 			ShotSelector.OnNewShotCreatedButtonClicked += ShowShotCreationUI;
 			ShotCreationControl.OnRequestCreateNewShot += OnRequestCreateNewShot;
 
-			DataWranglerServiceProvider.Instance.EventDelegates.OnRecordingStarted += OnRecordingStarted;
-			DataWranglerServiceProvider.Instance.EventDelegates.OnRecordingFinished+= OnRecordingFinished;
+			DataWranglerEventDelegates.Instance.OnRecordingStarted += OnRecordingStarted;
+			DataWranglerEventDelegates.Instance.OnRecordingFinished+= OnRecordingFinished;
 		}
 
         public void Dispose()
@@ -114,38 +115,41 @@ namespace DataWranglerInterface.ShotRecording
 			});
 		}
 
-		private void OnRecordingStarted(DataWranglerShotVersionMeta a_shotMetaData)
+		private void OnRecordingStarted(IngestDataShotVersionMeta a_shotMetaData)
 		{
-			DataWranglerFileSourceMetaViconTrackingData? trackingDataMeta = a_shotMetaData.FindFileSourceMeta<DataWranglerFileSourceMetaViconTrackingData>();
-			if (trackingDataMeta != null)
-			{
-				if (DataWranglerServiceProvider.Instance.ShogunLiveService.StartCapture(trackingDataMeta.TempCaptureFileName, trackingDataMeta.TempCaptureLibraryPath, out var task))
-				{
-					task.ContinueWith((a_result) => {
-						if (!a_result.Result)
-						{
-							Logger.LogError("ShotRecording", $"Vicon failed to send a confirmation that recording of library " +
-							                                 $"{trackingDataMeta.TempCaptureLibraryPath} with file name {trackingDataMeta.TempCaptureFileName} started");
-						}
-					});
-				}
-				else
-				{
-					Logger.LogError("ShotRecording", "Failed to start shogun live recording.");
-				}
-			}
+			throw new NotImplementedException(); //TODO
+			
+			//DataWranglerFileSourceMetaViconTrackingData? trackingDataMeta = a_shotMetaData.FindMetaByType<DataWranglerFileSourceMetaViconTrackingData>();
+			//if (trackingDataMeta != null)
+			//{
+			//	if (DataWranglerServiceProvider.Instance.ShogunLiveService.StartCapture(trackingDataMeta.TempCaptureFileName, trackingDataMeta.TempCaptureLibraryPath, out var task))
+			//	{
+			//		task.ContinueWith((a_result) => {
+			//			if (!a_result.Result)
+			//			{
+			//				Logger.LogError("ShotRecording", $"Vicon failed to send a confirmation that recording of library " +
+			//				                                 $"{trackingDataMeta.TempCaptureLibraryPath} with file name {trackingDataMeta.TempCaptureFileName} started");
+			//			}
+			//		});
+			//	}
+			//	else
+			//	{
+			//		Logger.LogError("ShotRecording", "Failed to start shogun live recording.");
+			//	}
+			//}
 		}
 
-		private void OnRecordingFinished(DataWranglerShotVersionMeta a_shotMetaData)
+		private void OnRecordingFinished(IngestDataShotVersionMeta a_shotMetaData)
 		{
-			DataWranglerFileSourceMetaViconTrackingData? trackingDataMeta = a_shotMetaData.FindFileSourceMeta<DataWranglerFileSourceMetaViconTrackingData>();
-			if (trackingDataMeta != null)
-			{
-				if (!DataWranglerServiceProvider.Instance.ShogunLiveService.StopCapture(true, trackingDataMeta.TempCaptureFileName, trackingDataMeta.TempCaptureLibraryPath))
-				{
-					Logger.LogError("ShotRecording", $"Failed to stop shogun capture of file {trackingDataMeta.TempCaptureFileName} in library {trackingDataMeta.TempCaptureLibraryPath}");
-				}
-			}
+			throw new NotImplementedException();
+			//DataWranglerFileSourceMetaViconTrackingData? trackingDataMeta = a_shotMetaData.FindMetaByType<DataWranglerFileSourceMetaViconTrackingData>();
+			//if (trackingDataMeta != null)
+			//{
+			//	if (!DataWranglerServiceProvider.Instance.ShogunLiveService.StopCapture(true, trackingDataMeta.TempCaptureFileName, trackingDataMeta.TempCaptureLibraryPath))
+			//	{
+			//		Logger.LogError("ShotRecording", $"Failed to stop shogun capture of file {trackingDataMeta.TempCaptureFileName} in library {trackingDataMeta.TempCaptureLibraryPath}");
+			//	}
+			//}
 		}
 	}
 }

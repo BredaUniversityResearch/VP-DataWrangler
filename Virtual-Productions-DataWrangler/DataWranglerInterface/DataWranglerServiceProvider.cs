@@ -13,7 +13,6 @@ namespace DataWranglerInterface
 		}
 
 		public readonly ShotGridAPI ShotGridAPI = new ShotGridAPI();
-        public readonly DataWranglerEventDelegates EventDelegates = new DataWranglerEventDelegates();
         public readonly ShogunLiveService ShogunLiveService = new ShogunLiveService(30);
 	}
 }

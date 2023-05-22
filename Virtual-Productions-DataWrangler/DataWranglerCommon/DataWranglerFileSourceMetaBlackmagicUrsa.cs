@@ -48,7 +48,7 @@ public partial class DataWranglerFileSourceMetaBlackmagicUrsa: DataWranglerFileS
 		};
 	}
 
-	public bool IsSourceFor(FileInfo a_fileInfo, string a_storageName, string a_codecName, BrawFileMetadata? a_fileMeta, out string? a_reasonForRejection)
+	public bool IsSourceFor(FileInfo a_fileInfo, string a_storageName, string a_codecName, BRAWFileMetadata? a_fileMeta, out string? a_reasonForRejection)
 	{
 		if (CodecName == a_codecName)
 		{

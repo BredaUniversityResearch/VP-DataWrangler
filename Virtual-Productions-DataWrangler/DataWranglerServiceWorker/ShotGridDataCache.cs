@@ -4,20 +4,21 @@ using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using CommonLogging;
 using DataWranglerCommon;
+using DataWranglerCommon.IngestDataSources;
 using Newtonsoft.Json;
 using ShotGridIntegration;
 
 namespace DataWranglerServiceWorker
 {
-	public class ShotGridDataCache
+    public class ShotGridDataCache
 	{
 		public class ShotVersionMetaCacheEntry
 		{
 			public ShotVersionIdentifier Identifier;
 			public string ShotCode;
-			public DataWranglerShotVersionMeta MetaValues;
+			public IngestDataShotVersionMeta MetaValues;
 
-			public ShotVersionMetaCacheEntry(int a_projectId, int a_shotId, int a_versionId, string a_shotCode, DataWranglerShotVersionMeta a_metaValues)
+			public ShotVersionMetaCacheEntry(int a_projectId, int a_shotId, int a_versionId, string a_shotCode, IngestDataShotVersionMeta a_metaValues)
 			{
 				Identifier = new ShotVersionIdentifier(a_projectId, a_shotId, a_versionId);
 				ShotCode = a_shotCode;
@@ -105,7 +106,7 @@ namespace DataWranglerServiceWorker
 							{
 								try
 								{
-									DataWranglerShotVersionMeta? decodedMeta = JsonConvert.DeserializeObject<DataWranglerShotVersionMeta>(version.Attributes.DataWranglerMeta, DataWranglerSerializationSettings.Instance);
+									IngestDataShotVersionMeta? decodedMeta = JsonConvert.DeserializeObject<IngestDataShotVersionMeta>(version.Attributes.DataWranglerMeta, DataWranglerSerializationSettings.Instance);
 									if (decodedMeta != null)
 									{
 										Logger.LogInfo("MetaCache", $"Got valid meta for shot version {version.Id}");
@@ -168,12 +169,12 @@ namespace DataWranglerServiceWorker
 		}
 
 		public List<KeyValuePair<TMetaType, ShotVersionMetaCacheEntry>> FindShotVersionWithMeta<TMetaType>()
-			where TMetaType: DataWranglerFileSourceMeta
+			where TMetaType: IngestDataSourceMeta
 		{
 			List<KeyValuePair<TMetaType, ShotVersionMetaCacheEntry>> result = new();
 			foreach (ShotVersionMetaCacheEntry entry in m_availableVersionMeta.Values)
 			{
-				DataWranglerFileSourceMeta? foundRelevantMeta = entry.MetaValues.FileSources.Find((a_meta) => a_meta is TMetaType);
+				IngestDataSourceMeta? foundRelevantMeta = entry.MetaValues.FileSources.Find((a_meta) => a_meta is TMetaType);
 				if (foundRelevantMeta != null)
 				{
 					result.Add(new KeyValuePair<TMetaType, ShotVersionMetaCacheEntry>((TMetaType)foundRelevantMeta, entry));

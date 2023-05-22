@@ -1,6 +1,7 @@
 ﻿using System.Windows.Controls;
 using AutoNotify;
 using DataWranglerCommon;
+using DataWranglerCommon.IngestDataSources;
 
 namespace DataWranglerInterface.ShotRecording
 {
@@ -9,11 +10,11 @@ namespace DataWranglerInterface.ShotRecording
 	/// </summary>
 	public partial class DataWranglerFileSourceUIBlackmagicUrsa : UserControl, IDataWranglerFileSourceUITitleProvider
 	{
-		public DataWranglerFileSourceMetaBlackmagicUrsa TargetMeta { get; private set; }
+		public IngestDataSourceMetaBlackmagicUrsa TargetMeta { get; private set; }
 
 		public string FileSourceTitle => "Blackmagic Ursa";
 
-		public DataWranglerFileSourceUIBlackmagicUrsa(DataWranglerFileSourceMetaBlackmagicUrsa a_meta)
+		public DataWranglerFileSourceUIBlackmagicUrsa(IngestDataSourceMetaBlackmagicUrsa a_meta)
 		{
 			TargetMeta = a_meta;
 

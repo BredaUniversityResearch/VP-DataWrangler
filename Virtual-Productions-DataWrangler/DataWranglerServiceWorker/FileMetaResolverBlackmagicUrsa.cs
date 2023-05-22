@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Text;
 using CommonLogging;
 using DataWranglerCommon;
@@ -10,43 +11,44 @@ public class FileMetaResolverBlackmagicUrsa: IFileMetaResolver
 {
 	public void ProcessDirectory(string a_baseDirectory, string a_storageName, ShotGridDataCache a_cache, DataImportWorker a_importWorker)
 	{
-		var relevantCacheEntries = a_cache.FindShotVersionWithMeta<DataWranglerFileSourceMetaBlackmagicUrsa>();
-		using BRAWFileDecoder fileDecoder = new BRAWFileDecoder();
-		
-		foreach (string filePath in Directory.EnumerateFiles(a_baseDirectory))
-		{
-			FileInfo fileInfo = new FileInfo(filePath);
-			if (CameraCodec.FindFromFileExtension(fileInfo.Extension, out ECameraCodec codec))
-			{
-				BrawFileMetadata? fileMeta = null;
-				if (codec == ECameraCodec.BlackmagicRAW)
-				{
-					fileMeta = fileDecoder.GetMetaForFile(fileInfo);
-				}
+		throw new NotImplementedException(); //TODO
+		//var relevantCacheEntries = a_cache.FindShotVersionWithMeta<DataWranglerFileSourceMetaBlackmagicUrsa>();
+		//using BRAWFileDecoder fileDecoder = new BRAWFileDecoder();
 
-				bool fileWasLinked = false;
-				StringBuilder rejectionLog = new StringBuilder(256);
-				foreach (var cacheEntry in relevantCacheEntries)
-				{
-					DataWranglerFileSourceMetaBlackmagicUrsa ursaMeta = cacheEntry.Key;
-					if (ursaMeta.IsSourceFor(fileInfo, a_storageName, codec.ToString(), fileMeta, out var reasonForRejection))
-					{
-						Logger.LogInfo("FileResolverUrsa", $"Found file {filePath} for shot {cacheEntry.Value.ShotCode} ({cacheEntry.Value.Identifier.VersionId})");
+		//foreach (string filePath in Directory.EnumerateFiles(a_baseDirectory))
+		//{
+		//	FileInfo fileInfo = new FileInfo(filePath);
+		//	if (BlackmagicCameraCodec.FindFromFileExtension(fileInfo.Extension, out EBlackmagicCameraCodec codec))
+		//	{
+		//		BRAWFileMetadata? fileMeta = null;
+		//		if (codec == EBlackmagicCameraCodec.BlackmagicRAW)
+		//		{
+		//			fileMeta = fileDecoder.GetMetaForFile(fileInfo);
+		//		}
 
-						a_importWorker.AddFileToImport(cacheEntry.Value.Identifier, fileInfo.FullName, ursaMeta.SourceFileTag);
-						fileWasLinked = true;
-					}
-					else
-					{
-						rejectionLog.AppendLine($"\t{cacheEntry.Value.Identifier.ProjectId}:{cacheEntry.Value.Identifier.ShotId}:{cacheEntry.Value.ShotCode}: {reasonForRejection}");
-					}
-				}
-				if (!fileWasLinked)
-				{
-					Logger.LogInfo("FileResolverUrsa", $"File {filePath} could not be linked to a shot. Rejection log: \n{rejectionLog}");
-				}
-			}
+		//		bool fileWasLinked = false;
+		//		StringBuilder rejectionLog = new StringBuilder(256);
+		//		foreach (var cacheEntry in relevantCacheEntries)
+		//		{
+		//			DataWranglerFileSourceMetaBlackmagicUrsa ursaMeta = cacheEntry.Key;
+		//			if (ursaMeta.IsSourceFor(fileInfo, a_storageName, codec.ToString(), fileMeta, out var reasonForRejection))
+		//			{
+		//				Logger.LogInfo("FileResolverUrsa", $"Found file {filePath} for shot {cacheEntry.Value.ShotCode} ({cacheEntry.Value.Identifier.VersionId})");
 
-		}
+		//				a_importWorker.AddFileToImport(cacheEntry.Value.Identifier, fileInfo.FullName, ursaMeta.SourceFileTag);
+		//				fileWasLinked = true;
+		//			}
+		//			else
+		//			{
+		//				rejectionLog.AppendLine($"\t{cacheEntry.Value.Identifier.ProjectId}:{cacheEntry.Value.Identifier.ShotId}:{cacheEntry.Value.ShotCode}: {reasonForRejection}");
+		//			}
+		//		}
+		//		if (!fileWasLinked)
+		//		{
+		//			Logger.LogInfo("FileResolverUrsa", $"File {filePath} could not be linked to a shot. Rejection log: \n{rejectionLog}");
+		//		}
+		//	}
+
+		//}
 	}
 }

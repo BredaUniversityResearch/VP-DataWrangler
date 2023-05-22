@@ -178,7 +178,7 @@ namespace ShotGridIntegrationTest
 		[TestMethod]
 		public void GetFilePublishTypes()
 		{
-			ShotGridAPIResponse<ShotGridEntityRelation[]> response = m_api.GetPublishFileTypes(TestConstants.TargetProjectId).Result;
+			ShotGridAPIResponse<ShotGridEntityRelation[]> response = m_api.GetPublishFileTypes().Result;
 
 			Assert.IsFalse(response.IsError);
 

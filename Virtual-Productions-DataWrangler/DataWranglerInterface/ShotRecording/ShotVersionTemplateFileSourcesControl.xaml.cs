@@ -2,15 +2,16 @@
 using System.Windows.Controls;
 using CommonLogging;
 using DataWranglerCommon;
+using DataWranglerCommon.IngestDataSources;
 
 namespace DataWranglerInterface.ShotRecording
 {
-	/// <summary>
-	/// Interaction logic for ShotVersionTemplateFileSourcesControl.xaml
-	/// </summary>
-	public partial class ShotVersionTemplateFileSourcesControl : UserControl
+    /// <summary>
+    /// Interaction logic for ShotVersionTemplateFileSourcesControl.xaml
+    /// </summary>
+    public partial class ShotVersionTemplateFileSourcesControl : UserControl
 	{
-		private readonly DataWranglerShotVersionMeta m_currentTemplateMeta = new DataWranglerShotVersionMeta();
+		private readonly IngestDataShotVersionMeta m_currentTemplateMeta = new IngestDataShotVersionMeta();
 		private List<UserControl> m_currentFileSourceControls = new List<UserControl>();
 
 		private ContextMenu m_addFileSourceContextMenu;
@@ -18,41 +19,36 @@ namespace DataWranglerInterface.ShotRecording
 		public ShotVersionTemplateFileSourcesControl()
 		{
 			m_addFileSourceContextMenu = new ContextMenu();
-			MenuItem item = new MenuItem
-			{
-				Header = "Blackmagic Ursa"
-			};
-			item.Click += (_, _) => TryAddSource(new DataWranglerFileSourceMetaBlackmagicUrsa());
-			m_addFileSourceContextMenu.Items.Add(item);
-
-			item = new MenuItem
-			{
-				Header = "TASCAM DR-60 MkII"
-			};
-			item.Click += (_, _) => TryAddSource(new DataWranglerFileSourceMetaTascam());
-			m_addFileSourceContextMenu.Items.Add(item);
-
-			item = new MenuItem
-			{
-				Header = "Vicon Motion Data"
-			};
-			item.Click += (_, _) => TryAddSource(new DataWranglerFileSourceMetaViconTrackingData());
-			m_addFileSourceContextMenu.Items.Add(item);
+			//MenuItem item = new MenuItem
+			//{
+			//	Header = "Blackmagic Ursa"
+			//};
+			//item.Click += (_, _) => TryAddSource(new DataWranglerFileSourceMetaBlackmagicUrsa());
+			//m_addFileSourceContextMenu.Items.Add(item);
+			//
+			//item = new MenuItem
+			//{
+			//	Header = "TASCAM DR-60 MkII"
+			//};
+			//item.Click += (_, _) => TryAddSource(new DataWranglerFileSourceMetaTascam());
+			//m_addFileSourceContextMenu.Items.Add(item);
+			//
+			//item = new MenuItem
+			//{
+			//	Header = "Vicon Motion Data"
+			//};
+			//item.Click += (_, _) => TryAddSource(new DataWranglerFileSourceMetaViconTrackingData());
+			//m_addFileSourceContextMenu.Items.Add(item);
 
 			InitializeComponent();
 
-			m_currentTemplateMeta.FileSources.Add(new DataWranglerFileSourceMetaBlackmagicUrsa());
+			m_currentTemplateMeta.FileSources.Add(new IngestDataSourceMetaBlackmagicUrsa());
 			UpdateDisplayedWidgets();
 		}
 
-		public DataWranglerShotVersionMeta CreateMetaFromCurrentTemplate()
+		public IngestDataShotVersionMeta CreateMetaFromCurrentTemplate()
 		{
-			DataWranglerShotVersionMeta meta = m_currentTemplateMeta.Clone();
-			foreach (DataWranglerFileSourceMeta fileMeta in m_currentTemplateMeta.FileSources)
-			{
-				fileMeta.OnTemplateMetaCloned();
-			}
-
+			IngestDataShotVersionMeta meta = m_currentTemplateMeta.Clone();
 			return meta;
 		}
 
@@ -63,14 +59,14 @@ namespace DataWranglerInterface.ShotRecording
 			Dispatcher.InvokeAsync(() =>
 			{
 				FileSourceControl.Children.Clear();
-				foreach (DataWranglerFileSourceMeta fs in m_currentTemplateMeta.FileSources)
+				foreach (IngestDataSourceMeta fs in m_currentTemplateMeta.FileSources)
 				{
 					AddMetaEditor(DataWranglerFileSourceUIDecorator.CreateEditorForMeta(fs), fs);
 				}
 			});
 		}
 
-		private void AddMetaEditor(UserControl a_metaEditorControl, DataWranglerFileSourceMeta a_editingMeta)
+		private void AddMetaEditor(UserControl a_metaEditorControl, IngestDataSourceMeta a_editingMeta)
 		{
 			m_currentFileSourceControls.Add(a_metaEditorControl);
 			FileSourceControl.Children.Add(new DataWranglerFileSourceUIDecorator(a_metaEditorControl, () => { RemoveMeta(a_editingMeta); }));
@@ -82,10 +78,10 @@ namespace DataWranglerInterface.ShotRecording
 			m_addFileSourceContextMenu.IsOpen = true;
 		}
 
-		private void TryAddSource(DataWranglerFileSourceMeta a_meta)
+		private void TryAddSource(IngestDataSourceMeta a_meta)
 		{
-			DataWranglerFileSourceMeta? meta = m_currentTemplateMeta.FileSources.Find(source => source.SourceType == a_meta.SourceType);
-			if (meta == null || !meta.IsUniqueMeta)
+			IngestDataSourceMeta? meta = m_currentTemplateMeta.FileSources.Find(source => source.SourceType == a_meta.SourceType);
+			if (meta == null)
 			{
 				m_currentTemplateMeta.FileSources.Add(a_meta);
 				UpdateDisplayedWidgets();
@@ -96,7 +92,7 @@ namespace DataWranglerInterface.ShotRecording
 			}
 		}
 
-		private void RemoveMeta(DataWranglerFileSourceMeta a_meta)
+		private void RemoveMeta(IngestDataSourceMeta a_meta)
 		{
 			bool success = m_currentTemplateMeta.FileSources.Remove(a_meta);
 			if (!success)

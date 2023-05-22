@@ -14,7 +14,7 @@ public class ShotGridEntity
 	[JsonProperty("relationships")]
 	public ShotGridEntityRelationships EntityRelationships = new ShotGridEntityRelationships();
 
-	public ShotGridEntityChangeTracker ChangeTracker;
+	public readonly ShotGridEntityChangeTracker ChangeTracker;
 
 	protected ShotGridEntity()
 	{
@@ -27,4 +27,6 @@ public class ShotGridEntityRelationships
 {
 	[JsonProperty("project"), JsonConverter(typeof(JsonConverterShotGridEntityReferenceRelationships))]
 	public ShotGridEntityReference? Project;
+	[JsonProperty("entity"), JsonConverter(typeof(JsonConverterShotGridEntityReferenceRelationships))]
+	public ShotGridEntityReference? Parent;
 }

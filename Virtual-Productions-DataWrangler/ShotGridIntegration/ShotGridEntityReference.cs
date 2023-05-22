@@ -10,6 +10,9 @@ public class ShotGridEntityReference
 	[JsonProperty("id")]
 	public int Id = 0;
 
+	[JsonProperty("name")]
+	public string? EntityName = null;
+
 	public ShotGridEntityReference()
 	{
 	}

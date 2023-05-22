@@ -1,7 +1,7 @@
 ﻿namespace DataWranglerCommon.IngestDataSources
 {
-	public class IngestDataSourceHandler
+	public abstract class IngestDataSourceHandler
 	{
-
+		public abstract void InstallHooks(DataWranglerEventDelegates a_eventDelegates);
 	}
 }
