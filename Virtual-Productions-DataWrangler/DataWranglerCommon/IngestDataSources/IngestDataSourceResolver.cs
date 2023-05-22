@@ -1,4 +1,6 @@
-﻿namespace DataWranglerCommon.IngestDataSources
+﻿using ShotGridIntegration;
+
+namespace DataWranglerCommon.IngestDataSources
 {
 	public abstract class IngestDataSourceResolver
 	{
@@ -6,6 +8,6 @@
 		{
 		};
 
-		public abstract List<IngestFileEntry> ProcessDirectory(string a_baseDirectory, string a_storageName/*, ShotGridDataCache a_cache*/);
+		public abstract List<IngestFileEntry> ProcessDirectory(string a_baseDirectory, string a_storageVolumeName, ShotGridEntityCache a_cache);
 	}
 }

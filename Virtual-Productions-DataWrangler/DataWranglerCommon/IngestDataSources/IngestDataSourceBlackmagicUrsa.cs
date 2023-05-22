@@ -1,5 +1,6 @@
 ﻿using AutoNotify;
 using Newtonsoft.Json;
+using ShotGridIntegration;
 
 namespace DataWranglerCommon.IngestDataSources
 {
@@ -35,7 +36,7 @@ namespace DataWranglerCommon.IngestDataSources
 
 	public class IngestDataSourceResolverBlackmagicUrsa : IngestDataSourceResolver
 	{
-		public override List<IngestFileEntry> ProcessDirectory(string a_baseDirectory, string a_storageName)
+		public override List<IngestFileEntry> ProcessDirectory(string a_baseDirectory, string a_storageVolumeName, ShotGridEntityCache a_cache)
 		{
 			throw new NotImplementedException();
 		}

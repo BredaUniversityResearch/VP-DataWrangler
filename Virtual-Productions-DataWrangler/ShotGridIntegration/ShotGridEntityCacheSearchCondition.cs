@@ -11,6 +11,11 @@ namespace ShotGridIntegration
 
 		public ShotGridEntityCacheSearchCondition(ShotGridEntityName a_targetEntityName, ShotGridSearchCondition a_searchConditions)
 		{
+			if (a_searchConditions.Condition != "is")
+			{
+				throw new Exception($"Search condition of type \"{a_searchConditions.Condition}\" is not supported");
+			}
+
 			TargetEntityName = a_targetEntityName;
 			m_targetValue = a_searchConditions.Value;
 

@@ -8,12 +8,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="6.0.1" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="7.0.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 
 	<ItemGroup>
 	  <ProjectReference Include="..\DataWranglerSourceAnalysis\DataWranglerSourceAnalysis.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+	  <ProjectReference Include="..\ShotGridIntegration\ShotGridIntegration.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
