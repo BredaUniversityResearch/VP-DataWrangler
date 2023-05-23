@@ -127,20 +127,19 @@ namespace DataWranglerInterface.ShotRecording
 
 		private void SetTargetMeta(IngestDataShotVersionMeta a_meta)
 		{
-			throw new NotImplementedException(); //TODO
-			//foreach (DataWranglerFileSourceMeta meta in m_currentVersionMeta.FileSources)
-			//{
-			//	meta.PropertyChanged -= OnAnyMetaPropertyChanged;
-			//}
+			foreach (IngestDataSourceMeta meta in m_currentVersionMeta.FileSources)
+			{
+				meta.PropertyChanged -= OnAnyMetaPropertyChanged;
+			}
 
-			//m_currentVersionMeta = a_meta;
+			m_currentVersionMeta = a_meta;
 
-			//foreach (DataWranglerFileSourceMeta meta in m_currentVersionMeta.FileSources)
-			//{
-			//	meta.PropertyChanged += OnAnyMetaPropertyChanged;
-			//}
+			foreach (IngestDataSourceMeta meta in m_currentVersionMeta.FileSources)
+			{
+				meta.PropertyChanged += OnAnyMetaPropertyChanged;
+			}
 
-			//VersionFileSourcesControl.SetCurrentMeta(m_currentVersionMeta);
+			VersionFileSourcesControl.SetCurrentMeta(m_currentVersionMeta);
 		}
 
 		private void GoodTakeCheckbox_Clicked(object a_sender, RoutedEventArgs a_e)

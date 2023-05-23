@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using BlackmagicCameraControlData;
+using Newtonsoft.Json;
 
 namespace DataWranglerCommon
 {

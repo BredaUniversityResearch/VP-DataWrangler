@@ -1,4 +1,5 @@
 ﻿using AutoNotify;
+using BlackmagicCameraControlData;
 using DataWranglerCommon.BRAWSupport;
 using Newtonsoft.Json;
 

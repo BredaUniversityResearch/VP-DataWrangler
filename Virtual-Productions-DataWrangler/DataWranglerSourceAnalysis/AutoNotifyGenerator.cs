@@ -29,7 +29,7 @@ namespace AutoNotify
     }
 
 	[AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
-    //[System.Diagnostics.Conditional(""AutoNotifyGenerator_DEBUG"")]
+    [System.Diagnostics.Conditional(""AutoNotifyGenerator_DEBUG"")]
     internal sealed class AutoNotifyPropertyAttribute : Attribute
     {
         public string BackingFieldName { get; set; }
@@ -50,13 +50,13 @@ namespace AutoNotify
             context.RegisterForPostInitialization((i) => i.AddSource("AutoNotifyAttribute", attributeText));
 
             // Register a syntax receiver that will be created for each generation pass
-            context.RegisterForSyntaxNotifications(() => new SyntaxReceiver());
+            context.RegisterForSyntaxNotifications(() => new AutoNotifySyntaxReceiver());
         }
 
         public void Execute(GeneratorExecutionContext context)
         {
             // retrieve the populated receiver 
-            if (!(context.SyntaxContextReceiver is SyntaxReceiver receiver))
+            if (!(context.SyntaxContextReceiver is AutoNotifySyntaxReceiver receiver))
                 return;
 
             // get the added attribute, and INotifyPropertyChanged
@@ -198,7 +198,7 @@ public {fieldType} {propertyName}
         /// <summary>
         /// Created on demand before each generation pass
         /// </summary>
-        class SyntaxReceiver : ISyntaxContextReceiver
+        class AutoNotifySyntaxReceiver : ISyntaxContextReceiver
         {
             public List<IFieldSymbol> Fields { get; } = new List<IFieldSymbol>();
 

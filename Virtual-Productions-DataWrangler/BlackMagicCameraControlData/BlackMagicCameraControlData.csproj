@@ -8,7 +8,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CommonLogging\CommonLogging.csproj" />
-    <ProjectReference Include="..\DataWranglerCommon\DataWranglerCommon.csproj" />
   </ItemGroup>
 
 </Project>

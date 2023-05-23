@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using BlackmagicCameraControlData;
 using DataWranglerInterface.CameraHandling;
+using ActiveCameraInfo = DataWranglerCommon.CameraHandling.ActiveCameraInfo;
 
 namespace DataWranglerInterface.ShotRecording
 {

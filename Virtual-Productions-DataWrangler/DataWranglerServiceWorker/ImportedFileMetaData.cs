@@ -25,11 +25,11 @@ namespace DataWranglerServiceWorker
 		[JsonProperty("imported_finished")]
 		public readonly DateTime ImportFinishedTime = DateTime.UtcNow;
 
-		public ImportedFileMetaData(ShotVersionIdentifier a_targetShotVersion, ShotGridDataCache a_cache)
+		public ImportedFileMetaData(ShotGridEntityShotVersion a_targetShotVersion, ShotGridDataCache a_cache)
 		{
-			ProjectId = a_targetShotVersion.ProjectId;
-			ShotId = a_targetShotVersion.ShotId;
-			VersionId = a_targetShotVersion.VersionId;
+			ProjectId = a_targetShotVersion.EntityRelationships.Project?.Id?? -1;
+			ShotId = a_targetShotVersion.EntityRelationships.Parent?.Id?? -1;
+			VersionId = a_targetShotVersion.Id;
 
 			if (a_cache.FindEntityById(ProjectId, out ShotGridEntityProject? project))
 			{

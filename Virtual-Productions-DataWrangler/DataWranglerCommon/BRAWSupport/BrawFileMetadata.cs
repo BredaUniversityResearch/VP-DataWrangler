@@ -1,4 +1,6 @@
-﻿namespace DataWranglerCommon.BRAWSupport;
+﻿using BlackmagicCameraControlData;
+
+namespace DataWranglerCommon.BRAWSupport;
 
 public class BRAWFileMetadata
 {

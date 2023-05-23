@@ -2,6 +2,7 @@
 using System.Text;
 using CommonLogging;
 using DataWranglerCommon;
+using DataWranglerCommon.CameraHandling;
 using Newtonsoft.Json;
 
 namespace DataWranglerInterface.Configuration
@@ -43,11 +44,5 @@ namespace DataWranglerInterface.Configuration
 				}
 			}
 		}
-	}
-
-	public class ConfigActiveCameraGrouping
-	{
-		public string Name = "Virtual Camera";
-		public List<string> DeviceHandleUuids = new List<string>();
 	}
 }

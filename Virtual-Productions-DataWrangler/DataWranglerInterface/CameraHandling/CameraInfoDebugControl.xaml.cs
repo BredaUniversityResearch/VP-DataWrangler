@@ -5,6 +5,7 @@ using BlackmagicCameraControlBluetooth;
 using BlackmagicCameraControlData;
 using BlackmagicCameraControlData.CommandPackets;
 using DataWranglerInterface.CameraHandling;
+using ActiveCameraInfo = DataWranglerCommon.CameraHandling.ActiveCameraInfo;
 
 namespace DataWranglerInterface.ShotRecording
 {

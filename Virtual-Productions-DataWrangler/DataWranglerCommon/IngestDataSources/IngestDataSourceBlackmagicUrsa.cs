@@ -1,5 +1,7 @@
 ﻿using AutoNotify;
+using BlackmagicCameraControlData;
 using DataWranglerCommon.BRAWSupport;
+using DataWranglerCommon.CameraHandling;
 using Newtonsoft.Json;
 using ShotGridIntegration;
 
@@ -7,9 +9,6 @@ namespace DataWranglerCommon.IngestDataSources
 {
     public partial class IngestDataSourceMetaBlackmagicUrsa: IngestDataSourceMeta
 	{
-		[AutoNotify, JsonProperty("Source")]
-		private string m_source = "";
-
 		[AutoNotify, JsonProperty("CodecName")]
 		private string m_codecName = "";
 
@@ -28,7 +27,6 @@ namespace DataWranglerCommon.IngestDataSources
 		{
 			return new IngestDataSourceMetaBlackmagicUrsa()
 			{
-				m_source = m_source,
 				m_codecName = m_codecName,
 				m_recordingStart = m_recordingStart,
 				m_startTimeCode = m_startTimeCode,
@@ -114,20 +112,21 @@ namespace DataWranglerCommon.IngestDataSources
 
 	public class IngestDataSourceHandlerBlackmagicUrsa : IngestDataSourceHandler
 	{
-		public override void InstallHooks(DataWranglerEventDelegates a_eventDelegates)
+		public override void InstallHooks(DataWranglerEventDelegates a_eventDelegates, DataWranglerServices a_services)
 		{
 			a_eventDelegates.OnRecordingStarted += OnRecordingStart;
-			a_eventDelegates.OnRecordingFinished += OnRecordingFinished;
 		}
 
-		private void OnRecordingFinished(IngestDataShotVersionMeta a_shotMetaData)
+		private void OnRecordingStart(ActiveCameraInfo a_sourceCamera, IngestDataShotVersionMeta a_shotMetaData)
 		{
-			throw new NotImplementedException();
-		}
-
-		private void OnRecordingStart(IngestDataShotVersionMeta a_shotMetaData)
-		{
-			throw new NotImplementedException();
+			IngestDataSourceMetaBlackmagicUrsa? dataSource = a_shotMetaData.FindMetaByType<IngestDataSourceMetaBlackmagicUrsa>();
+			if (dataSource != null)
+			{
+				dataSource.StartTimeCode = a_sourceCamera.CurrentTimeCode;
+				dataSource.CodecName = a_sourceCamera.SelectedCodec;
+				dataSource.RecordingStart = DateTimeOffset.UtcNow;
+				dataSource.CameraNumber = a_sourceCamera.CameraNumber;
+			}
 		}
 	};
 }

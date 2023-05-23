@@ -2,11 +2,14 @@
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Input;
+using DataWranglerCommon;
+using DataWranglerCommon.ShogunLiveSupport;
 using DataWranglerCommonWPF.Login;
 using DataWranglerInterface.CameraPreview;
 using DataWranglerInterface.DebugSupport;
 using DataWranglerInterface.Properties;
 using DataWranglerInterface.ShotRecording;
+using ShotGridIntegration;
 
 namespace DataWranglerInterface
 {
@@ -34,17 +37,24 @@ namespace DataWranglerInterface
 		private DebugWindow? m_debugWindow;
         private CameraPreviewWindow? m_previewWindow;
 
-		public MainWindow()
+        private ShotGridAPI m_targetAPI = new ShotGridAPI();
+        private ShogunLiveService m_shogunService = new ShogunLiveService(30);
+
+        public MainWindow()
 		{
 			InitializeComponent();
+
+			DataWranglerServices services = new DataWranglerServices(m_targetAPI, m_shogunService);
+			DataWranglerServiceProvider.Use(services);	
+
 			if (Debugger.IsAttached)
 			{
 				m_debugWindow = new DebugWindow();
 				m_debugWindow.Show();
 			}
 
-            m_previewWindow = new CameraPreviewWindow();
-			m_previewWindow.Show();
+            //m_previewWindow = new CameraPreviewWindow();
+			//m_previewWindow.Show();
 
             m_loginPage = new LoginPage();
 			OnRequestUserAuthentication();
@@ -53,12 +63,24 @@ namespace DataWranglerInterface
 		protected override void OnKeyDown(KeyEventArgs e)
 		{
 			base.OnKeyDown(e);
-			if (e.IsDown && e.Key == Key.F1)
+			if (e.IsDown)
 			{
-				if (m_debugWindow == null || !m_debugWindow.IsVisible)
+				if (e.Key == Key.F1)
 				{
-					m_debugWindow = new DebugWindow();
-					m_debugWindow.Show();
+					if (m_debugWindow == null || !m_debugWindow.IsVisible)
+					{
+						m_debugWindow = new DebugWindow();
+						m_debugWindow.Show();
+					}
+				}
+				else if (e.Key == Key.F2)
+				{
+					m_previewWindow = new CameraPreviewWindow();
+					m_previewWindow.Show();
+					if (m_shotRecordingPage != null)
+					{
+						m_shotRecordingPage.PreviewControl = m_previewWindow.PreviewControl;
+					}
 				}
 			}
 		}

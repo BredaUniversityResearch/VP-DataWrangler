@@ -1,11 +1,10 @@
 ﻿using System.Text.RegularExpressions;
-using Newtonsoft.Json;
+using DataWranglerCommon;
 
-namespace DataWranglerCommon
+namespace BlackmagicCameraControlData
 {
 	//Represents a SMTPE time code formatted as HH:MM:SS:FF
 	//See: https://en.wikipedia.org/wiki/SMPTE_timecode
-	[JsonConverter(typeof(TimeCodeJsonConverter))]
 	public readonly struct TimeCode
 	{
 		public readonly uint TimeCodeAsBinaryCodedDecimal = ~0u;

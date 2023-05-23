@@ -1,4 +1,5 @@
-﻿using DataWranglerCommon;
+﻿using BlackmagicCameraControlData;
+using DataWranglerCommon;
 using DataWranglerCommon.BRAWSupport;
 
 namespace DataWranglerCommonTests

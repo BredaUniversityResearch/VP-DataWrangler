@@ -1,14 +1,10 @@
 ﻿using System.ComponentModel;
-using System.Text.RegularExpressions;
-using System.Windows.Automation.Peers;
 using AutoNotify;
 using BlackmagicCameraControlData;
 using BlackmagicCameraControlData.CommandPackets;
 using CommonLogging;
-using DataWranglerCommon;
-using DataWranglerInterface.Configuration;
 
-namespace DataWranglerInterface.CameraHandling
+namespace DataWranglerCommon.CameraHandling
 {
     public class CameraPropertyChangedEventArgs : PropertyChangedEventArgs
     {
@@ -46,6 +42,8 @@ namespace DataWranglerInterface.CameraHandling
         private string m_cameraName = "";
         [AutoNotify]
         private string m_cameraModel = "";
+		[AutoNotify]
+		private string m_cameraNumber = "A";
         [AutoNotify]
         private int m_batteryPercentage = 0;
         [AutoNotify]

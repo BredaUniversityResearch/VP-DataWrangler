@@ -1,18 +1,14 @@
-﻿using DataWranglerCommon.ShogunLiveSupport;
-using ShotGridIntegration;
+﻿using DataWranglerCommon;
 
 namespace DataWranglerInterface
 {
 	public class DataWranglerServiceProvider
 	{
-		public static DataWranglerServiceProvider Instance { get; }
+		public static DataWranglerServices Instance { get; private set; } = null!;
 
-		static DataWranglerServiceProvider()
+		public static void Use(DataWranglerServices a_services)
 		{
-			Instance = new DataWranglerServiceProvider();
+			Instance = a_services;
 		}
-
-		public readonly ShotGridAPI ShotGridAPI = new ShotGridAPI();
-        public readonly ShogunLiveService ShogunLiveService = new ShogunLiveService(30);
 	}
 }

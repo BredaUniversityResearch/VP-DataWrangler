@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using CommonLogging;
+using DataWranglerCommon.IngestDataSources;
+using ShotGridIntegration;
 
 namespace DataWranglerServiceWorker
 {
@@ -8,14 +11,14 @@ namespace DataWranglerServiceWorker
 	{
 		private string m_rootPath;
 		private DriveInfo m_targetDriveInfo;
-		private ShotGridDataCache m_cache;
+		private ShotGridEntityCache m_cache;
+		private IngestDataCache m_ingestCache;
 		private DataImportWorker m_importWorker;
-		private IFileMetaResolver[] m_metaResolvers = { 
-			new FileMetaResolverBlackmagicUrsa(), 
-			new FileMetaResolverTascam() 
+		private IngestDataSourceResolver[] m_metaResolvers = { 
+			new IngestDataSourceResolverBlackmagicUrsa()
 		};
 
-		public FileMetaResolverWorker(string a_rootPath, ShotGridDataCache a_cache, DataImportWorker a_importWorker)
+		public FileMetaResolverWorker(string a_rootPath, ShotGridEntityCache a_cache, DataImportWorker a_importWorker)
 		{
 			Logger.LogInfo("FileMetaResolverWorker", $"Starting file discovery for drive {a_rootPath}");
 			m_rootPath = a_rootPath;
@@ -27,6 +30,8 @@ namespace DataWranglerServiceWorker
 
 			m_targetDriveInfo = new DriveInfo(rootPath);
 			m_cache = a_cache;
+			m_ingestCache = new IngestDataCache();
+			m_ingestCache.UpdateCache(m_cache);
 			m_importWorker = a_importWorker;
 		}
 
@@ -40,9 +45,14 @@ namespace DataWranglerServiceWorker
 
 			string storageName = m_targetDriveInfo.VolumeLabel;
 
-			foreach (IFileMetaResolver resolver in m_metaResolvers)
+			foreach (IngestDataSourceResolver resolver in m_metaResolvers)
 			{
-				resolver.ProcessDirectory(m_rootPath, storageName, m_cache, m_importWorker);
+				List<IngestDataSourceResolver.IngestFileEntry> filesToIngest = resolver.ProcessDirectory(m_rootPath, storageName, m_cache, m_ingestCache);
+
+				foreach (IngestDataSourceResolver.IngestFileEntry entry in filesToIngest)
+				{
+					m_importWorker.AddFileToImport(entry.TargetShotVersion, entry.SourcePath, entry.FileTag);
+				}
 			}
 
 			Logger.LogInfo("FileMetaResolverWorker", $"Done processing files for path {m_rootPath}");

@@ -51,7 +51,7 @@ namespace DataWranglerServiceWorker
 			m_driveEventWatcher.OnVolumeChanged += OnVolumeChanged;
 		}
 
-		private void OnFileCopyStarted(ShotVersionIdentifier a_shotVersion, FileCopyMetaData a_copyMetaData)
+		private void OnFileCopyStarted(ShotGridEntityShotVersion a_shotVersion, FileCopyMetaData a_copyMetaData)
 		{
 			m_copyProgress.SetTargetFile(a_copyMetaData.SourceFilePath.LocalPath, a_copyMetaData.DestinationFullFilePath.LocalPath);
 			Dispatcher.InvokeAsync(() => {
@@ -62,7 +62,7 @@ namespace DataWranglerServiceWorker
 			});
 		}
 
-		private void OnFileCopyUpdate(ShotVersionIdentifier a_shotVersion, FileCopyMetaData a_copyMetaData, FileCopyProgress a_progressUpdate)
+		private void OnFileCopyUpdate(ShotGridEntityShotVersion a_shotVersion, FileCopyMetaData a_copyMetaData, FileCopyProgress a_progressUpdate)
 		{
 			string humanReadableCopiedAmount = FormatAsHumanReadableByteAmount(a_progressUpdate.TotalBytesCopied);
 			string humanReadableSourceSize = FormatAsHumanReadableByteAmount(a_progressUpdate.TotalFileSizeBytes);
@@ -89,7 +89,7 @@ namespace DataWranglerServiceWorker
 			return $"{roundedByteAmount:0.00} {byteOrderString[speedUnitOrder]}"; ;
 		}
 
-		private void OnFileCopyFinished(ShotVersionIdentifier a_shotVersion, FileCopyMetaData a_copyMetaData, DataImportWorker.ECopyResult a_copyOperationResult)	
+		private void OnFileCopyFinished(ShotGridEntityShotVersion a_shotVersion, FileCopyMetaData a_copyMetaData, DataImportWorker.ECopyResult a_copyOperationResult)	
 		{
 			Dispatcher.InvokeAsync(() => {
 				if (m_importWorker.ImportQueueLength == 0)
@@ -104,17 +104,17 @@ namespace DataWranglerServiceWorker
 			}
 		}
 
-		private void CreatePublishEntryForFile(ShotVersionIdentifier a_shotVersion, FileCopyMetaData a_copyMetaData)
+		private void CreatePublishEntryForFile(ShotGridEntityShotVersion a_shotVersion, FileCopyMetaData a_copyMetaData)
 		{
-			if (!m_metaCache.FindEntityById(a_shotVersion.ShotId, out ShotGridEntityShot? shotData))
+			if (a_shotVersion.EntityRelationships.Project == null)
 			{
-				Logger.LogError("DataImporter", $"Failed to get shot data for shot id {a_shotVersion.ShotId}. File won't be marked as published in shotgrid");
+				Logger.LogError("DataImporter", $"Failed to publish entry for take {a_shotVersion.Id}. Project relationship was not properly set");
 				return;
 			}
 
-			if (!m_metaCache.FindEntityById(a_shotVersion.VersionId, out ShotGridEntityShotVersion? versionData))
+			if (a_shotVersion.EntityRelationships.Parent == null)
 			{
-				Logger.LogError("DataImporter", $"Failed to get shot version data for shot id {a_shotVersion.VersionId}. File won't be marked as published in shotgrid");
+				Logger.LogError("DataImporter", $"Failed to publish entry for take {a_shotVersion.Id}. Parent entity relationship to the Shot was not properly set");
 				return;
 			}
 
@@ -128,7 +128,7 @@ namespace DataWranglerServiceWorker
 				Description = ServiceWorkerConfig.Instance.FilePublishDescription
 			};
 
-			m_targetApi.CreateFilePublish(a_shotVersion.ProjectId, a_shotVersion.ShotId, a_shotVersion.VersionId, publishData)
+			m_targetApi.CreateFilePublish(a_shotVersion.EntityRelationships.Project.Id, a_shotVersion.EntityRelationships.Parent.Id, a_shotVersion.Id, publishData)
 				.ContinueWith(a_taskResult =>
 				{
 					if (!a_taskResult.Result.IsError)
@@ -170,7 +170,7 @@ namespace DataWranglerServiceWorker
 				{
 					foreach (string rootPath in m_importWorkerBacklog)
 					{
-						new FileMetaResolverWorker(rootPath, m_metaCache, m_importWorker).Run();
+						new FileMetaResolverWorker(rootPath, m_targetApi.LocalCache, m_importWorker).Run();
 					}
 
 					TryImportFilesFromMeta();
@@ -203,7 +203,7 @@ namespace DataWranglerServiceWorker
 				}
 				else
 				{
-					new FileMetaResolverWorker(a_e.DriveRootPath, m_metaCache, m_importWorker).Run();
+					new FileMetaResolverWorker(a_e.DriveRootPath, m_targetApi.LocalCache, m_importWorker).Run();
 				}
 			}
 		}
