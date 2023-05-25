@@ -101,10 +101,12 @@ namespace DataWranglerCommonWPF.Login
 				throw new Exception();
 			}
 
+#pragma warning disable CS0162
 			if (AcceptInvalidCredentials)
 			{
 				m_targetAPI.SetInvalidAuthentication();
 			}
+#pragma warning restore CS0162
 
 			if (a_obj.Success || AcceptInvalidCredentials)
 			{
