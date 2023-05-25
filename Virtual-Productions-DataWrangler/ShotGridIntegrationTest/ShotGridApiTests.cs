@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ShotGridIntegration;
 
@@ -10,8 +8,6 @@ namespace ShotGridIntegrationTest
 	[TestClass]
 	public class ShotGridApiTests
 	{
-
-
 		private static ShotGridAPI m_api = new ShotGridAPI();
 
 		[ClassInitialize]
@@ -113,13 +109,13 @@ namespace ShotGridIntegrationTest
 			}
 		}
 
-		[TestMethod]
-		public void GetPublishesSchema()
-		{
-			ShotGridAPIResponse<ShotGridEntityFieldSchema[]> schemas = m_api.GetEntityFieldSchema(ShotGridEntityName.Shot.CamelCase, TestConstants.TargetProjectId).Result;
-			Assert.IsFalse(schemas.IsError);
-			Assert.IsTrue(schemas.ResultData!.Length > 0);
-		}
+		//PdG 2023-05-25: Disabled since this is not a unit test per-se but something that we use to query the API when we need.
+		//[TestMethod]
+		//public void GetPublishesSchema()
+		//{
+		//	ShotGridAPIResponse<ShotGridEntityFieldSchema> schemas = m_api.GetEntityFieldSchema(ShotGridEntityName.Shot.CamelCase, TestConstants.TargetProjectId).Result;
+		//	Assert.IsFalse(schemas.IsError);
+		//}
 
 		[TestMethod]
 		public void GetPublishesForShot()

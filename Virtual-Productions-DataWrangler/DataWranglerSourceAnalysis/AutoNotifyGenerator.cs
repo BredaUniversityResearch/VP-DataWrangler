@@ -29,7 +29,6 @@ namespace AutoNotify
     }
 
 	[AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
-    [System.Diagnostics.Conditional(""AutoNotifyGenerator_DEBUG"")]
     internal sealed class AutoNotifyPropertyAttribute : Attribute
     {
         public string BackingFieldName { get; set; }

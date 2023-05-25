@@ -476,7 +476,7 @@ namespace ShotGridIntegration
 			return ParseResponse(a_shotGridEntityName.ImplementedType, response.StatusCode, responseBody);
 		}
 
-		public async Task<ShotGridAPIResponse<ShotGridEntityFieldSchema[]>> GetEntityFieldSchema(string a_entityType, int a_projectId)
+		public async Task<ShotGridAPIResponse<ShotGridEntityFieldSchema>> GetEntityFieldSchema(string a_entityType, int a_projectId)
 		{
 			if (m_authentication == null)
 			{
@@ -497,7 +497,7 @@ namespace ShotGridIntegration
 			HttpResponseMessage response = await m_client.SendAsync(request);
 			string responseBody = await response.Content.ReadAsStringAsync();
 
-			return ParseResponse<ShotGridEntityFieldSchema[]>(response.StatusCode, responseBody);
+			return ParseResponse<ShotGridEntityFieldSchema>(response.StatusCode, responseBody);
 		}
 
 		public async Task<ShotGridAPIResponse<ShotGridEntityRelation?>> FindRelationByCode(ShotGridEntityName a_relationType, string a_code)
