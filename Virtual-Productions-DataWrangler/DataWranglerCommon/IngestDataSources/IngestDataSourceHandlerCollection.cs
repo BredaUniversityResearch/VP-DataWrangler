@@ -9,7 +9,7 @@ namespace DataWranglerCommon.IngestDataSources
 
 		public void CreateAvailableHandlers(DataWranglerEventDelegates a_eventDelegates, DataWranglerServices a_services)
 		{
-			foreach (Type handlerType in FindAvailableHandlerTypes())
+			foreach (Type handlerType in IngestTypeHelper.FindTypesInheritingFrom(typeof(IngestDataSourceHandler)))
 			{
 				ConstructorInfo? constructor = handlerType.GetConstructor(Type.EmptyTypes);
 				if (constructor != null)
@@ -25,23 +25,6 @@ namespace DataWranglerCommon.IngestDataSources
 					Logger.LogError("IngestHandlerCollection", $"Tried to create ingest handler of type {handlerType}, but no parameterless constructor was found.");
 				}
 			}
-		}
-
-		private List<Type> FindAvailableHandlerTypes()
-		{
-			List<Type> resultTypes = new();
-			foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
-			{
-				foreach (Type type in assembly.GetTypes())
-				{
-					if (!type.IsAbstract && type.IsAssignableTo(typeof(IngestDataSourceHandler)))
-					{
-						resultTypes.Add(type);
-					}
-				}
-			}
-
-			return resultTypes;
 		}
 	}
 }

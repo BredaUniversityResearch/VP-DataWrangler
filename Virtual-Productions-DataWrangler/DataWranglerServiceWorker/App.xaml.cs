@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
 using CommonLogging;
+using DataWranglerCommon.IngestDataSources;
 using ShotGridIntegration;
 
 namespace DataWranglerServiceWorker
@@ -21,25 +22,23 @@ namespace DataWranglerServiceWorker
 		public static extern void FreeConsole();
 
 		private ShotGridAPI m_targetApi;
-		private ShotGridDataCache m_metaCache;
+		private ShotGridDataRequester m_metaRequester;
 		private Task? m_cacheUpdateTask = null;
 		private DataImportWorker m_importWorker;
+		private IngestDataCache m_ingestCache = new IngestDataCache();
 
 		private USBDriveEventWatcher m_driveEventWatcher = new USBDriveEventWatcher();
 		private CopyProgressWindow m_copyProgress;
 
-		private readonly IMetaFileResolver[] m_availableMetaFileResolvers = new[]
-		{
-			new MetaFileResolverVicon()
-		};
+		private readonly IngestDataSourceResolverCollection m_resolverCollection = new IngestDataSourceResolverCollection();
 
 		private readonly List<string> m_importWorkerBacklog = new List<string>();
 
 		public App()
 		{
 			m_targetApi = new ShotGridAPI();
-			m_metaCache = new ShotGridDataCache(m_targetApi);
-			m_importWorker = new DataImportWorker(m_metaCache, m_targetApi);
+			m_metaRequester = new ShotGridDataRequester(m_targetApi);
+			m_importWorker = new DataImportWorker(m_targetApi);
 			m_importWorker.Start();
 
 			m_importWorker.OnCopyStarted += OnFileCopyStarted;
@@ -165,16 +164,17 @@ namespace DataWranglerServiceWorker
 		{
 			m_targetApi.StartAutoRefreshToken(OnRequestUserAuthentication);
 
-			m_cacheUpdateTask = m_metaCache.UpdateCache();
+			m_cacheUpdateTask = m_metaRequester.RequestAllRelevantData();
 			m_cacheUpdateTask.ContinueWith(_ =>
+			{
+				m_ingestCache.UpdateCache(m_targetApi.LocalCache);
+				foreach (string rootPath in m_importWorkerBacklog)
 				{
-					foreach (string rootPath in m_importWorkerBacklog)
-					{
-						new FileMetaResolverWorker(rootPath, m_targetApi.LocalCache, m_importWorker).Run();
-					}
+					new FileMetaResolverWorker(rootPath, m_targetApi.LocalCache, m_importWorker, m_resolverCollection, m_ingestCache).Run();
+				}
 
-					TryImportFilesFromMeta();
-				});
+				TryImportFilesFromMeta();
+			});
 
 			m_driveEventWatcher.DetectCurrentlyPresentUSBDrives();
 		}
@@ -203,16 +203,19 @@ namespace DataWranglerServiceWorker
 				}
 				else
 				{
-					new FileMetaResolverWorker(a_e.DriveRootPath, m_targetApi.LocalCache, m_importWorker).Run();
+					new FileMetaResolverWorker(a_e.DriveRootPath, m_targetApi.LocalCache, m_importWorker, m_resolverCollection, m_ingestCache).Run();
 				}
 			}
 		}
 
 		private void TryImportFilesFromMeta()
 		{
-			foreach (IMetaFileResolver metaResolver in m_availableMetaFileResolvers)
+			foreach (IngestDataSourceResolver metaResolver in m_resolverCollection.DataSourceResolvers)
 			{
-				metaResolver.ProcessCache(m_metaCache, m_importWorker);
+				if (metaResolver.CanProcessCache)
+				{
+					metaResolver.ProcessCache(m_targetApi.LocalCache, m_ingestCache);
+				}
 			}
 		}
 	}

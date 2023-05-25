@@ -7,6 +7,7 @@ using ShotGridIntegration;
 
 namespace DataWranglerCommon.IngestDataSources
 {
+	[IngestDataSourceMeta(typeof(IngestDataSourceHandlerBlackmagicUrsa), typeof(IngestDataSourceResolverBlackmagicUrsa))]
     public partial class IngestDataSourceMetaBlackmagicUrsa: IngestDataSourceMeta
 	{
 		[AutoNotify, JsonProperty("CodecName")]

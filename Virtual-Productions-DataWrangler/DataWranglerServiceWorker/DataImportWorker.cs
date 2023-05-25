@@ -44,8 +44,8 @@ namespace DataWranglerServiceWorker
 		public event CopyProgressUpdate OnCopyUpdate = delegate { };
 		public event CopyFinishedDelegate OnCopyFinished = delegate { };
 
-		private ShotGridDataCache m_dataCache;
 		private ShotGridAPI m_api;
+		private ShotGridEntityCache m_localCache;
 		private Queue<ImportQueueEntry> m_importQueue = new();
 		public int ImportQueueLength => m_importQueue.Count;
 		private AutoResetEvent m_queueAddedEvent = new AutoResetEvent(false);
@@ -54,10 +54,10 @@ namespace DataWranglerServiceWorker
 
 		private SftpClient? m_importClient = null;
 
-		public DataImportWorker(ShotGridDataCache a_cache, ShotGridAPI a_api)
+		public DataImportWorker(ShotGridAPI a_api)
 		{
-			m_dataCache = a_cache;
 			m_api = a_api;
+			m_localCache = m_api.LocalCache;
 			m_dataImportThread = new Thread(DoBackgroundWork);
 		}
 
@@ -74,7 +74,7 @@ namespace DataWranglerServiceWorker
 
 		public void AddFileToImport(ShotGridEntityShotVersion a_shotVersion, string a_sourceFilePath, string a_fileTag)
 		{
-			if (!m_dataCache.FindEntity(a_obj => a_obj.Attributes.LocalStorageName == ServiceWorkerConfig.Instance.DefaultDataStorageName, out ShotGridEntityLocalStorage? targetStorage) ||
+			if (!m_localCache.TryGetEntityByPredicate(a_obj => a_obj.Attributes.LocalStorageName == ServiceWorkerConfig.Instance.DefaultDataStorageName, out ShotGridEntityLocalStorage? targetStorage) ||
 			    string.IsNullOrEmpty(targetStorage.Attributes.WindowsPath))
 			{
 				Logger.LogError("DataImport", $"Could not import file at path {a_sourceFilePath}. Could not find data storage with name \"{ServiceWorkerConfig.Instance.DefaultDataStorageName}\". Importer is NOT active");
@@ -93,19 +93,19 @@ namespace DataWranglerServiceWorker
 				return;
 			}
 
-			if (!m_dataCache.FindEntityById(a_shotVersion.EntityRelationships.Project.Id, out ShotGridEntityProject? project))
+			if (!m_localCache.TryGetEntityById(a_shotVersion.EntityRelationships.Project.Id, out ShotGridEntityProject? project))
 			{
 				Logger.LogError("DataImport", $"Could not import file at path {a_sourceFilePath}. Data references project ({a_shotVersion.EntityRelationships.Project.Id}) which is not known by the cache");
 				return;
 			}
 
-			if (!m_dataCache.FindEntityById(a_shotVersion.EntityRelationships.Parent.Id, out ShotGridEntityShot? shot))
+			if (!m_localCache.TryGetEntityById(a_shotVersion.EntityRelationships.Parent.Id, out ShotGridEntityShot? shot))
 			{
 				Logger.LogError("DataImport", $"Could not import file at path {a_sourceFilePath}. Data references shot ({a_shotVersion.EntityRelationships.Parent.Id}) which is not known by the cache");
 				return;
 			}
 
-			if (!m_dataCache.FindEntity(ShotGridEntityName.PublishedFileType, a_relation => a_relation.Attributes.Code == a_fileTag, out ShotGridEntityRelation? fileTag))
+			if (!m_localCache.TryGetEntityByPredicate(ShotGridEntityName.PublishedFileType, a_relation => ((ShotGridEntityRelation)a_relation).Attributes.Code == a_fileTag, out ShotGridEntity? fileTag))
 			{
 				Logger.LogError("DataImport", $"Could not import file at path {a_sourceFilePath}. Data references file relation ({a_fileTag}) which is not known by the cache");
 				return;
@@ -120,7 +120,7 @@ namespace DataWranglerServiceWorker
 
 			lock (m_importQueue)
 			{
-				m_importQueue.Enqueue(new ImportQueueEntry(new FileCopyMetaData(a_sourceFilePath, targetPath, targetStorage, fileTag), a_shotVersion));
+				m_importQueue.Enqueue(new ImportQueueEntry(new FileCopyMetaData(a_sourceFilePath, targetPath, targetStorage, (ShotGridEntityRelation)fileTag), a_shotVersion));
 				m_queueAddedEvent.Set();
 			}
 		}
@@ -202,7 +202,7 @@ namespace DataWranglerServiceWorker
 			using FileStream targetStream = new FileStream(targetPath, FileMode.Create, FileAccess.Write);
 			using TextWriter textWriter = new StreamWriter(targetStream);
 
-			ImportedFileMetaData importedMeta = new ImportedFileMetaData(a_resultToCopy.TargetShotVersion, m_dataCache);
+			ImportedFileMetaData importedMeta = new ImportedFileMetaData(a_resultToCopy.TargetShotVersion, m_localCache);
 			JsonSerializer.CreateDefault().Serialize(textWriter, importedMeta);
 		}
 

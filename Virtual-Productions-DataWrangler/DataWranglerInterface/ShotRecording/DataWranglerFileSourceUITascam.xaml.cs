@@ -2,6 +2,7 @@
 using System.Windows.Controls;
 using AutoNotify;
 using DataWranglerCommon;
+using DataWranglerCommon.IngestDataSources;
 
 namespace DataWranglerInterface.ShotRecording
 {
@@ -10,11 +11,11 @@ namespace DataWranglerInterface.ShotRecording
 	/// </summary>
 	public partial class DataWranglerFileSourceUITascam : UserControl, IDataWranglerFileSourceUITitleProvider
 	{
-		public DataWranglerFileSourceMetaTascam TargetMeta { get; private set; }
+		public IngestDataSourceMetaTascam TargetMeta { get; private set; }
 
-		public string FileSourceTitle => DataWranglerFileSourceMetaTascam.MetaSourceType;
+		public string FileSourceTitle => new IngestDataSourceMetaTascam().SourceType;
 
-		public DataWranglerFileSourceUITascam(DataWranglerFileSourceMetaTascam a_meta)
+		public DataWranglerFileSourceUITascam(IngestDataSourceMetaTascam a_meta)
 		{
 			TargetMeta = a_meta;
 

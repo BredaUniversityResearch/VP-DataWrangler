@@ -18,6 +18,17 @@ namespace DataWranglerCommon.IngestDataSources
 			}
 		};
 
-		public abstract List<IngestFileEntry> ProcessDirectory(string a_baseDirectory, string a_storageVolumeName, ShotGridEntityCache a_cache, IngestDataCache a_ingestCache);
+		public virtual bool CanProcessDirectory => false;
+		public virtual bool CanProcessCache => false;
+
+		public virtual List<IngestFileEntry> ProcessDirectory(string a_baseDirectory, string a_storageVolumeName, ShotGridEntityCache a_cache, IngestDataCache a_ingestCache)
+		{
+			throw new NotImplementedException();
+		}
+
+		public virtual List<IngestFileEntry> ProcessCache(ShotGridEntityCache a_cache, IngestDataCache a_ingestCache)
+		{
+			throw new NotImplementedException();
+		}
 	}
 }

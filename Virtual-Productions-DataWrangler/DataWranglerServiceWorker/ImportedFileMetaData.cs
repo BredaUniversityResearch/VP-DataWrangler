@@ -1,5 +1,6 @@
 ﻿
 using System;
+using DataWranglerCommon.IngestDataSources;
 using Newtonsoft.Json;
 using ShotGridIntegration;
 
@@ -25,25 +26,28 @@ namespace DataWranglerServiceWorker
 		[JsonProperty("imported_finished")]
 		public readonly DateTime ImportFinishedTime = DateTime.UtcNow;
 
-		public ImportedFileMetaData(ShotGridEntityShotVersion a_targetShotVersion, ShotGridDataCache a_cache)
+		public ImportedFileMetaData(ShotGridEntityShotVersion a_targetShotVersion, ShotGridEntityCache a_dataCache)
 		{
 			ProjectId = a_targetShotVersion.EntityRelationships.Project?.Id?? -1;
 			ShotId = a_targetShotVersion.EntityRelationships.Parent?.Id?? -1;
 			VersionId = a_targetShotVersion.Id;
 
-			if (a_cache.FindEntityById(ProjectId, out ShotGridEntityProject? project))
+			ShotGridEntityProject? project = a_dataCache.FindEntityById<ShotGridEntityProject>(ProjectId);
+			if (project != null)
 			{
 				ShotCode = project.Attributes.Name;
 			}
 
-			if (a_cache.FindEntityById(ShotId, out ShotGridEntityShot? shot))
+			ShotGridEntityShot? shot = a_dataCache.FindEntityById<ShotGridEntityShot>(ShotId);
+			if (shot != null)
 			{
 				ShotCode = shot.Attributes.ShotCode;
 			}
 
-			if (a_cache.FindEntityById(VersionId, out ShotGridEntityShotVersion? version))
+			ShotGridEntityShotVersion? shotVersion = a_dataCache.FindEntityById<ShotGridEntityShotVersion>(VersionId);
+			if (shotVersion != null)
 			{
-				VersionCode = version.Attributes.VersionCode;
+				VersionCode = shotVersion.Attributes.VersionCode;
 			}
 
 		}

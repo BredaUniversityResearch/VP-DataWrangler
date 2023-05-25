@@ -1,4 +1,5 @@
-﻿using System.Net.NetworkInformation;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Net.NetworkInformation;
 
 namespace ShotGridIntegration
 {
@@ -6,13 +7,13 @@ namespace ShotGridIntegration
 	{
 		private Dictionary<ShotGridEntityName, Dictionary<int, ShotGridEntity>> m_entitiesByNameAndId = new();
 
-		public TEntityType? FindEntity<TEntityType>(int a_entityId)
+		public TEntityType? FindEntityById<TEntityType>(int a_entityId)
 			where TEntityType : ShotGridEntity
 		{
-			return (TEntityType?)FindEntity(ShotGridEntityName.FromType<TEntityType>(), a_entityId);
+			return (TEntityType?)FindEntityById(ShotGridEntityName.FromType<TEntityType>(), a_entityId);
 		}
 
-		public ShotGridEntity? FindEntity(ShotGridEntityName a_entityTypeName, int a_entityId)
+		public ShotGridEntity? FindEntityById(ShotGridEntityName a_entityTypeName, int a_entityId)
 		{
 			var entitiesById = FindEntitiesByType(a_entityTypeName);
 			if (entitiesById != null && entitiesById.TryGetValue(a_entityId, out var resultEntity))
@@ -94,6 +95,51 @@ namespace ShotGridIntegration
 			}
 
 			return result;
+		}
+
+		public bool TryGetEntityById<TEntityType>(int a_entityId, [NotNullWhen(true)] out TEntityType? a_result)
+			where TEntityType: ShotGridEntity
+		{
+			a_result = FindEntityById<TEntityType>(a_entityId);
+			return a_result != null;
+		}
+
+		public ShotGridEntity? FindEntityByPredicate(ShotGridEntityName a_entityTypeName, Func<ShotGridEntity, bool> a_func)
+		{
+			var entities = FindEntitiesByType(a_entityTypeName);
+			if (entities == null)
+			{
+				return null;
+			}
+
+			foreach(var entity in entities.Values)
+			{
+				if (a_func(entity))
+				{
+					return entity;
+				}
+			}
+
+			return null;
+		}
+
+		public TEntityType? FindEntityByPredicate<TEntityType>(Func<TEntityType, bool> a_predicate)
+			where TEntityType: ShotGridEntity
+		{
+			return (TEntityType?)FindEntityByPredicate(ShotGridEntityName.FromType<TEntityType>(), a_ent => a_predicate((TEntityType)a_ent));
+		}
+
+		public bool TryGetEntityByPredicate(ShotGridEntityName a_entityType, Func<ShotGridEntity, bool> a_func, [NotNullWhen(true)] out ShotGridEntity? a_result)
+		{
+			a_result = FindEntityByPredicate(a_entityType, a_func);
+			return a_result != null;
+		}
+
+		public bool TryGetEntityByPredicate<TEntityType>(Func<TEntityType, bool> a_func, [NotNullWhen(true)] out TEntityType? a_result)
+			where TEntityType: ShotGridEntity
+		{
+			a_result = FindEntityByPredicate(a_func);
+			return a_result != null;
 		}
 	}
 }

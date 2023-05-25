@@ -14,11 +14,9 @@ namespace DataWranglerServiceWorker
 		private ShotGridEntityCache m_cache;
 		private IngestDataCache m_ingestCache;
 		private DataImportWorker m_importWorker;
-		private IngestDataSourceResolver[] m_metaResolvers = { 
-			new IngestDataSourceResolverBlackmagicUrsa()
-		};
+		private IngestDataSourceResolverCollection m_fileResolvers;
 
-		public FileMetaResolverWorker(string a_rootPath, ShotGridEntityCache a_cache, DataImportWorker a_importWorker)
+		public FileMetaResolverWorker(string a_rootPath, ShotGridEntityCache a_cache, DataImportWorker a_importWorker, IngestDataSourceResolverCollection a_fileResolvers, IngestDataCache a_ingestCache)
 		{
 			Logger.LogInfo("FileMetaResolverWorker", $"Starting file discovery for drive {a_rootPath}");
 			m_rootPath = a_rootPath;
@@ -30,9 +28,9 @@ namespace DataWranglerServiceWorker
 
 			m_targetDriveInfo = new DriveInfo(rootPath);
 			m_cache = a_cache;
-			m_ingestCache = new IngestDataCache();
-			m_ingestCache.UpdateCache(m_cache);
 			m_importWorker = a_importWorker;
+			m_fileResolvers = a_fileResolvers;
+			m_ingestCache = a_ingestCache;
 		}
 
 		public void Run()
@@ -45,8 +43,13 @@ namespace DataWranglerServiceWorker
 
 			string storageName = m_targetDriveInfo.VolumeLabel;
 
-			foreach (IngestDataSourceResolver resolver in m_metaResolvers)
+			foreach (IngestDataSourceResolver resolver in m_fileResolvers.DataSourceResolvers)
 			{
+				if (!resolver.CanProcessDirectory)
+				{
+					continue;
+				}
+
 				List<IngestDataSourceResolver.IngestFileEntry> filesToIngest = resolver.ProcessDirectory(m_rootPath, storageName, m_cache, m_ingestCache);
 
 				foreach (IngestDataSourceResolver.IngestFileEntry entry in filesToIngest)
