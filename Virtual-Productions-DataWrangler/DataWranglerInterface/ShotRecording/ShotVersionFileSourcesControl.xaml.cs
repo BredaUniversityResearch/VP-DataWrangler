@@ -11,7 +11,6 @@ namespace DataWranglerInterface.ShotRecording
     public partial class ShotVersionFileSourcesControl : UserControl
 	{
 		private IngestDataShotVersionMeta m_currentMeta = new IngestDataShotVersionMeta();
-		private List<UserControl> m_currentFileSourceControls = new List<UserControl>();
 
 		public ShotVersionFileSourcesControl()
 		{
@@ -26,22 +25,14 @@ namespace DataWranglerInterface.ShotRecording
 
 		public void UpdateDisplayedWidgets()
 		{
-			m_currentFileSourceControls.Clear();
-
 			Dispatcher.InvokeAsync(() =>
 			{
 				FileSourceControl.Children.Clear();
 				foreach (IngestDataSourceMeta fs in m_currentMeta.FileSources)
 				{
-					AddMetaEditor(DataWranglerFileSourceUIDecorator.CreateEditorForMeta(fs), fs);
+					FileSourceControl.Children.Add(new DataWranglerFileSourceUIDecorator(fs, null));
 				}
 			});
-		}
-
-		private void AddMetaEditor(UserControl a_metaEditorControl, IngestDataSourceMeta a_editingMeta)
-		{
-			m_currentFileSourceControls.Add(a_metaEditorControl);
-			FileSourceControl.Children.Add(new DataWranglerFileSourceUIDecorator(a_metaEditorControl, null));
 		}
 	}
 }

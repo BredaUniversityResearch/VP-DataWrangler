@@ -13,7 +13,12 @@
 				<Label x:Name="FileSourceMeta"></Label>
 				<Button x:Name="RemoveMetaButton" HorizontalAlignment="Right">❌</Button>
 			</DockPanel>
-			<StackPanel x:Name="ContentContainer"></StackPanel>
+			<Grid x:Name="ContentContainer">
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="1*"></ColumnDefinition>
+					<ColumnDefinition Width="2*"></ColumnDefinition>
+				</Grid.ColumnDefinitions>
+			</Grid>
 		</StackPanel>
 	</Grid>
 </UserControl>

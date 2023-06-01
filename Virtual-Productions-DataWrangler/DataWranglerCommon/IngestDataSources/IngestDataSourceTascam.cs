@@ -51,6 +51,11 @@ namespace DataWranglerCommon.IngestDataSources
 	{
 		private const string FileTag = "audio";
 
+		public IngestDataSourceResolverTascam()
+			: base(true, false)
+		{
+		}
+
 		public override List<IngestFileEntry> ProcessDirectory(string a_baseDirectory, string a_storageVolumeName, ShotGridEntityCache a_cache, IngestDataCache a_ingestCache)
 		{
 			List<IngestFileEntry> result = new List<IngestFileEntry>();

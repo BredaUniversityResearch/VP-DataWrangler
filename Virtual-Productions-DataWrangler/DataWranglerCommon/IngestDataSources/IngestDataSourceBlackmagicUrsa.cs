@@ -19,7 +19,7 @@ namespace DataWranglerCommon.IngestDataSources
 		[AutoNotify, JsonProperty("StartTimeCode")]
 		private TimeCode m_startTimeCode = new();
 
-		[AutoNotify, JsonProperty("CameraNumber")]
+		[AutoNotify, JsonProperty("CameraNumber"), IngestDataEditable(EDataEditFlags.Editable, EDataEditFlags.Editable)]
 		private string m_cameraNumber = "A";
 
 		public override string SourceType => "BlackmagicUrsa";
@@ -36,10 +36,15 @@ namespace DataWranglerCommon.IngestDataSources
 		}
 	}
 
-	public class IngestDataSourceResolverBlackmagicUrsa : IngestDataSourceResolver
+    public class IngestDataSourceResolverBlackmagicUrsa : IngestDataSourceResolver
 	{
 		private const string ImportedFileTag = "video";
 		private static readonly TimeSpan MaxTimeCodeOffset = new(0, 0, 2);
+
+		public IngestDataSourceResolverBlackmagicUrsa()
+			: base(true, false)
+		{
+		}
 
 		public override List<IngestFileEntry> ProcessDirectory(string a_baseDirectory, string a_storageVolumeName, ShotGridEntityCache a_cache, IngestDataCache a_ingestCache)
 		{

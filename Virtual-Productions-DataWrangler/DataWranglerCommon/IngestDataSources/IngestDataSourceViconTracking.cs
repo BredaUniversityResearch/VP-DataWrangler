@@ -89,41 +89,49 @@ namespace DataWranglerCommon.IngestDataSources
 
 	public class IngestDataSourceResolverViconTracking : IngestDataSourceResolver
 	{
-		public override List<IngestFileEntry> ProcessDirectory(string a_baseDirectory, string a_storageVolumeName, ShotGridEntityCache a_cache, IngestDataCache a_ingestCache)
+		private const string ViconTrackingFileTag = "motion-data";
+
+		public IngestDataSourceResolverViconTracking()
+			: base(false, true)
 		{
-			throw new NotImplementedException(); //TODO: This needs to be the other way around. Meta -> File not File -> Meta
 		}
 
-		//	var metasToParse = a_metaValues.FindShotVersionWithMeta<DataWranglerFileSourceMetaViconTrackingData>();
-		//	foreach (var currentMeta in metasToParse)
-		//	{
-		//		if (string.IsNullOrEmpty(currentMeta.Key.TempCaptureFileName) ||
-		//			string.IsNullOrEmpty(currentMeta.Key.TempCaptureLibraryPath))
-		//		{
-		//			Logger.LogError("MetaFileResolverVicon", $"Shot meta specifies empty temp file name or empty capture library on shot {currentMeta.Value.Identifier}");
-		//			continue;
-		//		}
+		public override List<IngestFileEntry> ProcessCache(ShotGridEntityCache a_cache, IngestDataCache a_ingestCache)
+		{
+			List<IngestFileEntry> result = new List<IngestFileEntry>();
 
-		//		int matchedCount = 0;
-		//		if (Directory.Exists(currentMeta.Key.TempCaptureLibraryPath))
-		//		{
-		//			foreach (string filePaths in Directory.GetFiles(currentMeta.Key.TempCaptureLibraryPath))
-		//			{
-		//				FileInfo targetFile = new FileInfo(filePaths);
-		//				if (targetFile.Name.StartsWith(currentMeta.Key.TempCaptureFileName))
-		//				{
-		//					a_importWorker.AddFileToImport(currentMeta.Value.Identifier, targetFile.FullName, currentMeta.Key.SourceFileTag);
-		//					++matchedCount;
-		//				}
-		//			}
-		//		}
+			var metasToParse = a_ingestCache.FindShotVersionsWithMeta<IngestDataSourceMetaViconTracking>();
+			foreach (var currentMeta in metasToParse)
+			{
+				if (string.IsNullOrEmpty(currentMeta.Value.TempCaptureFileName) ||
+					string.IsNullOrEmpty(currentMeta.Value.TempCaptureLibraryPath))
+				{
+					Logger.LogError("MetaFileResolverVicon", $"Shot meta specifies empty temp file name or empty capture library on shot {currentMeta.Key.Attributes.VersionCode}");
+					continue;
+				}
 
-		//		if (matchedCount == 0)
-		//		{
-		//			Logger.LogError("MetaFileResolverVicon", $"Failed to find any files to import for meta {currentMeta.Value.Identifier} " +
-		//				$"at directory {currentMeta.Key.TempCaptureLibraryPath} with name {currentMeta.Key.TempCaptureFileName}");
-		//		}
-		//	}
+				int matchedCount = 0;
+				if (Directory.Exists(currentMeta.Value.TempCaptureLibraryPath))
+				{
+					foreach (string filePaths in Directory.GetFiles(currentMeta.Value.TempCaptureLibraryPath))
+					{
+						FileInfo targetFile = new FileInfo(filePaths);
+						if (targetFile.Name.StartsWith(currentMeta.Value.TempCaptureFileName))
+						{
+							result.Add(new IngestFileEntry(currentMeta.Key, targetFile.FullName, ViconTrackingFileTag));
+							++matchedCount;
+						}
+					}
+				}
 
+				if (matchedCount == 0)
+				{
+					Logger.LogError("MetaFileResolverVicon", $"Failed to find any files to import for meta {currentMeta.Key.Attributes.VersionCode} " +
+						$"at directory {currentMeta.Value.TempCaptureLibraryPath} with name {currentMeta.Value.TempCaptureFileName}");
+				}
+			}
+
+			return result;
+		}
 	}
 }

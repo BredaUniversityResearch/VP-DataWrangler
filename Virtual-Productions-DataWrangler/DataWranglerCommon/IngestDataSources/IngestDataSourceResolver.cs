@@ -18,8 +18,14 @@ namespace DataWranglerCommon.IngestDataSources
 			}
 		};
 
-		public virtual bool CanProcessDirectory => false;
-		public virtual bool CanProcessCache => false;
+		public readonly bool CanProcessDirectory;
+		public readonly bool CanProcessCache;
+
+		protected IngestDataSourceResolver(bool a_processDirectory, bool a_processCache)
+		{
+			CanProcessDirectory = a_processDirectory;
+			CanProcessCache = a_processCache;
+		}
 
 		public virtual List<IngestFileEntry> ProcessDirectory(string a_baseDirectory, string a_storageVolumeName, ShotGridEntityCache a_cache, IngestDataCache a_ingestCache)
 		{

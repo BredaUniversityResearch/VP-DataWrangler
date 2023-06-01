@@ -12,7 +12,6 @@ namespace DataWranglerInterface.ShotRecording
     public partial class ShotVersionTemplateFileSourcesControl : UserControl
 	{
 		private readonly IngestDataShotVersionMeta m_currentTemplateMeta = new IngestDataShotVersionMeta();
-		private List<UserControl> m_currentFileSourceControls = new List<UserControl>();
 
 		private ContextMenu m_addFileSourceContextMenu;
 
@@ -54,22 +53,15 @@ namespace DataWranglerInterface.ShotRecording
 
 		public void UpdateDisplayedWidgets()
 		{
-			m_currentFileSourceControls.Clear();
-
 			Dispatcher.InvokeAsync(() =>
 			{
 				FileSourceControl.Children.Clear();
 				foreach (IngestDataSourceMeta fs in m_currentTemplateMeta.FileSources)
 				{
-					AddMetaEditor(DataWranglerFileSourceUIDecorator.CreateEditorForMeta(fs), fs);
+					DataWranglerFileSourceUIDecorator control = new DataWranglerFileSourceUIDecorator(fs, () => { RemoveMeta(fs); });
+					FileSourceControl.Children.Add(control);
 				}
 			});
-		}
-
-		private void AddMetaEditor(UserControl a_metaEditorControl, IngestDataSourceMeta a_editingMeta)
-		{
-			m_currentFileSourceControls.Add(a_metaEditorControl);
-			FileSourceControl.Children.Add(new DataWranglerFileSourceUIDecorator(a_metaEditorControl, () => { RemoveMeta(a_editingMeta); }));
 		}
 
 		private void AddFileSourceButton_Click(object sender, System.Windows.RoutedEventArgs e)

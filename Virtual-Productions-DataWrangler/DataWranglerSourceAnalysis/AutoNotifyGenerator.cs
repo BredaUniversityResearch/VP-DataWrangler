@@ -19,7 +19,6 @@ using System;
 namespace AutoNotify
 {
     [AttributeUsage(AttributeTargets.Field, Inherited = false, AllowMultiple = false)]
-    [System.Diagnostics.Conditional(""AutoNotifyGenerator_DEBUG"")]
     internal sealed class AutoNotifyAttribute : Attribute
     {
         public AutoNotifyAttribute()
