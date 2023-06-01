@@ -12,7 +12,7 @@
 			<RowDefinition Height="1*"></RowDefinition>
         </Grid.RowDefinitions>
 		<DockPanel Grid.Row="0">
-			<Label>Shot Version Template</Label>
+			<Label>File Sources</Label>
 			<Button x:Name="AddFileSourceButton" HorizontalAlignment="Right" VerticalAlignment="Center" Height="21" Width="40" Click="AddFileSourceButton_Click">Add</Button>
         </DockPanel>
 		<ScrollViewer VerticalScrollBarVisibility="Auto" Grid.Row="1">

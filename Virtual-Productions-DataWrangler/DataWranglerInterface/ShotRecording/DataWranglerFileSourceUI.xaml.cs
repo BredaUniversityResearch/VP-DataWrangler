@@ -4,6 +4,8 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using AutoNotify;
 using DataWranglerCommon.IngestDataSources;
+using DataWranglerCommonWPF;
+using ShotGridIntegration;
 
 namespace DataWranglerInterface.ShotRecording
 {
@@ -77,6 +79,8 @@ namespace DataWranglerInterface.ShotRecording
 					{
 						continue;
 					}
+
+					bool isEditable = (editFlags & EDataEditFlags.Editable) == EDataEditFlags.Editable;
 					a_targetCollection.RowDefinitions.Add(new RowDefinition());
 
 					Label label = new Label
@@ -90,13 +94,15 @@ namespace DataWranglerInterface.ShotRecording
 					Binding textBinding = new Binding(field.TargetMemberInfo.Name)
 					{
 						Source = a_target,
-						Mode = ((editFlags & EDataEditFlags.Editable) == EDataEditFlags.Editable)? BindingMode.TwoWay : BindingMode.OneWay
+						Mode = isEditable? BindingMode.TwoWay : BindingMode.OneWay
 					};
 					TextBox box = new TextBox();
 					box.SetBinding(TextBox.TextProperty, textBinding);
-					box.IsReadOnly = (editFlags & EDataEditFlags.Editable) != EDataEditFlags.Editable;
-					a_targetCollection.Children.Add(box);
+					box.IsReadOnly = !isEditable;
+					box.IsEnabled = isEditable;
 
+					a_targetCollection.Children.Add(box);
+					
 					Grid.SetRow(box, dataRow);
 					Grid.SetColumn(box, 1);
 

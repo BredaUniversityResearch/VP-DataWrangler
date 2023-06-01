@@ -73,6 +73,8 @@ namespace ShotGridIntegration
 				changedValues.Add(fieldName, kvp.Value);
 			}
 
+			m_changedFields.Clear();
+
 			return Task.Run(() => a_targetApi.UpdateEntityProperties(ShotGridEntityName.FromType(m_targetEntity.GetType()), m_targetEntity.Id, changedValues));
 		}
 

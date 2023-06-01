@@ -31,12 +31,6 @@
 			<AutoGen>True</AutoGen>
 			<DependentUpon>Settings.settings</DependentUpon>
 		</Compile>
-		<Compile Update="ShotRecording\DataWranglerFileSourceUIVicon.xaml.cs">
-		  <SubType>Code</SubType>
-		</Compile>
-		<Compile Update="ShotRecording\DataWranglerFileSourceUITascam.xaml.cs">
-		  <SubType>Code</SubType>
-		</Compile>
 		<Compile Update="ShotRecording\ShotVersionInfoDisplay.xaml.cs">
 		  <SubType>Code</SubType>
 		</Compile>
@@ -60,13 +54,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Page Update="ShotRecording\DataWranglerFileSourceUIVicon.xaml">
-	    <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
-	  </Page>
-	  <Page Update="ShotRecording\DataWranglerFileSourceUITascam.xaml">
-	    <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
-	    <SubType>Designer</SubType>
-	  </Page>
 	  <Page Update="ShotRecording\ShotVersionInfoDisplay.xaml">
 	    <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
 	    <SubType>Designer</SubType>

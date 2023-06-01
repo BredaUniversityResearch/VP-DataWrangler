@@ -59,14 +59,16 @@ namespace DataWranglerCommonWPF
 			}
 
 			double width = m_targetChildElement.DesiredSize.Width;
-			if (HorizontalAlignment == HorizontalAlignment.Stretch ||
-			    width <= 0.0)
+			if ((HorizontalAlignment == HorizontalAlignment.Stretch ||
+			    width <= 0.0) &&
+			    constraint.Width < double.PositiveInfinity)
 			{
 				width = constraint.Width;
 			}
 
 			double height = m_targetChildElement.DesiredSize.Height;
-			if (height <= 0.0f)
+			if (height <= 0.0f &&
+			    constraint.Height < double.PositiveInfinity)
 			{
 				height = DesiredSize.Height;
 			}
