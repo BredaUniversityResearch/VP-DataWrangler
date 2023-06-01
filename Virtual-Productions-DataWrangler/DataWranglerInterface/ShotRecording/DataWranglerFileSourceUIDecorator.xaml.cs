@@ -94,6 +94,7 @@ namespace DataWranglerInterface.ShotRecording
 					};
 					TextBox box = new TextBox();
 					box.SetBinding(TextBox.TextProperty, textBinding);
+					box.IsReadOnly = (editFlags & EDataEditFlags.Editable) != EDataEditFlags.Editable;
 					a_targetCollection.Children.Add(box);
 
 					Grid.SetRow(box, dataRow);

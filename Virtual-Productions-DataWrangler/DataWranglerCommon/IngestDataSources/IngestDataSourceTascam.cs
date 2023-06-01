@@ -28,7 +28,7 @@ namespace DataWranglerCommon.IngestDataSources
 	}
 
 	public class IngestDataSourceHandlerTascam : IngestDataSourceHandler
-	{
+	{	
 		private int m_nextFileIndex = 0;
 
 		public override void InstallHooks(DataWranglerEventDelegates a_eventDelegates, DataWranglerServices a_services)
