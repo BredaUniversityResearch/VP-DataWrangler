@@ -14,39 +14,11 @@ namespace DataWranglerSourceAnalysis
 	[Generator]
 	public class AutoNotifyGenerator : ISourceGenerator
 	{
-		private const string attributeText = @"
-using System;
-namespace AutoNotify
-{
-    [AttributeUsage(AttributeTargets.Field, Inherited = false, AllowMultiple = false)]
-    internal sealed class AutoNotifyAttribute : Attribute
-    {
-        public AutoNotifyAttribute()
-        {
-        }
-        public string PropertyName { get; set; } = """";
-    }
-
-	[AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
-    internal sealed class AutoNotifyPropertyAttribute : Attribute
-    {
-        public string BackingFieldName { get; set; }
-        public AutoNotifyPropertyAttribute(string a_backingFieldName)
-        {
-			BackingFieldName = a_backingFieldName;
-        }
-    }
-}
-";
-
 		public DiagnosticDescriptor ClassMustBeTopLevelDiagnostic = new DiagnosticDescriptor("AN001", "AutoNotify class should be top level", "Classes containing AutoFormat parameters should be top level. Class {0}.", "Usage", DiagnosticSeverity.Error, true);
 		public DiagnosticDescriptor FieldCannotBeProcessed = new DiagnosticDescriptor("AN002", "AutoNotify field has conflicting name", "AutoNotify field could not deduce a unique property name. Class: {0} Field: {1} Chosen property name: {2}.", "Usage", DiagnosticSeverity.Error, true);
 
 		public void Initialize(GeneratorInitializationContext context)
 		{
-			// Register the attribute source
-			context.RegisterForPostInitialization((i) => i.AddSource("AutoNotifyAttribute", attributeText));
-
 			// Register a syntax receiver that will be created for each generation pass
 			context.RegisterForSyntaxNotifications(() => new AutoNotifySyntaxReceiver());
 		}

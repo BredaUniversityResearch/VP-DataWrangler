@@ -12,10 +12,10 @@ namespace DataWranglerCommon.IngestDataSources
 	{
 		public override string SourceType => "Vicon Shogun Tracking Data";
 
-		[AutoNotify, JsonProperty("TempDataBase")]
+		[AutoNotify, JsonProperty("TempDataBase"), IngestDataEditable(EDataEditFlags.Visible, EDataEditFlags.Editable)]
 		private string m_tempCaptureLibraryPath = "C:/Temp/ViconTempDb/UNIT_TEST_DB";
 
-		[AutoNotify, JsonProperty("TempFileName")]
+		[AutoNotify, JsonProperty("TempFileName"), IngestDataEditable(EDataEditFlags.Visible, EDataEditFlags.None)]
 		private string m_tempCaptureFileName = "";
 
 		public override IngestDataSourceMeta Clone()

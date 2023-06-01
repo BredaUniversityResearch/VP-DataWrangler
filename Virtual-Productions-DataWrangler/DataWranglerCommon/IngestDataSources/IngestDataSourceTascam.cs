@@ -11,10 +11,10 @@ namespace DataWranglerCommon.IngestDataSources
 	{
 		public override string SourceType => "Tascam DR-60D MkII";
 
-		[AutoNotify, JsonProperty("FilePrefix")]
+		[AutoNotify, JsonProperty("FilePrefix"), IngestDataEditable(EDataEditFlags.Editable, EDataEditFlags.Editable)]
 		private string m_filePrefix = "TASCAM_";
 
-		[AutoNotify, JsonProperty("FileIndex")]
+		[AutoNotify, JsonProperty("FileIndex"), IngestDataEditable(EDataEditFlags.Editable, EDataEditFlags.Editable)]
 		private int m_fileIndex = 0;
 
 		public override IngestDataSourceMeta Clone()

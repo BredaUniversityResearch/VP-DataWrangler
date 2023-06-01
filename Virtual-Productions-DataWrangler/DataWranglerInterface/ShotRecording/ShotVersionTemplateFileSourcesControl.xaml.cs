@@ -18,26 +18,26 @@ namespace DataWranglerInterface.ShotRecording
 		public ShotVersionTemplateFileSourcesControl()
 		{
 			m_addFileSourceContextMenu = new ContextMenu();
-			//MenuItem item = new MenuItem
-			//{
-			//	Header = "Blackmagic Ursa"
-			//};
-			//item.Click += (_, _) => TryAddSource(new DataWranglerFileSourceMetaBlackmagicUrsa());
-			//m_addFileSourceContextMenu.Items.Add(item);
-			//
-			//item = new MenuItem
-			//{
-			//	Header = "TASCAM DR-60 MkII"
-			//};
-			//item.Click += (_, _) => TryAddSource(new DataWranglerFileSourceMetaTascam());
-			//m_addFileSourceContextMenu.Items.Add(item);
-			//
-			//item = new MenuItem
-			//{
-			//	Header = "Vicon Motion Data"
-			//};
-			//item.Click += (_, _) => TryAddSource(new DataWranglerFileSourceMetaViconTrackingData());
-			//m_addFileSourceContextMenu.Items.Add(item);
+			MenuItem item = new MenuItem
+			{
+				Header = "Blackmagic Ursa"
+			};
+			item.Click += (_, _) => TryAddSource(new IngestDataSourceMetaBlackmagicUrsa());
+			m_addFileSourceContextMenu.Items.Add(item);
+			
+			item = new MenuItem
+			{
+				Header = "TASCAM DR-60 MkII"
+			};
+			item.Click += (_, _) => TryAddSource(new IngestDataSourceMetaTascam());
+			m_addFileSourceContextMenu.Items.Add(item);
+			
+			item = new MenuItem
+			{
+				Header = "Vicon Motion Data"
+			};
+			item.Click += (_, _) => TryAddSource(new IngestDataSourceMetaViconTracking());
+			m_addFileSourceContextMenu.Items.Add(item);
 
 			InitializeComponent();
 

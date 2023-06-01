@@ -3,6 +3,7 @@
 [Flags]
 public enum EDataEditFlags
 {
+	None = 0,
 	Visible = (1 << 0),
 	Editable = (1 << 1) | Visible,
 };

@@ -37,36 +37,64 @@ namespace DataWranglerInterface.ShotRecording
 					IngestDataEditableAttribute? attributeData = propertyInfo.GetCustomAttribute<IngestDataEditableAttribute>(false);
 					if (attributeData != null)
 					{
-						if ((attributeData.Instance & EDataEditFlags.Visible) == EDataEditFlags.Visible ||
-						    (attributeData.Template & EDataEditFlags.Visible) == EDataEditFlags.Visible)
+						TryAddMemberFromInfo(propertyInfo, attributeData);
+					}
+					else
+					{
+						AutoNotifyPropertyAttribute? autoNotifyProperty = propertyInfo.GetCustomAttribute<AutoNotifyPropertyAttribute>(false);
+						if (autoNotifyProperty != null)
 						{
-							MemberInfo targetInfo = propertyInfo;
-							m_fields.Add(new DisplayedEditData(targetInfo, attributeData.Instance, attributeData.Template));
+							FieldInfo? fi = a_type.GetField(autoNotifyProperty.BackingFieldName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+							if (fi != null)
+							{
+								IngestDataEditableAttribute? ingestData = fi.GetCustomAttribute<IngestDataEditableAttribute>(false);
+								if (ingestData != null)
+								{
+									TryAddMemberFromInfo(propertyInfo, ingestData);
+								}
+							}
 						}
 					}
 				}
 			}
 
-			public void CreateEditControls(IngestDataSourceMeta a_target, UIElementCollection a_targetCollection)
+			private void TryAddMemberFromInfo(MemberInfo a_info, IngestDataEditableAttribute a_attributeData)
+			{
+				if ((a_attributeData.Instance & EDataEditFlags.Visible) == EDataEditFlags.Visible ||
+				    (a_attributeData.Template & EDataEditFlags.Visible) == EDataEditFlags.Visible)
+				{
+					m_fields.Add(new DisplayedEditData(a_info, a_attributeData.Instance, a_attributeData.Template));
+				}
+			}
+
+			public void CreateEditControls(IngestDataSourceMeta a_target, Grid a_targetCollection)
 			{
 				int dataRow = 0;
 				foreach (DisplayedEditData field in m_fields)
 				{
+					EDataEditFlags editFlags = field.InstanceFlags;
+					if ((editFlags & EDataEditFlags.Visible) == 0)
+					{
+						continue;
+					}
+					a_targetCollection.RowDefinitions.Add(new RowDefinition());
+
 					Label label = new Label
 					{
 						Content = field.TargetMemberInfo.Name
 					};
-					a_targetCollection.Add(label);
+					a_targetCollection.Children.Add(label);
 					Grid.SetRow(label, dataRow);
 					Grid.SetColumn(label, 0);
 
 					Binding textBinding = new Binding(field.TargetMemberInfo.Name)
 					{
-						Source = a_target
+						Source = a_target,
+						Mode = ((editFlags & EDataEditFlags.Editable) == EDataEditFlags.Editable)? BindingMode.TwoWay : BindingMode.OneWay
 					};
 					TextBox box = new TextBox();
 					box.SetBinding(TextBox.TextProperty, textBinding);
-					a_targetCollection.Add(box);
+					a_targetCollection.Children.Add(box);
 
 					Grid.SetRow(box, dataRow);
 					Grid.SetColumn(box, 1);
@@ -96,9 +124,11 @@ namespace DataWranglerInterface.ShotRecording
 		{
 			InitializeComponent();
 
+			FileSourceMeta.Content = a_meta.SourceType;
+
 			if (MetaForTypes.TryGetValue(a_meta.GetType(), out UIMetaData? targetMeta))
 			{
-				targetMeta.CreateEditControls(a_meta, ContentContainer.Children);
+				targetMeta.CreateEditControls(a_meta, ContentContainer);
 			}
 			else
 			{

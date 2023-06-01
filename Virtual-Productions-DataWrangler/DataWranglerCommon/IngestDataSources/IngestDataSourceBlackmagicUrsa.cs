@@ -10,13 +10,13 @@ namespace DataWranglerCommon.IngestDataSources
 	[IngestDataSourceMeta(typeof(IngestDataSourceHandlerBlackmagicUrsa), typeof(IngestDataSourceResolverBlackmagicUrsa))]
     public partial class IngestDataSourceMetaBlackmagicUrsa: IngestDataSourceMeta
 	{
-		[AutoNotify, JsonProperty("CodecName")]
+		[AutoNotify, JsonProperty("CodecName"), IngestDataEditable(EDataEditFlags.Visible, EDataEditFlags.None)]
 		private string m_codecName = "";
 
-		[AutoNotify, JsonProperty("RecordingStart")]
+		[AutoNotify, JsonProperty("RecordingStart"), IngestDataEditable(EDataEditFlags.Visible, EDataEditFlags.None)]
 		private DateTimeOffset m_recordingStart = DateTimeOffset.MinValue;
 
-		[AutoNotify, JsonProperty("StartTimeCode")]
+		[AutoNotify, JsonProperty("StartTimeCode"), IngestDataEditable(EDataEditFlags.Visible, EDataEditFlags.None)]
 		private TimeCode m_startTimeCode = new();
 
 		[AutoNotify, JsonProperty("CameraNumber"), IngestDataEditable(EDataEditFlags.Editable, EDataEditFlags.Editable)]
