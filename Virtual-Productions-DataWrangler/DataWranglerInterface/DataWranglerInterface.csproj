@@ -40,7 +40,7 @@
 		<Compile Update="ShotRecording\ShotVersionInfoDisplay.xaml.cs">
 		  <SubType>Code</SubType>
 		</Compile>
-		<Compile Update="ShotRecording\ShotVersionTemplateFileSourcesControl.xaml.cs">
+		<Compile Update="ShotRecording\ShotVersionFileSourcesControl.xaml.cs">
 		  <SubType>Code</SubType>
 		</Compile>
 	</ItemGroup>
@@ -71,7 +71,7 @@
 	    <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
 	    <SubType>Designer</SubType>
 	  </Page>
-	  <Page Update="ShotRecording\ShotVersionTemplateFileSourcesControl.xaml">
+	  <Page Update="ShotRecording\ShotVersionFileSourcesControl.xaml">
 	    <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
 	    <SubType>Designer</SubType>
 	  </Page>

@@ -16,6 +16,6 @@
         <dataWranglerCommonWpf:AsyncOperationChangeFeedback>
 			<TextBox MinHeight="60" TextWrapping="Wrap" Margin="4" MinWidth="60" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" AcceptsReturn="True" Text="{Binding CurrentVersion.Attributes.Description, FallbackValue='', RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:ShotVersionInfoDisplay}}}" LostFocus="OnDescriptionChanged"/>
         </dataWranglerCommonWpf:AsyncOperationChangeFeedback>
-        <local:ShotVersionFileSourcesControl x:Name="VersionFileSourcesControl" />
+		<local:ShotVersionFileSourcesControl x:Name="VersionFileSourcesControl" />
     </StackPanel>
 </UserControl>
