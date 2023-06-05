@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -78,10 +79,40 @@ namespace DataWranglerCommon.ShogunLiveSupport
 
 		public ShogunLiveService(int a_controlClientPort)
 		{
-			m_controlClient = new UdpClient();
-			m_controlClient.EnableBroadcast = true;
-			m_controlClient.ExclusiveAddressUse = false;
-			m_controlClient.Client.Bind(new IPEndPoint(IPAddress.Any, a_controlClientPort));
+			NetworkInterface[] nics = NetworkInterface.GetAllNetworkInterfaces();
+			foreach (NetworkInterface adapter in nics)
+			{
+				IPInterfaceProperties ipProps = adapter.GetIPProperties();
+				if (ipProps.UnicastAddresses.Count > 0 &&
+				    adapter.OperationalStatus == OperationalStatus.Up &&
+				    adapter.NetworkInterfaceType != NetworkInterfaceType.Tunnel &&
+				    adapter.Name.StartsWith("vEthernet") == false)
+				{
+					foreach (var unicastAddr in ipProps.UnicastAddresses)
+					{
+						//Double check that we have an IPv4 Address...
+						if (unicastAddr.Address.AddressFamily == AddressFamily.InterNetwork)
+						{
+							m_controlClient = new UdpClient();
+							m_controlClient.EnableBroadcast = true;
+							m_controlClient.ExclusiveAddressUse = false;
+							m_controlClient.Client.Bind(new IPEndPoint(unicastAddr.Address, a_controlClientPort));
+							break;
+						}
+					}
+
+					if (m_controlClient != null)
+					{
+						break;
+					}
+				}
+			}
+
+			if (m_controlClient == null)
+			{
+				throw new Exception("Failed to find network adapter to bind Shogun Service to");
+			}
+
 			m_receiveTask = Task.Run(BackgroundListenForBroadcasts);
 
 			m_targetEndPoint = new IPEndPoint(IPAddress.Broadcast, a_controlClientPort);
@@ -165,6 +196,7 @@ namespace DataWranglerCommon.ShogunLiveSupport
 		private bool BroadcastStringToShogunLive(string a_xml)
 		{
 			byte[] packetData = Encoding.UTF8.GetBytes(a_xml);
+
 			int sentBytes = m_controlClient.Send(packetData, m_targetEndPoint);
 			return (sentBytes == packetData.Length);
 		}

@@ -41,15 +41,18 @@ namespace DataWranglerCommon.IngestDataSources
 
 		private void OnRecordingStarted(ActiveCameraInfo a_sourceCamera, IngestDataShotVersionMeta a_shotMetaData)
 		{
-			if (m_targetService == null)
-			{
-				Logger.LogError("ViconIngestHandler", "Recording started with Vicon Tracking data, but ShogunLive service was null");
-				return;
-			}
-
 			IngestDataSourceMetaViconTracking? trackingDataMeta = a_shotMetaData.FindMetaByType<IngestDataSourceMetaViconTracking>();
 			if (trackingDataMeta != null)
 			{
+				//Generate a new 'random' file name 
+				trackingDataMeta.TempCaptureFileName = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
+
+				if (m_targetService == null)
+				{
+					Logger.LogError("ViconIngestHandler", "Recording started with Vicon Tracking data, but ShogunLive service was null");
+					return;
+				}
+
 				if (m_targetService.StartCapture(trackingDataMeta.TempCaptureFileName, trackingDataMeta.TempCaptureLibraryPath, out var task))
 				{
 					task.ContinueWith((a_result) => {

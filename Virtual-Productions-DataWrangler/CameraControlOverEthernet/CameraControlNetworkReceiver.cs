@@ -58,12 +58,13 @@ namespace CameraControlOverEthernet
 		private BlockingCollection<QueuedPacketEntry> m_receivedPacketQueue = new BlockingCollection<QueuedPacketEntry>();
 
 		public delegate void ClientDisconnectedDelegate(int a_connectionId);
+
 		public event ClientDisconnectedDelegate OnClientDisconnected = delegate { };
 
 		public void Start()
 		{
 			m_connectionListener.Start();
-			
+
 			m_discoveryBroadcastTask = new Task(BackgroundDiscoveryBroadcastTask);
 			m_discoveryBroadcastTask.Start();
 
@@ -80,7 +81,7 @@ namespace CameraControlOverEthernet
 				IPInterfaceProperties ipProps = adapter.GetIPProperties();
 				if (adapter.GetIPProperties().MulticastAddresses.Count > 0 &&
 				    adapter.SupportsMulticast &&
-				    adapter.OperationalStatus == OperationalStatus.Up && 
+				    adapter.OperationalStatus == OperationalStatus.Up &&
 				    adapter.NetworkInterfaceType != NetworkInterfaceType.Tunnel &&
 				    adapter.Name.StartsWith("vEthernet") == false)
 				{
@@ -100,10 +101,10 @@ namespace CameraControlOverEthernet
 				MemoryStream ms = new MemoryStream(buffer, 0, buffer.Length, true, false);
 				using (BinaryWriter writer = new BinaryWriter(ms, Encoding.ASCII, true))
 				{
-					CameraControlTransport.Write(new CameraControlDiscoveryPacket(m_serverIdentifier, ((IPEndPoint)m_connectionListener.LocalEndpoint).Port), writer);
+					CameraControlTransport.Write(new CameraControlDiscoveryPacket(m_serverIdentifier, ((IPEndPoint) m_connectionListener.LocalEndpoint).Port), writer);
 				}
 
-				m_discoveryBroadcaster.Send(new ReadOnlySpan<byte>(buffer, 0, (int)ms.Position), DiscoveryMulticastEndpoint);
+				m_discoveryBroadcaster.Send(new ReadOnlySpan<byte>(buffer, 0, (int) ms.Position), DiscoveryMulticastEndpoint);
 
 				await Task.Delay(DiscoveryMulticastInterval, m_cancellationTokenSource.Token);
 			}
@@ -176,14 +177,13 @@ namespace CameraControlOverEthernet
 
 				if (bytesReceived > 0)
 				{
-
 					MemoryStream ms = new MemoryStream(receiveBuffer, 0, bytesReceived + bytesFromLastReceive, false);
 					bytesFromLastReceive = 0;
 
 					using (BinaryReader reader = new BinaryReader(ms, Encoding.ASCII))
 					{
 						while (ms.Position < ms.Length)
-							{
+						{
 							long packetStart = ms.Position;
 							ICameraControlPacket? packet = CameraControlTransport.TryRead(reader);
 							if (packet != null)
@@ -194,7 +194,7 @@ namespace CameraControlOverEthernet
 							}
 							else
 							{
-								bytesFromLastReceive = (int)packetStart;
+								bytesFromLastReceive = (int) packetStart;
 								Array.Copy(receiveBuffer, ms.Position, receiveBuffer, 0, ms.Length - packetStart);
 								Logger.LogVerbose("CCServer", $"Failed to deserialize data from client {a_client.Client.Client.RemoteEndPoint} discarding {ms.Length - ms.Position} bytes");
 								break;
