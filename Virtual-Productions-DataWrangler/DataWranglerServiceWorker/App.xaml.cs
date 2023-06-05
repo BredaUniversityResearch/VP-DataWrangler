@@ -214,7 +214,11 @@ namespace DataWranglerServiceWorker
 			{
 				if (metaResolver.CanProcessCache)
 				{
-					metaResolver.ProcessCache(m_targetApi.LocalCache, m_ingestCache);
+					List<IngestDataSourceResolver.IngestFileEntry> filesToIngest = metaResolver.ProcessCache(m_targetApi.LocalCache, m_ingestCache);
+					foreach (IngestDataSourceResolver.IngestFileEntry entry in filesToIngest)
+					{
+						m_importWorker.AddFileToImport(entry.TargetShotVersion, entry.SourcePath, entry.FileTag);
+					}
 				}
 			}
 		}
