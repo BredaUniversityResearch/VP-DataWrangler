@@ -3,14 +3,14 @@ using System.Reflection;
 using AutoNotify;
 using Newtonsoft.Json;
 
-namespace ShotGridIntegration
+namespace DataApiCommon
 {
-	public class ShotGridEntityChangeTracker
+	public class DataEntityChangeTracker
 	{
-		private readonly ShotGridEntity m_targetEntity;
+		private readonly DataEntityBase m_targetEntity;
 		private readonly Dictionary<FieldInfo, object> m_changedFields = new();
 
-		public ShotGridEntityChangeTracker(ShotGridEntity a_targetEntity)
+		public DataEntityChangeTracker(DataEntityBase a_targetEntity)
 		{
 			m_targetEntity = a_targetEntity;
 
@@ -58,7 +58,7 @@ namespace ShotGridIntegration
 			m_changedFields[backingField] = newValue;
 		}
 
-		public Task<ShotGridAPIResponseGeneric> CommitChanges(ShotGridAPI a_targetApi)
+		public Task<DataApiResponseGeneric> CommitChanges(DataApi a_targetApi)
 		{
 			Dictionary<string, object> changedValues = new Dictionary<string, object>();
 			foreach (KeyValuePair<FieldInfo, object> kvp in m_changedFields)
@@ -75,7 +75,7 @@ namespace ShotGridIntegration
 
 			m_changedFields.Clear();
 
-			return Task.Run(() => a_targetApi.UpdateEntityProperties(ShotGridEntityName.FromType(m_targetEntity.GetType()), m_targetEntity.Id, changedValues));
+			return Task.Run(() => a_targetApi.UpdateEntityProperties(m_targetEntity, changedValues));
 		}
 
 		public bool HasAnyUncommittedChanges()

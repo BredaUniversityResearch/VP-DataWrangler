@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
+using DataApiCommon;
 using ShotGridIntegration;
 
 namespace DataWranglerInterface.ShotRecording
@@ -17,7 +18,7 @@ namespace DataWranglerInterface.ShotRecording
 			SetLoading(false);
 		}
 
-		public void BeginAsyncDataRefresh<TAPIResult, TDropDownType>(Task<ShotGridAPIResponse<TAPIResult[]>> a_task)
+		public void BeginAsyncDataRefresh<TAPIResult, TDropDownType>(Task<DataApiResponse<TAPIResult[]>> a_task)
 		{
 			if (m_itemEntryRefreshTask == null)
 			{
@@ -38,7 +39,7 @@ namespace DataWranglerInterface.ShotRecording
 
 				if (a_results.IsCompletedSuccessfully)
 				{
-					ShotGridAPIResponse<TAPIResult[]> apiResults = a_results.Result;
+					DataApiResponse<TAPIResult[]> apiResults = a_results.Result;
 					TDropDownType[] result = Array.Empty<TDropDownType>();
 					if (!apiResults.IsError)
 					{

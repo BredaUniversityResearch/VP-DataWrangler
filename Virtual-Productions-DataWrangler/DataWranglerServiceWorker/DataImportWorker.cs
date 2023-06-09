@@ -5,6 +5,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading;
 using CommonLogging;
+using DataApiCommon;
 using DataWranglerCommon;
 using Newtonsoft.Json;
 using Renci.SshNet;
@@ -27,25 +28,25 @@ namespace DataWranglerServiceWorker
 		private class ImportQueueEntry
 		{
 			public FileCopyMetaData CopyMetaData;
-			public ShotGridEntityShotVersion TargetShotVersion;
+			public DataEntityShotVersion TargetShotVersion;
 
-			public ImportQueueEntry(FileCopyMetaData a_copyMetaData, ShotGridEntityShotVersion a_shotVersion)
+			public ImportQueueEntry(FileCopyMetaData a_copyMetaData, DataEntityShotVersion a_shotVersion)
 			{
 				CopyMetaData = a_copyMetaData;
 				TargetShotVersion = a_shotVersion;
 			}
 		};
 
-		public delegate void CopyStartedDelegate(ShotGridEntityShotVersion shotVersion, FileCopyMetaData metaData);
-		public delegate void CopyProgressUpdate(ShotGridEntityShotVersion shotVersion, FileCopyMetaData metaData, FileCopyProgress progress);
-		public delegate void CopyFinishedDelegate(ShotGridEntityShotVersion shotVersion, FileCopyMetaData metaData, ECopyResult result);
+		public delegate void CopyStartedDelegate(DataEntityShotVersion shotVersion, FileCopyMetaData metaData);
+		public delegate void CopyProgressUpdate(DataEntityShotVersion shotVersion, FileCopyMetaData metaData, FileCopyProgress progress);
+		public delegate void CopyFinishedDelegate(DataEntityShotVersion shotVersion, FileCopyMetaData metaData, ECopyResult result);
 
 		public event CopyStartedDelegate OnCopyStarted = delegate { };
 		public event CopyProgressUpdate OnCopyUpdate = delegate { };
 		public event CopyFinishedDelegate OnCopyFinished = delegate { };
 
-		private ShotGridAPI m_api;
-		private ShotGridEntityCache m_localCache;
+		private DataApi m_api;
+		private DataEntityCache m_localCache;
 		private Queue<ImportQueueEntry> m_importQueue = new();
 		public int ImportQueueLength => m_importQueue.Count;
 		private AutoResetEvent m_queueAddedEvent = new AutoResetEvent(false);
@@ -54,7 +55,7 @@ namespace DataWranglerServiceWorker
 
 		private SftpClient? m_importClient = null;
 
-		public DataImportWorker(ShotGridAPI a_api)
+		public DataImportWorker(DataApi a_api)
 		{
 			m_api = a_api;
 			m_localCache = m_api.LocalCache;
@@ -72,10 +73,10 @@ namespace DataWranglerServiceWorker
 			m_dataImportThread.Join();
 		}
 
-		public void AddFileToImport(ShotGridEntityShotVersion a_shotVersion, string a_sourceFilePath, string a_fileTag)
+		public void AddFileToImport(DataEntityShotVersion a_shotVersion, string a_sourceFilePath, string a_fileTag)
 		{
-			if (!m_localCache.TryGetEntityByPredicate(a_obj => a_obj.Attributes.LocalStorageName == ServiceWorkerConfig.Instance.DefaultDataStorageName, out ShotGridEntityLocalStorage? targetStorage) ||
-			    string.IsNullOrEmpty(targetStorage.Attributes.WindowsPath))
+			if (!m_localCache.TryGetEntityByPredicate(a_obj => a_obj.LocalStorageName == ServiceWorkerConfig.Instance.DefaultDataStorageName, out DataEntityLocalStorage? targetStorage) ||
+			    targetStorage.StorageRoot == null)
 			{
 				Logger.LogError("DataImport", $"Could not import file at path {a_sourceFilePath}. Could not find data storage with name \"{ServiceWorkerConfig.Instance.DefaultDataStorageName}\". Importer is NOT active");
 				return;
@@ -87,25 +88,25 @@ namespace DataWranglerServiceWorker
 				return;
 			}
 
-			if (a_shotVersion.EntityRelationships.Parent == null || a_shotVersion.EntityRelationships.Parent.EntityType != ShotGridEntityName.Shot.CamelCase)
+			if (a_shotVersion.EntityRelationships.Parent == null || a_shotVersion.EntityRelationships.Parent.EntityType != typeof(DataEntityShot))
 			{
-				Logger.LogError("DataImport", $"Could not import file at path {a_sourceFilePath}. ShotVersion meta is incomplete, Relationships.Parent is null or not of expected type ({ShotGridEntityName.Shot.CamelCase} Got: {a_shotVersion.EntityRelationships.Parent?.EntityType??"NULL"}");
+				Logger.LogError("DataImport", $"Could not import file at path {a_sourceFilePath}. ShotVersion meta is incomplete, Relationships.Parent is null or not of expected type ({typeof(DataEntityShot)} Got: {a_shotVersion.EntityRelationships.Parent?.EntityType?.ToString()??"NULL"}");
 				return;
 			}
 
-			if (!m_localCache.TryGetEntityById(a_shotVersion.EntityRelationships.Project.Id, out ShotGridEntityProject? project))
+			if (!m_localCache.TryGetEntityById(a_shotVersion.EntityRelationships.Project.EntityId, out DataEntityProject? project))
 			{
-				Logger.LogError("DataImport", $"Could not import file at path {a_sourceFilePath}. Data references project ({a_shotVersion.EntityRelationships.Project.Id}) which is not known by the cache");
+				Logger.LogError("DataImport", $"Could not import file at path {a_sourceFilePath}. Data references project ({a_shotVersion.EntityRelationships.Project.EntityId}) which is not known by the cache");
 				return;
 			}
 
-			if (!m_localCache.TryGetEntityById(a_shotVersion.EntityRelationships.Parent.Id, out ShotGridEntityShot? shot))
+			if (!m_localCache.TryGetEntityById(a_shotVersion.EntityRelationships.Parent.EntityId, out DataEntityShot? shot))
 			{
-				Logger.LogError("DataImport", $"Could not import file at path {a_sourceFilePath}. Data references shot ({a_shotVersion.EntityRelationships.Parent.Id}) which is not known by the cache");
+				Logger.LogError("DataImport", $"Could not import file at path {a_sourceFilePath}. Data references shot ({a_shotVersion.EntityRelationships.Parent.EntityId}) which is not known by the cache");
 				return;
 			}
 
-			if (!m_localCache.TryGetEntityByPredicate(ShotGridEntityName.PublishedFileType, a_relation => ((ShotGridEntityRelation)a_relation).Attributes.Code == a_fileTag, out ShotGridEntity? fileTag))
+			if (!m_localCache.TryGetEntityByPredicate(typeof(DataEntityPublishedFileType), a_relation => ((DataEntityPublishedFileType)a_relation).FileType == a_fileTag, out DataEntityBase? fileTag))
 			{
 				Logger.LogError("DataImport", $"Could not import file at path {a_sourceFilePath}. Data references file relation ({a_fileTag}) which is not known by the cache");
 				return;
@@ -113,14 +114,14 @@ namespace DataWranglerServiceWorker
 
 			string targetPath = ServiceWorkerConfig.Instance.DefaultDataStoreFilePath + Path.GetFileName(a_sourceFilePath);
 			ConfigStringBuilder sb = new ConfigStringBuilder();
-			sb.AddReplacement("ProjectName", RemoveInvalidPathCharacters(project.Attributes.Name));
-			sb.AddReplacement("ShotCode", RemoveInvalidPathCharacters(shot.Attributes.ShotCode));
-			sb.AddReplacement("ShotVersionCode", RemoveInvalidPathCharacters(a_shotVersion.Attributes.VersionCode));
+			sb.AddReplacement("ProjectName", RemoveInvalidPathCharacters(project.Name));
+			sb.AddReplacement("ShotName", RemoveInvalidPathCharacters(shot.ShotName));
+			sb.AddReplacement("ShotVersionCode", RemoveInvalidPathCharacters(a_shotVersion.ShotVersionName));
 			targetPath = sb.Replace(targetPath);
 
 			lock (m_importQueue)
 			{
-				m_importQueue.Enqueue(new ImportQueueEntry(new FileCopyMetaData(a_sourceFilePath, targetPath, targetStorage, (ShotGridEntityRelation)fileTag), a_shotVersion));
+				m_importQueue.Enqueue(new ImportQueueEntry(new FileCopyMetaData(a_sourceFilePath, targetPath, targetStorage, (DataEntityPublishedFileType)fileTag), a_shotVersion));
 				m_queueAddedEvent.Set();
 			}
 		}
@@ -206,7 +207,7 @@ namespace DataWranglerServiceWorker
 			JsonSerializer.CreateDefault().Serialize(textWriter, importedMeta);
 		}
 
-		private ECopyResult CopyFileWithProgress(SftpClient a_client, ShotGridEntityShotVersion a_shotVersion, FileCopyMetaData a_copyMetaData)
+		private ECopyResult CopyFileWithProgress(SftpClient a_client, DataEntityShotVersion a_shotVersion, FileCopyMetaData a_copyMetaData)
 		{
 			string ftpTargetPath = Path.Combine(ServiceWorkerConfig.Instance.DefaultDataStoreFtpRelativeRoot, a_copyMetaData.DestinationRelativeFilePath);
 

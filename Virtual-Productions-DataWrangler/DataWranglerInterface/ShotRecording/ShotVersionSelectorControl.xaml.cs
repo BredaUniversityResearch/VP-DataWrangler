@@ -1,6 +1,5 @@
 ﻿using System.Windows.Controls;
-using System.Windows.Threading;
-using ShotGridIntegration;
+using DataApiCommon;
 
 namespace DataWranglerInterface.ShotRecording
 {
@@ -11,20 +10,20 @@ namespace DataWranglerInterface.ShotRecording
 	{
 		private class ShotVersionSelectorEntry
 		{
-			public ShotGridEntityShotVersion ShotVersionInfo;
+			public DataEntityShotVersion ShotVersionInfo;
 
-			public ShotVersionSelectorEntry(ShotGridEntityShotVersion a_shotVersion)
+			public ShotVersionSelectorEntry(DataEntityShotVersion a_shotVersion)
 			{
 				ShotVersionInfo = a_shotVersion;
 			}
 
 			public override string ToString()
 			{
-				return ShotVersionInfo.Attributes.VersionCode;
+				return ShotVersionInfo.ShotVersionName;
 			}
 		};
 
-		public delegate void ShotVersionSelected(ShotGridEntityShotVersion? a_shotVersion);
+		public delegate void ShotVersionSelected(DataEntityShotVersion? a_shotVersion);
 		public event ShotVersionSelected OnShotVersionSelected = delegate { };
 		public int SelectedVersionEntityId { get; private set; } = -1;
 
@@ -38,13 +37,13 @@ namespace DataWranglerInterface.ShotRecording
 		{
 			ShotVersionSelectorEntry? version = (ShotVersionSelectorEntry?)ShotVersionSelectorDropDown.DropDown.SelectedItem;
 			OnShotVersionSelected.Invoke(version?.ShotVersionInfo);
-			SelectedVersionEntityId = version?.ShotVersionInfo.Id ?? -1;
+			SelectedVersionEntityId = version?.ShotVersionInfo.EntityId ?? -1;
 		}
 
 		public void AsyncRefreshShotVersion(int a_shotId)
 		{
 			SelectedVersionEntityId = -1;
-			ShotVersionSelectorDropDown.BeginAsyncDataRefresh<ShotGridEntityShotVersion, ShotVersionSelectorEntry>(DataWranglerServiceProvider.Instance.ShotGridAPI.GetVersionsForShot(a_shotId));
+			ShotVersionSelectorDropDown.BeginAsyncDataRefresh<DataEntityShotVersion, ShotVersionSelectorEntry>(DataWranglerServiceProvider.Instance.TargetDataApi.GetVersionsForShot(a_shotId));
 		}
 
 		public int GetHighestVersionNumber()
@@ -52,7 +51,7 @@ namespace DataWranglerInterface.ShotRecording
 			int highestVersionId = 0;
 			foreach (ShotVersionSelectorEntry entry in ShotVersionSelectorDropDown.DropDown.Items)
 			{
-				string versionCode = entry.ShotVersionInfo.Attributes.VersionCode;
+				string versionCode = entry.ShotVersionInfo.ShotVersionName;
 				int lastSpacePos = versionCode.LastIndexOf(' ');
 				if (lastSpacePos != -1)
 				{
@@ -72,7 +71,7 @@ namespace DataWranglerInterface.ShotRecording
 			ShotVersionSelectorDropDown.SetLoading(true);
 		}
 
-		public void EndAddShotVersion(ShotGridEntityShotVersion a_resultResult)
+		public void EndAddShotVersion(DataEntityShotVersion a_resultResult)
 		{
 			Dispatcher.Invoke(() =>
 			{
@@ -82,11 +81,11 @@ namespace DataWranglerInterface.ShotRecording
 			});
 		}
 
-		public void UpdateEntity(ShotGridEntityShotVersion a_resultResultData)
+		public void UpdateEntity(DataEntityShotVersion a_resultResultData)
 		{
 			foreach (ShotVersionSelectorEntry entry in ShotVersionSelectorDropDown.DropDown.Items)
 			{
-				if (entry.ShotVersionInfo.Id == a_resultResultData.Id)
+				if (entry.ShotVersionInfo.EntityId == a_resultResultData.EntityId)
 				{
 					entry.ShotVersionInfo = a_resultResultData;
 					return;

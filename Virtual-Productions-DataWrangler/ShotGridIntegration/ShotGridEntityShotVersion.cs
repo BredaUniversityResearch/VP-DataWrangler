@@ -1,4 +1,5 @@
 ﻿using AutoNotify;
+using DataApiCommon;
 using Newtonsoft.Json;
 
 namespace ShotGridIntegration
@@ -16,5 +17,32 @@ namespace ShotGridIntegration
 	public class ShotGridEntityShotVersion: ShotGridEntity
 	{
 		[JsonProperty("attributes")] public ShotVersionAttributes Attributes { get; set; } = new ShotVersionAttributes();
+
+		public ShotGridEntityShotVersion()
+		{
+		}
+
+		public ShotGridEntityShotVersion(DataEntityShotVersion a_version)
+			: base(a_version)
+		{
+			Attributes.Description = a_version.Description;
+			Attributes.VersionCode = a_version.ShotVersionName;
+			Attributes.ImageURL = a_version.ImageURL;
+			Attributes.DataWranglerMeta = a_version.DataWranglerMeta;
+			Attributes.Flagged = a_version.Flagged;
+		}
+
+		public override DataEntityBase ToDataEntity()
+		{
+			DataEntityShotVersion result = new DataEntityShotVersion()
+			{
+				DataWranglerMeta = Attributes.DataWranglerMeta,
+				ShotVersionName = Attributes.VersionCode,
+				Description = Attributes.Description,
+				Flagged = Attributes.Flagged
+			};
+			CopyToDataEntity(result);
+			return result;
+		}
 	}
 }

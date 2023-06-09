@@ -1,9 +1,9 @@
 ﻿using AutoNotify;
 using BlackmagicCameraControlData;
+using DataApiCommon;
 using DataWranglerCommon.BRAWSupport;
 using DataWranglerCommon.CameraHandling;
 using Newtonsoft.Json;
-using ShotGridIntegration;
 
 namespace DataWranglerCommon.IngestDataSources
 {
@@ -46,13 +46,13 @@ namespace DataWranglerCommon.IngestDataSources
 		{
 		}
 
-		public override List<IngestFileEntry> ProcessDirectory(string a_baseDirectory, string a_storageVolumeName, ShotGridEntityCache a_cache, IngestDataCache a_ingestCache)
+		public override List<IngestFileEntry> ProcessDirectory(string a_baseDirectory, string a_storageVolumeName, DataEntityCache a_cache, IngestDataCache a_ingestCache)
 		{
 			List<IngestFileEntry> result = new();
 
 			var relevantMeta = a_ingestCache.FindShotVersionsWithMeta<IngestDataSourceMetaBlackmagicUrsa>();
 
-			List<KeyValuePair<ShotGridEntityShotVersion, string>> rejectionLog = new();
+			List<KeyValuePair<DataEntityShotVersion, string>> rejectionLog = new();
 
 			using BRAWFileDecoder fileDecoder = new BRAWFileDecoder();
 

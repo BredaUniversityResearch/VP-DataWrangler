@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using DataApiCommon;
+using Newtonsoft.Json;
 
 namespace ShotGridIntegration
 {
@@ -16,6 +17,11 @@ namespace ShotGridIntegration
 
 		[JsonProperty("attributes")]
 		public RelationAttributes Attributes = new RelationAttributes();
+
+		public override DataEntityBase ToDataEntity()
+		{
+			throw new NotImplementedException();
+		}
 	};
 
 	public class ShotGridEntityRelationCreateData
@@ -25,9 +31,9 @@ namespace ShotGridIntegration
 		[JsonProperty("code")]
 		public string Code;
 		[JsonProperty("type")]
-		public ShotGridEntityName RelationType;
+		public ShotGridEntityTypeInfo RelationType;
 
-		public ShotGridEntityRelationCreateData(int a_relationId, string a_code, ShotGridEntityName a_relationType)
+		public ShotGridEntityRelationCreateData(int a_relationId, string a_code, ShotGridEntityTypeInfo a_relationType)
 		{
 			RelationId = a_relationId;
 			Code = a_code;

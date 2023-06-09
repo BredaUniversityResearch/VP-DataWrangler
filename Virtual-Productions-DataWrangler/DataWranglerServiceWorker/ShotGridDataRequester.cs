@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using CommonLogging;
+using DataApiCommon;
 using DataWranglerCommon;
 using DataWranglerCommon.IngestDataSources;
 using Newtonsoft.Json;
@@ -12,10 +11,10 @@ namespace DataWranglerServiceWorker
 {
     public class ShotGridDataRequester
 	{
-		private ShotGridAPI m_targetApi;
+		private DataApi m_targetApi;
 		private DateTimeOffset m_lastCacheUpdateTime = DateTimeOffset.MinValue;
 
-		public ShotGridDataRequester(ShotGridAPI a_targetApi)
+		public ShotGridDataRequester(DataApi a_targetApi)
 		{
 			m_targetApi = a_targetApi;
 		}
@@ -24,69 +23,69 @@ namespace DataWranglerServiceWorker
 		{
 			try
 			{
-				ShotGridAPIResponse<ShotGridEntityLocalStorage[]> activeStores = await m_targetApi.GetLocalStorages();
+				DataApiResponse<DataEntityLocalStorage[]> activeStores = await m_targetApi.GetLocalStorages();
 				if (activeStores.IsError)
 				{
 					Logger.LogError("MetaCache", "Failed to fetch active stores: " + activeStores.ErrorInfo);
 					return;
 				}
 
-				ShotGridAPIResponse<ShotGridEntityRelation[]> fileTagRelations = await m_targetApi.GetRelations(ShotGridEntityName.PublishedFileType);
+				DataApiResponse<DataEntityPublishedFileType[]> fileTagRelations = await m_targetApi.GetPublishedFileTypes();
 				if (fileTagRelations.IsError)
 				{
 					Logger.LogError("MetaCache", "Failed to fetch file relations: " + fileTagRelations.ErrorInfo);
 					return;
 				}
 
-				ShotGridAPIResponse<ShotGridEntityProject[]> activeProjects = await m_targetApi.GetActiveProjects();
+				DataApiResponse<DataEntityProject[]> activeProjects = await m_targetApi.GetActiveProjects();
 				if (activeProjects.IsError)
 				{
 					Logger.LogError("MetaCache", "Failed to fetch projects: " + activeProjects.ErrorInfo);
 					return;
 				}
 
-				foreach (ShotGridEntityProject project in activeProjects.ResultData)
+				foreach (DataEntityProject project in activeProjects.ResultData)
 				{
-					Logger.LogInfo("MetaCache", $"Fetched data for project {project.Attributes.Name} ({project.Id})");
+					Logger.LogInfo("MetaCache", $"Fetched data for project {project.Name} ({project.EntityId})");
 
-					ShotGridAPIResponse<ShotGridEntityShot[]> shotsInProject = await m_targetApi.GetShotsForProject(project.Id);
+					DataApiResponse<DataEntityShot[]> shotsInProject = await m_targetApi.GetShotsForProject(project.EntityId);
 					if (shotsInProject.IsError)
 					{
-						Logger.LogError("MetaCache", $"Failed to fetch shots for project {project.Id}: {activeProjects.ErrorInfo}");
+						Logger.LogError("MetaCache", $"Failed to fetch shots for project {project.EntityId}: {activeProjects.ErrorInfo}");
 						continue;
 					}
 
-					foreach (ShotGridEntityShot shot in shotsInProject.ResultData)
+					foreach (DataEntityShot shot in shotsInProject.ResultData)
 					{
-						Logger.LogInfo("MetaCache", $"Fetched data for shot {shot.Attributes.ShotCode} ({shot.Id})");
+						Logger.LogInfo("MetaCache", $"Fetched data for shot {shot.ShotName} ({shot.EntityId})");
 
-						ShotGridAPIResponse<ShotGridEntityShotVersion[]> shotVersionsForShot = await m_targetApi.GetVersionsForShot(shot.Id);
+						DataApiResponse<DataEntityShotVersion[]> shotVersionsForShot = await m_targetApi.GetVersionsForShot(shot.EntityId);
 						if (shotVersionsForShot.IsError)
 						{
-							Logger.LogError("MetaCache", $"Failed to fetch shot versions for Shot: {shot.Attributes.ShotCode} ({shot.Id}) Project: {project.Attributes.Name} ({project.Id}): {activeProjects.ErrorInfo}");
+							Logger.LogError("MetaCache", $"Failed to fetch shot versions for Shot: {shot.ShotName} ({shot.EntityId}) Project: {project.Name} ({project.EntityId}): {activeProjects.ErrorInfo}");
 							continue;
 						}
 
-						foreach (ShotGridEntityShotVersion version in shotVersionsForShot.ResultData)
+						foreach (DataEntityShotVersion version in shotVersionsForShot.ResultData)
 						{
-							if (version.Attributes.DataWranglerMeta != null)
+							if (version.DataWranglerMeta != null)
 							{
 								try
 								{
-									IngestDataShotVersionMeta? decodedMeta = JsonConvert.DeserializeObject<IngestDataShotVersionMeta>(version.Attributes.DataWranglerMeta, DataWranglerSerializationSettings.Instance);
+									IngestDataShotVersionMeta? decodedMeta = JsonConvert.DeserializeObject<IngestDataShotVersionMeta>(version.DataWranglerMeta, DataWranglerSerializationSettings.Instance);
 									if (decodedMeta != null)
 									{
-										Logger.LogInfo("MetaCache", $"Got valid meta for shot version {version.Id}");
+										Logger.LogInfo("MetaCache", $"Got valid meta for shot version {version.EntityId}");
 									}
 								}
 								catch (JsonReaderException ex)
 								{
 									Logger.LogError("MetaCache",
-										$"Failed to read json data for shot version {project.Attributes.Name}/{shot.Attributes.ShotCode}/{version.Attributes.VersionCode} ({version.Id}). Exception: {ex.Message}");
+										$"Failed to read json data for shot version {project.Name}/{shot.ShotName}/{version.ShotVersionName} ({version.EntityId}). Exception: {ex.Message}");
 								}
 								catch (JsonSerializationException ex)
 								{
-									Logger.LogError("MetaCache", $"Failed to deserialize data for shot version {project.Attributes.Name}/{shot.Attributes.ShotCode}/{version.Attributes.VersionCode} ({version.Id}). Exception: {ex.Message}");
+									Logger.LogError("MetaCache", $"Failed to deserialize data for shot version {project.Name}/{shot.ShotName}/{version.ShotVersionName} ({version.EntityId}). Exception: {ex.Message}");
 								}
 							}
 						}

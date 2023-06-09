@@ -1,8 +1,8 @@
 ﻿using Newtonsoft.Json;
 using AutoNotify;
 using CommonLogging;
-using ShotGridIntegration;
 using System.Text.RegularExpressions;
+using DataApiCommon;
 using DataWranglerCommon.CameraHandling;
 
 namespace DataWranglerCommon.IngestDataSources
@@ -56,7 +56,7 @@ namespace DataWranglerCommon.IngestDataSources
 		{
 		}
 
-		public override List<IngestFileEntry> ProcessDirectory(string a_baseDirectory, string a_storageVolumeName, ShotGridEntityCache a_cache, IngestDataCache a_ingestCache)
+		public override List<IngestFileEntry> ProcessDirectory(string a_baseDirectory, string a_storageVolumeName, DataEntityCache a_cache, IngestDataCache a_ingestCache)
 		{
 			List<IngestFileEntry> result = new List<IngestFileEntry>();
 

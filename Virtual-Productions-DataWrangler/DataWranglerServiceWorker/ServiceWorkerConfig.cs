@@ -14,7 +14,7 @@ namespace DataWranglerServiceWorker
 		public string FilePublishDescription = "File auto-published by Data Wrangler";
 
 		public string DefaultDataStorageName = "CradleNas";
-		public string DefaultDataStoreFilePath = "${ProjectName}/RawFootage/${ShotCode}/${ShotVersionCode}/"; //Relative to DataStoreRoot
+		public string DefaultDataStoreFilePath = "${ProjectName}/RawFootage/${ShotName}/${ShotVersionCode}/"; //Relative to DataStoreRoot
 
 		public string DefaultDataStoreFtpHost = "cradlenas";	//Host for the sFTP file publisher.
 		public string DefaultDataStoreFtpUserName = "nas";

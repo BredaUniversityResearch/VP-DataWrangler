@@ -5,21 +5,21 @@ namespace ShotGridIntegration
 {
 	public class ShotGridEntityCacheSearchCondition
 	{
-		public readonly ShotGridEntityName TargetEntityName;
+		public readonly ShotGridEntityTypeInfo TargetEntityTypeInfo;
 		private readonly List<FieldInfo> m_fieldPath = new List<FieldInfo>(4);
 		private object m_targetValue;
 
-		public ShotGridEntityCacheSearchCondition(ShotGridEntityName a_targetEntityName, ShotGridSearchCondition a_searchConditions)
+		public ShotGridEntityCacheSearchCondition(ShotGridEntityTypeInfo a_targetEntityTypeInfo, ShotGridSearchCondition a_searchConditions)
 		{
 			if (a_searchConditions.Condition != "is")
 			{
 				throw new Exception($"Search condition of type \"{a_searchConditions.Condition}\" is not supported");
 			}
 
-			TargetEntityName = a_targetEntityName;
+			TargetEntityTypeInfo = a_targetEntityTypeInfo;
 			m_targetValue = a_searchConditions.Value;
 
-			Type fieldOwnerType = TargetEntityName.ImplementedType;
+			Type fieldOwnerType = TargetEntityTypeInfo.ImplementedType;
 			string fieldString = a_searchConditions.Field;
 			int separatorIndexLast = 0;
 			do

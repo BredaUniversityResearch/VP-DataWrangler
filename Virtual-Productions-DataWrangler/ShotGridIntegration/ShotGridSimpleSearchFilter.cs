@@ -21,7 +21,7 @@ namespace ShotGridIntegration
 			return filter;
 		}
 
-		public ShotGridEntityCacheSearchFilter BuildCacheFilter(ShotGridEntityName a_entityType)
+		public ShotGridEntityCacheSearchFilter BuildCacheFilter(ShotGridEntityTypeInfo a_entityType)
 		{
 			return new ShotGridEntityCacheSearchFilter(a_entityType, m_conditions);
 		}

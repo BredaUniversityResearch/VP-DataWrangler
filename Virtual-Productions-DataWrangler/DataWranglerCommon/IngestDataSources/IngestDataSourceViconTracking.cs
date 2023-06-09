@@ -1,9 +1,9 @@
 ﻿using AutoNotify;
 using CommonLogging;
+using DataApiCommon;
 using DataWranglerCommon.CameraHandling;
 using DataWranglerCommon.ShogunLiveSupport;
 using Newtonsoft.Json;
-using ShotGridIntegration;
 
 namespace DataWranglerCommon.IngestDataSources
 {
@@ -99,7 +99,7 @@ namespace DataWranglerCommon.IngestDataSources
 		{
 		}
 
-		public override List<IngestFileEntry> ProcessCache(ShotGridEntityCache a_cache, IngestDataCache a_ingestCache)
+		public override List<IngestFileEntry> ProcessCache(DataEntityCache a_cache, IngestDataCache a_ingestCache)
 		{
 			List<IngestFileEntry> result = new List<IngestFileEntry>();
 
@@ -109,7 +109,7 @@ namespace DataWranglerCommon.IngestDataSources
 				if (string.IsNullOrEmpty(currentMeta.Value.TempCaptureFileName) ||
 					string.IsNullOrEmpty(currentMeta.Value.TempCaptureLibraryPath))
 				{
-					Logger.LogError("MetaFileResolverVicon", $"Shot meta specifies empty temp file name or empty capture library on shot {currentMeta.Key.Attributes.VersionCode}");
+					Logger.LogError("MetaFileResolverVicon", $"Shot meta specifies empty temp file name or empty capture library on shot {currentMeta.Key.ShotVersionName}");
 					continue;
 				}
 
@@ -129,7 +129,7 @@ namespace DataWranglerCommon.IngestDataSources
 
 				if (matchedCount == 0)
 				{
-					Logger.LogError("MetaFileResolverVicon", $"Failed to find any files to import for meta {currentMeta.Key.Attributes.VersionCode} " +
+					Logger.LogError("MetaFileResolverVicon", $"Failed to find any files to import for meta {currentMeta.Key.ShotVersionName} " +
 						$"at directory {currentMeta.Value.TempCaptureLibraryPath} with name {currentMeta.Value.TempCaptureFileName}");
 				}
 			}

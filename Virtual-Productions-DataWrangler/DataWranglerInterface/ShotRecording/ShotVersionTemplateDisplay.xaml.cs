@@ -1,16 +1,13 @@
-﻿using System.Diagnostics;
-using System.Text.RegularExpressions;
-using System.Windows;
+﻿using System.Text.RegularExpressions;
 using System.Windows.Controls;
 using BlackmagicCameraControlData;
 using CommonLogging;
+using DataApiCommon;
 using DataWranglerCommon;
 using DataWranglerCommon.CameraHandling;
 using DataWranglerCommon.IngestDataSources;
-using DataWranglerInterface.CameraHandling;
 using Newtonsoft.Json;
 using ShotGridIntegration;
-using ActiveCameraInfo = DataWranglerCommon.CameraHandling.ActiveCameraInfo;
 
 namespace DataWranglerInterface.ShotRecording
 {
@@ -85,8 +82,7 @@ namespace DataWranglerInterface.ShotRecording
 			if (targetShotId != -1)
 			{
 				m_parentPage?.BeginAddShotVersion(targetShotId);
-
-				DataWranglerServiceProvider.Instance.ShotGridAPI.GetVersionsForShot(targetShotId, new ShotGridSortSpecifier("code", false)).ContinueWith(a_task => {
+				DataWranglerServiceProvider.Instance.TargetDataApi.GetVersionsForShot(targetShotId, (a_lhs, a_rhs) => string.Compare(a_lhs.ShotVersionName, a_rhs.ShotVersionName, StringComparison.Ordinal)).ContinueWith(a_task => {
 					if (!a_task.Result.IsError)
 					{
 						int nextTakeId = FindNextTakeIdFromShotVersions(a_task.Result.ResultData) + 1;
@@ -94,20 +90,21 @@ namespace DataWranglerInterface.ShotRecording
 						ConfigStringBuilder sb = new ConfigStringBuilder();
 						sb.AddReplacement("ShotVersionId", nextTakeId.ToString("D2"));
 
-						ShotVersionAttributes attributes = new ShotVersionAttributes();
-						attributes.VersionCode = Configuration.DataWranglerConfig.Instance.ShotVersionNameTemplate.Build(sb);
-						attributes.DataWranglerMeta =
-							JsonConvert.SerializeObject(a_meta, DataWranglerSerializationSettings.Instance);
+						DataEntityShotVersion newVersion = new DataEntityShotVersion
+						{
+							ShotVersionName = Configuration.DataWranglerConfig.Instance.ShotVersionNameTemplate.Build(sb),
+							DataWranglerMeta = JsonConvert.SerializeObject(a_meta, DataWranglerSerializationSettings.Instance)
+						};
 
-						DataWranglerServiceProvider.Instance.ShotGridAPI.CreateNewShotVersion(
-							m_projectSelector.SelectedProjectId, targetShotId,
-							attributes).ContinueWith(a_result =>
+						DataWranglerServiceProvider.Instance.TargetDataApi.CreateNewShotVersion(
+							m_projectSelector.SelectedProjectId, targetShotId, newVersion)
+							.ContinueWith(a_result =>
 						{
 							if (!a_result.Result.IsError)
 							{
 								m_parentPage?.CompleteAddShotVersion(a_result.Result.ResultData);
                                 DataWranglerEventDelegates.Instance.NotifyShotCreated(a_result.Result
-                                    .ResultData.Id);
+                                    .ResultData.EntityId);
                             }
 						});
 					}
@@ -115,16 +112,16 @@ namespace DataWranglerInterface.ShotRecording
 			}
 		}
 
-		private int FindNextTakeIdFromShotVersions(ShotGridEntityShotVersion[] a_resultData)
+		private int FindNextTakeIdFromShotVersions(DataEntityShotVersion[] a_resultData)
 		{
 			ConfigStringBuilder sb = new ConfigStringBuilder();
 			sb.AddReplacement("ShotVersionId", "([0-9]{2})");
 			Regex shotNameTemplateMatcher = new Regex(Configuration.DataWranglerConfig.Instance.ShotVersionNameTemplate.Build(sb));
 
 			int nextShotId = 0;
-			foreach (ShotGridEntityShotVersion shotVersion in a_resultData)
+			foreach (DataEntityShotVersion shotVersion in a_resultData)
 			{
-				Match nameMatch = shotNameTemplateMatcher.Match(shotVersion.Attributes.VersionCode);
+				Match nameMatch = shotNameTemplateMatcher.Match(shotVersion.ShotVersionName);
 				if (nameMatch.Success && nameMatch.Groups.Count >= 1)
 				{
 					nextShotId = int.Parse(nameMatch.Groups[1].ValueSpan);

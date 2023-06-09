@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using DataApiCommon;
+using Newtonsoft.Json;
 
 namespace ShotGridIntegration
 {
@@ -12,5 +13,12 @@ namespace ShotGridIntegration
 
 		[JsonProperty("attributes")]
 		public ProjectAttributes Attributes = new ProjectAttributes();
+
+		public override DataEntityProject ToDataEntity()
+		{
+			DataEntityProject project = new DataEntityProject() {Name = Attributes.Name};
+			CopyToDataEntity(project);
+			return project;
+		}
 	}
 }

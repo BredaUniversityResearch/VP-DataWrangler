@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using DataApiCommon;
 using ShotGridIntegration;
 
 namespace DataWranglerServiceWorker
@@ -10,17 +11,22 @@ namespace DataWranglerServiceWorker
 		public string DestinationRelativeFilePath;
 		public Uri DestinationFullFilePath;
 
-		public ShotGridEntityLocalStorage StorageTarget;
-		public ShotGridEntityRelation FileTag;
+		public DataEntityLocalStorage StorageTarget;
+		public DataEntityPublishedFileType FileTag;
 
-		public FileCopyMetaData(string a_sourceFilePath, string a_destinationRelativeFilePath, ShotGridEntityLocalStorage a_storageTarget, ShotGridEntityRelation a_fileTag)
+		public FileCopyMetaData(string a_sourceFilePath, string a_destinationRelativeFilePath, DataEntityLocalStorage a_storageTarget, DataEntityPublishedFileType a_fileTag)
 		{
 			SourceFilePath = new Uri(a_sourceFilePath, UriKind.Absolute);
 			DestinationRelativeFilePath = a_destinationRelativeFilePath;
 			StorageTarget = a_storageTarget;
 			FileTag = a_fileTag;
 
-			string storageTargetPath = a_storageTarget.Attributes.WindowsPath;
+			if (a_storageTarget.StorageRoot == null)
+			{
+				throw new Exception("Storage root was null when creating FileCopyMeta");
+			}
+
+			string storageTargetPath = a_storageTarget.StorageRoot.LocalPath;
 			if (!storageTargetPath.EndsWith('/'))
 			{
 				storageTargetPath += '/';

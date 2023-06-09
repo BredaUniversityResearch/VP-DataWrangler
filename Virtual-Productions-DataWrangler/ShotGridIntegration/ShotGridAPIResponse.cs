@@ -1,17 +1,18 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using DataApiCommon;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ShotGridIntegration
 {
 	public class ShotGridAPIResponseGeneric
 	{
 		public object? ResultDataGeneric = null;
-		public ShotGridErrorResponse? ErrorInfo = null;
+		public DataApiErrorDetails? ErrorInfo = null;
 
 		[MemberNotNullWhen(false, nameof(ResultDataGeneric))]
 		[MemberNotNullWhen(true, nameof(ErrorInfo))]
 		public virtual bool IsError => ErrorInfo != null;
 
-		public ShotGridAPIResponseGeneric(object? a_result, ShotGridErrorResponse? a_errorResponse)
+		public ShotGridAPIResponseGeneric(object? a_result, DataApiErrorDetails? a_errorResponse)
 		{
 			ResultDataGeneric = a_result;
 			ErrorInfo = a_errorResponse;
@@ -35,7 +36,7 @@ namespace ShotGridIntegration
 			}
 		}
 
-		public ShotGridAPIResponse(TSuccessDataType? a_result, ShotGridErrorResponse? a_errorResponse)
+		public ShotGridAPIResponse(TSuccessDataType? a_result, DataApiErrorDetails? a_errorResponse)
 			: base(a_result, a_errorResponse)
 		{
 		}

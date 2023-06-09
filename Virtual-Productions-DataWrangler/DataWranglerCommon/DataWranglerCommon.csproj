@@ -15,8 +15,8 @@
 	<ItemGroup>
 	  <ProjectReference Include="..\BlackMagicCameraControlData\BlackmagicCameraControlData.csproj" />
 	  <ProjectReference Include="..\CommonLogging\CommonLogging.csproj" />
+	  <ProjectReference Include="..\DataApiCommon\DataApiCommon.csproj" />
 	  <ProjectReference Include="..\DataWranglerSourceAnalysis\DataWranglerSourceAnalysis.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-	  <ProjectReference Include="..\ShotGridIntegration\ShotGridIntegration.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

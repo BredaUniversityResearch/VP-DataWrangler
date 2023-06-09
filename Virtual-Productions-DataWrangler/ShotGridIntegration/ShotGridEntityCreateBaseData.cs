@@ -16,7 +16,7 @@ namespace ShotGridIntegration
 
 		public ShotGridEntityCreateBaseData(int a_projectId, ShotGridEntityReference? a_parentEntity)
 		{
-			Project = new ShotGridEntityReference(ShotGridEntityName.Project, a_projectId);
+			Project = new ShotGridEntityReference(ShotGridEntityTypeInfo.Project, a_projectId);
 			ParentShotGridEntity = a_parentEntity;
 		}
 	}

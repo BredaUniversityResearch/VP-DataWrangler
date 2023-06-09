@@ -1,21 +1,16 @@
-﻿using DataWranglerCommon.ShogunLiveSupport;
-using ShotGridIntegration;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using DataApiCommon;
+using DataWranglerCommon.ShogunLiveSupport;
 
 namespace DataWranglerCommon
 {
 	public class DataWranglerServices
 	{
-		public readonly ShotGridAPI ShotGridAPI;
+		public readonly DataApi TargetDataApi;
 		public readonly ShogunLiveService ShogunLiveService;
 
-		public DataWranglerServices(ShotGridAPI a_shotGridAPI, ShogunLiveService a_shogunLiveService)
+		public DataWranglerServices(DataApi a_targetDataApi, ShogunLiveService a_shogunLiveService)
 		{
-			ShotGridAPI = a_shotGridAPI;
+			TargetDataApi = a_targetDataApi;
 			ShogunLiveService = a_shogunLiveService;
 		}
 	}

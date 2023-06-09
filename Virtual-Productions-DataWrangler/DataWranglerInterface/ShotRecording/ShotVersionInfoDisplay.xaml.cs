@@ -8,6 +8,7 @@ using System.Windows.Markup;
 using System.Windows.Media;
 using AutoNotify;
 using CommonLogging;
+using DataApiCommon;
 using DataWranglerCommon;
 using DataWranglerCommon.IngestDataSources;
 using DataWranglerCommonWPF;
@@ -22,7 +23,9 @@ namespace DataWranglerInterface.ShotRecording
     /// </summary>
     public partial class ShotVersionInfoDisplay : UserControl
 	{
-		[AutoNotify] private ShotGridEntityShotVersion? m_currentVersion = null;
+		[AutoNotify] 
+		private DataEntityShotVersion? m_currentVersion = null;
+		
 		private IngestDataShotVersionMeta m_currentVersionMeta = new IngestDataShotVersionMeta();
 
 		private bool m_isInBatchMetaChange = false;
@@ -76,17 +79,17 @@ namespace DataWranglerInterface.ShotRecording
 			VersionSelectorControl.AsyncRefreshShotVersion(a_shotId);
 		}
 
-		private void OnShotVersionSelected(ShotGridEntityShotVersion? a_shotVersion)
+		private void OnShotVersionSelected(DataEntityShotVersion? a_shotVersion)
 		{
 			if (a_shotVersion != null)
 			{
 				CurrentVersion = a_shotVersion;
 
-				if (!string.IsNullOrEmpty(a_shotVersion.Attributes.DataWranglerMeta))
+				if (!string.IsNullOrEmpty(a_shotVersion.DataWranglerMeta))
 				{
 					try
 					{
-						IngestDataShotVersionMeta? shotMeta = JsonConvert.DeserializeObject<IngestDataShotVersionMeta>(a_shotVersion.Attributes.DataWranglerMeta, DataWranglerSerializationSettings.Instance);
+						IngestDataShotVersionMeta? shotMeta = JsonConvert.DeserializeObject<IngestDataShotVersionMeta>(a_shotVersion.DataWranglerMeta, DataWranglerSerializationSettings.Instance);
 						if (shotMeta != null)
 						{
 							SetTargetMeta(shotMeta);
@@ -94,18 +97,18 @@ namespace DataWranglerInterface.ShotRecording
 						else
 						{
 							Logger.LogError("Interface",
-								$"Failed to deserialize shot version meta from value: {a_shotVersion.Attributes.DataWranglerMeta}");
+								$"Failed to deserialize shot version meta from value: {a_shotVersion.DataWranglerMeta}");
 							SetTargetMeta(new IngestDataShotVersionMeta());
 						}
 					}
 					catch (JsonSerializationException ex)
 					{
-						Logger.LogError("Interface", $"Failed to deserialize shot version meta from value: {a_shotVersion.Attributes.DataWranglerMeta}. Exception: {ex.Message}");
+						Logger.LogError("Interface", $"Failed to deserialize shot version meta from value: {a_shotVersion.DataWranglerMeta}. Exception: {ex.Message}");
 						SetTargetMeta(new IngestDataShotVersionMeta());
 					}
 					catch (JsonReaderException ex)
 					{
-						Logger.LogError("Interface", $"Failed to deserialize shot version meta from value: {a_shotVersion.Attributes.DataWranglerMeta}. Exception: {ex.Message}");
+						Logger.LogError("Interface", $"Failed to deserialize shot version meta from value: {a_shotVersion.DataWranglerMeta}. Exception: {ex.Message}");
 						SetTargetMeta(new IngestDataShotVersionMeta());
 					}
 				}
@@ -136,9 +139,8 @@ namespace DataWranglerInterface.ShotRecording
 			string metaAsString = JsonConvert.SerializeObject(m_currentVersionMeta, DataWranglerSerializationSettings.Instance);
 			Dictionary<string, object> valuesToSet = new Dictionary<string, object> { { "sg_datawrangler_meta", metaAsString } };
 
-
-			Task <ShotGridAPIResponse<ShotGridEntityShotVersion>> response = DataWranglerServiceProvider.Instance.ShotGridAPI.UpdateEntityProperties<ShotGridEntityShotVersion>(
-				selectedVersionId, valuesToSet);
+			Task<DataApiResponse<DataEntityShotVersion>> response = DataWranglerServiceProvider.Instance.TargetDataApi.UpdateEntityProperties<DataEntityShotVersion>(
+				VersionSelectorControl.SelectedVersionEntityId, valuesToSet);
 			response.ContinueWith((a_task) => {
 				if (a_task.Result.IsError)
 				{
@@ -147,9 +149,9 @@ namespace DataWranglerInterface.ShotRecording
 				else
 				{
 					VersionSelectorControl.UpdateEntity(response.Result.ResultData!);
-					if (!string.IsNullOrEmpty(a_task.Result.ResultData.Attributes.DataWranglerMeta))
+					if (!string.IsNullOrEmpty(a_task.Result.ResultData.DataWranglerMeta))
 					{
-						IngestDataShotVersionMeta? updatedMeta = JsonConvert.DeserializeObject<IngestDataShotVersionMeta>(a_task.Result.ResultData.Attributes.DataWranglerMeta, DataWranglerSerializationSettings.Instance);
+						IngestDataShotVersionMeta? updatedMeta = JsonConvert.DeserializeObject<IngestDataShotVersionMeta>(a_task.Result.ResultData.DataWranglerMeta, DataWranglerSerializationSettings.Instance);
 						if (updatedMeta != null)
 						{
 							SetTargetMeta(updatedMeta);
@@ -188,7 +190,7 @@ namespace DataWranglerInterface.ShotRecording
 				return;
 			}
 
-			Task<ShotGridAPIResponseGeneric> task = CurrentVersion.ChangeTracker.CommitChanges(DataWranglerServiceProvider.Instance.ShotGridAPI);
+			Task<DataApiResponseGeneric> task = CurrentVersion.ChangeTracker.CommitChanges(DataWranglerServiceProvider.Instance.TargetDataApi);
 			FrameworkElement sender = (FrameworkElement) a_sender;
 			AsyncOperationChangeFeedback? feedbackElement = AsyncOperationChangeFeedback.FindFeedbackElementFrom(sender);
 			if (feedbackElement != null)
@@ -204,7 +206,7 @@ namespace DataWranglerInterface.ShotRecording
 				return;
 			}
 
-			Task<ShotGridAPIResponseGeneric> task = CurrentVersion.ChangeTracker.CommitChanges(DataWranglerServiceProvider.Instance.ShotGridAPI);
+			Task<DataApiResponseGeneric> task = CurrentVersion.ChangeTracker.CommitChanges(DataWranglerServiceProvider.Instance.TargetDataApi);
 			FrameworkElement sender = (FrameworkElement)a_sender;
 			AsyncOperationChangeFeedback? feedbackElement = AsyncOperationChangeFeedback.FindFeedbackElementFrom(sender);
 			if (feedbackElement != null)

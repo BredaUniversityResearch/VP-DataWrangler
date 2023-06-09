@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
+using DataApiCommon;
 using ShotGridIntegration;
 
 namespace DataWranglerInterface.ShotRecording
@@ -12,21 +13,21 @@ namespace DataWranglerInterface.ShotRecording
 		private class ShotSelectorEntry
 		{
 			public readonly int ShotId;
-			public readonly ShotGridEntityShot ShotInfo;
+			public readonly DataEntityShot ShotInfo;
 
-			public ShotSelectorEntry(ShotGridEntityShot a_shotInfo)
+			public ShotSelectorEntry(DataEntityShot a_shotInfo)
 			{
-				ShotId = a_shotInfo.Id;
+				ShotId = a_shotInfo.EntityId;
 				ShotInfo = a_shotInfo;
 			}
 
 			public override string ToString()
 			{
-				return ShotInfo.Attributes.ShotCode!;
+				return ShotInfo.ShotName;
 			}
 		};
 
-		public delegate void ShotSelectionChangedDelegate(ShotGridEntityShot? a_shotInfo);
+		public delegate void ShotSelectionChangedDelegate(DataEntityShot? a_shotInfo);
 		public event ShotSelectionChangedDelegate OnSelectedShotChanged = delegate { };
 
 		public event Action OnNewShotCreatedButtonClicked = delegate { };
@@ -49,14 +50,14 @@ namespace DataWranglerInterface.ShotRecording
 
 		public void AsyncRefreshShots(int a_projectId)
 		{
-			ShotSelectorDropDown.BeginAsyncDataRefresh<ShotGridEntityShot, ShotSelectorEntry>(DataWranglerServiceProvider.Instance.ShotGridAPI.GetShotsForProject(a_projectId));
+			ShotSelectorDropDown.BeginAsyncDataRefresh<DataEntityShot, ShotSelectorEntry>(DataWranglerServiceProvider.Instance.TargetDataApi.GetShotsForProject(a_projectId));
 		}
 
-		public void OnNewShotCreationFinished(ShotGridEntityShot? a_resultResultData)
+		public void OnNewShotCreationFinished(DataEntityShot? a_resultResultData)
 		{
 			if (a_resultResultData != null)
 			{
-				ShotSelectorDropDown.AddDropdownEntry<ShotGridEntityShot, ShotSelectorEntry>(a_resultResultData, true);
+				ShotSelectorDropDown.AddDropdownEntry<DataEntityShot, ShotSelectorEntry>(a_resultResultData, true);
 			}
 
 			ShotSelectorDropDown.SetLoading(false);

@@ -1,4 +1,5 @@
 using System.Runtime.Serialization;
+using DataApiCommon;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -43,5 +44,10 @@ namespace ShotGridIntegration
 		public int EarliestUpdateId = 0;
 		[JsonProperty("updates")]
 		public ShotGridActivityUpdate[] Updates = Array.Empty<ShotGridActivityUpdate>();
+
+		public override DataEntityBase ToDataEntity()
+		{
+			throw new NotImplementedException();
+		}
 	}
 }

@@ -1,45 +1,37 @@
-﻿using DataWranglerCommon.IngestDataSources;
-using ShotGridIntegration;
+﻿using DataApiCommon;
+using DataWranglerCommon.IngestDataSources;
 
 namespace DataWranglerCommonTests
 {
 	public class IngestTests
 	{
-		public static ShotGridEntityCache BuildTestCachedEntries()
+		public static DataEntityCache BuildTestCachedEntries()
 		{
-			var cache = new ShotGridEntityCache();
-			cache.AddCachedEntity(new ShotGridEntityShotVersion()
+			var cache = new DataEntityCache();
+			cache.AddCachedEntity(new DataEntityShotVersion()
 			{
-				Attributes = new ShotVersionAttributes() { 
-					DataWranglerMeta = @"{""FileSources"":[{""Source"":"""",""CodecName"":""BlackmagicRAW"",""RecordingStart"":""2023-05-11T11:14:10.2834901+00:00"",""StartTimeCode"":""12:08:43:02"",""StorageTarget"":"""",""CameraNumber"":""A"",""SourceType"":""BlackmagicUrsa"",""SourceFileTag"":""video"",""IsUniqueMeta"":true}]}",
-					Description = "UNIT_TEST_DATA",
-					Flagged = false,
-					VersionCode = "test_shot_01"
-				},
-				Id = 1
+				DataWranglerMeta = @"{""FileSources"":[{""Source"":"""",""CodecName"":""BlackmagicRAW"",""RecordingStart"":""2023-05-11T11:14:10.2834901+00:00"",""StartTimeCode"":""12:08:43:02"",""StorageTarget"":"""",""CameraNumber"":""A"",""SourceType"":""BlackmagicUrsa"",""SourceFileTag"":""video"",""IsUniqueMeta"":true}]}",
+				Description = "UNIT_TEST_DATA",
+				Flagged = false,
+				ShotVersionName = "test_shot_01",
+				EntityId = 1
 			});
-			cache.AddCachedEntity(new ShotGridEntityShotVersion()
+			cache.AddCachedEntity(new DataEntityShotVersion()
 			{
-				Attributes = new ShotVersionAttributes()
-				{
-					DataWranglerMeta = "Some invalid JSON data",
-					Description = "UNIT_TEST_DATA",
-					Flagged = false,
-					VersionCode = "test_shot_02"
-				},
-				Id = 2
+				DataWranglerMeta = "Some invalid JSON data",
+				Description = "UNIT_TEST_DATA",
+				Flagged = false,
+				ShotVersionName = "test_shot_02",
+				EntityId = 2
 			});
 
-			cache.AddCachedEntity(new ShotGridEntityShotVersion()
+			cache.AddCachedEntity(new DataEntityShotVersion()
 			{
-				Attributes = new ShotVersionAttributes()
-				{
-					DataWranglerMeta = @"{""Dummy"": ""Bogus data""}",
-					Description = "UNIT_TEST_DATA",
-					Flagged = false,
-					VersionCode = "test_shot_03"
-				},
-				Id = 3
+				DataWranglerMeta = @"{""Dummy"": ""Bogus data""}",
+				Description = "UNIT_TEST_DATA",
+				Flagged = false,
+				ShotVersionName = "test_shot_03",
+				EntityId = 3
 			});
 
 			return cache;
@@ -48,7 +40,7 @@ namespace DataWranglerCommonTests
 		[Fact]
 		public void BuildCache()
 		{
-			ShotGridEntityCache entityCache = BuildTestCachedEntries();
+			DataEntityCache entityCache = BuildTestCachedEntries();
 			IngestDataCache cache = new IngestDataCache();
 			cache.UpdateCache(entityCache);
 

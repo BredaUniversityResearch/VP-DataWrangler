@@ -2,6 +2,7 @@
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using AutoNotify;
+using DataApiCommon;
 using DataWranglerCommonWPF;
 using ShotGridIntegration;
 
@@ -13,24 +14,21 @@ namespace DataWranglerInterface.ShotRecording
 	public partial class ShotInfoDisplay : UserControl
 	{
 		[AutoNotify]
-		private ShotGridEntityShotAttributes? m_displayedAttributes = null;
-
-		private ShotGridEntityShot? m_displayedShot = null;
+		private DataEntityShot? m_displayedShot = null;
 
 		public ShotInfoDisplay()
 		{
 			InitializeComponent();
 		}
 		
-		public void SetDisplayedShot(ShotGridEntityShot? a_shotInfo)
+		public void SetDisplayedShot(DataEntityShot? a_shotInfo)
 		{
 			if (a_shotInfo != null)
 			{
-				m_displayedShot = a_shotInfo;
-				DisplayedAttributes = a_shotInfo.Attributes;
-				if (!string.IsNullOrEmpty(a_shotInfo.Attributes.ImageURL))
+				DisplayedShot = a_shotInfo;
+				if (!string.IsNullOrEmpty(a_shotInfo.ImageURL))
 				{
-					ShotThumbnail.Source = new BitmapImage(new Uri(a_shotInfo.Attributes.ImageURL));
+					ShotThumbnail.Source = new BitmapImage(new Uri(a_shotInfo.ImageURL));
 				}
 				else
 				{
@@ -48,7 +46,7 @@ namespace DataWranglerInterface.ShotRecording
 		{
 			if (m_displayedShot != null && m_displayedShot.ChangeTracker.HasAnyUncommittedChanges())
 			{
-				Task<ShotGridAPIResponseGeneric> task = m_displayedShot.ChangeTracker.CommitChanges(DataWranglerServiceProvider.Instance.ShotGridAPI);
+				Task<DataApiResponseGeneric> task = m_displayedShot.ChangeTracker.CommitChanges(DataWranglerServiceProvider.Instance.TargetDataApi);
 				FrameworkElement sender = (FrameworkElement)a_sender;
 				AsyncOperationChangeFeedback? feedbackElement = AsyncOperationChangeFeedback.FindFeedbackElementFrom(sender);
 				if (feedbackElement != null)

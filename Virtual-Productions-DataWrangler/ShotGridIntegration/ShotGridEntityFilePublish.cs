@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using DataApiCommon;
+using Newtonsoft.Json;
 
 namespace ShotGridIntegration
 {
@@ -26,6 +27,54 @@ namespace ShotGridIntegration
 
 		[JsonProperty("attributes")]
 		public FilePublishAttributes Attributes = new FilePublishAttributes();
+
+		public ShotGridEntityFilePublish()
+		{
+		}
+
+		public ShotGridEntityFilePublish(DataEntityFilePublish a_publish)
+			: base(a_publish)
+		{
+			Attributes.Description = a_publish.Description;
+			if (a_publish.Path != null)
+			{
+				Attributes.Path = new ShotGridFileLink(a_publish.Path);
+			}
+
+			Attributes.PathCache = a_publish.RelativePathToStorageRoot;
+			if (a_publish.StorageRoot != null)
+			{
+				Attributes.PathCacheStorage = new ShotGridEntityReference(a_publish.StorageRoot);
+			}
+
+			if (a_publish.PublishedFileType != null)
+			{
+				Attributes.PublishedFileType = new ShotGridEntityReference(a_publish.PublishedFileType);
+			}
+
+			if (a_publish.ShotVersion != null)
+			{
+				Attributes.ShotVersion = new ShotGridEntityReference(a_publish.ShotVersion);
+			}
+
+			Attributes.PublishedFileName = a_publish.PublishedFileName;
+		}
+
+		public override DataEntityFilePublish ToDataEntity()
+		{
+			DataEntityFilePublish publish = new DataEntityFilePublish()
+			{
+				Description = Attributes.Description, 
+				Path = Attributes.Path?.ToDataEntity(),
+				RelativePathToStorageRoot = Attributes.PathCache,
+				StorageRoot = Attributes.PathCacheStorage?.ToDataEntity(),
+				PublishedFileName = Attributes.PublishedFileName,
+				PublishedFileType = Attributes.PublishedFileType?.ToDataEntity(),
+				ShotVersion = Attributes.ShotVersion?.ToDataEntity()
+			};
+			CopyToDataEntity(publish);
+			return publish;
+		}
 	}
 }
 

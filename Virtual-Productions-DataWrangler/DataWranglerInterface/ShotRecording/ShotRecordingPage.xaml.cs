@@ -1,11 +1,11 @@
 ﻿using System.Windows.Controls;
 using BlackmagicCameraControlBluetooth;
 using CommonLogging;
+using DataApiCommon;
 using DataWranglerCommon;
 using DataWranglerCommon.CameraHandling;
 using DataWranglerCommon.IngestDataSources;
 using DataWranglerInterface.CameraHandling;
-using ShotGridIntegration;
 
 namespace DataWranglerInterface.ShotRecording
 {
@@ -21,7 +21,7 @@ namespace DataWranglerInterface.ShotRecording
 		public delegate void ShotVersionCreationDelegate(int a_shotId);
 		public event ShotVersionCreationDelegate? OnNewShotVersionCreationStarted;
 
-		public delegate void ShotVersionCreatedDelegate(ShotGridEntityShotVersion a_data);
+		public delegate void ShotVersionCreatedDelegate(DataEntityShotVersion a_data);
 		public event ShotVersionCreatedDelegate? OnNewShotVersionCreated;
 
         public VideoPreviewControl? PreviewControl
@@ -78,10 +78,10 @@ namespace DataWranglerInterface.ShotRecording
 			ShotSelector.AsyncRefreshShots(a_projectId);
 		}
 
-		private void OnSelectedShotChanged(ShotGridEntityShot? a_shotInfo)
+		private void OnSelectedShotChanged(DataEntityShot? a_shotInfo)
 		{
 			ShotInfoDisplay.SetDisplayedShot(a_shotInfo);
-			ShotVersionInfoDisplay.OnShotSelected(a_shotInfo?.Id ?? -1);
+			ShotVersionInfoDisplay.OnShotSelected(a_shotInfo?.EntityId ?? -1);
 		}
 
 		public void BeginAddShotVersion(int a_shotId)
@@ -89,7 +89,7 @@ namespace DataWranglerInterface.ShotRecording
 			OnNewShotVersionCreationStarted?.Invoke(a_shotId);
 		}
 
-		public void CompleteAddShotVersion(ShotGridEntityShotVersion a_data)
+		public void CompleteAddShotVersion(DataEntityShotVersion a_data)
 		{
 			OnNewShotVersionCreated?.Invoke(a_data);
 		}
@@ -99,11 +99,11 @@ namespace DataWranglerInterface.ShotRecording
 			ShotCreationControl.Show();
 		}
 
-		private void OnRequestCreateNewShot(ShotGridEntityShotAttributes a_gridEntityShotAttributes)
+		private void OnRequestCreateNewShot(DataEntityShot a_gridEntityShotAttributes)
 		{
 			int projectId = ProjectSelector.SelectedProjectId;
 			ShotSelector.OnNewShotCreationStarted();
-			DataWranglerServiceProvider.Instance.ShotGridAPI.CreateNewShot(projectId, a_gridEntityShotAttributes).ContinueWith(a_task =>
+			DataWranglerServiceProvider.Instance.TargetDataApi.CreateNewShot(projectId, a_gridEntityShotAttributes).ContinueWith(a_task =>
 			{
 				if (a_task.Result.IsError)
 				{

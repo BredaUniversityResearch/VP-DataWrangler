@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ShotGridIntegration;
 
@@ -20,7 +16,7 @@ namespace ShotGridIntegrationTest
 					Id = 10,
 					EntityRelationships = new ShotGridEntityRelationships
 					{
-						Project = new ShotGridEntityReference(ShotGridEntityName.Project, 1)
+						Project = new ShotGridEntityReference(ShotGridEntityTypeInfo.Project, 1)
 					}
 				}
 			);
@@ -30,7 +26,7 @@ namespace ShotGridIntegrationTest
 					Id = 11,
 					EntityRelationships = new ShotGridEntityRelationships
 					{
-						Project = new ShotGridEntityReference(ShotGridEntityName.Project, 1)
+						Project = new ShotGridEntityReference(ShotGridEntityTypeInfo.Project, 1)
 					}
 				}
 			);
@@ -40,7 +36,7 @@ namespace ShotGridIntegrationTest
 					Id = 12,
 					EntityRelationships = new ShotGridEntityRelationships
 					{
-						Project = new ShotGridEntityReference(ShotGridEntityName.Project, 2)
+						Project = new ShotGridEntityReference(ShotGridEntityTypeInfo.Project, 2)
 					}
 				}
 			);

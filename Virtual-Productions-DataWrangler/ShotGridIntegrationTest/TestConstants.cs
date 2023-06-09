@@ -9,8 +9,8 @@ namespace ShotGridIntegrationTest
 	public class TestConstants
 	{
 		public const int TargetProjectId = 285;
-		public const int TargetShotId = 1369;
-		public const int TargetShotVersionId = 9350;
+		public const int TargetShotId = 1831;
+		public const int TargetShotVersionId = 10517;
 		public const int TargetPublishFile = 133;
 	}
 }

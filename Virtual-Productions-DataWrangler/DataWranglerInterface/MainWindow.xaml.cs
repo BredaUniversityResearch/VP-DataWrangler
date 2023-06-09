@@ -97,7 +97,7 @@ namespace DataWranglerInterface
 				Content = m_shotRecordingPage;
 			});
 
-			DataWranglerServiceProvider.Instance.ShotGridAPI.StartAutoRefreshToken(OnRequestUserAuthentication);
+			m_targetAPI.StartAutoRefreshToken(OnRequestUserAuthentication);
 		}
 
 		private void OnRequestUserAuthentication()
@@ -105,7 +105,7 @@ namespace DataWranglerInterface
 			Dispatcher.InvokeAsync(() =>
 			{
 				m_loginPage.OnSuccessfulLogin += OnLoggedIn;
-				m_loginPage.Initialize(DataWranglerServiceProvider.Instance.ShotGridAPI, new SettingsCredentialProvider());
+				m_loginPage.Initialize(m_targetAPI, new SettingsCredentialProvider());
 				Content = m_loginPage;
 			});
 		}

@@ -1,4 +1,4 @@
-﻿using ShotGridIntegration;
+﻿using DataApiCommon;
 
 namespace DataWranglerCommon.IngestDataSources
 {
@@ -6,11 +6,11 @@ namespace DataWranglerCommon.IngestDataSources
 	{
 		public class IngestFileEntry
 		{
-			public readonly ShotGridEntityShotVersion TargetShotVersion;
+			public readonly DataEntityShotVersion TargetShotVersion;
 			public readonly string SourcePath;
 			public readonly string FileTag;
 
-			public IngestFileEntry(ShotGridEntityShotVersion a_targetShotVersion, string a_sourcePath, string a_fileTag)
+			public IngestFileEntry(DataEntityShotVersion a_targetShotVersion, string a_sourcePath, string a_fileTag)
 			{
 				TargetShotVersion = a_targetShotVersion;
 				SourcePath = a_sourcePath;
@@ -27,12 +27,12 @@ namespace DataWranglerCommon.IngestDataSources
 			CanProcessCache = a_processCache;
 		}
 
-		public virtual List<IngestFileEntry> ProcessDirectory(string a_baseDirectory, string a_storageVolumeName, ShotGridEntityCache a_cache, IngestDataCache a_ingestCache)
+		public virtual List<IngestFileEntry> ProcessDirectory(string a_baseDirectory, string a_storageVolumeName, DataEntityCache a_cache, IngestDataCache a_ingestCache)
 		{
 			throw new NotImplementedException();
 		}
 
-		public virtual List<IngestFileEntry> ProcessCache(ShotGridEntityCache a_cache, IngestDataCache a_ingestCache)
+		public virtual List<IngestFileEntry> ProcessCache(DataEntityCache a_cache, IngestDataCache a_ingestCache)
 		{
 			throw new NotImplementedException();
 		}

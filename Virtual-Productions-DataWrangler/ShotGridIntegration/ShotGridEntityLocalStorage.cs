@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using DataApiCommon;
+using Newtonsoft.Json;
 
 namespace ShotGridIntegration
 {
@@ -18,5 +19,12 @@ namespace ShotGridIntegration
 
 		[JsonProperty("attributes")]
 		public LocalStorageAttributes Attributes = new LocalStorageAttributes();
+
+		public override DataEntityLocalStorage ToDataEntity()
+		{
+			DataEntityLocalStorage result = new DataEntityLocalStorage() {LocalStorageName = Attributes.LocalStorageName, StorageRoot = new Uri(Attributes.WindowsPath)};
+			CopyToDataEntity(result);
+			return result;
+		}
 	}
 }

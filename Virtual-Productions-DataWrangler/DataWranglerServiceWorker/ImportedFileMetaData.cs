@@ -1,5 +1,6 @@
 ﻿
 using System;
+using DataApiCommon;
 using DataWranglerCommon.IngestDataSources;
 using Newtonsoft.Json;
 using ShotGridIntegration;
@@ -17,37 +18,37 @@ namespace DataWranglerServiceWorker
 		public readonly int VersionId;
 
 		[JsonProperty("project_code")]
-		public readonly string ProjectCode = "Unknown";
+		public readonly string ProjectName = "Unknown";
 		[JsonProperty("shot_code")]
-		public readonly string ShotCode = "Unknown";
+		public readonly string ShotName = "Unknown";
 		[JsonProperty("version_code")]
-		public readonly string VersionCode = "Unknown";
+		public readonly string VersionName = "Unknown";
 
 		[JsonProperty("imported_finished")]
 		public readonly DateTime ImportFinishedTime = DateTime.UtcNow;
 
-		public ImportedFileMetaData(ShotGridEntityShotVersion a_targetShotVersion, ShotGridEntityCache a_dataCache)
+		public ImportedFileMetaData(DataEntityShotVersion a_targetShotVersion, DataEntityCache a_dataCache)
 		{
-			ProjectId = a_targetShotVersion.EntityRelationships.Project?.Id?? -1;
-			ShotId = a_targetShotVersion.EntityRelationships.Parent?.Id?? -1;
-			VersionId = a_targetShotVersion.Id;
+			ProjectId = a_targetShotVersion.EntityRelationships.Project?.EntityId?? -1;
+			ShotId = a_targetShotVersion.EntityRelationships.Parent?.EntityId ?? -1;
+			VersionId = a_targetShotVersion.EntityId;
 
-			ShotGridEntityProject? project = a_dataCache.FindEntityById<ShotGridEntityProject>(ProjectId);
+			DataEntityProject? project = a_dataCache.FindEntityById<DataEntityProject>(ProjectId);
 			if (project != null)
 			{
-				ShotCode = project.Attributes.Name;
+				ProjectName = project.Name;
 			}
 
-			ShotGridEntityShot? shot = a_dataCache.FindEntityById<ShotGridEntityShot>(ShotId);
+			DataEntityShot? shot = a_dataCache.FindEntityById<DataEntityShot>(ShotId);
 			if (shot != null)
 			{
-				ShotCode = shot.Attributes.ShotCode;
+				ShotName = shot.ShotName;
 			}
 
-			ShotGridEntityShotVersion? shotVersion = a_dataCache.FindEntityById<ShotGridEntityShotVersion>(VersionId);
+			DataEntityShotVersion? shotVersion = a_dataCache.FindEntityById<DataEntityShotVersion>(VersionId);
 			if (shotVersion != null)
 			{
-				VersionCode = shotVersion.Attributes.VersionCode;
+				VersionName = shotVersion.ShotVersionName;
 			}
 
 		}

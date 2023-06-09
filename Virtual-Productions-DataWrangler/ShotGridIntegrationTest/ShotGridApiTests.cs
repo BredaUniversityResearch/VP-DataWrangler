@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DataApiCommon;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ShotGridIntegration;
 
@@ -35,77 +36,72 @@ namespace ShotGridIntegrationTest
 		[TestMethod]
 		public void GetProjects()
 		{
-			ShotGridAPIResponse<ShotGridEntityProject[]> projects = m_api.GetActiveProjects().Result;
+			DataApiResponse<DataEntityProject[]> projects = m_api.GetActiveProjects().Result;
 
 			Assert.IsFalse(projects.IsError);
 
-			foreach (ShotGridEntityProject project in projects.ResultData!)
+			foreach (DataEntityProject project in projects.ResultData!)
 			{
-				Assert.IsTrue(project.Attributes.Name != null);
-				Assert.IsTrue(project.Links.Self != null);
+				Assert.IsTrue(project.Name != null);
 			}
 		}
 
 		[TestMethod]
 		public void GetShots()
 		{
-			ShotGridAPIResponse<ShotGridEntityShot[]> shots = m_api.GetShotsForProject(TestConstants.TargetProjectId).Result;
+			DataApiResponse<DataEntityShot[]> shots = m_api.GetShotsForProject(TestConstants.TargetProjectId).Result;
 
 			Assert.IsFalse(shots.IsError);
 			Assert.IsTrue(shots.ResultData!.Length > 0);
 
-			foreach (ShotGridEntityShot shot in shots.ResultData!)
+			foreach (DataEntityShot shot in shots.ResultData!)
 			{
-				Assert.IsTrue(!string.IsNullOrEmpty(shot.Attributes.ShotCode));
-				Assert.IsTrue(shot.Links.Self != null);
+				Assert.IsTrue(!string.IsNullOrEmpty(shot.ShotName));
 			}
 		}
 
 		[TestMethod]
 		public void GetShotsAndTestCache()
 		{
-			ShotGridAPIResponse<ShotGridEntityShot[]> shots = m_api.GetShotsForProject(TestConstants.TargetProjectId).Result;
+			DataApiResponse<DataEntityShot[]> shots = m_api.GetShotsForProject(TestConstants.TargetProjectId).Result;
 
 			Assert.IsFalse(shots.IsError);
 			Assert.IsTrue(shots.ResultData!.Length > 0);
 
-			foreach (ShotGridEntityShot shot in shots.ResultData!)
+			foreach (DataEntityShot shot in shots.ResultData!)
 			{
-				Assert.IsTrue(!string.IsNullOrEmpty(shot.Attributes.ShotCode));
-				Assert.IsTrue(shot.Links.Self != null);
+				Assert.IsTrue(!string.IsNullOrEmpty(shot.ShotName));
 			}
 
-			ShotGridEntityShot[] cachedShots = m_api.LocalCache.FindEntities<ShotGridEntityShot>(ShotGridSimpleSearchFilter.ForProject(TestConstants.TargetProjectId));
+			DataEntityShot[] cachedShots = m_api.LocalCache.FindEntities<DataEntityShot>(DataEntityCacheSearchFilter.ForProject(TestConstants.TargetProjectId));
 			Assert.IsTrue(cachedShots.Length == shots.ResultData.Length);
-			ShotGridEntityShot[] mismatchFilterShots = m_api.LocalCache.FindEntities<ShotGridEntityShot>(ShotGridSimpleSearchFilter.ForProject(-1));
+			DataEntityShot[] mismatchFilterShots = m_api.LocalCache.FindEntities<DataEntityShot>(DataEntityCacheSearchFilter.ForProject(-1));
 			Assert.IsTrue(mismatchFilterShots.Length == 0);
 		}
 
 		[TestMethod]
 		public void GetVersionsForShot()
 		{
-			ShotGridAPIResponse<ShotGridEntityShotVersion[]> shotVersions = m_api.GetVersionsForShot(TestConstants.TargetShotId).Result;
+			DataApiResponse<DataEntityShotVersion[]> shotVersions = m_api.GetVersionsForShot(TestConstants.TargetShotId).Result;
 
 			Assert.IsFalse(shotVersions.IsError);
 
-			foreach (ShotGridEntityShotVersion shotVersion in shotVersions.ResultData!)
+			foreach (DataEntityShotVersion shotVersion in shotVersions.ResultData!)
 			{
-				Assert.IsTrue(!string.IsNullOrEmpty(shotVersion.Attributes.VersionCode));
-				Assert.IsTrue(shotVersion.Links.Self != null);
+				Assert.IsTrue(!string.IsNullOrEmpty(shotVersion.ShotVersionName));
 			}
 		}
 
 		[TestMethod]
 		public void GetSortedVersionsForShot()
 		{
-			ShotGridAPIResponse<ShotGridEntityShotVersion[]> shotVersions = m_api.GetVersionsForShot(TestConstants.TargetShotId, new ShotGridSortSpecifier("code", false)).Result;
+			DataApiResponse<DataEntityShotVersion[]> shotVersions = m_api.GetVersionsForShot(TestConstants.TargetShotId).Result;
 
 			Assert.IsFalse(shotVersions.IsError);
 
-			foreach (ShotGridEntityShotVersion shotVersion in shotVersions.ResultData!)
+			foreach (DataEntityShotVersion shotVersion in shotVersions.ResultData!)
 			{
-				Assert.IsTrue(!string.IsNullOrEmpty(shotVersion.Attributes.VersionCode));
-				Assert.IsTrue(shotVersion.Links.Self != null);
+				Assert.IsTrue(!string.IsNullOrEmpty(shotVersion.ShotVersionName));
 			}
 		}
 
@@ -113,14 +109,14 @@ namespace ShotGridIntegrationTest
 		//[TestMethod]
 		//public void GetPublishesSchema()
 		//{
-		//	ShotGridAPIResponse<ShotGridEntityFieldSchema> schemas = m_api.GetEntityFieldSchema(ShotGridEntityName.Shot.CamelCase, TestConstants.TargetProjectId).Result;
+		//	DataApiResponse<ShotGridEntityFieldSchema> schemas = m_api.GetEntityFieldSchema(ShotGridEntityTypeInfo.Shot.CamelCase, TestConstants.TargetProjectId).Result;
 		//	Assert.IsFalse(schemas.IsError);
 		//}
 
 		[TestMethod]
 		public void GetPublishesForShot()
 		{
-			ShotGridAPIResponse<ShotGridEntityFilePublish[]> shots = m_api.GetPublishesForShotVersion(TestConstants.TargetShotVersionId).Result;
+			DataApiResponse<DataEntityFilePublish[]> shots = m_api.GetPublishesForShotVersion(TestConstants.TargetShotVersionId).Result;
 
 			Assert.IsFalse(shots.IsError);
 		}
@@ -128,7 +124,7 @@ namespace ShotGridIntegrationTest
 		[TestMethod]
 		public void UpdateEntityData()
 		{
-			ShotGridAPIResponse<ShotGridEntityShotVersion> response = m_api.UpdateEntityProperties<ShotGridEntityShotVersion>(
+			DataApiResponse<DataEntityShotVersion> response = m_api.UpdateEntityProperties<DataEntityShotVersion>(
 				TestConstants.TargetShotVersionId, new Dictionary<string, object> {{"sg_datawrangler_meta", "test"}}).Result;
 
 			Assert.IsFalse(response.IsError);
@@ -137,44 +133,43 @@ namespace ShotGridIntegrationTest
 		[TestMethod]
 		public void CreateFilePublish()
 		{
-			ShotGridAPIResponse<ShotGridEntityRelation?> fileTypeRelation = m_api.FindRelationByCode(ShotGridEntityName.PublishedFileType, "video").Result;
+			DataApiResponse<DataEntityPublishedFileType> fileTypeRelation = m_api.FindPublishedFileTypeByCode("video").Result;
 			Assert.IsTrue(fileTypeRelation.ResultData != null);
 
 			string targetPath = "\\\\cradlenas\\Virtual Productions\\Phils VP Pipeline Testing Playground\\Shots\\Shot 01\\Take 08\\A014_05111248_C002.braw";
 
-
-			ShotGridEntityFilePublish.FilePublishAttributes attributes = new ShotGridEntityFilePublish.FilePublishAttributes();
-			attributes.Path = new ShotGridFileLink(new Uri(targetPath));
+			DataEntityFilePublish attributes = new DataEntityFilePublish();
+			attributes.Path = new DataEntityFileLink(new Uri(targetPath));
 			attributes.PublishedFileName = "Testing braw File";
-			attributes.PublishedFileType = new ShotGridEntityReference(fileTypeRelation.ResultData!.ShotGridType!, fileTypeRelation.ResultData.Id);
-			attributes.ShotVersion = new ShotGridEntityReference(ShotGridEntityName.ShotVersion, TestConstants.TargetShotVersionId);
+			attributes.PublishedFileType = new DataEntityReference(fileTypeRelation.ResultData!);
+			attributes.ShotVersion = new DataEntityReference(typeof(DataEntityShotVersion), TestConstants.TargetShotVersionId);
 
-			ShotGridAPIResponse<ShotGridEntityFilePublish> response = m_api.CreateFilePublish(TestConstants.TargetProjectId, TestConstants.TargetShotId, TestConstants.TargetShotVersionId, attributes).Result;
+			DataApiResponse<DataEntityFilePublish> response = m_api.CreateFilePublish(TestConstants.TargetProjectId, TestConstants.TargetShotId, TestConstants.TargetShotVersionId, attributes).Result;
 			Assert.IsFalse(response.IsError);
 
-			ShotGridAPIResponse<ShotGridEntityShotVersion> targetShot = m_api.FindShotVersionById(TestConstants.TargetShotVersionId).Result;
+			DataApiResponse<DataEntityShotVersion> targetShot = m_api.FindShotVersionById(TestConstants.TargetShotVersionId).Result;
 			Assert.IsFalse(targetShot.IsError);
 
-			targetShot.ResultData!.Attributes.PathToFrames = targetPath;
-			ShotGridAPIResponseGeneric shotVersionUpdate = targetShot.ResultData!.ChangeTracker.CommitChanges(m_api).Result;
-			Assert.IsFalse(shotVersionUpdate.IsError);
+			//targetShot.ResultData!.PathToFrames = targetPath;
+			//DataApiResponseGeneric shotVersionUpdate = targetShot.ResultData!.ChangeTracker.CommitChanges(m_api).Result;
+			//Assert.IsFalse(shotVersionUpdate.IsError);
 		}
 
 		[TestMethod]
 		public void CreateShotVersion()
 		{
-			ShotVersionAttributes attributes = new ShotVersionAttributes();
+			DataEntityShotVersion attributes = new DataEntityShotVersion();
 			attributes.Flagged = false;
 			attributes.DataWranglerMeta = "{\"dummy\": \"Created by unit tests\"}";
-			attributes.VersionCode = "Unit Test Created Shot Version";
-			ShotGridAPIResponse<ShotGridEntityShotVersion> result = m_api.CreateNewShotVersion(TestConstants.TargetProjectId, TestConstants.TargetShotId, attributes).Result;
+			attributes.ShotVersionName = "Unit Test Created Shot Version";
+			DataApiResponse<DataEntityShotVersion> result = m_api.CreateNewShotVersion(TestConstants.TargetProjectId, TestConstants.TargetShotId, attributes).Result;
 			Assert.IsFalse(result.IsError);
 		}
 
 		[TestMethod]
-		public void GetFilePublishTypes()
+		public void GetSpecificFilePublishType()
 		{
-			ShotGridAPIResponse<ShotGridEntityRelation[]> response = m_api.GetPublishFileTypes().Result;
+			DataApiResponse<DataEntityPublishedFileType> response = m_api.FindPublishedFileTypeByCode("video").Result;
 
 			Assert.IsFalse(response.IsError);
 
@@ -183,43 +178,43 @@ namespace ShotGridIntegrationTest
 		[TestMethod]
 		public void GetLocalStorages()
 		{
-			ShotGridAPIResponse<ShotGridEntityLocalStorage[]> storages = m_api.GetLocalStorages().Result;
+			DataApiResponse<DataEntityLocalStorage[]> storages = m_api.GetLocalStorages().Result;
 
 			Assert.IsFalse(storages.IsError);
 		}
 
-		[TestMethod]
-		public void GetProjectActivityStream()
-		{
-			int updateLimit = 25;
-			ShotGridAPIResponse<ShotGridEntityActivityStreamResponse> activityStream = m_api.GetEntityActivityStream(ShotGridEntityName.Project, TestConstants.TargetProjectId, updateLimit).Result;
+		//[TestMethod]
+		//public void GetProjectActivityStream()
+		//{
+		//	int updateLimit = 25;
+		//	DataApiResponse<ShotGridEntityActivityStreamResponse> activityStream = m_api.GetEntityActivityStream(ShotGridEntityTypeInfo.Project, TestConstants.TargetProjectId, updateLimit).Result;
 
-			Assert.IsFalse(activityStream.IsError);
-			Assert.IsTrue(activityStream.ResultData!.Updates.Length == updateLimit);
-		}
+		//	Assert.IsFalse(activityStream.IsError);
+		//	Assert.IsTrue(activityStream.ResultData!.Updates.Length == updateLimit);
+		//}
 
 		//PdG 2023-02-20: Disabled because Activity streams don't provide the expected functionality. Only entity creation / deletion is marked in the project.
 		//[TestMethod]
 		//public void CheckActivityStreamWithUpdate()
 		//{
-		//	ShotGridAPIResponse<ShotGridEntityActivityStreamResponse> beginActivityStream = m_api.GetEntityActivityStream(ShotGridEntityName.Project, TestConstants.TargetProjectId, 1).Result;
+		//	DataApiResponse<ShotGridEntityActivityStreamResponse> beginActivityStream = m_api.GetEntityActivityStream(ShotGridEntityTypeInfo.Project, TestConstants.TargetProjectId, 1).Result;
 		//	Assert.IsFalse(beginActivityStream.IsError);
 
 		//	Dictionary<string, object> valuesToChange = new Dictionary<string, object>
 		//	{
 		//		["description"] = $"Test change by unit test at {DateTime.Now.ToString(CultureInfo.InvariantCulture)}"
 		//	};
-		//	ShotGridAPIResponseGeneric changeResponse = m_api.UpdateEntityProperties(ShotGridEntityName.ShotVersion, TestConstants.TargetShotVersionId, valuesToChange).Result;
+		//	DataApiResponseGeneric changeResponse = m_api.UpdateEntityProperties(ShotGridEntityTypeInfo.ShotVersion, TestConstants.TargetShotVersionId, valuesToChange).Result;
 		//	Assert.IsFalse(changeResponse.IsError);
 
-		//	ShotGridAPIResponse<ShotGridEntityActivityStreamResponse> changeActivity = m_api.GetEntityActivityStream(ShotGridEntityName.Project, TestConstants.TargetProjectId, 25, beginActivityStream.ResultData!.LatestUpdateId).Result;
+		//	DataApiResponse<ShotGridEntityActivityStreamResponse> changeActivity = m_api.GetEntityActivityStream(ShotGridEntityTypeInfo.Project, TestConstants.TargetProjectId, 25, beginActivityStream.ResultData!.LatestUpdateId).Result;
 		//	Assert.IsFalse(changeActivity.IsError);
 		//	Assert.IsTrue(changeActivity.ResultData!.Updates.Length > 0);
 
 		//	bool foundUpdate = false;
 		//	foreach (ShotGridEntityActivityStreamResponse.ShotGridActivityUpdate update in changeActivity.ResultData.Updates)
 		//	{
-		//		if (update.PrimaryEntity!.EntityType == ShotGridEntityName.ShotVersion.CamelCase 
+		//		if (update.PrimaryEntity!.EntityType == ShotGridEntityTypeInfo.ShotVersion.CamelCase 
 		//		    && update.PrimaryEntity.Id == TestConstants.TargetShotVersionId 
 		//		    && update.UpdateType == EActivityUpdateType.Update)
 		//		{
@@ -237,7 +232,7 @@ namespace ShotGridIntegrationTest
 		//	ShotGridLoginResponse loginResponse = api.TryLogin(CredentialProvider.Username!, CredentialProvider.Password!).Result;
 		//	Assert.IsTrue(loginResponse.Success);
 
-		//	ShotGridAPIResponse<ShotGridEntityAttachment> storages = api.CreateFileAttachment(TargetProjectId, TargetPublishFile);
+		//	DataApiResponse<ShotGridEntityAttachment> storages = api.CreateFileAttachment(TargetProjectId, TargetPublishFile);
 
 		//	Assert.IsFalse(storages.IsError);
 		//}

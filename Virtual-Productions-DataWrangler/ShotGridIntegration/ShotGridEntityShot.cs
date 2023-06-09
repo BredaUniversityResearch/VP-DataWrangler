@@ -1,4 +1,5 @@
 ﻿using AutoNotify;
+using DataApiCommon;
 using Newtonsoft.Json;
 
 namespace ShotGridIntegration
@@ -17,5 +18,23 @@ namespace ShotGridIntegration
 	{
 		[JsonProperty("attributes")]
 		public readonly ShotGridEntityShotAttributes Attributes = new ShotGridEntityShotAttributes();
+
+		public ShotGridEntityShot()
+		{
+		}
+
+		public ShotGridEntityShot(DataEntityShot a_shot)
+			: base(a_shot)
+		{
+			Attributes.ShotCode = a_shot.ShotName;
+
+		}
+
+		public override DataEntityShot ToDataEntity()
+		{
+			DataEntityShot shot = new DataEntityShot() {ShotName = Attributes.ShotCode};
+			CopyToDataEntity(shot);
+			return shot;
+		}
 	}
 }

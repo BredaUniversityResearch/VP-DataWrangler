@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
 using CommonLogging;
+using DataApiCommon;
 using DataWranglerCommon.IngestDataSources;
 using ShotGridIntegration;
 
@@ -50,7 +51,7 @@ namespace DataWranglerServiceWorker
 			m_driveEventWatcher.OnVolumeChanged += OnVolumeChanged;
 		}
 
-		private void OnFileCopyStarted(ShotGridEntityShotVersion a_shotVersion, FileCopyMetaData a_copyMetaData)
+		private void OnFileCopyStarted(DataEntityShotVersion a_shotVersion, FileCopyMetaData a_copyMetaData)
 		{
 			m_copyProgress.SetTargetFile(a_copyMetaData.SourceFilePath.LocalPath, a_copyMetaData.DestinationFullFilePath.LocalPath);
 			Dispatcher.InvokeAsync(() => {
@@ -61,7 +62,7 @@ namespace DataWranglerServiceWorker
 			});
 		}
 
-		private void OnFileCopyUpdate(ShotGridEntityShotVersion a_shotVersion, FileCopyMetaData a_copyMetaData, FileCopyProgress a_progressUpdate)
+		private void OnFileCopyUpdate(DataEntityShotVersion a_shotVersion, FileCopyMetaData a_copyMetaData, FileCopyProgress a_progressUpdate)
 		{
 			string humanReadableCopiedAmount = FormatAsHumanReadableByteAmount(a_progressUpdate.TotalBytesCopied);
 			string humanReadableSourceSize = FormatAsHumanReadableByteAmount(a_progressUpdate.TotalFileSizeBytes);
@@ -88,7 +89,7 @@ namespace DataWranglerServiceWorker
 			return $"{roundedByteAmount:0.00} {byteOrderString[speedUnitOrder]}"; ;
 		}
 
-		private void OnFileCopyFinished(ShotGridEntityShotVersion a_shotVersion, FileCopyMetaData a_copyMetaData, DataImportWorker.ECopyResult a_copyOperationResult)	
+		private void OnFileCopyFinished(DataEntityShotVersion a_shotVersion, FileCopyMetaData a_copyMetaData, DataImportWorker.ECopyResult a_copyOperationResult)	
 		{
 			Dispatcher.InvokeAsync(() => {
 				if (m_importWorker.ImportQueueLength == 0)
@@ -103,31 +104,32 @@ namespace DataWranglerServiceWorker
 			}
 		}
 
-		private void CreatePublishEntryForFile(ShotGridEntityShotVersion a_shotVersion, FileCopyMetaData a_copyMetaData)
+		private void CreatePublishEntryForFile(DataEntityShotVersion a_shotVersion, FileCopyMetaData a_copyMetaData)
 		{
 			if (a_shotVersion.EntityRelationships.Project == null)
 			{
-				Logger.LogError("DataImporter", $"Failed to publish entry for take {a_shotVersion.Id}. Project relationship was not properly set");
+				Logger.LogError("DataImporter", $"Failed to publish entry for take {a_shotVersion.EntityId}. Project relationship was not properly set");
 				return;
 			}
 
 			if (a_shotVersion.EntityRelationships.Parent == null)
 			{
-				Logger.LogError("DataImporter", $"Failed to publish entry for take {a_shotVersion.Id}. Parent entity relationship to the Shot was not properly set");
+				Logger.LogError("DataImporter", $"Failed to publish entry for take {a_shotVersion.EntityId}. Parent entity relationship to the Shot was not properly set");
 				return;
 			}
 
 			string publishFileName = Path.GetFileName(a_copyMetaData.SourceFilePath.LocalPath);
-			ShotGridEntityFilePublish.FilePublishAttributes publishData = new ShotGridEntityFilePublish.FilePublishAttributes
+
+			DataEntityFilePublish publishData = new DataEntityFilePublish
 			{
-				Path = new ShotGridFileLink(a_copyMetaData.DestinationFullFilePath),
+				Path = new DataEntityFileLink(a_copyMetaData.DestinationFullFilePath),
 				PublishedFileName = publishFileName,
-				PublishedFileType = ShotGridEntityReference.Create(ShotGridEntityName.PublishedFileType, a_copyMetaData.FileTag),
-				Status = ServiceWorkerConfig.Instance.FilePublishDefaultStatus,
+				PublishedFileType = new DataEntityReference(a_copyMetaData.FileTag),
+				//Status = ServiceWorkerConfig.Instance.FilePublishDefaultStatus,
 				Description = ServiceWorkerConfig.Instance.FilePublishDescription
 			};
 
-			m_targetApi.CreateFilePublish(a_shotVersion.EntityRelationships.Project.Id, a_shotVersion.EntityRelationships.Parent.Id, a_shotVersion.Id, publishData)
+			m_targetApi.CreateFilePublish(a_shotVersion.EntityRelationships.Project.EntityId, a_shotVersion.EntityRelationships.Parent.EntityId, a_shotVersion.EntityId, publishData)
 				.ContinueWith(a_taskResult =>
 				{
 					if (!a_taskResult.Result.IsError)
@@ -155,7 +157,7 @@ namespace DataWranglerServiceWorker
 
 		private void OnRequestUserAuthentication()
 		{
-			ShotGridAuthenticationWindow window = new ShotGridAuthenticationWindow(m_targetApi);
+			ShotGridAuthenticationWindow window = new ShotGridAuthenticationWindow((ShotGridAPI)m_targetApi);
 			window.EnsureLogin();
 			window.OnSuccessfulLogin += OnSuccessfulLogin;
 		}

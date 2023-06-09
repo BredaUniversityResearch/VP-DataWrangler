@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using DataApiCommon;
+using Newtonsoft.Json;
 
 namespace ShotGridIntegration
 {
@@ -12,5 +13,10 @@ namespace ShotGridIntegration
 
 		[JsonProperty("attributes")]
 		public AttachmentAttributes Attributes = new AttachmentAttributes();
+
+		public override DataEntityBase ToDataEntity()
+		{
+			throw new NotImplementedException();
+		}
 	}
 }

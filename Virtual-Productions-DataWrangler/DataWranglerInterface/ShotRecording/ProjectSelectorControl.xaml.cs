@@ -1,5 +1,5 @@
 ﻿using System.Windows.Controls;
-using ShotGridIntegration;
+using DataApiCommon;
 
 namespace DataWranglerInterface.ShotRecording
 {
@@ -10,10 +10,10 @@ namespace DataWranglerInterface.ShotRecording
 			public readonly int ProjectId;
 			public readonly string ProjectName;
 
-			public ProjectSelectionEntry(ShotGridEntityProject a_project)
+			public ProjectSelectionEntry(DataEntityProject a_project)
 			{
-				ProjectId = a_project.Id;
-				ProjectName = a_project.Attributes.Name;
+				ProjectId = a_project.EntityId;
+				ProjectName = a_project.Name;
 			}
 
 			public override string ToString()
@@ -43,7 +43,7 @@ namespace DataWranglerInterface.ShotRecording
 
 		public void AsyncRefreshProjects()
 		{
-			ProjectListDropDown.BeginAsyncDataRefresh<ShotGridEntityProject, ProjectSelectionEntry>(DataWranglerServiceProvider.Instance.ShotGridAPI.GetActiveProjects());
+			ProjectListDropDown.BeginAsyncDataRefresh<DataEntityProject, ProjectSelectionEntry>(DataWranglerServiceProvider.Instance.TargetDataApi.GetActiveProjects());
 		}
 	}
 }

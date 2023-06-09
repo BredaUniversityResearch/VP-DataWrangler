@@ -5,17 +5,17 @@ namespace ShotGridIntegration
 {
 	public class ShotGridEntityCache
 	{
-		private Dictionary<ShotGridEntityName, Dictionary<int, ShotGridEntity>> m_entitiesByNameAndId = new();
+		private Dictionary<ShotGridEntityTypeInfo, Dictionary<int, ShotGridEntity>> m_entitiesByNameAndId = new();
 
 		public TEntityType? FindEntityById<TEntityType>(int a_entityId)
 			where TEntityType : ShotGridEntity
 		{
-			return (TEntityType?)FindEntityById(ShotGridEntityName.FromType<TEntityType>(), a_entityId);
+			return (TEntityType?)FindEntityById(ShotGridEntityTypeInfo.FromType<TEntityType>(), a_entityId);
 		}
 
-		public ShotGridEntity? FindEntityById(ShotGridEntityName a_entityTypeName, int a_entityId)
+		public ShotGridEntity? FindEntityById(ShotGridEntityTypeInfo a_entityTypeTypeInfo, int a_entityId)
 		{
-			var entitiesById = FindEntitiesByType(a_entityTypeName);
+			var entitiesById = FindEntitiesByType(a_entityTypeTypeInfo);
 			if (entitiesById != null && entitiesById.TryGetValue(a_entityId, out var resultEntity))
 			{
 				return resultEntity;
@@ -24,9 +24,9 @@ namespace ShotGridIntegration
 			return null;
 		}
 
-		private Dictionary<int, ShotGridEntity>? FindEntitiesByType(ShotGridEntityName a_entityName)
+		private Dictionary<int, ShotGridEntity>? FindEntitiesByType(ShotGridEntityTypeInfo a_entityTypeInfo)
 		{
-			if (m_entitiesByNameAndId.TryGetValue(a_entityName, out var result))
+			if (m_entitiesByNameAndId.TryGetValue(a_entityTypeInfo, out var result))
 			{
 				return result;
 			}
@@ -40,13 +40,13 @@ namespace ShotGridIntegration
 			AddCachedEntity(a_entity.ShotGridType, a_entity);
 		}
 
-		public void AddCachedEntity(ShotGridEntityName a_entityName, ShotGridEntity a_entity)
+		public void AddCachedEntity(ShotGridEntityTypeInfo a_entityTypeInfo, ShotGridEntity a_entity)
 		{
-			var entitiesById = FindEntitiesByType(a_entityName);
+			var entitiesById = FindEntitiesByType(a_entityTypeInfo);
 			if (entitiesById == null)
 			{
 				entitiesById = new Dictionary<int, ShotGridEntity>();
-				m_entitiesByNameAndId.Add(a_entityName, entitiesById);
+				m_entitiesByNameAndId.Add(a_entityTypeInfo, entitiesById);
 			}
 
 			entitiesById[a_entity.Id] = a_entity;
@@ -55,15 +55,15 @@ namespace ShotGridIntegration
 		public TEntityType[] FindEntities<TEntityType>(ShotGridSimpleSearchFilter a_searchFilter)
 			where TEntityType: ShotGridEntity
 		{
-			ShotGridEntityName targetName = ShotGridEntityName.FromType<TEntityType>();
+			ShotGridEntityTypeInfo targetTypeInfo = ShotGridEntityTypeInfo.FromType<TEntityType>();
 
-			var entitiesById = FindEntitiesByType(targetName);
+			var entitiesById = FindEntitiesByType(targetTypeInfo);
 			if (entitiesById == null)
 			{
 				return Array.Empty<TEntityType>();
 			}
 
-			ShotGridEntityCacheSearchFilter cacheFilter = a_searchFilter.BuildCacheFilter(targetName);
+			ShotGridEntityCacheSearchFilter cacheFilter = a_searchFilter.BuildCacheFilter(targetTypeInfo);
 
 			List<TEntityType> targetEntities = new List<TEntityType>(entitiesById.Count);
 			foreach (ShotGridEntity entity in entitiesById.Values)
@@ -80,7 +80,7 @@ namespace ShotGridIntegration
 		public TEntityType[] GetEntitiesByType<TEntityType>()
 			where TEntityType: ShotGridEntity
 		{
-			var entitiesById = FindEntitiesByType(ShotGridEntityName.FromType<TEntityType>());
+			var entitiesById = FindEntitiesByType(ShotGridEntityTypeInfo.FromType<TEntityType>());
 			if (entitiesById == null)
 			{
 				return Array.Empty<TEntityType>();
@@ -104,9 +104,9 @@ namespace ShotGridIntegration
 			return a_result != null;
 		}
 
-		public ShotGridEntity? FindEntityByPredicate(ShotGridEntityName a_entityTypeName, Func<ShotGridEntity, bool> a_func)
+		public ShotGridEntity? FindEntityByPredicate(ShotGridEntityTypeInfo a_entityTypeTypeInfo, Func<ShotGridEntity, bool> a_func)
 		{
-			var entities = FindEntitiesByType(a_entityTypeName);
+			var entities = FindEntitiesByType(a_entityTypeTypeInfo);
 			if (entities == null)
 			{
 				return null;
@@ -126,10 +126,10 @@ namespace ShotGridIntegration
 		public TEntityType? FindEntityByPredicate<TEntityType>(Func<TEntityType, bool> a_predicate)
 			where TEntityType: ShotGridEntity
 		{
-			return (TEntityType?)FindEntityByPredicate(ShotGridEntityName.FromType<TEntityType>(), a_ent => a_predicate((TEntityType)a_ent));
+			return (TEntityType?)FindEntityByPredicate(ShotGridEntityTypeInfo.FromType<TEntityType>(), a_ent => a_predicate((TEntityType)a_ent));
 		}
 
-		public bool TryGetEntityByPredicate(ShotGridEntityName a_entityType, Func<ShotGridEntity, bool> a_func, [NotNullWhen(true)] out ShotGridEntity? a_result)
+		public bool TryGetEntityByPredicate(ShotGridEntityTypeInfo a_entityType, Func<ShotGridEntity, bool> a_func, [NotNullWhen(true)] out ShotGridEntity? a_result)
 		{
 			a_result = FindEntityByPredicate(a_entityType, a_func);
 			return a_result != null;

@@ -1,6 +1,6 @@
 ﻿using CommonLogging;
+using DataApiCommon;
 using Newtonsoft.Json;
-using ShotGridIntegration;
 
 namespace DataWranglerCommon.IngestDataSources
 {
@@ -8,10 +8,10 @@ namespace DataWranglerCommon.IngestDataSources
 	{
 		class CacheEntry
 		{
-			public ShotGridEntityShotVersion ShotVersion;
+			public DataEntityShotVersion ShotVersion;
 			public IngestDataShotVersionMeta DecodedMeta;
 
-			public CacheEntry(ShotGridEntityShotVersion a_shotVersion, IngestDataShotVersionMeta a_decodedMeta)
+			public CacheEntry(DataEntityShotVersion a_shotVersion, IngestDataShotVersionMeta a_decodedMeta)
 			{
 				ShotVersion = a_shotVersion;
 				DecodedMeta = a_decodedMeta;
@@ -20,19 +20,19 @@ namespace DataWranglerCommon.IngestDataSources
 
 		private readonly Dictionary<int, CacheEntry> m_cachedEntriesByShotId = new Dictionary<int, CacheEntry>();
 
-		public void UpdateCache(ShotGridEntityCache a_cache)
+		public void UpdateCache(DataEntityCache a_cache)
 		{
-			ShotGridEntityShotVersion[] shotVersions = a_cache.GetEntitiesByType<ShotGridEntityShotVersion>();
-			foreach (ShotGridEntityShotVersion version in shotVersions)
+			DataEntityShotVersion[] shotVersions = a_cache.GetEntitiesByType<DataEntityShotVersion>();
+			foreach (DataEntityShotVersion version in shotVersions)
 			{
-				if (version.Attributes.DataWranglerMeta != null)
+				if (version.DataWranglerMeta != null)
 				{
 					try
 					{
-						IngestDataShotVersionMeta? decodedMeta = JsonConvert.DeserializeObject<IngestDataShotVersionMeta>(version.Attributes.DataWranglerMeta, DataWranglerSerializationSettings.Instance);
+						IngestDataShotVersionMeta? decodedMeta = JsonConvert.DeserializeObject<IngestDataShotVersionMeta>(version.DataWranglerMeta, DataWranglerSerializationSettings.Instance);
 						if (decodedMeta != null)
 						{
-							Logger.LogInfo("MetaCache", $"Got valid meta for shot version {version.Id}");
+							Logger.LogInfo("MetaCache", $"Got valid meta for shot version {version.EntityId}");
 
 							AddOrUpdateMeta(version, decodedMeta);
 						}
@@ -40,38 +40,38 @@ namespace DataWranglerCommon.IngestDataSources
 					catch (JsonReaderException ex)
 					{
 						Logger.LogError("MetaCache",
-							$"Failed to read json data for shot version {version.EntityRelationships.Project?.EntityName}/{version.EntityRelationships.Parent?.EntityName} ({version.Id}). Exception: {ex.Message}");
+							$"Failed to read json data for shot version {version.EntityRelationships.Project?.EntityName}/{version.EntityRelationships.Parent?.EntityName} ({version.EntityId}). Exception: {ex.Message}");
 					}
 					catch (JsonSerializationException ex)
 					{
-						Logger.LogError("MetaCache", $"Failed to deserialize data for shot version {version.EntityRelationships.Project?.EntityName}/{version.EntityRelationships.Parent?.EntityName} ({version.Id}). Exception: {ex.Message}");
+						Logger.LogError("MetaCache", $"Failed to deserialize data for shot version {version.EntityRelationships.Project?.EntityName}/{version.EntityRelationships.Parent?.EntityName} ({version.EntityId}). Exception: {ex.Message}");
 					}
 				}
 			}
 		}
 
-		private void AddOrUpdateMeta(ShotGridEntityShotVersion a_shotVersion, IngestDataShotVersionMeta a_decodedMeta)
+		private void AddOrUpdateMeta(DataEntityShotVersion a_shotVersion, IngestDataShotVersionMeta a_decodedMeta)
 		{
-			if (m_cachedEntriesByShotId.TryGetValue(a_shotVersion.Id, out CacheEntry? entry))
+			if (m_cachedEntriesByShotId.TryGetValue(a_shotVersion.EntityId, out CacheEntry? entry))
 			{
 				entry.DecodedMeta = a_decodedMeta;
 			}
 			else
 			{
-				m_cachedEntriesByShotId.Add(a_shotVersion.Id, new CacheEntry(a_shotVersion, a_decodedMeta));
+				m_cachedEntriesByShotId.Add(a_shotVersion.EntityId, new CacheEntry(a_shotVersion, a_decodedMeta));
 			}
 		}
 
-		public List<KeyValuePair<ShotGridEntityShotVersion, TMetaType>> FindShotVersionsWithMeta<TMetaType>()
+		public List<KeyValuePair<DataEntityShotVersion, TMetaType>> FindShotVersionsWithMeta<TMetaType>()
 			where TMetaType: IngestDataSourceMeta
 		{
-			List<KeyValuePair<ShotGridEntityShotVersion, TMetaType>> result = new();
+			List<KeyValuePair<DataEntityShotVersion, TMetaType>> result = new();
 			foreach (CacheEntry entry in m_cachedEntriesByShotId.Values)
 			{
 				TMetaType? meta = entry.DecodedMeta.FindMetaByType<TMetaType>();
 				if (meta != null)
 				{
-					result.Add(new KeyValuePair<ShotGridEntityShotVersion, TMetaType>(entry.ShotVersion, meta));
+					result.Add(new KeyValuePair<DataEntityShotVersion, TMetaType>(entry.ShotVersion, meta));
 				}
 			}
 

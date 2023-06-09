@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using CommonLogging;
+using DataApiCommon;
 using DataWranglerCommon.IngestDataSources;
-using ShotGridIntegration;
 
 namespace DataWranglerServiceWorker
 {
@@ -11,12 +11,12 @@ namespace DataWranglerServiceWorker
 	{
 		private string m_rootPath;
 		private DriveInfo m_targetDriveInfo;
-		private ShotGridEntityCache m_cache;
+		private DataEntityCache m_cache;
 		private IngestDataCache m_ingestCache;
 		private DataImportWorker m_importWorker;
 		private IngestDataSourceResolverCollection m_fileResolvers;
 
-		public FileMetaResolverWorker(string a_rootPath, ShotGridEntityCache a_cache, DataImportWorker a_importWorker, IngestDataSourceResolverCollection a_fileResolvers, IngestDataCache a_ingestCache)
+		public FileMetaResolverWorker(string a_rootPath, DataEntityCache a_cache, DataImportWorker a_importWorker, IngestDataSourceResolverCollection a_fileResolvers, IngestDataCache a_ingestCache)
 		{
 			Logger.LogInfo("FileMetaResolverWorker", $"Starting file discovery for drive {a_rootPath}");
 			m_rootPath = a_rootPath;
