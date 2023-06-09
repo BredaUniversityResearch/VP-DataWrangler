@@ -6,17 +6,23 @@ namespace ShotGridIntegration
 {
 	public partial class ShotVersionAttributes
 	{
-		[AutoNotify, JsonProperty("code")] private string m_versionCode = "";
-		[AutoNotify, JsonProperty("description")] private string? m_description;
-		[AutoNotify, JsonProperty("image")] private string? m_imageURL;
-		[AutoNotify, JsonProperty("sg_datawrangler_meta")] private string? m_dataWranglerMeta;
-		[AutoNotify, JsonProperty("flagged")] private bool m_flagged = false;
-		[AutoNotify, JsonProperty("sg_path_to_frames")] private string? m_pathToFrames; /*Full-Res file path*/
+		[JsonProperty("code"), DataEntityField(nameof(DataEntityShotVersion.ShotVersionName))] 
+		public string VersionCode = "";
+		[JsonProperty("description"), DataEntityField(nameof(DataEntityShotVersion.Description))] 
+		public string? Description;
+		[JsonProperty("image"), DataEntityField(nameof(DataEntityShotVersion.ImageURL))] 
+		public string? ImageURL;
+		[JsonProperty("sg_datawrangler_meta"), DataEntityField(nameof(DataEntityShotVersion.DataWranglerMeta))] 
+		public string? DataWranglerMeta;
+		[JsonProperty("flagged"), DataEntityField(nameof(DataEntityShotVersion.Flagged))]
+		public bool Flagged = false;
+		[JsonProperty("sg_path_to_frames")] 
+		public string? PathToFrames; /*Full-Res file path*/
 	};
 
 	public class ShotGridEntityShotVersion: ShotGridEntity
 	{
-		[JsonProperty("attributes")] public ShotVersionAttributes Attributes { get; set; } = new ShotVersionAttributes();
+		[JsonProperty("attributes")] public ShotVersionAttributes Attributes = new ShotVersionAttributes();
 
 		public ShotGridEntityShotVersion()
 		{
@@ -32,17 +38,15 @@ namespace ShotGridIntegration
 			Attributes.Flagged = a_version.Flagged;
 		}
 
-		public override DataEntityBase ToDataEntity()
+		protected override DataEntityBase ToDataEntityInternal()
 		{
-			DataEntityShotVersion result = new DataEntityShotVersion()
+			return new DataEntityShotVersion()
 			{
 				DataWranglerMeta = Attributes.DataWranglerMeta,
 				ShotVersionName = Attributes.VersionCode,
 				Description = Attributes.Description,
 				Flagged = Attributes.Flagged
 			};
-			CopyToDataEntity(result);
-			return result;
 		}
 	}
 }

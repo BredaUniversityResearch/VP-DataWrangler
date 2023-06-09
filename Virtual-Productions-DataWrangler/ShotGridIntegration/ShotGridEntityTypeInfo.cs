@@ -1,6 +1,8 @@
 ﻿using System.Reflection;
 using System.Text;
 using DataApiCommon;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace ShotGridIntegration;
 
@@ -23,6 +25,7 @@ public class ShotGridEntityTypeInfo
 	public readonly Type? DataEntityType;
 
 	private static readonly ShotGridEntityTypeInfo[] AllEntityTypes;
+	private readonly Dictionary<string, string> m_dataEntityFieldToShotGridPath = new Dictionary<string, string>();
 
 	static ShotGridEntityTypeInfo()
 	{
@@ -51,6 +54,29 @@ public class ShotGridEntityTypeInfo
 		CamelCase = a_entityCamelCase;
 		DataEntityType = a_dataEntityType;
 		SnakeCasePlural = ToSnakeCasePlural(a_entityCamelCase);
+		BuildFieldConversionList(a_implementedType);
+	}
+
+	private void BuildFieldConversionList(Type a_type)
+	{
+		FieldInfo[] availableFields = a_type.GetFields(BindingFlags.Instance | BindingFlags.Public);
+		foreach (FieldInfo field in availableFields)
+		{
+			JsonPropertyAttribute? jsonName = field.GetCustomAttribute<JsonPropertyAttribute>();
+			if (jsonName != null)
+			{
+				DataEntityFieldAttribute? fieldAttribute = field.GetCustomAttribute<DataEntityFieldAttribute>();
+				string thisFieldPath = jsonName.PropertyName!;
+				if (fieldAttribute != null)
+				{
+					m_dataEntityFieldToShotGridPath.Add(fieldAttribute.DataEntityFieldName, thisFieldPath);
+				}
+				else
+				{
+					BuildFieldConversionList(field.FieldType);
+				}
+			}
+		}
 	}
 
 	private string ToSnakeCasePlural(string a_string)
@@ -146,4 +172,13 @@ public class ShotGridEntityTypeInfo
 		throw new Exception("");
 	}
 
+	public string GetShotGridFieldPathFromDataEntityFieldName(string a_keyName)
+	{
+		if (m_dataEntityFieldToShotGridPath.TryGetValue(a_keyName, out string? shotGridName))
+		{
+			return shotGridName;
+		}
+
+		throw new Exception($"Failed to find ShotGrid field path for EntityField {a_keyName}");
+	}
 };

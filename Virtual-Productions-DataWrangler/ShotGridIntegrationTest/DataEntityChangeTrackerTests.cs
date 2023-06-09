@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using DataApiCommon;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ShotGridIntegration;
@@ -7,7 +6,7 @@ using ShotGridIntegration;
 namespace ShotGridIntegrationTest
 {
 	[TestClass]
-	public class ShotGridChangeTrackerTest
+	public class DataEntityChangeTrackerTests
 	{
 		[TestMethod]
 		public void TestNotifyPropertyChanged()
@@ -22,9 +21,6 @@ namespace ShotGridIntegrationTest
 			ShotGridAPI api = new ShotGridAPI();
 			ShotGridLoginResponse response = api.TryLogin(CredentialProvider.Username!, CredentialProvider.Password!).Result;
 			Assert.IsTrue(response.Success);
-
-			ShotGridEntityShotVersion versionEntity = new ShotGridEntityShotVersion();
-			versionEntity.Attributes.Flagged = true;
 
 			DataApiResponse<DataEntityShotVersion[]> shotVersions = api.GetVersionsForShot(TestConstants.TargetShotId).Result;
 			if (shotVersions.IsError)
@@ -41,9 +37,9 @@ namespace ShotGridIntegrationTest
 			Task<DataApiResponseGeneric> commitChangeTask = shotVersion.ChangeTracker.CommitChanges(api);
 			commitChangeTask.Wait();
 			Assert.IsTrue(!commitChangeTask.Result.IsError);
-			ShotGridEntityShotVersion? changedShotVersion = commitChangeTask.Result.ResultDataGeneric as ShotGridEntityShotVersion;
+			DataEntityShotVersion? changedShotVersion = commitChangeTask.Result.ResultDataGeneric as DataEntityShotVersion;
 			Assert.IsTrue(changedShotVersion != null);
-			Assert.IsTrue(changedShotVersion!.Attributes.Flagged == newFlaggedValue);
+			Assert.IsTrue(changedShotVersion!.Flagged == newFlaggedValue);
 		}
 	}
 }

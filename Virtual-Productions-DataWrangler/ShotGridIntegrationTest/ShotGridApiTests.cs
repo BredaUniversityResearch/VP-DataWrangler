@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using DataApiCommon;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ShotGridIntegration;
@@ -75,7 +76,7 @@ namespace ShotGridIntegrationTest
 
 			DataEntityShot[] cachedShots = m_api.LocalCache.FindEntities<DataEntityShot>(DataEntityCacheSearchFilter.ForProject(TestConstants.TargetProjectId));
 			Assert.IsTrue(cachedShots.Length == shots.ResultData.Length);
-			DataEntityShot[] mismatchFilterShots = m_api.LocalCache.FindEntities<DataEntityShot>(DataEntityCacheSearchFilter.ForProject(-1));
+			DataEntityShot[] mismatchFilterShots = m_api.LocalCache.FindEntities<DataEntityShot>(DataEntityCacheSearchFilter.ForProject(- 1));
 			Assert.IsTrue(mismatchFilterShots.Length == 0);
 		}
 
@@ -124,8 +125,17 @@ namespace ShotGridIntegrationTest
 		[TestMethod]
 		public void UpdateEntityData()
 		{
+			DataApiResponse<DataEntityShotVersion[]> shotVersions = m_api.GetVersionsForShot(TestConstants.TargetShotId).Result;
+			Assert.IsFalse(shotVersions.IsError);
+
+			PropertyInfo? targetField = typeof(DataEntityShotVersion).GetProperty(nameof(DataEntityShotVersion.DataWranglerMeta), BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public);
+			if (targetField == null)
+			{
+				throw new Exception("Could not find field by name to test update with.");
+			}
+
 			DataApiResponse<DataEntityShotVersion> response = m_api.UpdateEntityProperties<DataEntityShotVersion>(
-				TestConstants.TargetShotVersionId, new Dictionary<string, object> {{"sg_datawrangler_meta", "test"}}).Result;
+				TestConstants.TargetShotVersionId, new Dictionary<PropertyInfo, object?> {{targetField, "test"}}).Result;
 
 			Assert.IsFalse(response.IsError);
 		}

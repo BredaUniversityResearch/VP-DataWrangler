@@ -8,10 +8,13 @@ public abstract class ShotGridEntity
 {
 	[JsonProperty("id")]
 	public int Id;
+
 	[JsonProperty("type")]
 	public ShotGridEntityTypeInfo ShotGridType;
+
 	[JsonProperty("links")]
 	public ShotGridEntityLinks Links = new ShotGridEntityLinks();
+
 	[JsonProperty("relationships")]
 	public ShotGridEntityRelationships EntityRelationships = new ShotGridEntityRelationships();
 
@@ -42,7 +45,16 @@ public abstract class ShotGridEntity
 		a_entity.EntityRelationships.Project = EntityRelationships.Project?.ToDataEntity();
 	}
 
-	public abstract DataEntityBase ToDataEntity();
+	protected abstract DataEntityBase ToDataEntityInternal();
+
+	public DataEntityBase ToDataEntity()
+	{
+		DataEntityBase result = ToDataEntityInternal();
+		CopyToDataEntity(result);
+		result.ChangeTracker.ClearChangedState();
+		return result;
+	}
+
 }
 
 public class ShotGridEntityRelationships

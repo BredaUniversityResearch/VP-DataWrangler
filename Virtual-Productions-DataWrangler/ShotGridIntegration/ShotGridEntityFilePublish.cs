@@ -60,9 +60,9 @@ namespace ShotGridIntegration
 			Attributes.PublishedFileName = a_publish.PublishedFileName;
 		}
 
-		public override DataEntityFilePublish ToDataEntity()
+		protected override DataEntityFilePublish ToDataEntityInternal()
 		{
-			DataEntityFilePublish publish = new DataEntityFilePublish()
+			return new DataEntityFilePublish()
 			{
 				Description = Attributes.Description, 
 				Path = Attributes.Path?.ToDataEntity(),
@@ -72,8 +72,6 @@ namespace ShotGridIntegration
 				PublishedFileType = Attributes.PublishedFileType?.ToDataEntity(),
 				ShotVersion = Attributes.ShotVersion?.ToDataEntity()
 			};
-			CopyToDataEntity(publish);
-			return publish;
 		}
 	}
 }

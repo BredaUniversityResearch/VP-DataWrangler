@@ -14,11 +14,9 @@ namespace ShotGridIntegration
 		[JsonProperty("attributes")]
 		public ProjectAttributes Attributes = new ProjectAttributes();
 
-		public override DataEntityProject ToDataEntity()
+		protected override DataEntityBase ToDataEntityInternal()
 		{
-			DataEntityProject project = new DataEntityProject() {Name = Attributes.Name};
-			CopyToDataEntity(project);
-			return project;
+			return new DataEntityProject() {Name = Attributes.Name};
 		}
 	}
 }

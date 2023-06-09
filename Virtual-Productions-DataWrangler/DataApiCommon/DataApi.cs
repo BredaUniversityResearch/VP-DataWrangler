@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace DataApiCommon
@@ -32,9 +33,9 @@ namespace DataApiCommon
 			return unsorted;
 		}
 
-		public abstract Task<DataApiResponseGeneric> UpdateEntityProperties(DataEntityBase a_targetEntity, Dictionary<string, object> a_changedValues);
+		public abstract Task<DataApiResponseGeneric> UpdateEntityProperties(DataEntityBase a_targetEntity, Dictionary<PropertyInfo, object?> a_changedValues);
 
-		public async Task<DataApiResponse<TDataEntityType>> UpdateEntityProperties<TDataEntityType>(int a_entityId, Dictionary<string, object> a_changedValues)
+		public async Task<DataApiResponse<TDataEntityType>> UpdateEntityProperties<TDataEntityType>(int a_entityId, Dictionary<PropertyInfo, object?> a_changedValues)
 			where TDataEntityType: DataEntityBase
 		{
 			TDataEntityType? entity = LocalCache.FindEntityById<TDataEntityType>(a_entityId);
@@ -45,6 +46,11 @@ namespace DataApiCommon
 
 			DataApiResponseGeneric response = await UpdateEntityProperties(entity, a_changedValues);
 			return new DataApiResponse<TDataEntityType>(response);
+		}
+
+		protected void OnDataEntitySuccessfullyFetched(DataEntityBase a_entity)
+		{
+			LocalCache.AddCachedEntity(a_entity.GetType(), a_entity);
 		}
 	}
 

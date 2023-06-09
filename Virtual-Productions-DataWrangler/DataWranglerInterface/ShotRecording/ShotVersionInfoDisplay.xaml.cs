@@ -129,29 +129,27 @@ namespace DataWranglerInterface.ShotRecording
 
 		private void UpdateRemoteShotGridMetaField()
 		{
-			int selectedVersionId = VersionSelectorControl.SelectedVersionEntityId;
-			if (selectedVersionId == -1)
+			if (m_currentVersion == null)
 			{
 				Logger.LogWarning("Interface", "Tried to update ShotGridMeta for invalid shot version.");
 				return;
 			}
 
-			string metaAsString = JsonConvert.SerializeObject(m_currentVersionMeta, DataWranglerSerializationSettings.Instance);
-			Dictionary<string, object> valuesToSet = new Dictionary<string, object> { { "sg_datawrangler_meta", metaAsString } };
-
-			Task<DataApiResponse<DataEntityShotVersion>> response = DataWranglerServiceProvider.Instance.TargetDataApi.UpdateEntityProperties<DataEntityShotVersion>(
-				VersionSelectorControl.SelectedVersionEntityId, valuesToSet);
-			response.ContinueWith((a_task) => {
+			m_currentVersion.DataWranglerMeta = JsonConvert.SerializeObject(m_currentVersionMeta, DataWranglerSerializationSettings.Instance);
+			Task<DataApiResponseGeneric> updateTask = m_currentVersion.ChangeTracker.CommitChanges(DataWranglerServiceProvider.Instance.TargetDataApi);
+			updateTask.ContinueWith((a_task) => {
 				if (a_task.Result.IsError)
 				{
 					throw new Exception();
 				}
 				else
 				{
-					VersionSelectorControl.UpdateEntity(response.Result.ResultData!);
-					if (!string.IsNullOrEmpty(a_task.Result.ResultData.DataWranglerMeta))
+					DataEntityShotVersion updatedEntity = (DataEntityShotVersion)a_task.Result.ResultDataGeneric;
+
+					VersionSelectorControl.UpdateEntity(updatedEntity);
+					if (!string.IsNullOrEmpty(updatedEntity.DataWranglerMeta))
 					{
-						IngestDataShotVersionMeta? updatedMeta = JsonConvert.DeserializeObject<IngestDataShotVersionMeta>(a_task.Result.ResultData.DataWranglerMeta, DataWranglerSerializationSettings.Instance);
+						IngestDataShotVersionMeta? updatedMeta = JsonConvert.DeserializeObject<IngestDataShotVersionMeta>(updatedEntity.DataWranglerMeta, DataWranglerSerializationSettings.Instance);
 						if (updatedMeta != null)
 						{
 							SetTargetMeta(updatedMeta);
@@ -162,7 +160,7 @@ namespace DataWranglerInterface.ShotRecording
 			AsyncOperationChangeFeedback? feedbackElement = AsyncOperationChangeFeedback.FindFeedbackElementFrom(VersionFileSourcesControl);
 			if (feedbackElement != null)
 			{
-				feedbackElement.ProvideFeedback(response);
+				feedbackElement.ProvideFeedback(updateTask);
 			}
 		}
 

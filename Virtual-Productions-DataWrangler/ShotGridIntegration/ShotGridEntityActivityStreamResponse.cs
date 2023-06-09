@@ -45,7 +45,7 @@ namespace ShotGridIntegration
 		[JsonProperty("updates")]
 		public ShotGridActivityUpdate[] Updates = Array.Empty<ShotGridActivityUpdate>();
 
-		public override DataEntityBase ToDataEntity()
+		protected override DataEntityBase ToDataEntityInternal()
 		{
 			throw new NotImplementedException();
 		}

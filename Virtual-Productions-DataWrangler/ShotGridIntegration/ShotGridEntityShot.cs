@@ -30,11 +30,9 @@ namespace ShotGridIntegration
 
 		}
 
-		public override DataEntityShot ToDataEntity()
+		protected override DataEntityShot ToDataEntityInternal()
 		{
-			DataEntityShot shot = new DataEntityShot() {ShotName = Attributes.ShotCode};
-			CopyToDataEntity(shot);
-			return shot;
+			return new DataEntityShot() {ShotName = Attributes.ShotCode};
 		}
 	}
 }

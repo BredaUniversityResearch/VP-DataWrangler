@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
+using System.Reflection;
 using System.Text;
 using DataApiCommon;
 using Newtonsoft.Json;
@@ -307,7 +308,9 @@ namespace ShotGridIntegration
 				Array resultArray = Array.CreateInstance(a_targetConversionDataEntityType.GetElementType()!, collection.Count);
 				foreach (ShotGridEntity ent in collection)
 				{
-					resultArray.SetValue(ent.ToDataEntity(), arrayIndex);
+					DataEntityBase entity = ent.ToDataEntity();
+					resultArray.SetValue(entity, arrayIndex);
+					OnDataEntitySuccessfullyFetched(entity);
 					++arrayIndex;
 				}
 
@@ -315,7 +318,9 @@ namespace ShotGridIntegration
 			}
 			else
 			{
-				result = ((ShotGridEntity)a_response.ResultDataGeneric).ToDataEntity();
+				DataEntityBase resultEntity = ((ShotGridEntity)a_response.ResultDataGeneric).ToDataEntity();
+				result = resultEntity;
+				OnDataEntitySuccessfullyFetched(resultEntity);
 			}
 
 			return new DataApiResponseGeneric(result, a_response.ErrorInfo);
@@ -492,7 +497,19 @@ namespace ShotGridIntegration
 		//	return ConvertResponse<TDataEntityType>(apiResponse);
 		//}
 
-		public override async Task<DataApiResponseGeneric> UpdateEntityProperties(DataEntityBase a_entity, Dictionary<string, object> a_propertiesToSet)
+		private Dictionary<string, object?> ConvertDataEntityToShotGridFieldNames(DataEntityBase a_entity, Dictionary<PropertyInfo, object?> a_properties)
+		{
+			ShotGridEntityTypeInfo shotGridType = ShotGridEntityTypeInfo.FromDataEntityType(a_entity.GetType());
+			Dictionary<string, object?> changedFields = new Dictionary<string, object?>();
+			foreach (var kvp in a_properties)
+			{
+				changedFields.Add(shotGridType.GetShotGridFieldPathFromDataEntityFieldName(kvp.Key.Name), kvp.Value);
+			}
+
+			return changedFields;
+		}
+
+		public override async Task<DataApiResponseGeneric> UpdateEntityProperties(DataEntityBase a_entity, Dictionary<PropertyInfo, object?> a_propertiesToSet)
 		{
 			if (m_authentication == null)
 			{
@@ -500,7 +517,7 @@ namespace ShotGridIntegration
 			}
 
 			ShotGridEntityTypeInfo typeInfo = ShotGridEntityTypeInfo.FromDataEntityType(a_entity.GetType());
-			string fullRequestAsString = JsonConvert.SerializeObject(a_propertiesToSet, SerializerSettings);
+			string fullRequestAsString = JsonConvert.SerializeObject(ConvertDataEntityToShotGridFieldNames(a_entity, a_propertiesToSet), SerializerSettings);
 
 			HttpRequestMessage request = new HttpRequestMessage
 			{

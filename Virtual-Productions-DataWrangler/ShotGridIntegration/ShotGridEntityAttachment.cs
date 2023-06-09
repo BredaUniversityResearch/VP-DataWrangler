@@ -14,7 +14,7 @@ namespace ShotGridIntegration
 		[JsonProperty("attributes")]
 		public AttachmentAttributes Attributes = new AttachmentAttributes();
 
-		public override DataEntityBase ToDataEntity()
+		protected override DataEntityBase ToDataEntityInternal()
 		{
 			throw new NotImplementedException();
 		}

@@ -4,13 +4,11 @@ namespace DataApiCommon
 {
 	public class DataEntityCacheSearchFilter
 	{
-		public readonly Type TargetEntityName;
 		private readonly List<DataEntityCacheSearchCondition> m_cacheSearchConditions;
 
-		public DataEntityCacheSearchFilter(Type a_targetEntityName, IReadOnlyList<DataEntityCacheSearchCondition> a_searchConditions)
+		public DataEntityCacheSearchFilter(IReadOnlyList<DataEntityCacheSearchCondition> a_searchConditions)
 		{
-			TargetEntityName = a_targetEntityName;
-			m_cacheSearchConditions = new List<DataEntityCacheSearchCondition>(a_searchConditions.Count);
+			m_cacheSearchConditions = new List<DataEntityCacheSearchCondition>(a_searchConditions);
 		}
 
 		public bool Matches(DataEntityBase a_entity)
@@ -28,7 +26,8 @@ namespace DataApiCommon
 
 		public static DataEntityCacheSearchFilter ForProject(int a_targetProjectId)
 		{
-			throw new NotImplementedException();
+			DataEntityCacheSearchFilter filter = new DataEntityCacheSearchFilter(new[] { new DataEntityCacheSearchCondition((a_entity) => a_entity.EntityRelationships.Project?.EntityId == a_targetProjectId)});
+			return filter;
 		}
 	}
 }

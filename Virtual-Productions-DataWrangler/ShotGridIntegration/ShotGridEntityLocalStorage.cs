@@ -20,11 +20,9 @@ namespace ShotGridIntegration
 		[JsonProperty("attributes")]
 		public LocalStorageAttributes Attributes = new LocalStorageAttributes();
 
-		public override DataEntityLocalStorage ToDataEntity()
+		protected override DataEntityBase ToDataEntityInternal()
 		{
-			DataEntityLocalStorage result = new DataEntityLocalStorage() {LocalStorageName = Attributes.LocalStorageName, StorageRoot = new Uri(Attributes.WindowsPath)};
-			CopyToDataEntity(result);
-			return result;
+			return new DataEntityLocalStorage() {LocalStorageName = Attributes.LocalStorageName, StorageRoot = new Uri(Attributes.WindowsPath)};
 		}
 	}
 }
