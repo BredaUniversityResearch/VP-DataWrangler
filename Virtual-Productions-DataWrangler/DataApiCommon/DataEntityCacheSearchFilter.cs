@@ -24,7 +24,7 @@ namespace DataApiCommon
 			return true;
 		}
 
-		public static DataEntityCacheSearchFilter ForProject(int a_targetProjectId)
+		public static DataEntityCacheSearchFilter ForProject(Guid a_targetProjectId)
 		{
 			DataEntityCacheSearchFilter filter = new DataEntityCacheSearchFilter(new[] { new DataEntityCacheSearchCondition((a_entity) => a_entity.EntityRelationships.Project?.EntityId == a_targetProjectId)});
 			return filter;

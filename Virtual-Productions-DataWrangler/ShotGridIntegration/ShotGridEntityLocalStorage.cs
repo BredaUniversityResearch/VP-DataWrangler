@@ -10,11 +10,11 @@ namespace ShotGridIntegration
 			[JsonProperty("code")]
 			public string LocalStorageName = "";
 			[JsonProperty("mac_path")]
-			public string? MacPath;
+			public string? MacPath = null;
 			[JsonProperty("windows_path")]
 			public string WindowsPath = "";
 			[JsonProperty("linux_path")]
-			public string? LinuxPath;
+			public string? LinuxPath = null;
 		};
 
 		[JsonProperty("attributes")]

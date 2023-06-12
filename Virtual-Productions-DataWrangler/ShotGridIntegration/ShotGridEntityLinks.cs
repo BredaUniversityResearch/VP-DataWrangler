@@ -5,5 +5,5 @@ namespace ShotGridIntegration;
 internal class ShotGridEntityLinks
 {
 	[JsonProperty("self")]
-	public string? Self;
+	public string? Self = null;
 };

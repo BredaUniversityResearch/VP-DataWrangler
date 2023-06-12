@@ -60,20 +60,7 @@ namespace DataWranglerSourceAnalysis
 			}
 
 			string namespaceName = classSymbol.ContainingNamespace.ToDisplayString();
-			string accessibility;
-			switch (classSymbol.DeclaredAccessibility)
-			{
-				default:
-				case Accessibility.Public:
-					accessibility = "public";
-					break;
-				case Accessibility.Internal:
-					accessibility = "internal";
-					break;
-				case Accessibility.Private:
-					accessibility = "private";
-					break;
-			}
+			string accessibility = SyntaxFacts.GetText(classSymbol.DeclaredAccessibility);
 
 			// begin building the generated source
 			StringBuilder source = new StringBuilder($@"

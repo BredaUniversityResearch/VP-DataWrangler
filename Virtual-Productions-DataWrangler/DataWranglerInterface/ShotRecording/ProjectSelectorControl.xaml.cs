@@ -7,7 +7,7 @@ namespace DataWranglerInterface.ShotRecording
 	{
 		public class ProjectSelectionEntry
 		{
-			public readonly int ProjectId;
+			public readonly Guid ProjectId;
 			public readonly string ProjectName;
 
 			public ProjectSelectionEntry(DataEntityProject a_project)
@@ -22,10 +22,10 @@ namespace DataWranglerInterface.ShotRecording
 			}
 		};
 
-		public delegate void SelectedProjectChangedDelegate(int projectId, string projectName);
+		public delegate void SelectedProjectChangedDelegate(Guid projectId, string projectName);
 		public event SelectedProjectChangedDelegate OnSelectedProjectChanged = delegate { };
 
-		public int SelectedProjectId { get; private set; }
+		public Guid SelectedProjectId { get; private set; }
 
 		public ProjectSelectorControl()
 		{

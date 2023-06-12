@@ -4,7 +4,7 @@ namespace DataApiCommon
 {
 	public partial class DataEntityBase
 	{
-		public int EntityId = 0;
+		public Guid EntityId = Guid.Empty;
 
 		[AutoNotify]
 		private DataEntityRelationships m_entityRelationships = new DataEntityRelationships();

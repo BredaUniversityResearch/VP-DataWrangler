@@ -22,16 +22,16 @@ namespace ShotGridIntegration
 		public class ShotGridActivityUpdate
 		{
 			[JsonProperty("id")]
-			public int Id;
+			public int Id = 0;
 
 			[JsonProperty("update_type")]
-			public EActivityUpdateType UpdateType;
+			public EActivityUpdateType UpdateType = EActivityUpdateType.Create;
 
 			[JsonProperty("meta")]
-			public JObject? Meta;
+			public JObject? Meta = null;
 
 			[JsonProperty("primary_entity")]
-			public ShotGridEntityReference? PrimaryEntity;
+			public ShotGridEntityReference? PrimaryEntity = null;
 		}
 
 		[JsonProperty("entity_type")]

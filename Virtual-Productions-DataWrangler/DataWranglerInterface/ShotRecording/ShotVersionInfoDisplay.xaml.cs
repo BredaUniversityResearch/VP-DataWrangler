@@ -74,7 +74,7 @@ namespace DataWranglerInterface.ShotRecording
 			a_parentPage.OnNewShotVersionCreated += (a_data) => VersionSelectorControl.EndAddShotVersion(a_data);
 		}
 
-		public void OnShotSelected(int a_shotId)
+		public void OnShotSelected(Guid a_shotId)
 		{
 			VersionSelectorControl.AsyncRefreshShotVersion(a_shotId);
 		}

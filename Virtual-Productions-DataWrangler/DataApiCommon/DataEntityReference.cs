@@ -7,7 +7,7 @@ namespace DataApiCommon
 		[AutoNotify]
 		private Type? m_entityType = null;
 		[AutoNotify]
-		private int m_entityId = 0;
+		private Guid m_entityId = Guid.Empty;
 		[AutoNotify]
 		private string? m_entityName = null;
 
@@ -22,7 +22,7 @@ namespace DataApiCommon
 			m_entityName = "???";
 		}
 
-		public DataEntityReference(Type a_entityType, int a_entityId)
+		public DataEntityReference(Type a_entityType, Guid a_entityId)
 		{
 			m_entityType = a_entityType;
 			m_entityId = a_entityId;

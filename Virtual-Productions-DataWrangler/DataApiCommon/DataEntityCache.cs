@@ -4,15 +4,15 @@ namespace DataApiCommon
 {
 	public class DataEntityCache
 	{
-		private Dictionary<Type, Dictionary<int, DataEntityBase>> m_entitiesByNameAndId = new();
+		private Dictionary<Type, Dictionary<Guid, DataEntityBase>> m_entitiesByNameAndId = new();
 
-		public TEntityType? FindEntityById<TEntityType>(int a_entityId)
+		public TEntityType? FindEntityById<TEntityType>(Guid a_entityId)
 			where TEntityType : DataEntityBase
 		{
 			return (TEntityType?)FindEntityById(typeof(TEntityType), a_entityId);
 		}
 
-		public DataEntityBase? FindEntityById(Type a_entityTypeName, int a_entityId)
+		public DataEntityBase? FindEntityById(Type a_entityTypeName, Guid a_entityId)
 		{
 			var entitiesById = FindEntitiesByType(a_entityTypeName);
 			if (entitiesById != null && entitiesById.TryGetValue(a_entityId, out var resultEntity))
@@ -23,7 +23,7 @@ namespace DataApiCommon
 			return null;
 		}
 
-		private Dictionary<int, DataEntityBase>? FindEntitiesByType(Type a_entityName)
+		private Dictionary<Guid, DataEntityBase>? FindEntitiesByType(Type a_entityName)
 		{
 			if (m_entitiesByNameAndId.TryGetValue(a_entityName, out var result))
 			{
@@ -44,7 +44,7 @@ namespace DataApiCommon
 			var entitiesById = FindEntitiesByType(a_entityName);
 			if (entitiesById == null)
 			{
-				entitiesById = new Dictionary<int, DataEntityBase>();
+				entitiesById = new Dictionary<Guid, DataEntityBase>();
 				m_entitiesByNameAndId.Add(a_entityName, entitiesById);
 			}
 
@@ -94,7 +94,7 @@ namespace DataApiCommon
 			return result;
 		}
 
-		public bool TryGetEntityById<TEntityType>(int a_entityId, [NotNullWhen(true)] out TEntityType? a_result)
+		public bool TryGetEntityById<TEntityType>(Guid a_entityId, [NotNullWhen(true)] out TEntityType? a_result)
 			where TEntityType : DataEntityBase
 		{
 			a_result = FindEntityById<TEntityType>(a_entityId);

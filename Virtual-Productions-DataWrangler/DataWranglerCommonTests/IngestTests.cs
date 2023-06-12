@@ -14,7 +14,7 @@ namespace DataWranglerCommonTests
 				Description = "UNIT_TEST_DATA",
 				Flagged = false,
 				ShotVersionName = "test_shot_01",
-				EntityId = 1
+				EntityId = new Guid(1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 			});
 			cache.AddCachedEntity(new DataEntityShotVersion()
 			{
@@ -22,7 +22,7 @@ namespace DataWranglerCommonTests
 				Description = "UNIT_TEST_DATA",
 				Flagged = false,
 				ShotVersionName = "test_shot_02",
-				EntityId = 2
+				EntityId = new Guid(2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 			});
 
 			cache.AddCachedEntity(new DataEntityShotVersion()
@@ -31,7 +31,7 @@ namespace DataWranglerCommonTests
 				Description = "UNIT_TEST_DATA",
 				Flagged = false,
 				ShotVersionName = "test_shot_03",
-				EntityId = 3
+				EntityId = new Guid(3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 			});
 
 			return cache;

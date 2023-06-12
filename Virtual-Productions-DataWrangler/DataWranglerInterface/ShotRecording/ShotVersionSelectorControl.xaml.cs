@@ -25,7 +25,7 @@ namespace DataWranglerInterface.ShotRecording
 
 		public delegate void ShotVersionSelected(DataEntityShotVersion? a_shotVersion);
 		public event ShotVersionSelected OnShotVersionSelected = delegate { };
-		public int SelectedVersionEntityId { get; private set; } = -1;
+		public Guid SelectedVersionEntityId { get; private set; } = Guid.Empty;
 
 		public ShotVersionSelectorControl()
 		{
@@ -37,12 +37,12 @@ namespace DataWranglerInterface.ShotRecording
 		{
 			ShotVersionSelectorEntry? version = (ShotVersionSelectorEntry?)ShotVersionSelectorDropDown.DropDown.SelectedItem;
 			OnShotVersionSelected.Invoke(version?.ShotVersionInfo);
-			SelectedVersionEntityId = version?.ShotVersionInfo.EntityId ?? -1;
+			SelectedVersionEntityId = version?.ShotVersionInfo.EntityId ?? Guid.Empty;
 		}
 
-		public void AsyncRefreshShotVersion(int a_shotId)
+		public void AsyncRefreshShotVersion(Guid a_shotId)
 		{
-			SelectedVersionEntityId = -1;
+			SelectedVersionEntityId = Guid.Empty;
 			ShotVersionSelectorDropDown.BeginAsyncDataRefresh<DataEntityShotVersion, ShotVersionSelectorEntry>(DataWranglerServiceProvider.Instance.TargetDataApi.GetVersionsForShot(a_shotId));
 		}
 

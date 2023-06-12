@@ -11,11 +11,11 @@ namespace DataWranglerServiceWorker
 	public class ImportedFileMetaData
 	{
 		[JsonProperty("project_id")]
-		public readonly int ProjectId;
+		public readonly Guid ProjectId;
 		[JsonProperty("shot_id")]
-		public readonly int ShotId;
+		public readonly Guid ShotId;
 		[JsonProperty("version_id")]
-		public readonly int VersionId;
+		public readonly Guid VersionId;
 
 		[JsonProperty("project_code")]
 		public readonly string ProjectName = "Unknown";
@@ -29,8 +29,8 @@ namespace DataWranglerServiceWorker
 
 		public ImportedFileMetaData(DataEntityShotVersion a_targetShotVersion, DataEntityCache a_dataCache)
 		{
-			ProjectId = a_targetShotVersion.EntityRelationships.Project?.EntityId?? -1;
-			ShotId = a_targetShotVersion.EntityRelationships.Parent?.EntityId ?? -1;
+			ProjectId = a_targetShotVersion.EntityRelationships.Project?.EntityId?? Guid.Empty;
+			ShotId = a_targetShotVersion.EntityRelationships.Parent?.EntityId ?? Guid.Empty;
 			VersionId = a_targetShotVersion.EntityId;
 
 			DataEntityProject? project = a_dataCache.FindEntityById<DataEntityProject>(ProjectId);

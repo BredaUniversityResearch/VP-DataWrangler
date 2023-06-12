@@ -18,7 +18,7 @@ namespace DataWranglerInterface.ShotRecording
 		private ActiveCameraHandler m_activeCameraHandler;
 		private IngestDataSourceHandlerCollection m_ingestDataHandler = new IngestDataSourceHandlerCollection();
 
-		public delegate void ShotVersionCreationDelegate(int a_shotId);
+		public delegate void ShotVersionCreationDelegate(Guid a_shotId);
 		public event ShotVersionCreationDelegate? OnNewShotVersionCreationStarted;
 
 		public delegate void ShotVersionCreatedDelegate(DataEntityShotVersion a_data);
@@ -73,7 +73,7 @@ namespace DataWranglerInterface.ShotRecording
 			CameraInfoDebug.SetTargetCamera(null);
 		}
 
-		private void OnSelectedProjectChanged(int a_projectId, string a_projectName)
+		private void OnSelectedProjectChanged(Guid a_projectId, string a_projectName)
 		{
 			ShotSelector.AsyncRefreshShots(a_projectId);
 		}
@@ -81,10 +81,10 @@ namespace DataWranglerInterface.ShotRecording
 		private void OnSelectedShotChanged(DataEntityShot? a_shotInfo)
 		{
 			ShotInfoDisplay.SetDisplayedShot(a_shotInfo);
-			ShotVersionInfoDisplay.OnShotSelected(a_shotInfo?.EntityId ?? -1);
+			ShotVersionInfoDisplay.OnShotSelected(a_shotInfo?.EntityId ?? Guid.Empty);
 		}
 
-		public void BeginAddShotVersion(int a_shotId)
+		public void BeginAddShotVersion(Guid a_shotId)
 		{
 			OnNewShotVersionCreationStarted?.Invoke(a_shotId);
 		}
@@ -101,7 +101,7 @@ namespace DataWranglerInterface.ShotRecording
 
 		private void OnRequestCreateNewShot(DataEntityShot a_gridEntityShotAttributes)
 		{
-			int projectId = ProjectSelector.SelectedProjectId;
+			Guid projectId = ProjectSelector.SelectedProjectId;
 			ShotSelector.OnNewShotCreationStarted();
 			DataWranglerServiceProvider.Instance.TargetDataApi.CreateNewShot(projectId, a_gridEntityShotAttributes).ContinueWith(a_task =>
 			{

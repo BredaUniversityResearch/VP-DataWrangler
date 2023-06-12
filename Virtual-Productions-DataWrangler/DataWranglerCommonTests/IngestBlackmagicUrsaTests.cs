@@ -10,6 +10,8 @@ namespace DataWranglerCommonTests
 		[Fact]
 		public void TryMatchBrawFile()
 		{
+			Guid targetGuid = new Guid(10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+
 			DataEntityCache entityCache = IngestTests.BuildTestCachedEntries();
 			entityCache.AddCachedEntity(new DataEntityShotVersion()
 			{
@@ -17,7 +19,7 @@ namespace DataWranglerCommonTests
 				Description = "This should be the one we link to for this unit test.",
 				Flagged = false,
 				ShotVersionName = "test_shot_10",
-				EntityId = 10
+				EntityId = targetGuid
 			});
 			IngestDataCache dataCache = new IngestDataCache();
 			dataCache.UpdateCache(entityCache);
@@ -26,7 +28,7 @@ namespace DataWranglerCommonTests
 
 			List<IngestDataSourceResolver.IngestFileEntry> filesToImport = resolver.ProcessDirectory(SampleFolder, "TEST", entityCache, dataCache);
 			Assert.True(filesToImport.Count == 1);
-			Assert.True(filesToImport[0].TargetShotVersion.EntityId == 10);
+			Assert.True(filesToImport[0].TargetShotVersion.EntityId == targetGuid);
 		}
 	}
 }

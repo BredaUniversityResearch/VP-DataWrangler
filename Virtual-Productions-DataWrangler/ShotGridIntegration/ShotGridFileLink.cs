@@ -34,15 +34,15 @@ internal class ShotGridFileLink
 	[JsonProperty("link_type")]
 	public string LinkType = "local";
 	[JsonProperty("local_storage")]
-	public ShotGridEntityReference? LocalStorageTarget;
+	public ShotGridEntityReference? LocalStorageTarget = null;
 	[JsonProperty("local_path")]
-	public string? LocalPath;
+	public string? LocalPath = null;
 	[JsonProperty("local_path_linux")]
-	public string? LocalPathLinux;
+	public string? LocalPathLinux = null;
 	[JsonProperty("local_path_mac")]
-	public string? LocalPathMac;
+	public string? LocalPathMac = null;
 	[JsonProperty("local_path_windows")]
-	public string? LocalPathWindows;
+	public string? LocalPathWindows = null;
 	[JsonProperty("name")]
 	public string FileName = "";
 	[JsonProperty("url")]

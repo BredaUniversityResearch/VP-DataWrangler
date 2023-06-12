@@ -12,17 +12,17 @@ namespace DataApiCommon
 		public readonly DataEntityCache LocalCache = new DataEntityCache();
 
 		public abstract Task<DataApiResponse<DataEntityProject[]>> GetActiveProjects();
-		public abstract Task<DataApiResponse<DataEntityFilePublish>> CreateFilePublish(int a_projectId, int a_parentId, int a_shotVersionId, DataEntityFilePublish a_publishData);
-		public abstract Task<DataApiResponse<DataEntityShot>> CreateNewShot(int a_projectId, DataEntityShot a_gridEntityShotAttributes);
-		public abstract Task<DataApiResponse<DataEntityShotVersion>> CreateNewShotVersion(int a_projectSelectorSelectedProjectId, int a_targetShotId, DataEntityShotVersion a_versionData);
+		public abstract Task<DataApiResponse<DataEntityFilePublish>> CreateFilePublish(Guid a_projectId, Guid a_parentId, Guid a_shotVersionId, DataEntityFilePublish a_publishData);
+		public abstract Task<DataApiResponse<DataEntityShot>> CreateNewShot(Guid a_projectId, DataEntityShot a_gridEntityShotAttributes);
+		public abstract Task<DataApiResponse<DataEntityShotVersion>> CreateNewShotVersion(Guid a_projectId, Guid a_targetShotId, DataEntityShotVersion a_versionData);
 		public abstract Task<DataApiResponse<DataEntityLocalStorage[]>> GetLocalStorages();
-		public abstract Task<DataApiResponse<DataEntityShot[]>> GetShotsForProject(int a_projectId);
+		public abstract Task<DataApiResponse<DataEntityShot[]>> GetShotsForProject(Guid a_projectId);
 
 		public abstract Task<DataApiResponse<DataEntityPublishedFileType[]>> GetPublishedFileTypes();
 
-		public abstract Task<DataApiResponse<DataEntityShotVersion[]>> GetVersionsForShot(int a_shotEntityId);
+		public abstract Task<DataApiResponse<DataEntityShotVersion[]>> GetVersionsForShot(Guid a_shotEntityId);
 
-		public async Task<DataApiResponse<DataEntityShotVersion[]>> GetVersionsForShot(int a_shotEntityId, Comparison<DataEntityShotVersion> a_sortComparer)
+		public async Task<DataApiResponse<DataEntityShotVersion[]>> GetVersionsForShot(Guid a_shotEntityId, Comparison<DataEntityShotVersion> a_sortComparer)
 		{
 			DataApiResponse<DataEntityShotVersion[]> unsorted = await GetVersionsForShot(a_shotEntityId);
 			if (!unsorted.IsError)
@@ -35,7 +35,7 @@ namespace DataApiCommon
 
 		public abstract Task<DataApiResponseGeneric> UpdateEntityProperties(DataEntityBase a_targetEntity, Dictionary<PropertyInfo, object?> a_changedValues);
 
-		public async Task<DataApiResponse<TDataEntityType>> UpdateEntityProperties<TDataEntityType>(int a_entityId, Dictionary<PropertyInfo, object?> a_changedValues)
+		public async Task<DataApiResponse<TDataEntityType>> UpdateEntityProperties<TDataEntityType>(Guid a_entityId, Dictionary<PropertyInfo, object?> a_changedValues)
 			where TDataEntityType: DataEntityBase
 		{
 			TDataEntityType? entity = LocalCache.FindEntityById<TDataEntityType>(a_entityId);

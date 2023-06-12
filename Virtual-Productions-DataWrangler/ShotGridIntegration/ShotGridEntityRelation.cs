@@ -8,7 +8,7 @@ namespace ShotGridIntegration
 		public class RelationAttributes
 		{
 			[JsonProperty("id")]
-			public int RelationId;
+			public int RelationId = 0;
 			[JsonProperty("code")]
 			public string Code = "";
 			[JsonProperty("type")]

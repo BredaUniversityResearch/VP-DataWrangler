@@ -11,6 +11,17 @@ public class DataApiErrorDetails
 
 	public RequestError[] Errors = Array.Empty<RequestError>();
 
+	public DataApiErrorDetails()
+	{
+	}
+
+	public DataApiErrorDetails(string a_mainApiError)
+	{
+		Errors = new []{
+			new RequestError{ Description = a_mainApiError }
+		};
+	}
+
 	public override string ToString()
 	{
 		StringBuilder sb = new StringBuilder(256);

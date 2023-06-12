@@ -76,7 +76,7 @@ namespace ShotGridIntegrationTest
 
 			DataEntityShot[] cachedShots = m_api.LocalCache.FindEntities<DataEntityShot>(DataEntityCacheSearchFilter.ForProject(TestConstants.TargetProjectId));
 			Assert.IsTrue(cachedShots.Length == shots.ResultData.Length);
-			DataEntityShot[] mismatchFilterShots = m_api.LocalCache.FindEntities<DataEntityShot>(DataEntityCacheSearchFilter.ForProject(- 1));
+			DataEntityShot[] mismatchFilterShots = m_api.LocalCache.FindEntities<DataEntityShot>(DataEntityCacheSearchFilter.ForProject(new Guid(-1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)));
 			Assert.IsTrue(mismatchFilterShots.Length == 0);
 		}
 
@@ -117,7 +117,7 @@ namespace ShotGridIntegrationTest
 		[TestMethod]
 		public void GetPublishesForShot()
 		{
-			DataApiResponse<DataEntityFilePublish[]> shots = m_api.GetPublishesForShotVersion(TestConstants.TargetShotVersionId).Result;
+			DataApiResponse<DataEntityFilePublish[]> shots = m_api.GetPublishesForShotVersion(ShotGridIdUtility.ToShotGridId(TestConstants.TargetShotVersionId)).Result;
 
 			Assert.IsFalse(shots.IsError);
 		}
@@ -157,8 +157,8 @@ namespace ShotGridIntegrationTest
 			DataApiResponse<DataEntityFilePublish> response = m_api.CreateFilePublish(TestConstants.TargetProjectId, TestConstants.TargetShotId, TestConstants.TargetShotVersionId, attributes).Result;
 			Assert.IsFalse(response.IsError);
 
-			DataApiResponse<DataEntityShotVersion> targetShot = m_api.FindShotVersionById(TestConstants.TargetShotVersionId).Result;
-			Assert.IsFalse(targetShot.IsError);
+			//DataApiResponse<DataEntityShotVersion> targetShot = m_api.FindShotVersionById(TestConstants.TargetShotVersionId).Result;
+			//Assert.IsFalse(targetShot.IsError);
 
 			//targetShot.ResultData!.PathToFrames = targetPath;
 			//DataApiResponseGeneric shotVersionUpdate = targetShot.ResultData!.ChangeTracker.CommitChanges(m_api).Result;

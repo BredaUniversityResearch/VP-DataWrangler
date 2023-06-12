@@ -32,7 +32,7 @@ public class DataWranglerEventDelegates
 	    OnRecordingFinished(a_sourceCamera, a_shotMetaData);
     }
 
-    public void NotifyShotCreated(int a_shotId)
+    public void NotifyShotCreated(Guid a_shotId)
     {
 	    OnShotCreated();
     }

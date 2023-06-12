@@ -18,7 +18,7 @@ namespace DataWranglerCommon.IngestDataSources
 			}
 		};
 
-		private readonly Dictionary<int, CacheEntry> m_cachedEntriesByShotId = new Dictionary<int, CacheEntry>();
+		private readonly Dictionary<Guid, CacheEntry> m_cachedEntriesByShotId = new Dictionary<Guid, CacheEntry>();
 
 		public void UpdateCache(DataEntityCache a_cache)
 		{

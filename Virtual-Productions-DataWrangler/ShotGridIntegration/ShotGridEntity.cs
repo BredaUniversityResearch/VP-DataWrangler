@@ -6,6 +6,7 @@ namespace ShotGridIntegration;
 
 internal abstract class ShotGridEntity
 {
+
 	[JsonProperty("id")]
 	public int Id;
 
@@ -26,7 +27,7 @@ internal abstract class ShotGridEntity
 	protected ShotGridEntity(DataEntityBase a_entity)
 		: this()
 	{
-		Id = a_entity.EntityId;
+		Id = ShotGridIdUtility.ToShotGridId(a_entity.EntityId);
 		if (a_entity.EntityRelationships.Parent != null)
 		{
 			EntityRelationships.Parent = new ShotGridEntityReference(a_entity.EntityRelationships.Parent);
@@ -40,7 +41,7 @@ internal abstract class ShotGridEntity
 
 	public void CopyToDataEntity(DataEntityBase a_entity)
 	{
-		a_entity.EntityId = Id;
+		a_entity.EntityId = ShotGridIdUtility.ToDataEntityId(Id);
 		a_entity.EntityRelationships.Parent = EntityRelationships.Parent?.ToDataEntity();
 		a_entity.EntityRelationships.Project = EntityRelationships.Project?.ToDataEntity();
 	}

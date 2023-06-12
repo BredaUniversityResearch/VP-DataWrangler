@@ -21,14 +21,14 @@ internal class ShotGridEntityReference
 	public ShotGridEntityReference(DataEntityReference a_dataEntityReference)
 	{
 		EntityName = a_dataEntityReference.EntityName;
-		Id = a_dataEntityReference.EntityId;
+		Id = ShotGridIdUtility.ToShotGridId(a_dataEntityReference.EntityId);
 		EntityType = ShotGridEntityTypeInfo.FromDataEntityType(a_dataEntityReference.EntityType!).CamelCase;
 	}
 
-	public ShotGridEntityReference(ShotGridEntityTypeInfo a_entityType, int a_entityId)
+	public ShotGridEntityReference(ShotGridEntityTypeInfo a_entityType, Guid a_entityId)
 	{
 		EntityType = a_entityType.CamelCase;
-		Id = a_entityId;
+		Id = ShotGridIdUtility.ToShotGridId(a_entityId);
 	}
 
 	public static ShotGridEntityReference Create<TEntityType>(TEntityType a_target)
@@ -39,7 +39,7 @@ internal class ShotGridEntityReference
 
 	public static ShotGridEntityReference Create(ShotGridEntityTypeInfo a_shotGridTypeTypeInfo, ShotGridEntity a_target)
 	{
-		ShotGridEntityReference entityRef = new ShotGridEntityReference(a_shotGridTypeTypeInfo, a_target.Id);
+		ShotGridEntityReference entityRef = new ShotGridEntityReference(a_shotGridTypeTypeInfo, ShotGridIdUtility.ToDataEntityId(a_target.Id));
 		return entityRef;
 	}
 
@@ -50,6 +50,6 @@ internal class ShotGridEntityReference
 			throw new Exception();
 		}
 
-		return new DataEntityReference() { EntityId = Id, EntityType = ShotGridEntityTypeInfo.FromCamelCaseName(EntityType).DataEntityType, EntityName = EntityName};
+		return new DataEntityReference() { EntityId = ShotGridIdUtility.ToDataEntityId(Id), EntityType = ShotGridEntityTypeInfo.FromCamelCaseName(EntityType).DataEntityType, EntityName = EntityName};
 	}
 };

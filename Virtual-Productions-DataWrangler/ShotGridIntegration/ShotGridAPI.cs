@@ -143,17 +143,17 @@ namespace ShotGridIntegration
 				JsonAttributeFieldEnumerator.Get<ShotGridEntityProject.ProjectAttributes>(), null);
 		}
 
-		public override async Task<DataApiResponse<DataEntityShot[]>> GetShotsForProject(int a_projectId)
+		public override async Task<DataApiResponse<DataEntityShot[]>> GetShotsForProject(Guid a_projectId)
 		{
-			ShotGridSimpleSearchFilter filter = ShotGridSimpleSearchFilter.ForProject(a_projectId);
+			ShotGridSimpleSearchFilter filter = ShotGridSimpleSearchFilter.ForProject(ShotGridIdUtility.ToShotGridId(a_projectId));
 			return await RemoteFindParseAndConvert<DataEntityShot[]>(ShotGridEntityTypeInfo.Shot, filter,
 				JsonAttributeFieldEnumerator.Get<ShotGridEntityShotAttributes>(), null);
 		}
 
-		public override async Task<DataApiResponse<DataEntityShotVersion[]>> GetVersionsForShot(int a_shotId)
+		public override async Task<DataApiResponse<DataEntityShotVersion[]>> GetVersionsForShot(Guid a_shotId)
 		{
 			ShotGridSimpleSearchFilter filter = new ShotGridSimpleSearchFilter();
-			filter.FieldIs("entity.Shot.id", a_shotId);
+			filter.FieldIs("entity.Shot.id", ShotGridIdUtility.ToShotGridId(a_shotId));
 			return await RemoteFindParseAndConvert<DataEntityShotVersion[]>(ShotGridEntityTypeInfo.ShotVersion, filter, 
 				JsonAttributeFieldEnumerator.Get<ShotVersionAttributes>(), null);
 		}
@@ -381,19 +381,19 @@ namespace ShotGridIntegration
 			return m_authentication;
 		}
 
-		public override async Task<DataApiResponse<DataEntityShot>> CreateNewShot(int a_projectId, DataEntityShot a_entityShot)
+		public override async Task<DataApiResponse<DataEntityShot>> CreateNewShot(Guid a_projectId, DataEntityShot a_entityShot)
 		{
 			ShotGridEntityShot shot = new ShotGridEntityShot(a_entityShot);
 			return await CreateNewEntity<ShotGridEntityShot, ShotGridEntityShotAttributes, DataEntityShot>(a_projectId, shot.Attributes, null);
 		}
 
-		public override async Task<DataApiResponse<DataEntityShotVersion>> CreateNewShotVersion(int a_projectId, int a_parentShotId, DataEntityShotVersion a_versionData)
+		public override async Task<DataApiResponse<DataEntityShotVersion>> CreateNewShotVersion(Guid a_projectId, Guid a_parentShotId, DataEntityShotVersion a_versionData)
 		{
 			ShotGridEntityShotVersion shotVersion = new ShotGridEntityShotVersion(a_versionData);
 			return await CreateNewEntity<ShotGridEntityShotVersion, ShotVersionAttributes, DataEntityShotVersion>(a_projectId, shotVersion.Attributes, new ShotGridEntityReference(ShotGridEntityTypeInfo.Shot, a_parentShotId));
 		}
 
-		private async Task<DataApiResponse<TResultEntityType>> CreateNewEntity<TShotGridEntityType, TAttributesType, TResultEntityType>(int a_projectId, TAttributesType a_attributes, ShotGridEntityReference? a_parent)
+		private async Task<DataApiResponse<TResultEntityType>> CreateNewEntity<TShotGridEntityType, TAttributesType, TResultEntityType>(Guid a_projectId, TAttributesType a_attributes, ShotGridEntityReference? a_parent)
 			where TShotGridEntityType : ShotGridEntity
 			where TResultEntityType: DataEntityBase
 			where TAttributesType: notnull
@@ -413,7 +413,7 @@ namespace ShotGridIntegration
 			return ConvertResponse<TResultEntityType>(apiResponse);
 		}
 
-		public override async Task<DataApiResponse<DataEntityFilePublish>> CreateFilePublish(int a_projectId, int a_shotId, int a_versionId, DataEntityFilePublish a_publishAttributes)
+		public override async Task<DataApiResponse<DataEntityFilePublish>> CreateFilePublish(Guid a_projectId, Guid a_shotId, Guid a_versionId, DataEntityFilePublish a_publishAttributes)
 		{
 			if (a_publishAttributes.ShotVersion != null && a_publishAttributes.ShotVersion.EntityId != a_versionId)
 			{
@@ -522,7 +522,7 @@ namespace ShotGridIntegration
 			HttpRequestMessage request = new HttpRequestMessage
 			{
 				Method = HttpMethod.Put,
-				RequestUri = new Uri($"{BaseUrl}entity/{typeInfo.SnakeCasePlural}/{a_entity.EntityId}"),
+				RequestUri = new Uri($"{BaseUrl}entity/{typeInfo.SnakeCasePlural}/{ShotGridIdUtility.ToShotGridId(a_entity.EntityId)}"),
 				Headers = {
 					{ HttpRequestHeader.Accept.ToString(), "application/json" },
 					{ HttpRequestHeader.AcceptEncoding.ToString(), "gzip, deflate, br" },
@@ -574,7 +574,7 @@ namespace ShotGridIntegration
 					if (relation.Attributes.Code == a_code)
 					{
 						return new DataApiResponse<DataEntityPublishedFileType>(new DataEntityPublishedFileType() { 
-							EntityId = relation.Id,
+							EntityId = ShotGridIdUtility.ToDataEntityId(relation.Id),
 							FileType = relation.Attributes.Code
 							}, null);
 					}

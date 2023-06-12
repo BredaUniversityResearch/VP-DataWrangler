@@ -12,7 +12,7 @@ namespace DataWranglerInterface.ShotRecording
 	{
 		private class ShotSelectorEntry
 		{
-			public readonly int ShotId;
+			public readonly Guid ShotId;
 			public readonly DataEntityShot ShotInfo;
 
 			public ShotSelectorEntry(DataEntityShot a_shotInfo)
@@ -32,7 +32,7 @@ namespace DataWranglerInterface.ShotRecording
 
 		public event Action OnNewShotCreatedButtonClicked = delegate { };
 
-		public int SelectedShotId { get; private set; }
+		public Guid SelectedShotId { get; private set; }
 
 		public ShotSelectorControl()
 		{
@@ -45,10 +45,10 @@ namespace DataWranglerInterface.ShotRecording
 		{
 			ShotSelectorEntry? entry = (ShotSelectorEntry?) ShotSelectorDropDown.DropDown.SelectedItem;
 			OnSelectedShotChanged.Invoke(entry?.ShotInfo);
-			SelectedShotId = entry?.ShotId ?? -1;
+			SelectedShotId = entry?.ShotId ?? Guid.Empty;
 		}
 
-		public void AsyncRefreshShots(int a_projectId)
+		public void AsyncRefreshShots(Guid a_projectId)
 		{
 			ShotSelectorDropDown.BeginAsyncDataRefresh<DataEntityShot, ShotSelectorEntry>(DataWranglerServiceProvider.Instance.TargetDataApi.GetShotsForProject(a_projectId));
 		}

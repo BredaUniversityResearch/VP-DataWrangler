@@ -9,7 +9,7 @@ namespace ShotGridIntegration
 		[JsonProperty("entity")]
 		public ShotGridEntityReference? ParentShotGridEntity = null;
 
-		public ShotGridEntityCreateBaseData(int a_projectId, ShotGridEntityReference? a_parentEntity)
+		public ShotGridEntityCreateBaseData(Guid a_projectId, ShotGridEntityReference? a_parentEntity)
 		{
 			Project = new ShotGridEntityReference(ShotGridEntityTypeInfo.Project, a_projectId);
 			ParentShotGridEntity = a_parentEntity;

@@ -78,8 +78,8 @@ namespace DataWranglerInterface.ShotRecording
 				throw new Exception();
 			}
 
-			int targetShotId = m_shotSelectorControl.SelectedShotId;
-			if (targetShotId != -1)
+			Guid targetShotId = m_shotSelectorControl.SelectedShotId;
+			if (targetShotId != Guid.Empty)
 			{
 				m_parentPage?.BeginAddShotVersion(targetShotId);
 				DataWranglerServiceProvider.Instance.TargetDataApi.GetVersionsForShot(targetShotId, (a_lhs, a_rhs) => string.Compare(a_lhs.ShotVersionName, a_rhs.ShotVersionName, StringComparison.Ordinal)).ContinueWith(a_task => {
