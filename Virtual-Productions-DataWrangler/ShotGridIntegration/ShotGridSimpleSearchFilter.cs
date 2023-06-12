@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 namespace ShotGridIntegration
 {
 	[JsonConverter(typeof(ShotGridSimpleSearchFilterConverter))]
-	public class ShotGridSimpleSearchFilter
+	internal class ShotGridSimpleSearchFilter
 	{
 		private readonly List<ShotGridSearchCondition> m_conditions = new List<ShotGridSearchCondition>();
 		public IReadOnlyList<ShotGridSearchCondition> Conditions => m_conditions;
@@ -19,11 +19,6 @@ namespace ShotGridIntegration
 			ShotGridSimpleSearchFilter filter = new ShotGridSimpleSearchFilter();
 			filter.FieldIs("project.Project.id", a_projectId);
 			return filter;
-		}
-
-		public ShotGridEntityCacheSearchFilter BuildCacheFilter(ShotGridEntityTypeInfo a_entityType)
-		{
-			return new ShotGridEntityCacheSearchFilter(a_entityType, m_conditions);
 		}
 	}
 

@@ -6,7 +6,7 @@ using Newtonsoft.Json.Serialization;
 
 namespace ShotGridIntegration;
 
-public class ShotGridEntityTypeInfo
+internal class ShotGridEntityTypeInfo
 {
 	public static readonly ShotGridEntityTypeInfo Invalid = new ShotGridEntityTypeInfo(typeof(ShotGridEntity), "Invalid", null);
 

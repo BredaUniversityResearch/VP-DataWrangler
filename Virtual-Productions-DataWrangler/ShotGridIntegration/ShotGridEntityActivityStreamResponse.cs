@@ -17,7 +17,7 @@ namespace ShotGridIntegration
 		Delete
 	}
 
-	public class ShotGridEntityActivityStreamResponse : ShotGridEntity
+	internal class ShotGridEntityActivityStreamResponse : ShotGridEntity
 	{
 		public class ShotGridActivityUpdate
 		{

@@ -3,7 +3,7 @@ using Newtonsoft.Json.Linq;
 
 namespace ShotGridIntegration
 {
-	public class JsonConverterShotGridEntityReferenceRelationships : JsonConverter<ShotGridEntityReference>
+	internal class JsonConverterShotGridEntityReferenceRelationships : JsonConverter<ShotGridEntityReference>
 	{
 		public override bool CanWrite => false;
 

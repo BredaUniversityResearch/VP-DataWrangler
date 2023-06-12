@@ -40,12 +40,14 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlackMagicCameraControlBlue
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataWranglerSourceAnalysisAttributes", "DataWranglerSourceAnalysisAttributes\DataWranglerSourceAnalysisAttributes.csproj", "{767E262B-4102-4B4C-BEB8-B0786FF01CC0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataApiFileSystem", "DataApiFileSystem\DataApiFileSystem.csproj", "{313B3E45-CA55-45FF-98FE-A654E1244B73}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataApiFileSystem", "DataApiFileSystem\DataApiFileSystem.csproj", "{313B3E45-CA55-45FF-98FE-A654E1244B73}"
 	ProjectSection(ProjectDependencies) = postProject
 		{16A29701-EDEB-40FB-BA91-EAC4D932D4E1} = {16A29701-EDEB-40FB-BA91-EAC4D932D4E1}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataApiCommon", "DataApiCommon\DataApiCommon.csproj", "{16A29701-EDEB-40FB-BA91-EAC4D932D4E1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataApiCommon", "DataApiCommon\DataApiCommon.csproj", "{16A29701-EDEB-40FB-BA91-EAC4D932D4E1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataApiTests", "DataApiTests\DataApiTests.csproj", "{E8835463-D3CF-4FB1-B551-7E3A3B8A91B3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -285,6 +287,18 @@ Global
 		{16A29701-EDEB-40FB-BA91-EAC4D932D4E1}.Release|x64.Build.0 = Release|Any CPU
 		{16A29701-EDEB-40FB-BA91-EAC4D932D4E1}.Release|x86.ActiveCfg = Release|Any CPU
 		{16A29701-EDEB-40FB-BA91-EAC4D932D4E1}.Release|x86.Build.0 = Release|Any CPU
+		{E8835463-D3CF-4FB1-B551-7E3A3B8A91B3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E8835463-D3CF-4FB1-B551-7E3A3B8A91B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E8835463-D3CF-4FB1-B551-7E3A3B8A91B3}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{E8835463-D3CF-4FB1-B551-7E3A3B8A91B3}.Debug|x64.Build.0 = Debug|Any CPU
+		{E8835463-D3CF-4FB1-B551-7E3A3B8A91B3}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{E8835463-D3CF-4FB1-B551-7E3A3B8A91B3}.Debug|x86.Build.0 = Debug|Any CPU
+		{E8835463-D3CF-4FB1-B551-7E3A3B8A91B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E8835463-D3CF-4FB1-B551-7E3A3B8A91B3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E8835463-D3CF-4FB1-B551-7E3A3B8A91B3}.Release|x64.ActiveCfg = Release|Any CPU
+		{E8835463-D3CF-4FB1-B551-7E3A3B8A91B3}.Release|x64.Build.0 = Release|Any CPU
+		{E8835463-D3CF-4FB1-B551-7E3A3B8A91B3}.Release|x86.ActiveCfg = Release|Any CPU
+		{E8835463-D3CF-4FB1-B551-7E3A3B8A91B3}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

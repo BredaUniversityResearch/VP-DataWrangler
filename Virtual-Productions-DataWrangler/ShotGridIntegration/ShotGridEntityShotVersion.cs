@@ -20,7 +20,7 @@ namespace ShotGridIntegration
 		public string? PathToFrames; /*Full-Res file path*/
 	};
 
-	public class ShotGridEntityShotVersion: ShotGridEntity
+	internal class ShotGridEntityShotVersion: ShotGridEntity
 	{
 		[JsonProperty("attributes")] public ShotVersionAttributes Attributes = new ShotVersionAttributes();
 

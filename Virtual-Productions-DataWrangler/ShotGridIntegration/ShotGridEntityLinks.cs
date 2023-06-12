@@ -2,7 +2,7 @@
 
 namespace ShotGridIntegration;
 
-public class ShotGridEntityLinks
+internal class ShotGridEntityLinks
 {
 	[JsonProperty("self")]
 	public string? Self;

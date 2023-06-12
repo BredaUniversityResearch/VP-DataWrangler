@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 
 namespace ShotGridIntegration;
 
-public class ShotGridEntityReference
+internal class ShotGridEntityReference
 {
 	[JsonProperty("type")]
 	public string? EntityType = null;

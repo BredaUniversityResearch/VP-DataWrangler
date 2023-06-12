@@ -3,7 +3,7 @@
 namespace ShotGridIntegration
 {
 	[SuppressMessage("ReSharper", "InconsistentNaming")]
-	public class ShotGridDataRequestQuery
+	internal class ShotGridDataRequestQuery
 	{
 		public ShotGridSimpleSearchFilter filters;
 		public string[] fields;

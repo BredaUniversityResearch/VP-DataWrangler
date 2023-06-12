@@ -1,20 +1,13 @@
 ﻿using System.Threading.Tasks;
-using DataApiCommon;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ShotGridIntegration;
+using DataApiCommon;
 
 namespace ShotGridIntegrationTest
 {
 	[TestClass]
 	public class DataEntityChangeTrackerTests
 	{
-		[TestMethod]
-		public void TestNotifyPropertyChanged()
-		{
-			ShotGridEntityShotVersion versionEntity = new ShotGridEntityShotVersion();
-			versionEntity.Attributes.Flagged = true;
-		}
-
 		[TestMethod]
 		public void PropagateChangeBack()
 		{

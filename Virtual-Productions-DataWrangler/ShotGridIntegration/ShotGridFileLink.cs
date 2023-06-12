@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 
 namespace ShotGridIntegration;
 
-public class ShotGridFileLink
+internal class ShotGridFileLink
 {
 	public ShotGridFileLink()
 	{

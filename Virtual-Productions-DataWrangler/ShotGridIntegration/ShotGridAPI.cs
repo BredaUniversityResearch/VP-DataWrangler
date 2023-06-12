@@ -393,7 +393,7 @@ namespace ShotGridIntegration
 			return await CreateNewEntity<ShotGridEntityShotVersion, ShotVersionAttributes, DataEntityShotVersion>(a_projectId, shotVersion.Attributes, new ShotGridEntityReference(ShotGridEntityTypeInfo.Shot, a_parentShotId));
 		}
 
-		public async Task<DataApiResponse<TResultEntityType>> CreateNewEntity<TShotGridEntityType, TAttributesType, TResultEntityType>(int a_projectId, TAttributesType a_attributes, ShotGridEntityReference? a_parent)
+		private async Task<DataApiResponse<TResultEntityType>> CreateNewEntity<TShotGridEntityType, TAttributesType, TResultEntityType>(int a_projectId, TAttributesType a_attributes, ShotGridEntityReference? a_parent)
 			where TShotGridEntityType : ShotGridEntity
 			where TResultEntityType: DataEntityBase
 			where TAttributesType: notnull

@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 
 namespace ShotGridIntegration
 {
-	public partial class ShotGridEntityShotAttributes
+	internal partial class ShotGridEntityShotAttributes
 	{
 		[JsonProperty("code"), AutoNotify] private string m_shotCode = "";
 		[JsonProperty("description"), AutoNotify] private string m_description = "";
@@ -14,7 +14,7 @@ namespace ShotGridIntegration
 		[JsonProperty("project"), AutoNotify] private ShotGridEntityReference? m_project;
 	};
 
-	public class ShotGridEntityShot: ShotGridEntity
+	internal class ShotGridEntityShot: ShotGridEntity
 	{
 		[JsonProperty("attributes")]
 		public readonly ShotGridEntityShotAttributes Attributes = new ShotGridEntityShotAttributes();

@@ -3,7 +3,7 @@ using Newtonsoft.Json.Linq;
 
 namespace ShotGridIntegration
 {
-	public class JsonConverterShotGridEntityName: JsonConverter<ShotGridEntityTypeInfo>
+	internal class JsonConverterShotGridEntityName: JsonConverter<ShotGridEntityTypeInfo>
 	{
 		public override void WriteJson(JsonWriter writer, ShotGridEntityTypeInfo? value, JsonSerializer serializer)
 		{

@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 
 namespace ShotGridIntegration
 {
-	public class ShotGridEntityAttachment : ShotGridEntity
+	internal class ShotGridEntityAttachment : ShotGridEntity
 	{
 		public class AttachmentAttributes
 		{

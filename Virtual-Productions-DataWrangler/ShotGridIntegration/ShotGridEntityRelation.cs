@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 
 namespace ShotGridIntegration
 {
-	public class ShotGridEntityRelation : ShotGridEntity
+	internal class ShotGridEntityRelation : ShotGridEntity
 	{
 		public class RelationAttributes
 		{
@@ -24,7 +24,7 @@ namespace ShotGridIntegration
 		}
 	};
 
-	public class ShotGridEntityRelationCreateData
+	internal class ShotGridEntityRelationCreateData
 	{
 		[JsonProperty("id")]
 		public int RelationId;

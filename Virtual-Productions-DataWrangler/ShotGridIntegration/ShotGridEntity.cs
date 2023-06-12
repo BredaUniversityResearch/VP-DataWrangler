@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 
 namespace ShotGridIntegration;
 
-public abstract class ShotGridEntity
+internal abstract class ShotGridEntity
 {
 	[JsonProperty("id")]
 	public int Id;
@@ -57,7 +57,7 @@ public abstract class ShotGridEntity
 
 }
 
-public class ShotGridEntityRelationships
+internal class ShotGridEntityRelationships
 {
 	[JsonProperty("project"), JsonConverter(typeof(JsonConverterShotGridEntityReferenceRelationships))]
 	public ShotGridEntityReference? Project;
