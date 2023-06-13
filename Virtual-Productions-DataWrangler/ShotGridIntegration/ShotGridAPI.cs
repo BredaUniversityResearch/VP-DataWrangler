@@ -381,9 +381,9 @@ namespace ShotGridIntegration
 			return m_authentication;
 		}
 
-		public override async Task<DataApiResponse<DataEntityShot>> CreateNewShot(Guid a_projectId, DataEntityShot a_entityShot)
+		public override async Task<DataApiResponse<DataEntityShot>> CreateNewShot(Guid a_projectId, DataEntityShot a_shotData)
 		{
-			ShotGridEntityShot shot = new ShotGridEntityShot(a_entityShot);
+			ShotGridEntityShot shot = new ShotGridEntityShot(a_shotData);
 			return await CreateNewEntity<ShotGridEntityShot, ShotGridEntityShotAttributes, DataEntityShot>(a_projectId, shot.Attributes, null);
 		}
 

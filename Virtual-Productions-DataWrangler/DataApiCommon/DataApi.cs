@@ -12,8 +12,8 @@ namespace DataApiCommon
 		public readonly DataEntityCache LocalCache = new DataEntityCache();
 
 		public abstract Task<DataApiResponse<DataEntityProject[]>> GetActiveProjects();
-		public abstract Task<DataApiResponse<DataEntityFilePublish>> CreateFilePublish(Guid a_projectId, Guid a_parentId, Guid a_shotVersionId, DataEntityFilePublish a_publishData);
-		public abstract Task<DataApiResponse<DataEntityShot>> CreateNewShot(Guid a_projectId, DataEntityShot a_gridEntityShotAttributes);
+		public abstract Task<DataApiResponse<DataEntityFilePublish>> CreateFilePublish(Guid a_projectId, Guid a_shotId, Guid a_shotVersionId, DataEntityFilePublish a_publishData);
+		public abstract Task<DataApiResponse<DataEntityShot>> CreateNewShot(Guid a_projectId, DataEntityShot a_shotData);
 		public abstract Task<DataApiResponse<DataEntityShotVersion>> CreateNewShotVersion(Guid a_projectId, Guid a_targetShotId, DataEntityShotVersion a_versionData);
 		public abstract Task<DataApiResponse<DataEntityLocalStorage[]>> GetLocalStorages();
 		public abstract Task<DataApiResponse<DataEntityShot[]>> GetShotsForProject(Guid a_projectId);

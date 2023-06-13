@@ -29,7 +29,7 @@ public class DataApiResponse<TSuccessDataType>: DataApiResponseGeneric
 	public DataApiResponse(DataApiResponseGeneric a_genericResponse)
 		: base(a_genericResponse.ResultDataGeneric, a_genericResponse.ErrorInfo)
 	{
-		if (!(ResultDataGeneric is TSuccessDataType))
+		if (ResultDataGeneric != null && !(ResultDataGeneric is TSuccessDataType))
 		{
 			throw new Exception($"Failed to cast type {a_genericResponse.GetType()} to type {typeof(TSuccessDataType)}");
 		}
