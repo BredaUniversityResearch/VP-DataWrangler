@@ -48,7 +48,7 @@ namespace DataApiCommon
 			Dictionary<PropertyInfo, object?> changedValues = new Dictionary<PropertyInfo, object?>(m_changedFields);
 			m_changedFields.Clear();
 
-			return Task.Run(() => a_targetApi.UpdateEntityProperties(m_targetEntity, changedValues));
+			return a_targetApi.UpdateEntityProperties(m_targetEntity, changedValues);
 		}
 
 		public bool HasAnyUncommittedChanges()

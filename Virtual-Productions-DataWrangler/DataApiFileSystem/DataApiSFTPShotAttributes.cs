@@ -11,6 +11,9 @@ internal class DataApiSFTPShotAttributes
 	[JsonProperty("shot_name")]
 	public string ShotName = "";
 
+	[JsonProperty("description")]
+	public string Description = "";
+
 	public DataApiSFTPShotAttributes()
 	{
 	}
@@ -24,6 +27,7 @@ internal class DataApiSFTPShotAttributes
 	{
 		EntityId = a_dataEntity.EntityId;
 		ShotName = a_dataEntity.ShotName;
+		Description = a_dataEntity.Description;
 	}
 
 	public DataEntityShot ToDataEntity(DataEntityProject a_ownerProject)
@@ -32,6 +36,7 @@ internal class DataApiSFTPShotAttributes
 		{
 			EntityId = EntityId,
 			ShotName = ShotName,
+			Description = Description,
 			EntityRelationships =
 			{
 				Project = new DataEntityReference(a_ownerProject)

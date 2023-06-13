@@ -11,7 +11,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\CommonLogging\CommonLogging.csproj" />
     <ProjectReference Include="..\DataApiCommon\DataApiCommon.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="nas.pem">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

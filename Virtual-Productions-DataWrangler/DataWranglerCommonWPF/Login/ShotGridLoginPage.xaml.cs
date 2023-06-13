@@ -11,7 +11,7 @@ namespace DataWranglerCommonWPF.Login
 	/// <summary>
 	/// Interaction logic for LoginPage.xaml
 	/// </summary>
-	public partial class LoginPage : Page
+	public partial class ShotGridLoginPage : Page
 	{
 		private const bool AcceptInvalidCredentials = false;
 
@@ -22,7 +22,7 @@ namespace DataWranglerCommonWPF.Login
 		private ShotGridAPI? m_targetAPI;
 		private ILoginCredentialProvider? m_credentialProvider;
 
-		public LoginPage()
+		public ShotGridLoginPage()
 		{
 			InitializeComponent();
 

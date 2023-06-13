@@ -7,5 +7,5 @@
         xmlns:login="clr-namespace:DataWranglerCommonWPF.Login;assembly=DataWranglerCommonWPF"
         mc:Ignorable="d"
         Title="DataWrangler Authentication" Height="450" Width="800">
-	<login:LoginPage x:Name="LoginContent"/>
+	<login:ShotGridLoginPage x:Name="LoginContent"/>
 </Window>

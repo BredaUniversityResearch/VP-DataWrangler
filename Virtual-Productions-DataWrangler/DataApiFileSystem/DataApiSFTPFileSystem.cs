@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using System.Reflection.PortableExecutable;
 using System.Text;
+using CommonLogging;
 using DataApiCommon;
 using Newtonsoft.Json;
 using Renci.SshNet;
@@ -28,6 +29,17 @@ namespace DataApiSFTP
 		private const string ShotVersionMetaFileName = "IngestinatorShotVersionMeta.json";
 
 		private SftpClient? m_client = null;
+
+		public bool Connect(DataApiSFTPConfig a_config)
+		{
+			if (a_config.SFTPKeyFile == null)
+			{
+				Logger.LogError("SFTPApi", "Key file not valid for SFTP connection");
+				return false;
+			}
+
+			return Connect(a_config.TargetHost, a_config.SFTPUserName, a_config.SFTPKeyFile);
+		}
 
 		public bool Connect(string a_hostName, string a_userName, PrivateKeyFile a_keyFile)
 		{
@@ -270,28 +282,31 @@ namespace DataApiSFTP
 
 				List<DataEntityShot> shots = new List<DataEntityShot>();
 				string ingestFolderPath = GetProjectIngestFolderPath(project).ToString();
-				foreach (SftpFile file in m_client.ListDirectory(ingestFolderPath))
+				if (m_client.Exists(ingestFolderPath))
 				{
-					if (file.IsDirectory && !file.Name.StartsWith('.'))
+					foreach (SftpFile file in m_client.ListDirectory(ingestFolderPath))
 					{
-						string metaPath = file.FullName + "/" + ShotMetaFileName;
-						DataApiSFTPShotAttributes? attrib = null;
-						if (m_client.Exists(metaPath))
+						if (file.IsDirectory && !file.Name.StartsWith('.'))
 						{
-							string metaAsString = m_client.ReadAllText(metaPath);
-							attrib = JsonConvert.DeserializeObject<DataApiSFTPShotAttributes>(metaAsString);
-						}
+							string metaPath = file.FullName + "/" + ShotMetaFileName;
+							DataApiSFTPShotAttributes? attrib = null;
+							if (m_client.Exists(metaPath))
+							{
+								string metaAsString = m_client.ReadAllText(metaPath);
+								attrib = JsonConvert.DeserializeObject<DataApiSFTPShotAttributes>(metaAsString);
+							}
 
-						if (attrib == null)
-						{
-							attrib = new DataApiSFTPShotAttributes(file.Name);
-							string metaAsString = JsonConvert.SerializeObject(attrib, Formatting.Indented);
-							m_client.WriteAllText(metaPath, metaAsString);
-						}
+							if (attrib == null)
+							{
+								attrib = new DataApiSFTPShotAttributes(file.Name);
+								string metaAsString = JsonConvert.SerializeObject(attrib, Formatting.Indented);
+								m_client.WriteAllText(metaPath, metaAsString);
+							}
 
-						DataEntityShot shot = attrib.ToDataEntity(project);
-						LocalCache.AddCachedEntity(shot);
-						shots.Add(shot);
+							DataEntityShot shot = attrib.ToDataEntity(project);
+							LocalCache.AddCachedEntity(shot);
+							shots.Add(shot);
+						}
 					}
 				}
 
@@ -332,41 +347,44 @@ namespace DataApiSFTP
 
 				List<DataEntityShotVersion> versions = new List<DataEntityShotVersion>();
 				string ingestFolderPath = GetShotIngestFolderPath(project, shotData).ToString();
-				foreach (SftpFile file in m_client.ListDirectory(ingestFolderPath))
+				if (m_client.Exists(ingestFolderPath))
 				{
-					if (file.IsDirectory && !file.Name.StartsWith('.'))
+					foreach (SftpFile file in m_client.ListDirectory(ingestFolderPath))
 					{
-						string metaPath = file.FullName + "/" + ShotVersionMetaFileName;
-						DataApiSFTPShotVersionAttributes? attrib = null;
-						if (m_client.Exists(metaPath))
+						if (file.IsDirectory && !file.Name.StartsWith('.'))
 						{
-							string metaAsString = m_client.ReadAllText(metaPath);
-							attrib = JsonConvert.DeserializeObject<DataApiSFTPShotVersionAttributes>(metaAsString);
-						}
-
-						if (attrib == null)
-						{
-							attrib = new DataApiSFTPShotVersionAttributes();
-							string metaAsString = JsonConvert.SerializeObject(attrib, Formatting.Indented);
-							m_client.WriteAllText(metaPath, metaAsString);
-						}
-
-						DataEntityShotVersion shotVersion = new DataEntityShotVersion
-						{
-							EntityId = attrib.EntityId,
-							ShotVersionName = file.Name,
-							EntityRelationships =
+							string metaPath = file.FullName + "/" + ShotVersionMetaFileName;
+							DataApiSFTPShotVersionAttributes? attrib = null;
+							if (m_client.Exists(metaPath))
 							{
-								Project = new DataEntityReference(project),
-								Parent = new DataEntityReference(shotData)
-							},
-							DataWranglerMeta = attrib.DataWranglerMeta,
-							Description = attrib.Description,
-							Flagged = attrib.Flagged,
-							ImageURL = attrib.ImageURL
-						};
-						LocalCache.AddCachedEntity(shotVersion);
-						versions.Add(shotVersion);
+								string metaAsString = m_client.ReadAllText(metaPath);
+								attrib = JsonConvert.DeserializeObject<DataApiSFTPShotVersionAttributes>(metaAsString);
+							}
+
+							if (attrib == null)
+							{
+								attrib = new DataApiSFTPShotVersionAttributes();
+								string metaAsString = JsonConvert.SerializeObject(attrib, Formatting.Indented);
+								m_client.WriteAllText(metaPath, metaAsString);
+							}
+
+							DataEntityShotVersion shotVersion = new DataEntityShotVersion
+							{
+								EntityId = attrib.EntityId,
+								ShotVersionName = file.Name,
+								EntityRelationships =
+								{
+									Project = new DataEntityReference(project),
+									Parent = new DataEntityReference(shotData)
+								},
+								DataWranglerMeta = attrib.DataWranglerMeta,
+								Description = attrib.Description,
+								Flagged = attrib.Flagged,
+								ImageURL = attrib.ImageURL
+							};
+							LocalCache.AddCachedEntity(shotVersion);
+							versions.Add(shotVersion);
+						}
 					}
 				}
 

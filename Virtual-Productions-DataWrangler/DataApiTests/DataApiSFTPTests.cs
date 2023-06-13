@@ -8,16 +8,16 @@ namespace DataApiTests
 	[TestClass]
 	public class DataApiSFTPTests
 	{
-		private DataApiSFTPFileSystem m_api = new DataApiSFTPFileSystem();
+		private static DataApiSFTPFileSystem m_api = new DataApiSFTPFileSystem();
 
-		[TestInitialize]
-		public void ConnectToApi()
+		[ClassInitialize]
+		public static void ConnectToApi(TestContext a_context)
 		{
 			Assert.IsTrue(m_api.Connect(TestConstants.TargetHost, TestConstants.TargetUser, TestConstants.TargetKeyFile));
 		}
 
-		[TestCleanup]
-		public void Disconnect()
+		[ClassCleanup]
+		public static void Disconnect()
 		{
 			m_api.Dispose();
 		}

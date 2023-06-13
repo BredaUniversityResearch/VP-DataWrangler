@@ -21,7 +21,7 @@
     <Compile Update="LoadingSpinner.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="Login\LoginPage.xaml.cs">
+    <Compile Update="Login\ShotGridLoginPage.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Update="Properties\UserSettings.Designer.cs">
@@ -36,7 +36,7 @@
       <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
       <SubType>Designer</SubType>
     </Page>
-    <Page Update="Login\LoginPage.xaml">
+    <Page Update="Login\ShotGridLoginPage.xaml">
       <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
       <SubType>Designer</SubType>
     </Page>

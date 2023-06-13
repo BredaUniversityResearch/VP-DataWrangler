@@ -4,5 +4,6 @@ TestResults/
 **/bin/
 
 *.user
+nas.pem
 
 ShotGridIntegrationTest/test_credentials.json

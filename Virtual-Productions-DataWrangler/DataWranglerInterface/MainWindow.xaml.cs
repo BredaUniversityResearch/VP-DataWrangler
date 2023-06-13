@@ -2,6 +2,8 @@
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Input;
+using DataApiCommon;
+using DataApiSFTP;
 using DataWranglerCommon;
 using DataWranglerCommon.ShogunLiveSupport;
 using DataWranglerCommonWPF.Login;
@@ -31,13 +33,13 @@ namespace DataWranglerInterface
 			}
 		}
 
-		private LoginPage m_loginPage;
+		private ShotGridLoginPage? m_shotGridLoginPage = null;
 		private ShotRecordingPage? m_shotRecordingPage;
 
 		private DebugWindow? m_debugWindow;
         private CameraPreviewWindow? m_previewWindow;
 
-        private ShotGridAPI m_targetAPI = new ShotGridAPI();
+        private DataApi m_targetAPI = new DataApiSFTPFileSystem();
         private ShogunLiveService m_shogunService = new ShogunLiveService(30);
 
         public MainWindow()
@@ -56,8 +58,22 @@ namespace DataWranglerInterface
             //m_previewWindow = new CameraPreviewWindow();
 			//m_previewWindow.Show();
 
-            m_loginPage = new LoginPage();
-			OnRequestUserAuthentication();
+			if (m_targetAPI is ShotGridAPI)
+			{
+				m_shotGridLoginPage = new ShotGridLoginPage();
+				OnRequestUserAuthentication();
+			}
+			else if (m_targetAPI is DataApiSFTPFileSystem fsApi)
+			{
+				if (fsApi.Connect(DataApiSFTPConfig.DefaultConfig))
+				{
+					OnLoggedIn();
+				}
+			}
+			else
+			{
+				throw new Exception("Unknown api backend");
+			}
 		}
 
 		protected override void OnKeyDown(KeyEventArgs e)
@@ -97,17 +113,28 @@ namespace DataWranglerInterface
 				Content = m_shotRecordingPage;
 			});
 
-			m_targetAPI.StartAutoRefreshToken(OnRequestUserAuthentication);
+			if (m_targetAPI is ShotGridAPI sgApi)
+			{
+				sgApi.StartAutoRefreshToken(OnRequestUserAuthentication);
+			}
 		}
 
 		private void OnRequestUserAuthentication()
 		{
-			Dispatcher.InvokeAsync(() =>
+			if (m_targetAPI is ShotGridAPI sgApi)
 			{
-				m_loginPage.OnSuccessfulLogin += OnLoggedIn;
-				m_loginPage.Initialize(m_targetAPI, new SettingsCredentialProvider());
-				Content = m_loginPage;
-			});
+				Dispatcher.InvokeAsync(() =>
+				{
+					if (m_shotGridLoginPage == null)
+					{
+						throw new Exception("Expected login page to be here");
+					}
+
+					m_shotGridLoginPage.OnSuccessfulLogin += OnLoggedIn;
+					m_shotGridLoginPage.Initialize(sgApi, new SettingsCredentialProvider());
+					Content = m_shotGridLoginPage;
+				});
+			}
 		}
 
 		protected override void OnClosing(CancelEventArgs e)
