@@ -1,7 +1,9 @@
 ﻿
 using DataApiCommon;
 using DataApiSFTP;
+using System;
 using System.Reflection;
+using CommonLogging;
 
 namespace DataApiTests
 {
@@ -14,6 +16,15 @@ namespace DataApiTests
 		public static void ConnectToApi(TestContext a_context)
 		{
 			Assert.IsTrue(m_api.Connect(TestConstants.TargetHost, TestConstants.TargetUser, TestConstants.TargetKeyFile));
+			Logger.Instance.OnMessageLogged += OnLoggerMessageLogged;
+		}
+
+		private static void OnLoggerMessageLogged(string a_source, ELogSeverity a_severity, string a_message)
+		{
+			if (a_severity == ELogSeverity.Error)
+			{
+				throw new AssertFailedException($"Received error message: {a_message}");
+			}
 		}
 
 		[ClassCleanup]
@@ -37,6 +48,11 @@ namespace DataApiTests
 			Assert.IsTrue(Array.Find(projects.ResultData, (a_proj) => a_proj.Name == ".." || a_proj.Name == ".") == null);
 			Assert.IsTrue(projects.ResultData.Length > 0, "Expected at least one active project");
 			Assert.IsTrue(m_api.LocalCache.GetEntitiesByType<DataEntityProject>().Length == projects.ResultData.Length);
+
+			foreach (var val in projects.ResultData)
+			{
+				Assert.IsFalse(string.IsNullOrEmpty(val.Name));
+			}
 		}
 
 		[TestMethod]
@@ -48,6 +64,11 @@ namespace DataApiTests
 			Assert.IsFalse(shots.IsError);
 			Assert.IsTrue(shots.ResultData.Length > 0);
 			Assert.IsTrue(m_api.LocalCache.GetEntitiesByType<DataEntityShot>().Length == shots.ResultData.Length);
+
+			foreach (var val in shots.ResultData)
+			{
+				Assert.IsFalse(string.IsNullOrEmpty(val.ShotName));
+			}
 		}
 
 		[TestMethod]
@@ -63,6 +84,11 @@ namespace DataApiTests
 			Assert.IsFalse(versions.IsError);
 			Assert.IsTrue(versions.ResultData.Length > 0);
 			Assert.IsTrue(m_api.LocalCache.GetEntitiesByType<DataEntityShotVersion>().Length == versions.ResultData.Length);
+
+			foreach (var val in versions.ResultData)
+			{
+				Assert.IsFalse(string.IsNullOrEmpty(val.ShotVersionName));
+			}
 		}
 
 		[TestMethod]
@@ -115,8 +141,8 @@ namespace DataApiTests
 			DataApiResponse<DataEntityShotVersion[]> shotVersions = m_api.GetVersionsForShot(TestConstants.TargetShotVersionId).Result;
 			DataApiResponse<DataEntityFilePublish> response = m_api.CreateFilePublish(TestConstants.TargetProjectId, TestConstants.TargetShotId, TestConstants.TargetShotVersionId, filePublishData).Result;
 
-			Assert.IsFalse(response.IsError);
-			Assert.IsTrue(response.ResultData.EntityId != Guid.Empty);
+			Assert.IsFalse(response.IsError, response.ErrorInfo?.ToString());
+			Assert.IsTrue(response.ResultData.EntityId != Guid.Empty, "Response data contains empty guid");
 		}
 
 		//[TestMethod]

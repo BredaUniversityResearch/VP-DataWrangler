@@ -8,7 +8,7 @@ namespace DataApiSFTP
 		[JsonProperty("active")]
 		public bool Active = true;
 
-		[JsonProperty("project_name")]
+		[JsonIgnore]
 		public string ProjectName = "";
 
 		[JsonProperty("entity_id")]

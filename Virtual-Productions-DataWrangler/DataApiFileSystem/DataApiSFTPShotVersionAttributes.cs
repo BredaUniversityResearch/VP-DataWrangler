@@ -8,7 +8,7 @@ public class DataApiSFTPShotVersionAttributes
 	[JsonProperty("entity_id")]
 	public Guid EntityId = Guid.NewGuid();
 
-	[JsonProperty("shot_version_name")]
+	[JsonIgnore]
 	public string ShotVersionName = "";
 
 	[JsonProperty("datawrangler_meta")]

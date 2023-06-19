@@ -1,8 +1,10 @@
 ﻿using System.Reflection;
 using System.Reflection.PortableExecutable;
+using System.Runtime.Serialization;
 using System.Text;
 using CommonLogging;
 using DataApiCommon;
+using DataApiTests;
 using Newtonsoft.Json;
 using Renci.SshNet;
 using Renci.SshNet.Sftp;
@@ -113,15 +115,14 @@ namespace DataApiSFTP
 						DataApiSFTPProjectAttributes? attrib = null;
 						if (m_client.Exists(metaPath))
 						{
-							string metaAsString = m_client.ReadAllText(metaPath);
-							attrib = JsonConvert.DeserializeObject<DataApiSFTPProjectAttributes>(metaAsString);
+							attrib = ReadProjectData(m_client, metaPath, directoryEntry.Name);
 						}
 
 						if (attrib == null)
 						{
 							attrib = new DataApiSFTPProjectAttributes();
 							string metaAsString = JsonConvert.SerializeObject(attrib, Formatting.Indented);
-							m_client.WriteAllText(metaPath, metaAsString);
+							m_client.TruncateWriteAllText(metaPath, metaAsString);
 						}
 
 						if (attrib.Active)
@@ -137,6 +138,8 @@ namespace DataApiSFTP
 						}
 					}
 				}
+
+				projects.Sort((a_lhs, a_rhs) => string.Compare(a_lhs.Name, a_rhs.Name, StringComparison.Ordinal));
 
 				return new DataApiResponse<DataEntityProject[]>(projects.ToArray(), null);
 			});
@@ -207,7 +210,7 @@ namespace DataApiSFTP
 					EntityId = Guid.NewGuid()
 				};
 				string metaAsString = JsonConvert.SerializeObject(attrib, Formatting.Indented);
-				m_client.WriteAllText(outputFolderPath + "/" + ShotMetaFileName, metaAsString);
+				m_client.TruncateWriteAllText(outputFolderPath + "/" + ShotMetaFileName, metaAsString);
 
 				return new DataApiResponse<DataEntityShot>(attrib.ToDataEntity(project), null);
 			});
@@ -246,7 +249,7 @@ namespace DataApiSFTP
 					EntityId = Guid.NewGuid()
 				};
 				string metaAsString = JsonConvert.SerializeObject(attribs, Formatting.Indented);
-				m_client.WriteAllText(shotVersionPath + "/" + ShotVersionMetaFileName, metaAsString);
+				m_client.TruncateWriteAllText(shotVersionPath + "/" + ShotVersionMetaFileName, metaAsString);
 
 				DataEntityShotVersion version = attribs.ToDataEntity(project, shot);
 				LocalCache.AddCachedEntity(version);
@@ -292,15 +295,14 @@ namespace DataApiSFTP
 							DataApiSFTPShotAttributes? attrib = null;
 							if (m_client.Exists(metaPath))
 							{
-								string metaAsString = m_client.ReadAllText(metaPath);
-								attrib = JsonConvert.DeserializeObject<DataApiSFTPShotAttributes>(metaAsString);
+								attrib = ReadShotData(m_client, metaPath, file.Name);
 							}
 
 							if (attrib == null)
 							{
 								attrib = new DataApiSFTPShotAttributes(file.Name);
 								string metaAsString = JsonConvert.SerializeObject(attrib, Formatting.Indented);
-								m_client.WriteAllText(metaPath, metaAsString);
+								m_client.TruncateWriteAllText(metaPath, metaAsString);
 							}
 
 							DataEntityShot shot = attrib.ToDataEntity(project);
@@ -310,6 +312,7 @@ namespace DataApiSFTP
 					}
 				}
 
+				shots.Sort((a_lhs, a_rhs) => string.Compare(a_lhs.ShotName, a_rhs.ShotName, StringComparison.Ordinal));
 				return new DataApiResponse<DataEntityShot[]>(shots.ToArray(), null);
 			});
 		}
@@ -365,7 +368,7 @@ namespace DataApiSFTP
 							{
 								attrib = new DataApiSFTPShotVersionAttributes();
 								string metaAsString = JsonConvert.SerializeObject(attrib, Formatting.Indented);
-								m_client.WriteAllText(metaPath, metaAsString);
+								m_client.TruncateWriteAllText(metaPath, metaAsString);
 							}
 
 							DataEntityShotVersion shotVersion = new DataEntityShotVersion
@@ -388,6 +391,7 @@ namespace DataApiSFTP
 					}
 				}
 
+				versions.Sort((a_lhs, a_rhs) => string.Compare(a_lhs.ShotVersionName, a_rhs.ShotVersionName, StringComparison.Ordinal));
 				return new DataApiResponse<DataEntityShotVersion[]>(versions.ToArray(), null);
 			});
 		}
@@ -430,6 +434,8 @@ namespace DataApiSFTP
 				return new DataApiResponseGeneric(null, new DataApiErrorDetails($"Failed to deserialize project attributes. Attribute content: {a_client.ReadAllText(metaPath)}"));
 			}
 
+			attrib.ProjectName = a_dataEntityProject.Name;
+
 			DataEntityProject project = attrib.ToDataEntity();
 			foreach(KeyValuePair<PropertyInfo, object?> kvp in a_changedValues)
 			{
@@ -437,7 +443,7 @@ namespace DataApiSFTP
 			}
 
 			attrib = new DataApiSFTPProjectAttributes(project);
-			a_client.WriteAllText(metaPath, JsonConvert.SerializeObject(attrib, Formatting.Indented));
+			a_client.TruncateWriteAllText(metaPath, JsonConvert.SerializeObject(attrib, Formatting.Indented));
 
 			return new DataApiResponseGeneric(project, null);
 		}
@@ -470,7 +476,7 @@ namespace DataApiSFTP
 			}
 
 			attrib = new DataApiSFTPShotAttributes(shot);
-			a_client.WriteAllText(metaPath, JsonConvert.SerializeObject(attrib, Formatting.Indented));
+			a_client.TruncateWriteAllText(metaPath, JsonConvert.SerializeObject(attrib, Formatting.Indented));
 
 			return new DataApiResponseGeneric(shot, null);
 		}
@@ -496,7 +502,7 @@ namespace DataApiSFTP
 				return new DataApiResponseGeneric(null, new DataApiErrorDetails($"Tried to update shot version with name {a_shotVersionEntity.ShotVersionName} which does not have a valid meta file"));
 			}
 
-			DataApiSFTPShotVersionAttributes? attrib = JsonConvert.DeserializeObject<DataApiSFTPShotVersionAttributes>(a_client.ReadAllText(metaPath));
+			DataApiSFTPShotVersionAttributes? attrib = ReadShotVersionData(a_client, metaPath, a_shotVersionEntity.ShotVersionName);
 			if (attrib == null)
 			{
 				return new DataApiResponseGeneric(null, new DataApiErrorDetails($"Failed to deserialize project attributes. Attribute content: {a_client.ReadAllText(metaPath)}"));
@@ -509,7 +515,7 @@ namespace DataApiSFTP
 			}
 
 			attrib = new DataApiSFTPShotVersionAttributes(shotVersion);
-			a_client.WriteAllText(metaPath, JsonConvert.SerializeObject(attrib, Formatting.Indented));
+			a_client.TruncateWriteAllText(metaPath, JsonConvert.SerializeObject(attrib, Formatting.Indented));
 
 			return new DataApiResponseGeneric(shotVersion, null);
 		}
@@ -526,6 +532,51 @@ namespace DataApiSFTP
 					a_client.CreateDirectory(path);
 				}
 			} while (lastIndex != -1);
+		}
+
+		private DataApiSFTPProjectAttributes? ReadProjectData(SftpClient a_client, string a_metaPath, string a_directoryEntryName)
+		{
+			DataApiSFTPProjectAttributes? attrib = JsonConvert.DeserializeObject<DataApiSFTPProjectAttributes>(a_client.ReadAllText(a_metaPath));
+			if (attrib != null)
+			{
+				attrib.ProjectName = a_directoryEntryName;
+			}
+
+			return attrib;
+		}
+
+
+		private DataApiSFTPShotAttributes? ReadShotData(SftpClient a_client, string a_metaPath, string a_fileName)
+		{
+			string metaAsString = a_client.ReadAllText(a_metaPath);
+
+			DataApiSFTPShotAttributes? attrib = null;
+			try
+			{
+				attrib = JsonConvert.DeserializeObject<DataApiSFTPShotAttributes>(metaAsString);
+			}
+			catch (JsonReaderException e)
+			{
+				Logger.LogError("SFTPDataApi", $"Failed to deserialize file at \"{a_metaPath}\" due to exception: {e.Message}");
+			}
+
+			if (attrib != null)
+			{
+				attrib.ShotName = a_fileName;
+			}
+
+			return attrib;
+		}
+
+		private DataApiSFTPShotVersionAttributes? ReadShotVersionData(SftpClient a_client, string a_fileLocation, string a_shotVersionName)
+		{
+			DataApiSFTPShotVersionAttributes? attrib = JsonConvert.DeserializeObject<DataApiSFTPShotVersionAttributes>(a_client.ReadAllText(a_fileLocation));
+			if (attrib != null)
+			{
+				attrib.ShotVersionName = a_shotVersionName;
+			}
+
+			return attrib;
 		}
 	}
 }

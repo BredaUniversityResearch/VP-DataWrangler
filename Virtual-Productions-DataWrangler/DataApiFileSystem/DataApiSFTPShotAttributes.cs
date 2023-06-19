@@ -8,7 +8,7 @@ internal class DataApiSFTPShotAttributes
 	[JsonProperty("entity_id")]
 	public Guid EntityId = Guid.NewGuid();
 
-	[JsonProperty("shot_name")]
+	[JsonIgnore]
 	public string ShotName = "";
 
 	[JsonProperty("description")]

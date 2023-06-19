@@ -12,5 +12,11 @@ namespace DataApiCommon
 
 		[AutoNotify]
 		private string? m_imageURL;
+
+		[AutoNotify]
+		private string m_camera = "N/A";
+
+		[AutoNotify]
+		private string m_lens = "N/A";
 	}
 }
