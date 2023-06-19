@@ -32,6 +32,11 @@ namespace ShotGridIntegration
 		private CancellationTokenSource m_cancellationTokenSource = new CancellationTokenSource();
 		private Action? m_onRequestUserAuthentication = null;
 
+		public override Task<bool> StartConnect()
+		{
+			throw new NotImplementedException();
+		}
+
 		//Password is the ShotGrid passphrase, NOT the Autodesk ID password.
 		public async Task<ShotGridLoginResponse> TryLogin(string a_username, string a_password)
 		{

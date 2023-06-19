@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CommonLogging\CommonLogging.csproj" />
+    <ProjectReference Include="..\DataApiFileSystem\DataApiSFTP.csproj" />
     <ProjectReference Include="..\DataWranglerCommonWPF\DataWranglerCommonWPF.csproj" />
     <ProjectReference Include="..\DataWranglerCommon\DataWranglerCommon.csproj" />
   </ItemGroup>

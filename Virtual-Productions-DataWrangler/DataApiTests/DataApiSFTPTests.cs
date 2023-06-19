@@ -10,12 +10,15 @@ namespace DataApiTests
 	[TestClass]
 	public class DataApiSFTPTests
 	{
-		private static DataApiSFTPFileSystem m_api = new DataApiSFTPFileSystem();
+		private static DataApiSFTPFileSystem m_api = null!;
 
 		[ClassInitialize]
 		public static void ConnectToApi(TestContext a_context)
 		{
-			Assert.IsTrue(m_api.Connect(TestConstants.TargetHost, TestConstants.TargetUser, TestConstants.TargetKeyFile));
+			DataApiSFTPConfig config = new DataApiSFTPConfig(TestConstants.TargetHost, TestConstants.TargetUser, TestConstants.DefaultDataStoreFtpKeyFilePath);
+			m_api = new DataApiSFTPFileSystem(config);
+
+			Assert.IsTrue(m_api.StartConnect().Result);
 			Logger.Instance.OnMessageLogged += OnLoggerMessageLogged;
 		}
 
@@ -128,17 +131,22 @@ namespace DataApiTests
 		[TestMethod]
 		public void CreatePublishForShotVersion()
 		{
+			DataApiResponse<DataEntityProject[]> projects = m_api.GetActiveProjects().Result;
+			Assert.IsFalse(projects.IsError, projects.ErrorInfo?.ToString());
+			DataApiResponse<DataEntityShot[]> shots = m_api.GetShotsForProject(TestConstants.TargetProjectId).Result;
+			Assert.IsFalse(shots.IsError, shots.ErrorInfo?.ToString());
+			DataApiResponse<DataEntityShotVersion[]> shotVersions = m_api.GetVersionsForShot(TestConstants.TargetShotId).Result;
+			Assert.IsFalse(shotVersions.IsError, shotVersions.ErrorInfo?.ToString());
+
 			DataEntityFilePublish filePublishData = new DataEntityFilePublish()
 			{
 				Description = "File publish created by unit test",
 				PublishedFileName = "Unit test name",
 				PublishedFileType = new DataEntityReference(m_api.GetPublishedFileTypes().Result.ResultData![0]),
-				RelativePathToStorageRoot = "test/path",
+				RelativePathToStorageRoot = "Phils VP Pipeline Testing Playground/FilePublishTable.csv",
+				StorageRoot = new DataEntityReference(m_api.GetLocalStorages().Result.ResultData![0])
 			};
 
-			DataApiResponse<DataEntityProject[]> projects = m_api.GetActiveProjects().Result;
-			DataApiResponse<DataEntityShot[]> shots = m_api.GetShotsForProject(TestConstants.TargetProjectId).Result;
-			DataApiResponse<DataEntityShotVersion[]> shotVersions = m_api.GetVersionsForShot(TestConstants.TargetShotVersionId).Result;
 			DataApiResponse<DataEntityFilePublish> response = m_api.CreateFilePublish(TestConstants.TargetProjectId, TestConstants.TargetShotId, TestConstants.TargetShotVersionId, filePublishData).Result;
 
 			Assert.IsFalse(response.IsError, response.ErrorInfo?.ToString());

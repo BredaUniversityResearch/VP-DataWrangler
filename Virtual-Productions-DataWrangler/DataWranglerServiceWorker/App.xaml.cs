@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using CommonLogging;
 using DataApiCommon;
+using DataApiSFTP;
 using DataWranglerCommon.IngestDataSources;
 using ShotGridIntegration;
 
@@ -22,8 +23,8 @@ namespace DataWranglerServiceWorker
 		[DllImport("Kernel32")]
 		public static extern void FreeConsole();
 
-		private ShotGridAPI m_targetApi;
-		private ShotGridDataRequester m_metaRequester;
+		private DataApi m_targetApi;
+		private DataApiDataRequester m_metaApiDataRequester;
 		private Task? m_cacheUpdateTask = null;
 		private DataImportWorker m_importWorker;
 		private IngestDataCache m_ingestCache = new IngestDataCache();
@@ -37,8 +38,8 @@ namespace DataWranglerServiceWorker
 
 		public App()
 		{
-			m_targetApi = new ShotGridAPI();
-			m_metaRequester = new ShotGridDataRequester(m_targetApi);
+			m_targetApi = new DataApiSFTPFileSystem(DataApiSFTPConfig.DefaultConfig);
+			m_metaApiDataRequester = new DataApiDataRequester(m_targetApi);
 			m_importWorker = new DataImportWorker(m_targetApi);
 			m_importWorker.Start();
 
@@ -123,6 +124,7 @@ namespace DataWranglerServiceWorker
 			DataEntityFilePublish publishData = new DataEntityFilePublish
 			{
 				Path = new DataEntityFileLink(a_copyMetaData.DestinationFullFilePath),
+				StorageRoot = new DataEntityReference(a_copyMetaData.StorageTarget),
 				PublishedFileName = publishFileName,
 				PublishedFileType = new DataEntityReference(a_copyMetaData.FileTag),
 				//Status = ServiceWorkerConfig.Instance.FilePublishDefaultStatus,
@@ -152,21 +154,31 @@ namespace DataWranglerServiceWorker
 
 			Console.WriteLine("DataWranglerServiceWorker");
 
-			OnRequestUserAuthentication();
+			m_targetApi.StartConnect().ContinueWith((a_resultTask) => {
+				if (a_resultTask.Result)
+				{
+					OnSuccessfulLogin();
+				}
+				else
+				{
+					Logger.LogError("API", "Failed to connect to API");
+				}
+			});
+			//OnRequestUserAuthentication();
 		}
 
-		private void OnRequestUserAuthentication()
-		{
-			ShotGridAuthenticationWindow window = new ShotGridAuthenticationWindow((ShotGridAPI)m_targetApi);
-			window.EnsureLogin();
-			window.OnSuccessfulLogin += OnSuccessfulLogin;
-		}
+		//private void OnRequestUserAuthentication()
+		//{
+		//	ShotGridAuthenticationWindow window = new ShotGridAuthenticationWindow((ShotGridAPI)m_targetApi);
+		//	window.EnsureLogin();
+		//	window.OnSuccessfulLogin += OnSuccessfulLogin;
+		//}
 
 		private void OnSuccessfulLogin()
 		{
-			m_targetApi.StartAutoRefreshToken(OnRequestUserAuthentication);
+			//m_targetApi.StartAutoRefreshToken(OnRequestUserAuthentication);
 
-			m_cacheUpdateTask = m_metaRequester.RequestAllRelevantData();
+			m_cacheUpdateTask = m_metaApiDataRequester.RequestAllRelevantData();
 			m_cacheUpdateTask.ContinueWith(_ =>
 			{
 				m_ingestCache.UpdateCache(m_targetApi.LocalCache);

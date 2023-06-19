@@ -39,7 +39,7 @@ namespace DataWranglerInterface
 		private DebugWindow? m_debugWindow;
         private CameraPreviewWindow? m_previewWindow;
 
-        private DataApi m_targetAPI = new DataApiSFTPFileSystem();
+        private DataApi m_targetAPI = new DataApiSFTPFileSystem(DataApiSFTPConfig.DefaultConfig);
         private ShogunLiveService m_shogunService = new ShogunLiveService(30);
 
         public MainWindow()
@@ -58,22 +58,14 @@ namespace DataWranglerInterface
             //m_previewWindow = new CameraPreviewWindow();
 			//m_previewWindow.Show();
 
-			if (m_targetAPI is ShotGridAPI)
+			//Todo: Add feedback to the user here.
+			m_targetAPI.StartConnect().ContinueWith(a_resultTask =>
 			{
-				m_shotGridLoginPage = new ShotGridLoginPage();
-				OnRequestUserAuthentication();
-			}
-			else if (m_targetAPI is DataApiSFTPFileSystem fsApi)
-			{
-				if (fsApi.Connect(DataApiSFTPConfig.DefaultConfig))
+				if (a_resultTask.Result)
 				{
 					OnLoggedIn();
 				}
-			}
-			else
-			{
-				throw new Exception("Unknown api backend");
-			}
+			});
 		}
 
 		protected override void OnKeyDown(KeyEventArgs e)

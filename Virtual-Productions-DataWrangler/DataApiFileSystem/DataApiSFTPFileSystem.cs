@@ -1,10 +1,15 @@
-﻿using System.Reflection;
+﻿using System.Globalization;
+using System.Net.Sockets;
+using System.Reflection;
 using System.Reflection.PortableExecutable;
 using System.Runtime.Serialization;
 using System.Text;
 using CommonLogging;
+using CsvHelper;
+using CsvHelper.Configuration;
 using DataApiCommon;
 using DataApiTests;
+using Microsoft.VisualBasic.FileIO;
 using Newtonsoft.Json;
 using Renci.SshNet;
 using Renci.SshNet.Sftp;
@@ -17,8 +22,16 @@ namespace DataApiSFTP
 		private const string DefaultDataStoreIngestFolderName = "RawFootage";
 
 		private static readonly Guid LocalStorageGuid = Guid.Parse("00c0ff1e-1329-4357-82ec-000000000001");
-
-
+		private static readonly DataEntityLocalStorage[] LocalStorages = new[]
+		{
+			new DataEntityLocalStorage()
+			{
+				EntityId = LocalStorageGuid,
+				LocalStorageName = "CradleNas",
+				StorageRoot = new Uri("file://cradlenas/Virtual Productions/")
+			}
+		};
+				
 		private static readonly DataEntityPublishedFileType[] PublishedFileTypes = new[]
 		{
 			new DataEntityPublishedFileType{ EntityId = Guid.Parse("00c0ff1e-1329-4357-82ed-000000000001"), FileType = "video"},
@@ -29,26 +42,42 @@ namespace DataApiSFTP
 		private const string ProjectMetaFileName = "IngestinatorDataApiMeta.json";
 		private const string ShotMetaFileName = "IngestinatorShotMeta.json";
 		private const string ShotVersionMetaFileName = "IngestinatorShotVersionMeta.json";
+		private const string PublishFileMetaFileNameSuffix = ".IngestinatorMeta.json";
+		private const string ProjectPublishOverviewFileName = "FilePublishTable.csv";
 
 		private SftpClient? m_client = null;
 
-		public bool Connect(DataApiSFTPConfig a_config)
+		private DataApiSFTPConfig m_config;
+
+		public DataApiSFTPFileSystem(DataApiSFTPConfig a_config)
 		{
-			if (a_config.SFTPKeyFile == null)
+			m_config = a_config;
+		}
+
+		public override Task<bool> StartConnect()
+		{
+			if (m_config.SFTPKeyFile == null)
 			{
 				Logger.LogError("SFTPApi", "Key file not valid for SFTP connection");
-				return false;
+				return Task.FromResult(false);
 			}
 
-			return Connect(a_config.TargetHost, a_config.SFTPUserName, a_config.SFTPKeyFile);
+			return Task.Run(() => Connect(m_config.TargetHost, m_config.SFTPUserName, m_config.SFTPKeyFile));
 		}
 
 		public bool Connect(string a_hostName, string a_userName, PrivateKeyFile a_keyFile)
 		{
-			if (m_client == null)
+			if (m_client == null || !m_client.IsConnected)
 			{
 				m_client = new SftpClient(a_hostName, 22, a_userName, a_keyFile);
-				m_client.Connect();
+				try
+				{
+					m_client.Connect();
+				}
+				catch (SocketException ex)
+				{
+					Logger.LogError("SFTPApi", $"Failed to connect with SFTP at host {a_hostName}: {ex.Message}");
+				}
 			}
 			else
 			{
@@ -167,18 +196,51 @@ namespace DataApiSFTP
 					return new DataApiResponse<DataEntityFilePublish>(null, new DataApiErrorDetails($"Shot with Id {a_shotId} was not found in the local cache"));
 				}
 
-				if (string.IsNullOrEmpty(a_publishData.RelativePathToStorageRoot))
+				DataEntityShotVersion? shotVersion = LocalCache.FindEntityById<DataEntityShotVersion>(a_shotVersionId);
+				if (shotVersion == null)
 				{
-					return new DataApiResponse<DataEntityFilePublish>(null, new DataApiErrorDetails($"File publish was created with invalid relative path: \"{a_publishData.RelativePathToStorageRoot}\""));
+					return new DataApiResponse<DataEntityFilePublish>(null, new DataApiErrorDetails($"ShotVersion with Id {a_shotVersionId} was not found in the local cache"));
 				}
 
-				DataEntityFilePublish publish = a_publishData;
-				//TODO: Store this file publish information somewhere sane.
+				if (a_publishData.StorageRoot == null || a_publishData.Path == null)
+				{
+					return new DataApiResponse<DataEntityFilePublish>(null, new DataApiErrorDetails($"Could not create file publish. Storage root is {(a_publishData.StorageRoot == null? "INVALID" : "valid")}. Path is {(a_publishData.Path == null? "INVALID" : "valid")}"));
+				}
 
-				publish.EntityId = Guid.NewGuid();
+				DataEntityLocalStorage? storageRoot = LocalCache.FindEntityById<DataEntityLocalStorage>(a_publishData.StorageRoot.EntityId);
+				if (storageRoot == null || storageRoot.StorageRoot == null)
+				{
+					return new DataApiResponse<DataEntityFilePublish>(null, new DataApiErrorDetails($"Could not create file publish. Storage root with id {a_publishData.StorageRoot.EntityId} is not known by the local cache"));
+				}
+
+				if (string.IsNullOrEmpty(a_publishData.RelativePathToStorageRoot))
+				{
+					Uri relativeUri = storageRoot.StorageRoot.MakeRelativeUri(a_publishData.Path.UriPath!);
+					if (relativeUri.OriginalString.Length > 0)
+					{
+						a_publishData.RelativePathToStorageRoot = relativeUri.OriginalString;
+					}
+					else
+					{
+						return new DataApiResponse<DataEntityFilePublish>(null, new DataApiErrorDetails($"File publish was created with invalid relative path: \"{a_publishData.RelativePathToStorageRoot}\""));
+					}
+				}
+
+				DataApiSFTPFilePublishAttributes attrib = new DataApiSFTPFilePublishAttributes(a_publishData, LocalCache)
+				{
+					EntityId = Guid.NewGuid()
+				};
+
+				string outputFolderPath = GetShotVersionIngestFolderPath(project, shot, shotVersion).ToString();
+				string metaAsString = JsonConvert.SerializeObject(attrib, Formatting.Indented);
+				m_client.TruncateWriteAllText(outputFolderPath + "/" + a_publishData.PublishedFileName + PublishFileMetaFileNameSuffix, metaAsString);
+
+				DataEntityFilePublish publish = attrib.ToDataEntity(project, shotVersion, LocalCache);
 				LocalCache.AddCachedEntity(publish);
 
-				return new DataApiResponse<DataEntityFilePublish>(a_publishData, null);
+				AddFilePublishToOverviewFile(project, shot, shotVersion, publish);
+
+				return new DataApiResponse<DataEntityFilePublish>(publish, null);
 			});
 		}
 
@@ -259,13 +321,12 @@ namespace DataApiSFTP
 
 		public override Task<DataApiResponse<DataEntityLocalStorage[]>> GetLocalStorages()
 		{
-			return Task.FromResult(new DataApiResponse<DataEntityLocalStorage[]>(new DataEntityLocalStorage[] { 
-				new() {
-					EntityId = LocalStorageGuid,
-					LocalStorageName = "Cradle Nas",
-					StorageRoot = new Uri("file:///cradlenas/Virtual Productions/")
-				}
-			}, null));
+			foreach (DataEntityLocalStorage storage in LocalStorages)
+			{
+				LocalCache.AddCachedEntity(storage);
+			}
+
+			return Task.FromResult(new DataApiResponse<DataEntityLocalStorage[]>(LocalStorages, null));
 		}
 
 		public override Task<DataApiResponse<DataEntityShot[]>> GetShotsForProject(Guid a_projectId)
@@ -317,8 +378,30 @@ namespace DataApiSFTP
 			});
 		}
 
+		public DataEntityPublishedFileType GetPublishedFileTypeByTag(string a_fileTypeTag)
+		{
+			DataEntityPublishedFileType[]? fileTypes = GetPublishedFileTypes().Result.ResultData;
+			if (fileTypes == null)
+			{
+				throw new Exception("File types returned null array.");
+			}
+
+			DataEntityPublishedFileType? targetFileType = Array.Find(fileTypes, (a_ent) => string.Equals(a_ent.FileType, a_fileTypeTag, StringComparison.InvariantCultureIgnoreCase));
+			if (targetFileType == null)
+			{
+				throw new Exception($"Could not find target file type with tag \"{a_fileTypeTag}\"");
+			}
+
+			return targetFileType;
+		}
+
 		public override Task<DataApiResponse<DataEntityPublishedFileType[]>> GetPublishedFileTypes()
 		{
+			foreach (DataEntityPublishedFileType fileType in PublishedFileTypes)
+			{
+				LocalCache.AddCachedEntity(fileType);
+			}
+
 			return Task.FromResult(new DataApiResponse<DataEntityPublishedFileType[]>(PublishedFileTypes, null));
 		}
 
@@ -577,6 +660,88 @@ namespace DataApiSFTP
 			}
 
 			return attrib;
+		}
+
+		internal class FilePublishEntry
+		{
+			public string ProjectName { get; set; } = "";
+			public string ShotName { get; set; } = "";
+			public string VersionName { get; set; } = "";
+			public string FileType { get; set; } = "";
+			public string Path { get; set; } = "";
+		}
+
+		private void AddFilePublishToOverviewFile(DataEntityProject a_project, DataEntityShot a_shot, DataEntityShotVersion a_shotVersion, DataEntityFilePublish a_publish)
+		{
+			if (m_client == null)
+			{
+				throw new Exception("Client is not connected (yet)");
+			}
+
+			string targetFile = GetProjectFolderPath(a_project).Append(ProjectPublishOverviewFileName).ToString();
+
+			DataEntityLocalStorage? localStorage = null;
+			if (a_publish.StorageRoot != null)
+			{
+				localStorage = LocalCache.FindEntityById<DataEntityLocalStorage>(a_publish.StorageRoot.EntityId);
+			}
+
+			DataEntityPublishedFileType? fileType = null;
+			if (a_publish.PublishedFileType != null)
+			{
+				fileType = LocalCache.FindEntityById<DataEntityPublishedFileType>(a_publish.PublishedFileType.EntityId);
+			}
+
+			Uri fullPublishedPath = localStorage?.StorageRoot ?? new Uri(Uri.UriSchemeFile);
+			fullPublishedPath = new Uri(fullPublishedPath, a_publish.RelativePathToStorageRoot);
+
+			using (SftpFileStream fs = m_client.Open(targetFile, FileMode.OpenOrCreate, FileAccess.ReadWrite))
+			{
+				List<FilePublishEntry> entries;
+				using (TextReader textReader = new StreamReader(fs, Encoding.UTF8, true, -1, true))
+				{
+					using (CsvReader reader = new CsvReader(textReader, CultureInfo.InvariantCulture, true))
+					{
+						entries = new List<FilePublishEntry>(reader.GetRecords<FilePublishEntry>());
+
+						entries.Add(new FilePublishEntry
+						{
+							ProjectName = a_project.Name,
+							ShotName = a_shot.ShotName,
+							VersionName = a_shotVersion.ShotVersionName,
+							FileType = fileType?.FileType ?? "",
+							Path = fullPublishedPath.AbsoluteUri,
+						});
+
+						entries.Sort((a_lhs, a_rhs) => { 
+							int cmp = string.CompareOrdinal(a_lhs.ProjectName, a_rhs.ProjectName);
+							if (cmp != 0)
+							{
+								return cmp;
+							}
+
+							cmp = string.CompareOrdinal(a_lhs.ShotName, a_rhs.ShotName);
+							if (cmp != 0)
+							{
+								return cmp;
+							}
+
+							return string.CompareOrdinal(a_lhs.VersionName, a_rhs.VersionName);
+						});
+					}
+				}
+
+				fs.SetLength(0);
+				fs.Seek(0, SeekOrigin.Begin);
+
+				using (TextWriter textWriter = new StreamWriter(fs, Encoding.UTF8))
+				{
+					using (CsvWriter writer = new CsvWriter(textWriter, CultureInfo.InvariantCulture, true))
+					{
+						writer.WriteRecords(entries);
+					}
+				}
+			}
 		}
 	}
 }

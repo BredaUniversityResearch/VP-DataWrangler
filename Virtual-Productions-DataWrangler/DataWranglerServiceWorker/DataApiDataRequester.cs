@@ -9,12 +9,12 @@ using ShotGridIntegration;
 
 namespace DataWranglerServiceWorker
 {
-    public class ShotGridDataRequester
+    public class DataApiDataRequester
 	{
 		private DataApi m_targetApi;
 		private DateTimeOffset m_lastCacheUpdateTime = DateTimeOffset.MinValue;
 
-		public ShotGridDataRequester(DataApi a_targetApi)
+		public DataApiDataRequester(DataApi a_targetApi)
 		{
 			m_targetApi = a_targetApi;
 		}

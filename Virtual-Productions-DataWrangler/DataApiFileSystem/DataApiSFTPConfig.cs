@@ -15,6 +15,18 @@ namespace DataApiSFTP
 
 		public static readonly DataApiSFTPConfig DefaultConfig = new DataApiSFTPConfig();
 
+		public DataApiSFTPConfig(string a_targetHost, string a_sftpUser, string a_keyFilePath)
+		{
+			TargetHost = a_targetHost;
+			SFTPUserName = a_sftpUser;
+			SFTPKeyFilePath = a_keyFilePath;
+
+			if (!TryReloadPrivateKey())
+			{
+				Logger.LogError("Config", $"Failed to acquire ftp private key, file \"{SFTPKeyFilePath}\" not found.");
+			}
+		}
+
 		private DataApiSFTPConfig()
 		{
 			if (!TryReloadPrivateKey())

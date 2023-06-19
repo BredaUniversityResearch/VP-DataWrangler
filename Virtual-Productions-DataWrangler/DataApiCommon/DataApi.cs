@@ -11,6 +11,8 @@ namespace DataApiCommon
 	{
 		public readonly DataEntityCache LocalCache = new DataEntityCache();
 
+		public abstract Task<bool> StartConnect();
+
 		public abstract Task<DataApiResponse<DataEntityProject[]>> GetActiveProjects();
 		public abstract Task<DataApiResponse<DataEntityFilePublish>> CreateFilePublish(Guid a_projectId, Guid a_shotId, Guid a_shotVersionId, DataEntityFilePublish a_publishData);
 		public abstract Task<DataApiResponse<DataEntityShot>> CreateNewShot(Guid a_projectId, DataEntityShot a_shotData);
