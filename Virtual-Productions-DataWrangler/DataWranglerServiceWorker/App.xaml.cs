@@ -154,26 +154,10 @@ namespace DataWranglerServiceWorker
 
 			Console.WriteLine("DataWranglerServiceWorker");
 
-			m_targetApi.StartConnect().ContinueWith((a_resultTask) => {
-				if (a_resultTask.Result)
-				{
-					OnSuccessfulLogin();
-				}
-				else
-				{
-					Logger.LogError("API", "Failed to connect to API");
-				}
-			});
-			//OnRequestUserAuthentication();
+			APIConnectionWindow window = new APIConnectionWindow(m_targetApi);
+			window.OnSuccessfulConnect += OnSuccessfulLogin;
 		}
-
-		//private void OnRequestUserAuthentication()
-		//{
-		//	ShotGridAuthenticationWindow window = new ShotGridAuthenticationWindow((ShotGridAPI)m_targetApi);
-		//	window.EnsureLogin();
-		//	window.OnSuccessfulLogin += OnSuccessfulLogin;
-		//}
-
+		
 		private void OnSuccessfulLogin()
 		{
 			//m_targetApi.StartAutoRefreshToken(OnRequestUserAuthentication);

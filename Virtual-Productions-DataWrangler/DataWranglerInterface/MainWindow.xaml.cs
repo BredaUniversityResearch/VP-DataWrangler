@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Shapes;
 using DataApiCommon;
 using DataApiSFTP;
 using DataWranglerCommon;
@@ -33,7 +34,7 @@ namespace DataWranglerInterface
 			}
 		}
 
-		private ShotGridLoginPage? m_shotGridLoginPage = null;
+		private APIConnectionPage? m_apiConnectionPage = null;
 		private ShotRecordingPage? m_shotRecordingPage;
 
 		private DebugWindow? m_debugWindow;
@@ -58,17 +59,31 @@ namespace DataWranglerInterface
             //m_previewWindow = new CameraPreviewWindow();
 			//m_previewWindow.Show();
 
-			//Todo: Add feedback to the user here.
 			m_targetAPI.StartConnect().ContinueWith(a_resultTask =>
 			{
 				if (a_resultTask.Result)
 				{
 					OnLoggedIn();
 				}
+				else
+				{
+					m_apiConnectionPage?.OnConnectFailure("Failed to connect to API");
+				}
 			});
+			OnApiConnectStarted();
 		}
 
-		protected override void OnKeyDown(KeyEventArgs e)
+        private void OnApiConnectStarted()
+        {
+			Dispatcher.InvokeAsync(() =>
+			{
+				m_apiConnectionPage = new APIConnectionPage();
+				Content = m_apiConnectionPage;
+			});
+
+		}
+
+        protected override void OnKeyDown(KeyEventArgs e)
 		{
 			base.OnKeyDown(e);
 			if (e.IsDown)
@@ -105,28 +120,10 @@ namespace DataWranglerInterface
 				Content = m_shotRecordingPage;
 			});
 
-			if (m_targetAPI is ShotGridAPI sgApi)
-			{
-				sgApi.StartAutoRefreshToken(OnRequestUserAuthentication);
-			}
-		}
-
-		private void OnRequestUserAuthentication()
-		{
-			if (m_targetAPI is ShotGridAPI sgApi)
-			{
-				Dispatcher.InvokeAsync(() =>
-				{
-					if (m_shotGridLoginPage == null)
-					{
-						throw new Exception("Expected login page to be here");
-					}
-
-					m_shotGridLoginPage.OnSuccessfulLogin += OnLoggedIn;
-					m_shotGridLoginPage.Initialize(sgApi, new SettingsCredentialProvider());
-					Content = m_shotGridLoginPage;
-				});
-			}
+			//if (m_targetAPI is ShotGridAPI sgApi)
+			//{
+			//	sgApi.StartAutoRefreshToken(OnRequestUserAuthentication);
+			//}
 		}
 
 		protected override void OnClosing(CancelEventArgs e)

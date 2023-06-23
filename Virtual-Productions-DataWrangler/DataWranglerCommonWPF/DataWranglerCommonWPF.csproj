@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Resources\IngestinatorLogo.png" />
     <None Remove="Resources\Loading.png" />
     <None Remove="Resources\LoadingDelayed.png" />
     <None Remove="Resources\ShotGridLogo.png" />
@@ -43,6 +44,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="Resources\IngestinatorLogo.png" />
     <Resource Include="Resources\Loading.png" />
     <Resource Include="Resources\LoadingDelayed.png" />
     <Resource Include="Resources\ShotGridLogo.png" />

@@ -76,7 +76,7 @@ namespace DataApiSFTP
 				}
 				catch (SocketException ex)
 				{
-					Logger.LogError("SFTPApi", $"Failed to connect with SFTP at host {a_hostName}: {ex.Message}");
+					Logger.LogError("SFTPApi", $"Failed to connect with SFTP at host \"{a_hostName}\": {ex.Message}");
 				}
 			}
 			else
