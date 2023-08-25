@@ -26,7 +26,8 @@ namespace DataWranglerCommonTests
 
 			IngestDataSourceResolverBlackmagicUrsa resolver = new IngestDataSourceResolverBlackmagicUrsa();
 
-			List<IngestDataSourceResolver.IngestFileEntry> filesToImport = resolver.ProcessDirectory(SampleFolder, "TEST", entityCache, dataCache);
+			List<IngestFileResolutionDetails> resolutionDetails = new List<IngestFileResolutionDetails>();
+			List<IngestDataSourceResolver.IngestFileEntry> filesToImport = resolver.ProcessDirectory(SampleFolder, "TEST", entityCache, dataCache, resolutionDetails);
 			Assert.True(filesToImport.Count == 1);
 			Assert.True(filesToImport[0].TargetShotVersion.EntityId == targetGuid);
 		}

@@ -56,7 +56,7 @@ namespace DataWranglerCommon.IngestDataSources
 		{
 		}
 
-		public override List<IngestFileEntry> ProcessDirectory(string a_baseDirectory, string a_storageVolumeName, DataEntityCache a_cache, IngestDataCache a_ingestCache)
+		public override List<IngestFileEntry> ProcessDirectory(string a_baseDirectory, string a_storageVolumeName, DataEntityCache a_cache, IngestDataCache a_ingestCache, List<IngestFileResolutionDetails> a_fileResolutionDetails)
 		{
 			List<IngestFileEntry> result = new List<IngestFileEntry>();
 
@@ -78,6 +78,9 @@ namespace DataWranglerCommon.IngestDataSources
 
 			foreach (string filePath in Directory.EnumerateFiles(fileBasePath))
 			{
+				IngestFileResolutionDetails details = new IngestFileResolutionDetails(filePath);
+				a_fileResolutionDetails.Add(details);
+
 				FileInfo fileInfo = new FileInfo(filePath);
 				foreach (var cacheEntry in relevantCacheEntries)
 				{

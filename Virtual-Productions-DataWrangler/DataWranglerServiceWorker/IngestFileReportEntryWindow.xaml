@@ -1,0 +1,24 @@
+﻿<Window x:Class="DataWranglerServiceWorker.IngestFileReportEntryWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:DataWranglerServiceWorker"
+        mc:Ignorable="d"
+        Title="IngestFileReportEntryWindow" Height="450" Width="800">
+    <StackPanel>
+		<DockPanel>
+			<Label>Source File:</Label>
+			<Label Content="{Binding Entry.SourceFile, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:IngestFileReportEntryWindow}}}"></Label>
+		</DockPanel>
+		<Label>Attempted Resolutions:</Label>
+		<DataGrid ItemsSource="{Binding Entry.IngestReport, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:IngestFileReportEntryWindow}}}" AutoGenerateColumns="False">
+			<DataGrid.Columns>
+				<DataGridTextColumn Header="Project" Binding="{Binding Key.ProjectName}"/>
+				<DataGridTextColumn Header="Shot Name" Binding="{Binding Key.ShotName}"/>
+				<DataGridTextColumn Header="Shot Version" Binding="{Binding Key.ShotVersionName}"/>
+				<DataGridTextColumn Header="Rejection Reason" Binding="{Binding Value}"/>
+			</DataGrid.Columns>
+		</DataGrid>
+	</StackPanel>
+</Window>

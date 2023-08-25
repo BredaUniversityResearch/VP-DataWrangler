@@ -28,9 +28,11 @@ namespace DataWranglerServiceWorker
 		private Task? m_cacheUpdateTask = null;
 		private DataImportWorker m_importWorker;
 		private IngestDataCache m_ingestCache = new IngestDataCache();
+		private IngestFileReport m_ingestReport = new IngestFileReport();
 
 		private USBDriveEventWatcher m_driveEventWatcher = new USBDriveEventWatcher();
 		private CopyProgressWindow m_copyProgress;
+		private IngestReportWindow m_ingestReportWindow;
 
 		private readonly IngestDataSourceResolverCollection m_resolverCollection = new IngestDataSourceResolverCollection();
 
@@ -48,6 +50,7 @@ namespace DataWranglerServiceWorker
 			m_importWorker.OnCopyFinished += OnFileCopyFinished;
 
 			m_copyProgress = new CopyProgressWindow();
+			m_ingestReportWindow = new IngestReportWindow(m_ingestReport);
 
 			m_driveEventWatcher.OnVolumeChanged += OnVolumeChanged;
 		}
@@ -56,7 +59,7 @@ namespace DataWranglerServiceWorker
 		{
 			m_copyProgress.SetTargetFile(a_copyMetaData.SourceFilePath.LocalPath, a_copyMetaData.DestinationFullFilePath.LocalPath);
 			Dispatcher.InvokeAsync(() => {
-				if (!m_copyProgress.IsVisible)
+				if (!m_ingestReportWindow.IsVisible)
 				{
 					m_copyProgress.Show();
 				}
@@ -92,17 +95,20 @@ namespace DataWranglerServiceWorker
 
 		private void OnFileCopyFinished(DataEntityShotVersion a_shotVersion, FileCopyMetaData a_copyMetaData, DataImportWorker.ECopyResult a_copyOperationResult)	
 		{
-			Dispatcher.InvokeAsync(() => {
-				if (m_importWorker.ImportQueueLength == 0)
-				{
-					m_copyProgress.Hide();
-				}
-			});
-
 			if (a_copyOperationResult == DataImportWorker.ECopyResult.Success)
 			{
 				CreatePublishEntryForFile(a_shotVersion, a_copyMetaData);
 			}
+
+			m_ingestReport.AddCopiedFile(a_shotVersion, a_copyMetaData, a_copyOperationResult);
+
+			Dispatcher.InvokeAsync(() => {
+				if (m_importWorker.ImportQueueLength == 0)
+				{
+					m_copyProgress.Hide();
+					m_ingestReportWindow.Show();
+				}
+			});
 		}
 
 		private void CreatePublishEntryForFile(DataEntityShotVersion a_shotVersion, FileCopyMetaData a_copyMetaData)
@@ -168,13 +174,28 @@ namespace DataWranglerServiceWorker
 				m_ingestCache.UpdateCache(m_targetApi.LocalCache);
 				foreach (string rootPath in m_importWorkerBacklog)
 				{
-					new FileMetaResolverWorker(rootPath, m_targetApi.LocalCache, m_importWorker, m_resolverCollection, m_ingestCache).Run();
+					new FileMetaResolverWorker(rootPath, m_targetApi.LocalCache, m_importWorker, m_resolverCollection, m_ingestCache, m_ingestReport).Run();
 				}
 
 				TryImportFilesFromMeta();
 			});
 
 			m_driveEventWatcher.DetectCurrentlyPresentUSBDrives();
+
+			/*
+			DataEntityLocalStorage testStorage = new DataEntityLocalStorage() {StorageRoot = new Uri("D:/")};
+
+			IngestFileReport testReport = new IngestFileReport();
+			IngestFileResolutionDetails testDetails = new IngestFileResolutionDetails("C:/success");
+			testDetails.AddRejection(new IngestShotVersionIdentifier(new DataEntityShotVersion {EntityId = Guid.NewGuid(), ShotVersionName = "test_version_01"}, null), "Some random rejection");
+			testDetails.AddRejection(new IngestShotVersionIdentifier(new DataEntityShotVersion {EntityId = Guid.NewGuid(), ShotVersionName = "test_version_02"}, null), "Computer said no");
+			testReport.AddFileResolutionDetails(testDetails);
+			testReport.AddCopiedFile(new DataEntityShotVersion { }, new FileCopyMetaData("C:/success", "D:/success", testStorage, new DataEntityPublishedFileType()), DataImportWorker.ECopyResult.Success);
+			testReport.AddCopiedFile(new DataEntityShotVersion { }, new FileCopyMetaData("C:/up_to_date", "D:/up_to_date", testStorage, new DataEntityPublishedFileType()), DataImportWorker.ECopyResult.FileAlreadyUpToDate);
+			testReport.AddCopiedFile(new DataEntityShotVersion { }, new FileCopyMetaData("C:/invalid_destination", "D:/invalid_destination", testStorage, new DataEntityPublishedFileType()), DataImportWorker.ECopyResult.InvalidDestinationPath);
+			testReport.AddCopiedFile(new DataEntityShotVersion { }, new FileCopyMetaData("C:/unknown_fail", "D:/unknown_fail", testStorage, new DataEntityPublishedFileType()), DataImportWorker.ECopyResult.UnknownFailure);
+			(new IngestReportWindow(testReport)).Show();
+			*/
 		}
 
 		private void OnLoggerMessageLogged(string a_source, ELogSeverity a_severity, string a_message)
@@ -201,7 +222,7 @@ namespace DataWranglerServiceWorker
 				}
 				else
 				{
-					new FileMetaResolverWorker(a_e.DriveRootPath, m_targetApi.LocalCache, m_importWorker, m_resolverCollection, m_ingestCache).Run();
+					new FileMetaResolverWorker(a_e.DriveRootPath, m_targetApi.LocalCache, m_importWorker, m_resolverCollection, m_ingestCache, m_ingestReport).Run();
 				}
 			}
 		}

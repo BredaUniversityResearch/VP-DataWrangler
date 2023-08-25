@@ -15,8 +15,9 @@ namespace DataWranglerServiceWorker
 		private IngestDataCache m_ingestCache;
 		private DataImportWorker m_importWorker;
 		private IngestDataSourceResolverCollection m_fileResolvers;
+		private IngestFileReport m_ingestReport;
 
-		public FileMetaResolverWorker(string a_rootPath, DataEntityCache a_cache, DataImportWorker a_importWorker, IngestDataSourceResolverCollection a_fileResolvers, IngestDataCache a_ingestCache)
+		public FileMetaResolverWorker(string a_rootPath, DataEntityCache a_cache, DataImportWorker a_importWorker, IngestDataSourceResolverCollection a_fileResolvers, IngestDataCache a_ingestCache, IngestFileReport a_report)
 		{
 			Logger.LogInfo("FileMetaResolverWorker", $"Starting file discovery for drive {a_rootPath}");
 			m_rootPath = a_rootPath;
@@ -31,6 +32,7 @@ namespace DataWranglerServiceWorker
 			m_importWorker = a_importWorker;
 			m_fileResolvers = a_fileResolvers;
 			m_ingestCache = a_ingestCache;
+			m_ingestReport = a_report;
 		}
 
 		public void Run()
@@ -50,7 +52,13 @@ namespace DataWranglerServiceWorker
 					continue;
 				}
 
-				List<IngestDataSourceResolver.IngestFileEntry> filesToIngest = resolver.ProcessDirectory(m_rootPath, storageName, m_cache, m_ingestCache);
+				List<IngestFileResolutionDetails> resolutionDetails = new List<IngestFileResolutionDetails>();
+				List<IngestDataSourceResolver.IngestFileEntry> filesToIngest = resolver.ProcessDirectory(m_rootPath, storageName, m_cache, m_ingestCache, resolutionDetails);
+				
+				foreach (IngestFileResolutionDetails details in resolutionDetails)
+				{
+					m_ingestReport.AddFileResolutionDetails(details);
+				}
 
 				foreach (IngestDataSourceResolver.IngestFileEntry entry in filesToIngest)
 				{

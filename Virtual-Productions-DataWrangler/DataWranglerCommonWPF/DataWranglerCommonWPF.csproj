@@ -11,6 +11,8 @@
     <None Remove="Resources\Loading.png" />
     <None Remove="Resources\LoadingDelayed.png" />
     <None Remove="Resources\ShotGridLogo.png" />
+    <None Remove="Resources\StatusIcons\Error.png" />
+    <None Remove="Resources\StatusIcons\Pending.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -48,6 +50,8 @@
     <Resource Include="Resources\Loading.png" />
     <Resource Include="Resources\LoadingDelayed.png" />
     <Resource Include="Resources\ShotGridLogo.png" />
+    <Resource Include="Resources\StatusIcons\Error.png" />
+    <Resource Include="Resources\StatusIcons\Pending.png" />
   </ItemGroup>
 
   <ItemGroup>

@@ -46,18 +46,19 @@ namespace DataWranglerCommon.IngestDataSources
 		{
 		}
 
-		public override List<IngestFileEntry> ProcessDirectory(string a_baseDirectory, string a_storageVolumeName, DataEntityCache a_cache, IngestDataCache a_ingestCache)
+		public override List<IngestFileEntry> ProcessDirectory(string a_baseDirectory, string a_storageVolumeName, DataEntityCache a_cache, IngestDataCache a_ingestCache, List<IngestFileResolutionDetails> a_fileResolutionDetails)
 		{
 			List<IngestFileEntry> result = new();
 
 			var relevantMeta = a_ingestCache.FindShotVersionsWithMeta<IngestDataSourceMetaBlackmagicUrsa>();
 
-			List<KeyValuePair<DataEntityShotVersion, string>> rejectionLog = new();
-
 			using BRAWFileDecoder fileDecoder = new BRAWFileDecoder();
 
 			foreach (string filePath in Directory.EnumerateFiles(a_baseDirectory))
 			{
+				IngestFileResolutionDetails fileDetails = new IngestFileResolutionDetails(filePath);
+				a_fileResolutionDetails.Add(fileDetails);
+
 				FileInfo fileInfo = new FileInfo(filePath);
 				if (BlackmagicCameraCodec.FindFromFileExtension(fileInfo.Extension, out EBlackmagicCameraCodec codec))
 				{
@@ -73,18 +74,18 @@ namespace DataWranglerCommon.IngestDataSources
 						{
 							if (targetShotMeta.Value.CodecName != codec.ToString())
 							{
-								rejectionLog.Add(new(targetShotMeta.Key, $"Wrong codec: Meta: {targetShotMeta.Value.CodecName} File: {codec}"));
+								fileDetails.AddRejection(new IngestShotVersionIdentifier(targetShotMeta.Key, a_cache), $"Wrong codec: Meta: {targetShotMeta.Value.CodecName} File: {codec}");
 								continue;
 							}
 							else if (targetShotMeta.Value.StartTimeCode == TimeCode.Invalid)
 							{
-								rejectionLog.Add(new(targetShotMeta.Key, $"Meta is contains invalid start time code: Meta: {targetShotMeta.Value.StartTimeCode}"));
+								fileDetails.AddRejection(new IngestShotVersionIdentifier(targetShotMeta.Key, a_cache), $"Meta is contains invalid start time code: Meta: {targetShotMeta.Value.StartTimeCode}");
 								continue;
 							}
 							else if (fileMeta.FirstFrameTimeCode == TimeCode.Invalid)
 							{
 								//Reject on file meta not being correct.
-								rejectionLog.Add(new(targetShotMeta.Key, $"File contains invalid first frame time code: File: {fileMeta.FirstFrameTimeCode}"));
+								fileDetails.AddRejection(new IngestShotVersionIdentifier(targetShotMeta.Key, a_cache), $"File contains invalid first frame time code: File: {fileMeta.FirstFrameTimeCode}");
 								continue;
 							}
 
@@ -96,19 +97,27 @@ namespace DataWranglerCommon.IngestDataSources
 							{
 								if (fileMeta.DateRecorded != targetShotMeta.Value.RecordingStart.Date)
 								{
-									rejectionLog.Add(new(targetShotMeta.Key, $"Recording date: Meta: {targetShotMeta.Value.RecordingStart.Date} File: {fileMeta.DateRecorded.Date}"));
+									fileDetails.AddRejection(new IngestShotVersionIdentifier(targetShotMeta.Key, a_cache), $"Recording date: Meta: {targetShotMeta.Value.RecordingStart.Date} File: {fileMeta.DateRecorded.Date}");
 									continue;
 								}
 								else if (fileMeta.CameraNumber != targetShotMeta.Value.CameraNumber)
 								{
-									rejectionLog.Add(new(targetShotMeta.Key, $"Wrong camera number: Meta: {targetShotMeta.Value.CameraNumber} File: {fileMeta.CameraNumber}"));
+									fileDetails.AddRejection(new IngestShotVersionIdentifier(targetShotMeta.Key, a_cache), $"Wrong camera number: Meta: {targetShotMeta.Value.CameraNumber} File: {fileMeta.CameraNumber}");
 									continue;
 								}
 
 								result.Add(new IngestFileEntry(targetShotMeta.Key, filePath, ImportedFileTag));
 							}
+							else
+							{
+									fileDetails.AddRejection(new IngestShotVersionIdentifier(targetShotMeta.Key, a_cache), $"TimeCode offset incorrect: Meta: {targetShotMeta.Value.StartTimeCode} File: {fileMeta.FirstFrameTimeCode}");
+							}
 						}
 					}
+				}
+				else
+				{
+					//TODO: Log Rejection of the resolver.
 				}
 			}
 
@@ -116,7 +125,7 @@ namespace DataWranglerCommon.IngestDataSources
 		}	
 	}
 
-	public class IngestDataSourceHandlerBlackmagicUrsa : IngestDataSourceHandler
+    public class IngestDataSourceHandlerBlackmagicUrsa : IngestDataSourceHandler
 	{
 		public override void InstallHooks(DataWranglerEventDelegates a_eventDelegates, DataWranglerServices a_services)
 		{

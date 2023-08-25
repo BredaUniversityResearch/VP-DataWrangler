@@ -18,6 +18,7 @@
     <ProjectReference Include="..\DataApiFileSystem\DataApiSFTP.csproj" />
     <ProjectReference Include="..\DataWranglerCommonWPF\DataWranglerCommonWPF.csproj" />
     <ProjectReference Include="..\DataWranglerCommon\DataWranglerCommon.csproj" />
+    <ProjectReference Include="..\DataWranglerSourceAnalysis\DataWranglerSourceAnalysis.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <ItemGroup>
