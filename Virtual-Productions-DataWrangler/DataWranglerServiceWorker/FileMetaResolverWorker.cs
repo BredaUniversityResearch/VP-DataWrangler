@@ -52,17 +52,15 @@ namespace DataWranglerServiceWorker
 					continue;
 				}
 
-				List<IngestFileResolutionDetails> resolutionDetails = new List<IngestFileResolutionDetails>();
-				List<IngestDataSourceResolver.IngestFileEntry> filesToIngest = resolver.ProcessDirectory(m_rootPath, storageName, m_cache, m_ingestCache, resolutionDetails);
+				List<IngestFileResolutionDetails> resolutionDetails = resolver.ProcessDirectory(m_rootPath, storageName, m_cache, m_ingestCache);
 				
 				foreach (IngestFileResolutionDetails details in resolutionDetails)
 				{
 					m_ingestReport.AddFileResolutionDetails(details);
-				}
-
-				foreach (IngestDataSourceResolver.IngestFileEntry entry in filesToIngest)
-				{
-					m_importWorker.AddFileToImport(entry.TargetShotVersion, entry.SourcePath, entry.FileTag);
+					if (details.HasSuccessfulResolution())
+					{
+						m_importWorker.AddFileToImport(details.TargetShotVersion!, details.FilePath, details.TargetFileTag);
+					}
 				}
 			}
 

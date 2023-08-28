@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DataWranglerServiceWorker"
         mc:Ignorable="d"
-        Title="IngestFileReportEntryWindow" Height="450" Width="800">
+        Title="Ingestinator File Report" Height="450" Width="800">
     <StackPanel>
 		<DockPanel>
 			<Label>Source File:</Label>

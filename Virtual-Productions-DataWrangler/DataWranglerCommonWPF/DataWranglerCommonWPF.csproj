@@ -13,6 +13,8 @@
     <None Remove="Resources\ShotGridLogo.png" />
     <None Remove="Resources\StatusIcons\Error.png" />
     <None Remove="Resources\StatusIcons\Pending.png" />
+    <None Remove="Resources\StatusIcons\Success.png" />
+    <None Remove="Resources\StatusIcons\Warning.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -52,6 +54,8 @@
     <Resource Include="Resources\ShotGridLogo.png" />
     <Resource Include="Resources\StatusIcons\Error.png" />
     <Resource Include="Resources\StatusIcons\Pending.png" />
+    <Resource Include="Resources\StatusIcons\Success.png" />
+    <Resource Include="Resources\StatusIcons\Warning.png" />
   </ItemGroup>
 
   <ItemGroup>

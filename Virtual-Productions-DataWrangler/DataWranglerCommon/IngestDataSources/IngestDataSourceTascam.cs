@@ -56,9 +56,9 @@ namespace DataWranglerCommon.IngestDataSources
 		{
 		}
 
-		public override List<IngestFileEntry> ProcessDirectory(string a_baseDirectory, string a_storageVolumeName, DataEntityCache a_cache, IngestDataCache a_ingestCache, List<IngestFileResolutionDetails> a_fileResolutionDetails)
+		public override List<IngestFileResolutionDetails> ProcessDirectory(string a_baseDirectory, string a_storageVolumeName, DataEntityCache a_cache, IngestDataCache a_ingestCache)
 		{
-			List<IngestFileEntry> result = new List<IngestFileEntry>();
+			List<IngestFileResolutionDetails> result = new List<IngestFileResolutionDetails>();
 
 			string sysFilePath = Path.Combine(a_baseDirectory, "dr-1.sys");
 			if (!File.Exists(sysFilePath))
@@ -79,7 +79,7 @@ namespace DataWranglerCommon.IngestDataSources
 			foreach (string filePath in Directory.EnumerateFiles(fileBasePath))
 			{
 				IngestFileResolutionDetails details = new IngestFileResolutionDetails(filePath);
-				a_fileResolutionDetails.Add(details);
+				result.Add(details);
 
 				FileInfo fileInfo = new FileInfo(filePath);
 				foreach (var cacheEntry in relevantCacheEntries)
@@ -88,7 +88,7 @@ namespace DataWranglerCommon.IngestDataSources
 					if (IsSourceFor(fileInfo, tascamMeta))
 					{
 						Logger.LogInfo("FileMetaResolverWorker", $"TASCAM meta resolver added {filePath} to import queue");
-						result.Add(new IngestFileEntry(cacheEntry.Key, filePath, FileTag));
+						details.SetSuccessfulResolution(cacheEntry.Key, FileTag);
 					}
 				}
 			}

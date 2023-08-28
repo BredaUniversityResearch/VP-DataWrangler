@@ -27,12 +27,12 @@ namespace DataWranglerCommon.IngestDataSources
 			CanProcessCache = a_processCache;
 		}
 
-		public virtual List<IngestFileEntry> ProcessDirectory(string a_baseDirectory, string a_storageVolumeName, DataEntityCache a_cache, IngestDataCache a_ingestCache, List<IngestFileResolutionDetails> a_fileResolutionDetails)
+		public virtual List<IngestFileResolutionDetails> ProcessDirectory(string a_baseDirectory, string a_storageVolumeName, DataEntityCache a_cache, IngestDataCache a_ingestCache)
 		{
 			throw new NotImplementedException();
 		}
 
-		public virtual List<IngestFileEntry> ProcessCache(DataEntityCache a_cache, IngestDataCache a_ingestCache)
+		public virtual List<IngestFileResolutionDetails> ProcessCache(DataEntityCache a_cache, IngestDataCache a_ingestCache)
 		{
 			throw new NotImplementedException();
 		}

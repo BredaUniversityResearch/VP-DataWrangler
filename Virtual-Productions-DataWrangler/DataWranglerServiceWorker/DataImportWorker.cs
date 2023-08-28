@@ -39,10 +39,12 @@ namespace DataWranglerServiceWorker
 
 		public delegate void CopyStartedDelegate(DataEntityShotVersion shotVersion, FileCopyMetaData metaData);
 		public delegate void CopyProgressUpdate(DataEntityShotVersion shotVersion, FileCopyMetaData metaData, FileCopyProgress progress);
+		public delegate void CopyWriteMetaDataStart(DataEntityShotVersion shotVersion, FileCopyMetaData metaData);
 		public delegate void CopyFinishedDelegate(DataEntityShotVersion shotVersion, FileCopyMetaData metaData, ECopyResult result);
 
 		public event CopyStartedDelegate OnCopyStarted = delegate { };
 		public event CopyProgressUpdate OnCopyUpdate = delegate { };
+		public event CopyWriteMetaDataStart OnCopyStartWriteMetaData = delegate { };
 		public event CopyFinishedDelegate OnCopyFinished = delegate { };
 
 		private DataApi m_api;
@@ -174,6 +176,7 @@ namespace DataWranglerServiceWorker
 
 						if (result == ECopyResult.Success)
 						{
+							OnCopyStartWriteMetaData.Invoke(resultToCopy.TargetShotVersion, resultToCopy.CopyMetaData);
 							WriteMetadata(resultToCopy);
 						}
 

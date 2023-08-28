@@ -7,13 +7,18 @@ namespace DataWranglerServiceWorker;
 
 public partial class IngestFileReportEntry
 {
-	public IngestFileReportEntry(Uri a_sourceFile)
+	public enum EStatusImageType
 	{
-		m_sourceFile = a_sourceFile;
-	}
+		Success,
+		Warning,
+		Error,
+		Pending
+	};
 
 	[AutoNotify]
-	private string m_status = "Not Imported";
+	private EStatusImageType m_statusImageType = EStatusImageType.Warning;
+	[AutoNotify]
+	private string m_status = "Ignored File Type";
 	[AutoNotify]
 	private Uri m_sourceFile;
 	[AutoNotify]
@@ -21,4 +26,9 @@ public partial class IngestFileReportEntry
 
 	[AutoNotify]
 	private Dictionary<IngestShotVersionIdentifier, string>? m_ingestReport = null;
+
+	public IngestFileReportEntry(Uri a_sourceFile)
+	{
+		m_sourceFile = a_sourceFile;
+	}
 };

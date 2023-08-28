@@ -46,9 +46,9 @@ namespace DataWranglerCommon.IngestDataSources
 		{
 		}
 
-		public override List<IngestFileEntry> ProcessDirectory(string a_baseDirectory, string a_storageVolumeName, DataEntityCache a_cache, IngestDataCache a_ingestCache, List<IngestFileResolutionDetails> a_fileResolutionDetails)
+		public override List<IngestFileResolutionDetails> ProcessDirectory(string a_baseDirectory, string a_storageVolumeName, DataEntityCache a_cache, IngestDataCache a_ingestCache)
 		{
-			List<IngestFileEntry> result = new();
+			List<IngestFileResolutionDetails> result = new();
 
 			var relevantMeta = a_ingestCache.FindShotVersionsWithMeta<IngestDataSourceMetaBlackmagicUrsa>();
 
@@ -57,7 +57,7 @@ namespace DataWranglerCommon.IngestDataSources
 			foreach (string filePath in Directory.EnumerateFiles(a_baseDirectory))
 			{
 				IngestFileResolutionDetails fileDetails = new IngestFileResolutionDetails(filePath);
-				a_fileResolutionDetails.Add(fileDetails);
+				result.Add(fileDetails);
 
 				FileInfo fileInfo = new FileInfo(filePath);
 				if (BlackmagicCameraCodec.FindFromFileExtension(fileInfo.Extension, out EBlackmagicCameraCodec codec))
@@ -106,7 +106,7 @@ namespace DataWranglerCommon.IngestDataSources
 									continue;
 								}
 
-								result.Add(new IngestFileEntry(targetShotMeta.Key, filePath, ImportedFileTag));
+								fileDetails.SetSuccessfulResolution(targetShotMeta.Key, ImportedFileTag);
 							}
 							else
 							{

@@ -99,9 +99,9 @@ namespace DataWranglerCommon.IngestDataSources
 		{
 		}
 
-		public override List<IngestFileEntry> ProcessCache(DataEntityCache a_cache, IngestDataCache a_ingestCache)
+		public override List<IngestFileResolutionDetails> ProcessCache(DataEntityCache a_cache, IngestDataCache a_ingestCache)
 		{
-			List<IngestFileEntry> result = new List<IngestFileEntry>();
+			List<IngestFileResolutionDetails> result = new List<IngestFileResolutionDetails>();
 
 			var metasToParse = a_ingestCache.FindShotVersionsWithMeta<IngestDataSourceMetaViconTracking>();
 			foreach (var currentMeta in metasToParse)
@@ -118,10 +118,14 @@ namespace DataWranglerCommon.IngestDataSources
 				{
 					foreach (string filePaths in Directory.GetFiles(currentMeta.Value.TempCaptureLibraryPath))
 					{
+						IngestFileResolutionDetails fileDetails = new IngestFileResolutionDetails(filePaths);
+
+
 						FileInfo targetFile = new FileInfo(filePaths);
 						if (targetFile.Name.StartsWith(currentMeta.Value.TempCaptureFileName))
 						{
-							result.Add(new IngestFileEntry(currentMeta.Key, targetFile.FullName, ViconTrackingFileTag));
+							fileDetails.SetSuccessfulResolution(currentMeta.Key, ViconTrackingFileTag);
+							result.Add(fileDetails);
 							++matchedCount;
 						}
 					}

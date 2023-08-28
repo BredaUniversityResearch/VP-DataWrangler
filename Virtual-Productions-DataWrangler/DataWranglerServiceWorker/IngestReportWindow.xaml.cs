@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
@@ -24,6 +25,74 @@ namespace DataWranglerServiceWorker
 			if (row.Item is IngestFileReportEntry entry)
 			{
 				(new IngestFileReportEntryWindow(entry)).Show();
+			}
+		}
+
+
+		public void SetTargetFile(Uri a_sourceFile, string a_destinationFile)
+		{
+			if (!Dispatcher.CheckAccess())
+			{
+				Dispatcher.InvokeAsync(() => { SetTargetFile(a_sourceFile, a_destinationFile); });
+				return;
+			}
+
+			CurrentFileName.Content = a_sourceFile;
+			IngestFileReportEntry? entry = Report.FindEntryForFilePath(a_sourceFile);
+			if (entry != null)
+			{
+				entry.Status = "Starting Copy...";
+			}
+		}
+
+		public void ProgressUpdate(Uri a_sourceFile, float a_progressPercent, string a_humanReadableSpeed)
+		{
+			if (!Dispatcher.CheckAccess())
+			{
+				Dispatcher.InvokeAsync(() => { ProgressUpdate(a_sourceFile, a_progressPercent, a_humanReadableSpeed); });
+				return;
+			}
+
+			CopyOperationContainer.Visibility = Visibility.Visible;
+			CopyProgressIndicator.Value = a_progressPercent * 100.0f;
+			ProgressInformation.Content = a_humanReadableSpeed;
+
+			IngestFileReportEntry? entry = Report.FindEntryForFilePath(a_sourceFile);
+			if (entry != null)
+			{
+				entry.Status = $"Copying {a_progressPercent:P}";
+			}
+		}
+
+		public void OnAllCopyOperationsFinished()
+		{
+			if (!Dispatcher.CheckAccess())
+			{
+				Dispatcher.InvokeAsync(OnAllCopyOperationsFinished);
+				return;
+			}
+
+			CopyOperationContainer.Visibility = Visibility.Collapsed;
+		}
+
+		public void OnFileCopyCompleted(Uri a_sourceFilePath, DataImportWorker.ECopyResult a_copyOperationResult)
+		{
+			//if (a_copyOperationResult == DataImportWorker.ECopyResult.Success)
+			//{
+			//	IngestFileReportEntry? entry = Report.FindEntryForFilePath(a_sourceFilePath);
+			//	if (entry != null)
+			//	{
+			//		entry.Status = "Success";
+			//	}
+			//}	
+		}
+
+		public void OnFileCopyStartWriteMetaData(Uri a_sourceFilePath)
+		{
+			IngestFileReportEntry? entry = Report.FindEntryForFilePath(a_sourceFilePath);
+			if (entry != null)
+			{
+				entry.Status = "Writing Metadata...";
 			}
 		}
 	}

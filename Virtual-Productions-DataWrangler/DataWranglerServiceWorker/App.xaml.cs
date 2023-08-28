@@ -31,7 +31,7 @@ namespace DataWranglerServiceWorker
 		private IngestFileReport m_ingestReport = new IngestFileReport();
 
 		private USBDriveEventWatcher m_driveEventWatcher = new USBDriveEventWatcher();
-		private CopyProgressWindow m_copyProgress;
+		//private CopyProgressWindow m_copyProgress;
 		private IngestReportWindow m_ingestReportWindow;
 
 		private readonly IngestDataSourceResolverCollection m_resolverCollection = new IngestDataSourceResolverCollection();
@@ -47,9 +47,10 @@ namespace DataWranglerServiceWorker
 
 			m_importWorker.OnCopyStarted += OnFileCopyStarted;
 			m_importWorker.OnCopyUpdate += OnFileCopyUpdate;
+			m_importWorker.OnCopyStartWriteMetaData += OnFileCopyStartWriteMetaData;
 			m_importWorker.OnCopyFinished += OnFileCopyFinished;
 
-			m_copyProgress = new CopyProgressWindow();
+			//m_copyProgress = new CopyProgressWindow();
 			m_ingestReportWindow = new IngestReportWindow(m_ingestReport);
 
 			m_driveEventWatcher.OnVolumeChanged += OnVolumeChanged;
@@ -57,11 +58,11 @@ namespace DataWranglerServiceWorker
 
 		private void OnFileCopyStarted(DataEntityShotVersion a_shotVersion, FileCopyMetaData a_copyMetaData)
 		{
-			m_copyProgress.SetTargetFile(a_copyMetaData.SourceFilePath.LocalPath, a_copyMetaData.DestinationFullFilePath.LocalPath);
+			m_ingestReportWindow.SetTargetFile(a_copyMetaData.SourceFilePath, a_copyMetaData.DestinationFullFilePath.LocalPath);
 			Dispatcher.InvokeAsync(() => {
 				if (!m_ingestReportWindow.IsVisible)
 				{
-					m_copyProgress.Show();
+					m_ingestReportWindow.Show();
 				}
 			});
 		}
@@ -72,8 +73,8 @@ namespace DataWranglerServiceWorker
 			string humanReadableSourceSize = FormatAsHumanReadableByteAmount(a_progressUpdate.TotalFileSizeBytes);
 			string humanReadableCopySpeed = FormatAsHumanReadableByteAmount(a_progressUpdate.CurrentCopySpeedBytesPerSecond);
 
-			m_copyProgress.ProgressUpdate(a_progressUpdate.PercentageCopied, $"{humanReadableCopiedAmount} / {humanReadableSourceSize} @ {humanReadableCopySpeed}/s");
-			m_copyProgress.UpdateQueueLength(m_importWorker.ImportQueueLength);
+			m_ingestReportWindow.ProgressUpdate(a_copyMetaData.SourceFilePath, a_progressUpdate.PercentageCopied, $"{humanReadableCopiedAmount} / {humanReadableSourceSize} @ {humanReadableCopySpeed}/s");
+			//m_copyProgress.UpdateQueueLength(m_importWorker.ImportQueueLength);
 		}
 
 		private static string FormatAsHumanReadableByteAmount(long a_byteAmount)
@@ -93,8 +94,15 @@ namespace DataWranglerServiceWorker
 			return $"{roundedByteAmount:0.00} {byteOrderString[speedUnitOrder]}"; ;
 		}
 
-		private void OnFileCopyFinished(DataEntityShotVersion a_shotVersion, FileCopyMetaData a_copyMetaData, DataImportWorker.ECopyResult a_copyOperationResult)	
+		private void OnFileCopyStartWriteMetaData(DataEntityShotVersion a_shotversion, FileCopyMetaData a_metadata)
 		{
+			Dispatcher.InvokeAsync(() => { m_ingestReportWindow.OnFileCopyStartWriteMetaData(a_metadata.SourceFilePath); });
+		}
+
+		private void OnFileCopyFinished(DataEntityShotVersion a_shotVersion, FileCopyMetaData a_copyMetaData, DataImportWorker.ECopyResult a_copyOperationResult)
+		{
+			Dispatcher.InvokeAsync(() => { m_ingestReportWindow.OnFileCopyCompleted(a_copyMetaData.SourceFilePath, a_copyOperationResult); });
+
 			if (a_copyOperationResult == DataImportWorker.ECopyResult.Success)
 			{
 				CreatePublishEntryForFile(a_shotVersion, a_copyMetaData);
@@ -105,8 +113,7 @@ namespace DataWranglerServiceWorker
 			Dispatcher.InvokeAsync(() => {
 				if (m_importWorker.ImportQueueLength == 0)
 				{
-					m_copyProgress.Hide();
-					m_ingestReportWindow.Show();
+					m_ingestReportWindow.OnAllCopyOperationsFinished();
 				}
 			});
 		}
@@ -207,7 +214,7 @@ namespace DataWranglerServiceWorker
 		{
 			base.OnExit(e);
 
-			m_copyProgress.Close();
+			m_ingestReportWindow.Close();
 
 			FreeConsole();
 		}
@@ -233,10 +240,14 @@ namespace DataWranglerServiceWorker
 			{
 				if (metaResolver.CanProcessCache)
 				{
-					List<IngestDataSourceResolver.IngestFileEntry> filesToIngest = metaResolver.ProcessCache(m_targetApi.LocalCache, m_ingestCache);
-					foreach (IngestDataSourceResolver.IngestFileEntry entry in filesToIngest)
+					List<IngestFileResolutionDetails> filesToIngest = metaResolver.ProcessCache(m_targetApi.LocalCache, m_ingestCache);
+					foreach (IngestFileResolutionDetails entry in filesToIngest)
 					{
-						m_importWorker.AddFileToImport(entry.TargetShotVersion, entry.SourcePath, entry.FileTag);
+						m_ingestReport.AddFileResolutionDetails(entry);
+						if (entry.HasSuccessfulResolution())
+						{
+							m_importWorker.AddFileToImport(entry.TargetShotVersion, entry.FilePath, entry.TargetFileTag);
+						}
 					}
 				}
 			}

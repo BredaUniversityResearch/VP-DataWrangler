@@ -7,24 +7,27 @@ namespace DataWranglerServiceWorker
 {
 	internal class IngestReportColumnStatusImageConverter: IValueConverter
 	{
-		private BitmapImage UpToDateImage = new BitmapImage(new Uri("pack://application:,,,/DataWranglerCommonWPF;component/Resources/StatusIcons/Pending.png"));
-		private BitmapImage ErrorImage = new BitmapImage(new Uri("pack://application:,,,/DataWranglerCommonWPF;component/Resources/StatusIcons/Error.png"));
+		private readonly BitmapImage SuccessImage = new BitmapImage(new Uri("pack://application:,,,/DataWranglerCommonWPF;component/Resources/StatusIcons/Success.png"));
+		private readonly BitmapImage WarningImage = new BitmapImage(new Uri("pack://application:,,,/DataWranglerCommonWPF;component/Resources/StatusIcons/Warning.png"));
+		private readonly BitmapImage ErrorImage = new BitmapImage(new Uri("pack://application:,,,/DataWranglerCommonWPF;component/Resources/StatusIcons/Error.png"));
+		private readonly BitmapImage PendingImage = new BitmapImage(new Uri("pack://application:,,,/DataWranglerCommonWPF;component/Resources/StatusIcons/Pending.png"));
 
 		public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
 		{
-			string val = (string) value;
-			if (val == DataImportWorker.ECopyResult.Success.ToString())
+			IngestFileReportEntry.EStatusImageType val = (IngestFileReportEntry.EStatusImageType) value;
+			switch (val)
 			{
-				return UpToDateImage;
+				case IngestFileReportEntry.EStatusImageType.Error:
+					return ErrorImage;
+				case IngestFileReportEntry.EStatusImageType.Warning:
+					return WarningImage;
+				case IngestFileReportEntry.EStatusImageType.Success:
+					return SuccessImage;
+				case IngestFileReportEntry.EStatusImageType.Pending:
+					return PendingImage;
 			}
-			else if (val == DataImportWorker.ECopyResult.FileAlreadyUpToDate.ToString())
-			{
-				return UpToDateImage;
-			}
-			else
-			{
-				return ErrorImage;
-			}
+
+			throw new ArgumentException($"Unknown value {val} for StatusImageType");
 		}
 
 		public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
