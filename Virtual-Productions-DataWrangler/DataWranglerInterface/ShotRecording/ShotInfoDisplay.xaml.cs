@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System.ComponentModel;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using AutoNotify;
@@ -23,12 +24,19 @@ namespace DataWranglerInterface.ShotRecording
 		
 		public void SetDisplayedShot(DataEntityShot? a_shotInfo)
 		{
-			if (a_shotInfo != null)
+			if (DisplayedShot != null)
 			{
-				DisplayedShot = a_shotInfo;
-				if (!string.IsNullOrEmpty(a_shotInfo.ImageURL))
+				DisplayedShot.PropertyChanged -= OnDisplayedShotPropertyChanged;
+			}
+
+			DisplayedShot = a_shotInfo;
+			if (DisplayedShot != null)
+			{
+				DisplayedShot.PropertyChanged += OnDisplayedShotPropertyChanged;
+				
+				if (!string.IsNullOrEmpty(DisplayedShot.ImageURL))
 				{
-					ShotThumbnail.Source = new BitmapImage(new Uri(a_shotInfo.ImageURL));
+					ShotThumbnail.Source = new BitmapImage(new Uri(DisplayedShot.ImageURL));
 				}
 				else
 				{
@@ -42,17 +50,17 @@ namespace DataWranglerInterface.ShotRecording
 			}
 		}
 
-		private void OnDescriptionChanged(object a_sender, RoutedEventArgs a_e)
+		private void OnDisplayedShotPropertyChanged(object? a_sender, PropertyChangedEventArgs a_e)
 		{
-			if (m_displayedShot != null && m_displayedShot.ChangeTracker.HasAnyUncommittedChanges())
+			if (m_displayedShot == null)
+			{
+				return;
+			}
+
+			if (a_e.PropertyName == nameof(DisplayedShot.Description))
 			{
 				Task<DataApiResponseGeneric> task = m_displayedShot.ChangeTracker.CommitChanges(DataWranglerServiceProvider.Instance.TargetDataApi);
-				FrameworkElement sender = (FrameworkElement)a_sender;
-				AsyncOperationChangeFeedback? feedbackElement = AsyncOperationChangeFeedback.FindFeedbackElementFrom(sender);
-				if (feedbackElement != null)
-				{
-					feedbackElement.ProvideFeedback(task);
-				}
+				DescriptionFeedbackElement.ProvideFeedback(task);
 			}
 		}
 	}

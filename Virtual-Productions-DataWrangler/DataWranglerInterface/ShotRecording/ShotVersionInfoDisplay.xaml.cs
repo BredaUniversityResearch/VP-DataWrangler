@@ -83,7 +83,13 @@ namespace DataWranglerInterface.ShotRecording
 		{
 			if (a_shotVersion != null)
 			{
+				if (CurrentVersion != null)
+				{
+					CurrentVersion.PropertyChanged -= OnCurrentVersionPropertyChanged;
+				}
+
 				CurrentVersion = a_shotVersion;
+				CurrentVersion.PropertyChanged += OnCurrentVersionPropertyChanged;
 
 				if (!string.IsNullOrEmpty(a_shotVersion.DataWranglerMeta))
 				{
@@ -181,35 +187,23 @@ namespace DataWranglerInterface.ShotRecording
 			VersionFileSourcesControl.SetCurrentMeta(m_currentVersionMeta);
 		}
 
-		private void GoodTakeCheckbox_Clicked(object a_sender, RoutedEventArgs a_e)
+		private void OnCurrentVersionPropertyChanged(object? a_sender, PropertyChangedEventArgs a_e)
 		{
-			if (CurrentVersion == null || !CurrentVersion.ChangeTracker.HasAnyUncommittedChanges())
+			if (CurrentVersion == null)
 			{
 				return;
 			}
 
-			Task<DataApiResponseGeneric> task = CurrentVersion.ChangeTracker.CommitChanges(DataWranglerServiceProvider.Instance.TargetDataApi);
-			FrameworkElement sender = (FrameworkElement) a_sender;
-			AsyncOperationChangeFeedback? feedbackElement = AsyncOperationChangeFeedback.FindFeedbackElementFrom(sender);
-			if (feedbackElement != null)
+			
+			if (a_e.PropertyName == nameof(CurrentVersion.Description))
 			{
-				feedbackElement.ProvideFeedback(task);
+				Task<DataApiResponseGeneric> task = CurrentVersion.ChangeTracker.CommitChanges(DataWranglerServiceProvider.Instance.TargetDataApi);
+				DescriptionFeedbackElement.ProvideFeedback(task);
 			}
-		}
-
-		private void OnDescriptionChanged(object a_sender, RoutedEventArgs a_routedEventArgs)
-		{
-			if (CurrentVersion == null || !CurrentVersion.ChangeTracker.HasAnyUncommittedChanges())
+			else if (a_e.PropertyName == nameof(CurrentVersion.Flagged))
 			{
-				return;
-			}
-
-			Task<DataApiResponseGeneric> task = CurrentVersion.ChangeTracker.CommitChanges(DataWranglerServiceProvider.Instance.TargetDataApi);
-			FrameworkElement sender = (FrameworkElement)a_sender;
-			AsyncOperationChangeFeedback? feedbackElement = AsyncOperationChangeFeedback.FindFeedbackElementFrom(sender);
-			if (feedbackElement != null)
-			{
-				feedbackElement.ProvideFeedback(task);
+				Task<DataApiResponseGeneric> task = CurrentVersion.ChangeTracker.CommitChanges(DataWranglerServiceProvider.Instance.TargetDataApi);
+				GoodTakeFeedbackElement.ProvideFeedback(task);
 			}
 		}
 	}

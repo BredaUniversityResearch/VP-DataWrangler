@@ -161,6 +161,7 @@ namespace DataApiSFTP
 								EntityId = attrib.EntityId,
 								Name = directoryEntry.Name
 							};
+							project.ChangeTracker.ClearChangedState();
 
 							LocalCache.AddCachedEntity(project);
 							projects.Add(project);
@@ -367,6 +368,9 @@ namespace DataApiSFTP
 							}
 
 							DataEntityShot shot = attrib.ToDataEntity(project);
+
+							shot.ChangeTracker.ClearChangedState();
+
 							LocalCache.AddCachedEntity(shot);
 							shots.Add(shot);
 						}

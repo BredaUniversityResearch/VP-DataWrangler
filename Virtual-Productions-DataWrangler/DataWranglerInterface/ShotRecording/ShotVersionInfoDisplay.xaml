@@ -10,11 +10,11 @@
              d:DesignHeight="450" d:DesignWidth="800">
     <StackPanel xamlUtility:Spacing.Vertical="10">
         <local:ShotVersionSelectorControl x:Name="VersionSelectorControl" />
-        <dataWranglerCommonWpf:AsyncOperationChangeFeedback HorizontalAlignment="Left">
-            <CheckBox Click="GoodTakeCheckbox_Clicked" IsChecked="{Binding CurrentVersion.Flagged, FallbackValue=false, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:ShotVersionInfoDisplay}}}">Good Take</CheckBox>
+        <dataWranglerCommonWpf:AsyncOperationChangeFeedback HorizontalAlignment="Left" x:Name="GoodTakeFeedbackElement">
+            <CheckBox IsChecked="{Binding CurrentVersion.Flagged, FallbackValue=false, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:ShotVersionInfoDisplay}}}">Good Take</CheckBox>
         </dataWranglerCommonWpf:AsyncOperationChangeFeedback>
-        <dataWranglerCommonWpf:AsyncOperationChangeFeedback>
-			<TextBox MinHeight="60" TextWrapping="Wrap" Margin="4" MinWidth="60" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" AcceptsReturn="True" Text="{Binding CurrentVersion.Description, FallbackValue='', RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:ShotVersionInfoDisplay}}}" LostFocus="OnDescriptionChanged"/>
+		<dataWranglerCommonWpf:AsyncOperationChangeFeedback x:Name="DescriptionFeedbackElement">
+			<TextBox MinHeight="60" TextWrapping="Wrap" Margin="4" MinWidth="60" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" AcceptsReturn="True" Text="{Binding CurrentVersion.Description, FallbackValue='', RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:ShotVersionInfoDisplay}}}"/>
         </dataWranglerCommonWpf:AsyncOperationChangeFeedback>
         <local:ShotVersionFileSourcesControl x:Name="VersionFileSourcesControl"/>
     </StackPanel>
