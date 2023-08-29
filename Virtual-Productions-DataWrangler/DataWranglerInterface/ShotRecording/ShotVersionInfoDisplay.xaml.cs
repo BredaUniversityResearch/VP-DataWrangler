@@ -81,48 +81,39 @@ namespace DataWranglerInterface.ShotRecording
 
 		private void OnShotVersionSelected(DataEntityShotVersion? a_shotVersion)
 		{
-			if (a_shotVersion != null)
+			if (CurrentVersion != null)
 			{
-				if (CurrentVersion != null)
-				{
-					CurrentVersion.PropertyChanged -= OnCurrentVersionPropertyChanged;
-				}
+				CurrentVersion.PropertyChanged -= OnCurrentVersionPropertyChanged;
+			}
 
-				CurrentVersion = a_shotVersion;
+			IngestDataShotVersionMeta shotMeta = new IngestDataShotVersionMeta();
+			CurrentVersion = a_shotVersion;
+			if (CurrentVersion != null)
+			{
 				CurrentVersion.PropertyChanged += OnCurrentVersionPropertyChanged;
 
-				if (!string.IsNullOrEmpty(a_shotVersion.DataWranglerMeta))
+				if (!string.IsNullOrEmpty(CurrentVersion.DataWranglerMeta))
 				{
 					try
 					{
-						IngestDataShotVersionMeta? shotMeta = JsonConvert.DeserializeObject<IngestDataShotVersionMeta>(a_shotVersion.DataWranglerMeta, DataWranglerSerializationSettings.Instance);
-						if (shotMeta != null)
+						IngestDataShotVersionMeta? deserializedMeta = JsonConvert.DeserializeObject<IngestDataShotVersionMeta>(CurrentVersion.DataWranglerMeta, DataWranglerSerializationSettings.Instance);
+						if (deserializedMeta != null)
 						{
-							SetTargetMeta(shotMeta);
+							shotMeta = deserializedMeta;
 						}
 						else
 						{
 							Logger.LogError("Interface",
-								$"Failed to deserialize shot version meta from value: {a_shotVersion.DataWranglerMeta}");
-							SetTargetMeta(new IngestDataShotVersionMeta());
+								$"Failed to deserialize shot version meta from value: {CurrentVersion.DataWranglerMeta}");
 						}
 					}
-					catch (JsonSerializationException ex)
+					catch (JsonException ex)
 					{
-						Logger.LogError("Interface", $"Failed to deserialize shot version meta from value: {a_shotVersion.DataWranglerMeta}. Exception: {ex.Message}");
-						SetTargetMeta(new IngestDataShotVersionMeta());
+						Logger.LogError("Interface", $"Failed to deserialize shot version meta from value: {CurrentVersion.DataWranglerMeta}. Exception: {ex.Message}");
 					}
-					catch (JsonReaderException ex)
-					{
-						Logger.LogError("Interface", $"Failed to deserialize shot version meta from value: {a_shotVersion.DataWranglerMeta}. Exception: {ex.Message}");
-						SetTargetMeta(new IngestDataShotVersionMeta());
-					}
-				}
-				else
-				{
-					SetTargetMeta(new IngestDataShotVersionMeta());
 				}
 			}
+			SetTargetMeta(shotMeta);
 		}
 
 		private void OnAnyMetaPropertyChanged(object? a_sender, PropertyChangedEventArgs a_e)
