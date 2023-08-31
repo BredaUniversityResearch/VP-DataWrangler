@@ -27,7 +27,12 @@ namespace BlackmagicCameraControlData
 			OnCameraDataReceived(a_deviceHandle, a_receivedTime, a_packet);
 		}
 
-		public bool TrySendAsyncCommand(CameraDeviceHandle a_deviceHandle, ICommandPacketBase a_command)
+		//public virtual bool TrySendAsyncCommand(CameraDeviceHandle a_deviceHandle, ICommandPacketBase a_command)
+		//{
+		//	return false;
+		//}
+
+		public virtual bool TrySynchronizeClock(CameraDeviceHandle a_targetDevice, int a_minutesOffsetFromUtc, DateTime a_timeSyncPoint)
 		{
 			return false;
 		}

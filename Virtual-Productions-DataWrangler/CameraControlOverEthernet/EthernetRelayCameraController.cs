@@ -86,5 +86,30 @@ namespace CameraControlOverEthernet
 				CameraDataReceived(handle, receivedTimeCode, new CommandPacketSystemTimeCode() {BinaryCodedTimeCode = receivedTimeCode.TimeCodeAsBinaryCodedDecimal, TimeCode = receivedTimeCode});
 			}
 		}
+
+		public override bool TrySynchronizeClock(CameraDeviceHandle a_targetDevice, int a_minutesOffsetFromUtc, DateTime a_timeSyncPoint)
+		{
+			int connectionId = -1;
+			foreach (var kvp in m_cameraHandlesByConnectionId)
+			{
+				if (kvp.Value.Contains(a_targetDevice))
+				{
+					connectionId = kvp.Key;
+					break;
+				}
+			}
+
+			if (connectionId != -1)
+			{
+				uint timeBcd = BinaryCodedDecimal.FromTime(a_timeSyncPoint);
+				uint dateBcd = BinaryCodedDecimal.FromDate(a_timeSyncPoint);
+
+				m_receiver.SendMessageToConnection(connectionId, new CameraControlConfigurationTimePacket((short)a_minutesOffsetFromUtc, timeBcd, dateBcd));
+				return true;
+			}
+
+
+			return false;
+		}
 	}
 }

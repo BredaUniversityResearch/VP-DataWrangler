@@ -5,6 +5,7 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 using System.Xml;
+using BlackmagicCameraControlData.CommandPackets;
 using CommonLogging;
 
 namespace CameraControlOverEthernet
@@ -54,7 +55,7 @@ namespace CameraControlOverEthernet
 		private Task? m_connectAcceptTask = null;
 		private readonly int m_serverIdentifier = Random.Shared.Next();
 
-		private List<ClientConnection> m_connectedClients = new List<ClientConnection>();
+		private readonly List<ClientConnection> m_connectedClients = new List<ClientConnection>();
 		private BlockingCollection<QueuedPacketEntry> m_receivedPacketQueue = new BlockingCollection<QueuedPacketEntry>();
 
 		public delegate void ClientDisconnectedDelegate(int a_connectionId);
@@ -225,6 +226,23 @@ namespace CameraControlOverEthernet
 			a_cameraControlPacket = null;
 			a_connectionId = -1;
 			return false;
+		}
+
+		public void SendMessageToConnection(int a_connectionId, ICameraControlPacket a_packetToSend)
+		{
+			lock (m_connectedClients)
+			{
+				ClientConnection? conn = m_connectedClients.Find((obj) => obj.ConnectionId == a_connectionId);
+				if (conn != null)
+				{
+					byte[] bufferBytes = new byte[128];
+					using MemoryStream ms = new MemoryStream(bufferBytes, true);
+					using BinaryWriter writer = new BinaryWriter(ms, Encoding.ASCII, true);
+					CameraControlTransport.Write(a_packetToSend, writer);
+
+					conn.Client.GetStream().Write(bufferBytes, 0, (int)ms.Position);
+				}
+			}
 		}
 	}
 }

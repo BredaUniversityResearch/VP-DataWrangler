@@ -158,23 +158,21 @@ namespace DataWranglerCommon.CameraHandling
 		        if (!m_receivedAnyBatteryStatusPackets)
 		        {
 			        CommandPacketConfigurationTimezone tzPacket = new CommandPacketConfigurationTimezone(TimeZoneInfo.Local);
-			        a_deviceHandle.TargetController.TrySendAsyncCommand(a_deviceHandle, tzPacket);
 			        m_timeSyncPoint = DateTime.UtcNow;
-			        a_deviceHandle.TargetController.TrySendAsyncCommand(a_deviceHandle,
-				        new CommandPacketConfigurationRealTimeClock(m_timeSyncPoint));
+			        a_deviceHandle.TargetController.TrySynchronizeClock(a_deviceHandle, tzPacket.MinutesOffsetFromUTC, m_timeSyncPoint);
 
-			        Logger.LogInfo("CameraInfo",
+					Logger.LogInfo("CameraInfo",
 				        $"Synchronizing camera with deviceHandle {a_deviceHandle.DeviceUuid} time to {DateTime.UtcNow} + {tzPacket.MinutesOffsetFromUTC} Minutes");
 
 			        m_receivedAnyBatteryStatusPackets = true;
 		        }
 
-		        if (SelectedCodec == "" && DateTimeOffset.UtcNow - m_connectTime > new TimeSpan(0, 0, 15))
+		        /*if (SelectedCodec == "" && DateTimeOffset.UtcNow - m_connectTime > new TimeSpan(0, 0, 15))
 		        {
 			        a_deviceHandle.TargetController.TrySendAsyncCommand(a_deviceHandle,
 				        new CommandPacketMediaCodec()
 					        { BasicCodec = CommandPacketMediaCodec.EBasicCodec.BlackmagicRAW, Variant = 0 });
-		        }
+		        }*/
 
 		        BatteryPercentage = batteryInfo.BatteryPercentage;
 		        OnCameraPropertyChanged(nameof(BatteryPercentage), a_receivedTime);
