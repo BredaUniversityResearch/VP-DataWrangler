@@ -56,6 +56,8 @@ namespace CameraControlOverEthernet
 
 				handles.Add(handle);
 				CameraConnected(handle);
+
+				m_receiver.SendMessageToConnection(a_connectionId, new CameraControlRequestCurrentState(connectedPacket.DeviceUuid));
 			}
 			else if (a_cameraControlPacket is CameraControlCameraDisconnectedPacket disconnectedPacket)
 			{
@@ -107,7 +109,6 @@ namespace CameraControlOverEthernet
 				m_receiver.SendMessageToConnection(connectionId, new CameraControlConfigurationTimePacket((short)a_minutesOffsetFromUtc, timeBcd, dateBcd));
 				return true;
 			}
-
 
 			return false;
 		}

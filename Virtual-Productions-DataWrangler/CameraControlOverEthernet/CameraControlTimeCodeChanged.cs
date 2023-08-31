@@ -1,5 +1,4 @@
 ﻿using BlackmagicCameraControlData;
-using DataWranglerCommon;
 
 namespace CameraControlOverEthernet
 {
