@@ -195,9 +195,9 @@ namespace CameraControlOverEthernet
 							}
 							else
 							{
-								bytesFromLastReceive = (int) packetStart;
-								Array.Copy(receiveBuffer, ms.Position, receiveBuffer, 0, ms.Length - packetStart);
-								Logger.LogVerbose("CCServer", $"Failed to deserialize data from client {a_client.Client.Client.RemoteEndPoint} discarding {ms.Length - ms.Position} bytes");
+								bytesFromLastReceive = (int)(ms.Length - packetStart);
+								Array.Copy(receiveBuffer, packetStart, receiveBuffer, 0, bytesFromLastReceive);
+								Logger.LogVerbose("CCServer", $"Failed to deserialize data from client {a_client.Client.Client.RemoteEndPoint} moving {bytesFromLastReceive} bytes over to next receive cycle");
 								break;
 							}
 						}
