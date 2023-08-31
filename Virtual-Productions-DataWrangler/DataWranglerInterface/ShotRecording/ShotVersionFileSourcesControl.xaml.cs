@@ -79,7 +79,7 @@ namespace DataWranglerInterface.ShotRecording
 				FileSourceControl.Children.Clear();
 				foreach (IngestDataSourceMeta fs in m_currentDisplayedMeta.FileSources)
 				{
-					DataWranglerFileSourceUIDecorator control = new DataWranglerFileSourceUIDecorator(fs, () => { RemoveMeta(fs); });
+					DataWranglerFileSourceUIDecorator control = new DataWranglerFileSourceUIDecorator(fs, () => { RemoveMeta(fs); }, IsTemplateDisplay);
 					FileSourceControl.Children.Add(control);
 				}
 			});

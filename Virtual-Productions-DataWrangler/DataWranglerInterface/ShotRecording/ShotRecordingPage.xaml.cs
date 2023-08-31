@@ -37,7 +37,7 @@ namespace DataWranglerInterface.ShotRecording
 			m_activeCameraHandler.OnVirtualCameraConnected += VirtualCameraConnected;
 			m_activeCameraHandler.OnCameraDisconnected += OnCameraDisconnected;
 
-			CameraInfoDebug.CameraApiController = m_bluetoothController;
+			//CameraInfoDebug.CameraApiController = m_bluetoothController;
 
 			ProjectSelector.AsyncRefreshProjects();
 
@@ -64,13 +64,13 @@ namespace DataWranglerInterface.ShotRecording
 		private void VirtualCameraConnected(ActiveCameraInfo a_camera)
 		{
 			CameraInfo.AddTargetCameraInfo(a_camera);
-			CameraInfoDebug.SetTargetCamera(a_camera);
+			//CameraInfoDebug.SetTargetCamera(a_camera);
 		}
 
 		private void OnCameraDisconnected(ActiveCameraInfo a_handle)
 		{
 			CameraInfo.RemoveTargetCameraInfo(a_handle);
-			CameraInfoDebug.SetTargetCamera(null);
+			//CameraInfoDebug.SetTargetCamera(null);
 		}
 
 		private void OnSelectedProjectChanged(Guid a_projectId, string a_projectName)

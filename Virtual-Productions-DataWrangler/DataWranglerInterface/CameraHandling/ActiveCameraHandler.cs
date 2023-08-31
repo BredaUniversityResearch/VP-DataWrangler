@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Windows.Media;
 using BlackmagicCameraControlBluetooth;
 using BlackmagicCameraControlData;
@@ -84,7 +85,7 @@ namespace DataWranglerInterface.CameraHandling
             else
             {
                 Logger.LogWarning("ACH",
-                    $"Received data for camera {a_deviceHandle.DeviceUuid} but camera is not actively connected");
+                    $"Received data for camera {a_deviceHandle.DeviceUuid} but camera is not actively connected. Packet: {a_packet.GetType()}");
             }
         }
 
@@ -131,36 +132,31 @@ namespace DataWranglerInterface.CameraHandling
             {
 	            info = new ActiveCameraInfo(grouping);
 				m_activeCameras.Add(info);
-				info.CameraName = a_deviceHandle.DeviceUuid;
-	            info.OnDeviceConnectionsChanged += OnCameraConnectionChanged;
+				if (string.IsNullOrEmpty(info.CameraName))
+				{
+					info.CameraName = a_deviceHandle.DeviceUuid;
+				}
+
+				info.OnDeviceConnectionsChanged += OnCameraConnectionChanged;
+	            info.PropertyChanged += OnCameraPropertyChanged;
 				OnVirtualCameraConnected(info);
             }
 
             info.TransferCameraHandle(null, a_deviceHandle);
         }
 
-        private void OnCameraConnectionChanged(ActiveCameraInfo a_source)
-        {
-            if (a_source.ConnectionsForPhysicalDevice.Count == 0)
+		private void OnCameraConnectionChanged(ActiveCameraInfo a_source)
+		{
+			if (a_source.ConnectionsForPhysicalDevice.Count == 0)
             {
                 OnCameraDisconnected(a_source);
                 m_activeCameras.Remove(a_source);
             }
 
-            //Update groupings
-            DataWranglerConfig config = DataWranglerConfig.Instance;
-            config.ConfiguredCameraGroupings.Clear();
-            foreach (ActiveCameraInfo info in m_activeCameras)
-            {
-	            if (info.Grouping != null)
-	            {
-                    config.ConfiguredCameraGroupings.Add(info.Grouping);
-	            }
-            }
-            config.Save();
-        }
+            SaveCameraGroupings();
+		}
 
-        private void OnCommonCameraDisconnected(CameraDeviceHandle a_deviceHandle)
+		private void OnCommonCameraDisconnected(CameraDeviceHandle a_deviceHandle)
         {
             if (FindCameraInfoForDevice(a_deviceHandle, out ActiveCameraInfo? info))
             {
@@ -181,7 +177,39 @@ namespace DataWranglerInterface.CameraHandling
             }
         }
 
-        private void BackgroundUpdateFramePreview()
+        private void OnCameraPropertyChanged(object? a_sender, PropertyChangedEventArgs a_e)
+        {
+	        if (a_e.PropertyName == nameof(ActiveCameraInfo.CameraName))
+	        {
+				SaveCameraGroupings();
+	        }
+        }
+
+        private void SaveCameraGroupings()
+        {
+	        DataWranglerConfig config = DataWranglerConfig.Instance;
+	        config.ConfiguredCameraGroupings.Clear();
+	        foreach (ActiveCameraInfo info in m_activeCameras)
+	        {
+                if (info.Grouping == null && info.ConnectionsForPhysicalDevice.Count > 0)
+		        {
+			        info.Grouping = new ConfigActiveCameraGrouping();
+			        foreach (CameraDeviceHandle handle in info.ConnectionsForPhysicalDevice)
+			        {
+				        info.Grouping.DeviceHandleUuids.Add(handle.DeviceUuid);
+			        }
+		        }
+
+                if (info.Grouping != null)
+                {
+	                config.ConfiguredCameraGroupings.Add(info.Grouping);
+                }
+	        }
+
+	        config.Save();
+        }
+
+		private void BackgroundUpdateFramePreview()
         {
 	        while (m_deckLinkController != null)
 	        {

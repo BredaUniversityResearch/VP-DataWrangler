@@ -69,12 +69,12 @@ namespace DataWranglerInterface.ShotRecording
 				}
 			}
 
-			public void CreateEditControls(IngestDataSourceMeta a_target, Grid a_targetCollection)
+			public void CreateEditControls(IngestDataSourceMeta a_target, Grid a_targetCollection, bool a_isTemplateDisplay)
 			{
 				int dataRow = 0;
 				foreach (DisplayedEditData field in m_fields)
 				{
-					EDataEditFlags editFlags = field.InstanceFlags;
+					EDataEditFlags editFlags = (a_isTemplateDisplay) ? field.TemplateFlags : field.InstanceFlags;
 					if ((editFlags & EDataEditFlags.Visible) == 0)
 					{
 						continue;
@@ -127,7 +127,7 @@ namespace DataWranglerInterface.ShotRecording
 			}
 		}
 
-		public DataWranglerFileSourceUIDecorator(IngestDataSourceMeta a_meta, Action? a_onRemoveAction)
+		public DataWranglerFileSourceUIDecorator(IngestDataSourceMeta a_meta, Action? a_onRemoveAction, bool a_isTemplateDisplay)
 		{
 			InitializeComponent();
 
@@ -135,7 +135,7 @@ namespace DataWranglerInterface.ShotRecording
 
 			if (MetaForTypes.TryGetValue(a_meta.GetType(), out UIMetaData? targetMeta))
 			{
-				targetMeta.CreateEditControls(a_meta, ContentContainer);
+				targetMeta.CreateEditControls(a_meta, ContentContainer, a_isTemplateDisplay);
 			}
 			else
 			{

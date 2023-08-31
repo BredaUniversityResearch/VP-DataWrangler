@@ -8,11 +8,18 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
 	<StackPanel ToolTip="{Binding ElementName=ActiveCameraInfoControlInstance, Path=CurrentTooltip}" ToolTipOpening="OnToolTipOpening">
-		<Label Content="{Binding ElementName=ActiveCameraInfoControlInstance, Path=TargetInfo.CameraName}"></Label>
-		<Label Content="{Binding ElementName=ActiveCameraInfoControlInstance, Path=TargetInfo.CurrentTimeCode}"></Label>
-		<StackPanel x:Name="DeviceHandleControl" AllowDrop="True">
-			<Label Content="Connections:"></Label>
-			<ItemsControl ItemsSource="{Binding ElementName=ActiveCameraInfoControlInstance, Path=DeviceHandleControls}"/>
+		<DockPanel>
+			<Button Content="🔽" DockPanel.Dock="Right" Click="ToggleExpandedDetails"/>
+			<Label Content="{Binding ElementName=ActiveCameraInfoControlInstance, Path=TargetInfo.CurrentTimeCode, FallbackValue='12:34:56:78'}" DockPanel.Dock="Right"/>
+			<Label Content="{Binding ElementName=ActiveCameraInfoControlInstance, Path=TargetInfo.CameraName, FallbackValue='CameraNameGoesHere'}"></Label>
+		</DockPanel>
+		<StackPanel x:Name="ExpandedDetails" Margin="4,0,0,0" Visibility="Collapsed">
+		    <TextBox Text="{Binding ElementName=ActiveCameraInfoControlInstance, Path=TargetInfo.CameraName}"></TextBox>
+		    <Label Content="{Binding ElementName=ActiveCameraInfoControlInstance, Path=TargetInfo.CurrentTimeCode}"></Label>
+		    <StackPanel x:Name="DeviceHandleControl" AllowDrop="True">
+		    	<Label Content="Connections:"></Label>
+		    	<ItemsControl ItemsSource="{Binding ElementName=ActiveCameraInfoControlInstance, Path=DeviceHandleControls}"/>
+            </StackPanel>
         </StackPanel>
 	</StackPanel>
 </UserControl>

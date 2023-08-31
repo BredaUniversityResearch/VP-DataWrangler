@@ -39,7 +39,7 @@ namespace DataWranglerCommon.CameraHandling
         private CameraPropertyCache m_cameraProperties = new CameraPropertyCache();
 
         [AutoNotify]
-        private string m_cameraName = "";
+        private string m_cameraName;
         [AutoNotify]
         private string m_cameraModel = "";
 		[AutoNotify]
@@ -58,7 +58,9 @@ namespace DataWranglerCommon.CameraHandling
         public ActiveCameraInfo(ConfigActiveCameraGrouping? a_grouping)
         {
 	        Grouping = a_grouping;
+	        m_cameraName = a_grouping?.Name?? "";
             m_connectTime = DateTimeOffset.UtcNow;
+            PropertyChanged += OnPropertyChanged;
         }
 
         public void TransferCameraHandle(ActiveCameraInfo? a_fromCamera, CameraDeviceHandle a_deviceHandle)
@@ -201,8 +203,19 @@ namespace DataWranglerCommon.CameraHandling
 
         private void OnCameraPropertyChanged(string a_propertyName, TimeCode a_changeTime)
         {
-            CameraPropertyChangedEventArgs evt = new CameraPropertyChangedEventArgs(a_propertyName, this, a_changeTime);
+	        CameraPropertyChangedEventArgs evt = new CameraPropertyChangedEventArgs(a_propertyName, this, a_changeTime);
             CameraPropertyChanged?.Invoke(this, evt);
         }
-    }
+
+        private void OnPropertyChanged(object? a_sender, PropertyChangedEventArgs a_e)
+        {
+	        if (a_e.PropertyName == nameof(CameraName))
+	        {
+		        if (Grouping != null)
+		        {
+			        Grouping.Name = CameraName;
+		        }
+	        }
+        }
+	}
 }

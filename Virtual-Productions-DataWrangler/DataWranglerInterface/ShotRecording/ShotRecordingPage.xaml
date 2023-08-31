@@ -26,11 +26,13 @@
 				<ShotRecordingPage:ShotCreationControl x:Name="ShotCreationControl" Visibility="Hidden"/>
 			</Grid>
 		</DockPanel>
-		<ShotRecordingPage:ShotVersionInfoDisplay x:Name="ShotVersionInfoDisplay" Margin="10,10,10,0" VerticalAlignment="Top" Grid.Column="1" />
+		<DockPanel Grid.Column="1">
+			<ShotRecordingPage:ShotVersionTemplateDisplay x:Name="ShotTemplateDisplay" Margin="10,10,10,10"/>
+		</DockPanel>
 		<DockPanel Grid.Column="2" Grid.Row="0">
 			<ShotRecordingPage:CameraInfoControl x:Name="CameraInfo" DockPanel.Dock="Top"/>
-			<ShotRecordingPage:CameraInfoDebugControl x:Name="CameraInfoDebug" DockPanel.Dock="Top"/>
-			<ShotRecordingPage:ShotVersionTemplateDisplay x:Name="ShotTemplateDisplay" Margin="10,10,10,10"/>
+			<ShotRecordingPage:ShotVersionInfoDisplay x:Name="ShotVersionInfoDisplay" Margin="10,10,10,0" VerticalAlignment="Top"/>
+			<!--<ShotRecordingPage:CameraInfoDebugControl x:Name="CameraInfoDebug" DockPanel.Dock="Top"/>-->
 		</DockPanel>
 	</Grid>
 </Page>
