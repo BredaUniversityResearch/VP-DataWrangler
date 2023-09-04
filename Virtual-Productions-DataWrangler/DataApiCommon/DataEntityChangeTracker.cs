@@ -9,6 +9,7 @@ namespace DataApiCommon
 	{
 		private readonly DataEntityBase m_targetEntity;
 		private readonly Dictionary<PropertyInfo, object?> m_changedFields = new();
+		private readonly Dictionary<PropertyInfo, KeyValuePair<INotifyPropertyChanged, PropertyChangedEventHandler>> m_propertyChangedByChildProperty = new();
 
 		public DataEntityChangeTracker(DataEntityBase a_targetEntity)
 		{
@@ -16,11 +17,14 @@ namespace DataApiCommon
 
 			Type targetType = a_targetEntity.GetType();
 			a_targetEntity.PropertyChanged += OnChildPropertyChanged;
-			foreach (FieldInfo info in targetType.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
+			foreach (PropertyInfo info in targetType.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
 			{
 				if (info.GetValue(a_targetEntity) is INotifyPropertyChanged propertyChanged)
 				{
-					propertyChanged.PropertyChanged += OnChildPropertyChanged;
+					//Flatten any changes in the child hierarchy
+					PropertyChangedEventHandler eventHandler = (_, _) => OnChildPropertyChanged(a_targetEntity, new PropertyChangedEventArgs(info.Name));
+					propertyChanged.PropertyChanged += eventHandler;
+					m_propertyChangedByChildProperty[info] = new KeyValuePair<INotifyPropertyChanged, PropertyChangedEventHandler>(propertyChanged, eventHandler);
 				}
 			}
 		}
@@ -39,6 +43,20 @@ namespace DataApiCommon
 			}
 
 			object? newValue = prop.GetValue(a_sender);
+
+			//Update event handler so that we preserve the nice notifications from direct children.
+			if (m_propertyChangedByChildProperty.TryGetValue(prop, out KeyValuePair<INotifyPropertyChanged, PropertyChangedEventHandler> existingHandler))
+			{
+				existingHandler.Key.PropertyChanged -= existingHandler.Value;
+			}
+			m_propertyChangedByChildProperty.Remove(prop);
+
+			if (newValue is INotifyPropertyChanged propertyChangedHandler)
+			{
+				PropertyChangedEventHandler handler = (_, _) => OnChildPropertyChanged(m_targetEntity, new PropertyChangedEventArgs(prop.Name));
+				m_propertyChangedByChildProperty[prop] = new KeyValuePair<INotifyPropertyChanged, PropertyChangedEventHandler>(propertyChangedHandler, handler);
+				propertyChangedHandler.PropertyChanged += handler;
+			}
 
 			m_changedFields[prop] = newValue;
 		}

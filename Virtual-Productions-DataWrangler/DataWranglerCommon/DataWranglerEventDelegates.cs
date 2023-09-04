@@ -1,4 +1,5 @@
-﻿using DataWranglerCommon.CameraHandling;
+﻿using DataApiCommon;
+using DataWranglerCommon.CameraHandling;
 using DataWranglerCommon.IngestDataSources;
 
 namespace DataWranglerCommon;

@@ -18,5 +18,8 @@ namespace DataApiCommon
 
 		[AutoNotify]
 		private string m_lens = "N/A";
+
+		[AutoNotify]
+		private IngestDataShotVersionMeta m_dataSourcesTemplate = new IngestDataShotVersionMeta();
 	}
 }

@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 
 namespace DataApiSFTP;
 
-internal class DataApiSFTPShotAttributes
+public class DataApiSFTPShotAttributes
 {
 	[JsonProperty("entity_id")]
 	public Guid EntityId = Guid.NewGuid();
@@ -13,6 +13,9 @@ internal class DataApiSFTPShotAttributes
 
 	[JsonProperty("description")]
 	public string Description = "";
+
+	[JsonProperty("data_sources_template", ItemConverterType = typeof(IngestDataSourceMetaConverter))]
+	public List<IngestDataSourceMeta> DataSourcesTemplate = new List<IngestDataSourceMeta>();
 
 	public DataApiSFTPShotAttributes()
 	{
@@ -28,6 +31,7 @@ internal class DataApiSFTPShotAttributes
 		EntityId = a_dataEntity.EntityId;
 		ShotName = a_dataEntity.ShotName;
 		Description = a_dataEntity.Description;
+		DataSourcesTemplate = a_dataEntity.DataSourcesTemplate.FileSources;
 	}
 
 	public DataEntityShot ToDataEntity(DataEntityProject a_ownerProject)
@@ -37,6 +41,7 @@ internal class DataApiSFTPShotAttributes
 			EntityId = EntityId,
 			ShotName = ShotName,
 			Description = Description,
+			DataSourcesTemplate = new IngestDataShotVersionMeta(DataSourcesTemplate),
 			EntityRelationships =
 			{
 				Project = new DataEntityReference(a_ownerProject)

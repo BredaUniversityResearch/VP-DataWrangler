@@ -1,6 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 using CommonLogging;
+using DataApiCommon;
 using DataWranglerCommon.IngestDataSources;
 
 namespace DataWranglerInterface.ShotRecording
@@ -20,14 +21,29 @@ namespace DataWranglerInterface.ShotRecording
 				    flags: FrameworkPropertyMetadataOptions.AffectsRender,
 					propertyChangedCallback: OnIsTemplateDisplayChanged)
 		    );
-
+		
 	    public bool IsTemplateDisplay
 	    { 
 		    get => (bool)GetValue(IsTemplateDisplayProperty); 
 		    set => SetValue(IsTemplateDisplayProperty, value); 
 	    }
 
-		private IngestDataShotVersionMeta m_currentDisplayedMeta = new IngestDataShotVersionMeta();
+	    public static readonly DependencyProperty SourceMetaProperty =
+		    DependencyProperty.Register(
+			    name: nameof(SourceMeta),
+			    propertyType: typeof(IngestDataShotVersionMeta),
+			    ownerType: typeof(ShotVersionFileSourcesControl),
+			    typeMetadata: new FrameworkPropertyMetadata(
+				    defaultValue: new IngestDataShotVersionMeta(),
+				    flags: FrameworkPropertyMetadataOptions.AffectsRender,
+				    propertyChangedCallback: OnSourceMetaChanged)
+		    );
+
+	    public IngestDataShotVersionMeta SourceMeta
+	    {
+		    get => (IngestDataShotVersionMeta)GetValue(SourceMetaProperty);
+		    set => SetValue(SourceMetaProperty, value);
+	    }
 
 		private ContextMenu m_addFileSourceContextMenu;
 
@@ -60,16 +76,8 @@ namespace DataWranglerInterface.ShotRecording
 			AddFileSourceButton.Visibility = Visibility.Hidden;
 		}
 
-		public IngestDataShotVersionMeta CreateMetaFromCurrentTemplate()
-		{
-			IngestDataShotVersionMeta meta = m_currentDisplayedMeta.Clone();
-			return meta;
-		}
-
 		public void SetCurrentMeta(IngestDataShotVersionMeta a_meta)
 		{
-			m_currentDisplayedMeta = a_meta;
-			UpdateDisplayedWidgets();
 		}
 
 		public void UpdateDisplayedWidgets()
@@ -77,7 +85,7 @@ namespace DataWranglerInterface.ShotRecording
 			Dispatcher.InvokeAsync(() =>
 			{
 				FileSourceControl.Children.Clear();
-				foreach (IngestDataSourceMeta fs in m_currentDisplayedMeta.FileSources)
+				foreach (IngestDataSourceMeta fs in SourceMeta.FileSources)
 				{
 					DataWranglerFileSourceUIDecorator control = new DataWranglerFileSourceUIDecorator(fs, () => { RemoveMeta(fs); }, IsTemplateDisplay);
 					FileSourceControl.Children.Add(control);
@@ -93,10 +101,10 @@ namespace DataWranglerInterface.ShotRecording
 
 		private void TryAddSource(IngestDataSourceMeta a_meta)
 		{
-			IngestDataSourceMeta? meta = m_currentDisplayedMeta.FileSources.Find(source => source.SourceType == a_meta.SourceType);
+			IngestDataSourceMeta? meta = SourceMeta.FindMetaByType(a_meta.SourceType);
 			if (meta == null)
 			{
-				m_currentDisplayedMeta.FileSources.Add(a_meta);
+				SourceMeta.AddFileSource(a_meta);
 				UpdateDisplayedWidgets();
 			}
 			else
@@ -107,13 +115,24 @@ namespace DataWranglerInterface.ShotRecording
 
 		private void RemoveMeta(IngestDataSourceMeta a_meta)
 		{
-			bool success = m_currentDisplayedMeta.FileSources.Remove(a_meta);
+			bool success = SourceMeta.RemoveFileSourceInstance(a_meta);
 			if (!success)
 			{
 				throw new Exception("Failed to remove meta from file sources");
 			}
 
 			UpdateDisplayedWidgets();
+		}
+
+		private static void OnSourceMetaChanged(DependencyObject a_d, DependencyPropertyChangedEventArgs a_e)
+		{
+			//IngestDataShotVersionMeta newValue = (IngestDataShotVersionMeta)a_d.GetValue(SourceMetaProperty);
+			ShotVersionFileSourcesControl target = (ShotVersionFileSourcesControl)a_d;
+
+			if (target.SourceMeta != null)
+			{
+				target.UpdateDisplayedWidgets();
+			}
 		}
 
 		private static void OnIsTemplateDisplayChanged(DependencyObject a_d, DependencyPropertyChangedEventArgs a_e)
@@ -123,10 +142,6 @@ namespace DataWranglerInterface.ShotRecording
 
 			if (newValue)
 			{
-				target.m_currentDisplayedMeta = new IngestDataShotVersionMeta();
-				target.m_currentDisplayedMeta.FileSources.Add(new IngestDataSourceMetaBlackmagicUrsa());
-				target.UpdateDisplayedWidgets();
-				
 				target.AddFileSourceButton.Visibility = Visibility.Visible;
 			}
 			else

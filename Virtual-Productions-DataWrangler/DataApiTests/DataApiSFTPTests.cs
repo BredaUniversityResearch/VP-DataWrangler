@@ -3,7 +3,9 @@ using DataApiCommon;
 using DataApiSFTP;
 using System;
 using System.Reflection;
+using BlackmagicCameraControlData;
 using CommonLogging;
+using DataWranglerCommon.IngestDataSources;
 
 namespace DataApiTests
 {
@@ -211,6 +213,51 @@ namespace DataApiTests
 				TestConstants.TargetShotVersionId, new Dictionary<PropertyInfo, object?> { { targetField, $"Unit test updated this description on {DateTime.Now}" } }).Result;
 
 			Assert.IsFalse(response.IsError);
+		}
+
+		[TestMethod]
+		public void ShotDataTemplateSerialization()
+		{
+			DataApiResponse<DataEntityProject[]> projects = m_api.GetActiveProjects().Result;
+			DataApiResponse<DataEntityShot[]> shots = m_api.GetShotsForProject(TestConstants.TargetProjectId).Result;
+
+			DataEntityShot? shot = m_api.LocalCache.FindEntityById<DataEntityShot>(TestConstants.TargetShotId);
+			Assert.IsTrue(shot != null);
+
+			while (true)
+			{
+				IngestDataSourceMetaBlackmagicUrsa? ursaMeta = shot.DataSourcesTemplate.FindMetaByType<IngestDataSourceMetaBlackmagicUrsa>();
+				if (ursaMeta != null)
+				{
+					shot.DataSourcesTemplate.RemoveFileSourceInstance(ursaMeta);
+				}
+				else
+				{
+					break;
+				}
+			}
+
+			IngestDataSourceMetaBlackmagicUrsa meta = new IngestDataSourceMetaBlackmagicUrsa();
+			meta.CameraNumber = "TestNumber";
+			shot.DataSourcesTemplate.AddFileSource(meta);
+
+			Assert.IsTrue(shot.ChangeTracker.HasAnyUncommittedChanges());
+			DataApiResponseGeneric updateResponse = shot.ChangeTracker.CommitChanges(m_api).Result;
+			Assert.IsFalse(updateResponse.IsError);
+
+			{
+				DataApiSFTPFileSystem newApi = new DataApiSFTPFileSystem(DataApiSFTPConfig.DefaultConfig);
+				bool connectResult = newApi.StartConnect().Result;
+				Assert.IsTrue(connectResult);
+				projects = newApi.GetActiveProjects().Result;
+				shots = newApi.GetShotsForProject(TestConstants.TargetProjectId).Result;
+				shot = newApi.LocalCache.FindEntityById<DataEntityShot>(TestConstants.TargetShotId);
+
+				Assert.IsTrue(shot != null);
+				IngestDataSourceMetaBlackmagicUrsa? ursaMeta = shot.DataSourcesTemplate.FindMetaByType<IngestDataSourceMetaBlackmagicUrsa>();
+				Assert.IsTrue(ursaMeta != null);
+				Assert.IsTrue(ursaMeta.CameraNumber == "TestNumber");
+			}
 		}
 	}
 }

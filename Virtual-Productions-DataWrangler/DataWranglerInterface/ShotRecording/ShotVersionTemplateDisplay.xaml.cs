@@ -1,5 +1,7 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.ComponentModel;
+using System.Text.RegularExpressions;
 using System.Windows.Controls;
+using AutoNotify;
 using BlackmagicCameraControlData;
 using CommonLogging;
 using DataApiCommon;
@@ -46,10 +48,14 @@ namespace DataWranglerInterface.ShotRecording
 
 		private ShotRecordingPage? m_parentPage = null;
 
+		private DataEntityShot? m_targetShot = null;
 		private ProjectSelectorControl? m_projectSelector = null;
 		private ShotSelectorControl? m_shotSelectorControl = null;
 
 		private bool m_shouldCreateNewShotOnRecord = true;
+
+		[AutoNotify]
+		private IngestDataShotVersionMeta? m_targetShotIngestData = null;
 
 		//Subscriber for hooking into StorageTargetChanged / CodecChanged messages during recording.
 		private CameraPropertyChangedSubscriber? m_subscriber = null;
@@ -138,7 +144,7 @@ namespace DataWranglerInterface.ShotRecording
 			{
 				if (m_shouldCreateNewShotOnRecord)
 				{
-					IngestDataShotVersionMeta targetMeta = VersionTemplateFileSourcesControl.CreateMetaFromCurrentTemplate();
+					IngestDataShotVersionMeta targetMeta = m_targetShot?.DataSourcesTemplate.Clone() ?? new IngestDataShotVersionMeta();
 					if (m_subscriber != null)
 					{
 						Logger.LogError("ShotVersionTemplate", "Expected target subscriber to be null, was not null. Did we miss a message?");
@@ -168,6 +174,31 @@ namespace DataWranglerInterface.ShotRecording
 					a_camera.CameraPropertyChanged -= m_subscriber.OnCameraPropertyChanged;
 					m_subscriber = null;
 				}
+			}
+		}
+
+		public void SetDisplayedShot(DataEntityShot? a_targetShot)
+		{
+			if (m_targetShot != null)
+			{
+				m_targetShot.DataSourcesTemplate.PropertyChanged -= OnDataSourcesChanged;
+			}
+
+			m_targetShot = a_targetShot;
+			if (m_targetShot != null)
+			{
+				m_targetShot.DataSourcesTemplate.PropertyChanged += OnDataSourcesChanged;
+			}
+
+			TargetShotIngestData = m_targetShot?.DataSourcesTemplate;
+		}
+
+		private void OnDataSourcesChanged(object? a_sender, PropertyChangedEventArgs a_e)
+		{
+			if (m_targetShot != null)
+			{
+				Task<DataApiResponseGeneric> task = m_targetShot.ChangeTracker.CommitChanges(DataWranglerServiceProvider.Instance.TargetDataApi);
+				FileSourcesFeedback.ProvideFeedback(task);
 			}
 		}
 	}

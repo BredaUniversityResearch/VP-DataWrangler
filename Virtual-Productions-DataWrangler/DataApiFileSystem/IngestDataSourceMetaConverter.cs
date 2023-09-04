@@ -4,9 +4,9 @@ using DataApiCommon;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace DataWranglerCommon.IngestDataSources;
+namespace DataApiSFTP;
 
-public class IngestDataSourceMetaConverter : JsonConverter<IngestDataSourceMeta>
+internal class IngestDataSourceMetaConverter : JsonConverter<IngestDataSourceMeta>
 {
 	private static Dictionary<string, Type> ms_dataSourceMetaNames = new Dictionary<string, Type>();
 
@@ -48,7 +48,7 @@ public class IngestDataSourceMetaConverter : JsonConverter<IngestDataSourceMeta>
 			{
 				using (var sr = rootObject.CreateReader())
 				{
-					JsonSerializer.CreateDefault(DataWranglerSerializationSettings.Instance).Populate(sr, meta);
+					JsonSerializer.CreateDefault().Populate(sr, meta);
 				}
 			}
 			else

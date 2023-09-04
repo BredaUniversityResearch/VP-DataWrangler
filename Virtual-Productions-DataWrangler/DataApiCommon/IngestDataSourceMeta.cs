@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace DataWranglerCommon.IngestDataSources
+namespace DataApiCommon
 {
 	public abstract class IngestDataSourceMeta: INotifyPropertyChanged
 	{

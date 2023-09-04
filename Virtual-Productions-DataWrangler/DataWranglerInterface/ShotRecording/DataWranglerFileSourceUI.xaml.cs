@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using AutoNotify;
+using DataApiCommon;
 using DataWranglerCommon.IngestDataSources;
 using DataWranglerCommonWPF;
 using ShotGridIntegration;

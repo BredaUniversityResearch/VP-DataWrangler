@@ -82,6 +82,7 @@ namespace DataWranglerInterface.ShotRecording
 		{
 			ShotInfoDisplay.SetDisplayedShot(a_shotInfo);
 			ShotVersionInfoDisplay.OnShotSelected(a_shotInfo?.EntityId ?? Guid.Empty);
+			ShotTemplateDisplay.SetDisplayedShot(a_shotInfo);
 		}
 
 		public void BeginAddShotVersion(Guid a_shotId)
