@@ -9,6 +9,11 @@ public class CommandWriter
 		m_targetStream = a_targetStream;
 	}
 
+	public void Write(sbyte a_valueToWrite)
+	{
+		m_targetStream.WriteByte((byte)a_valueToWrite);
+	}
+
 	public void Write(byte a_valueToWrite)
 	{
 		m_targetStream.WriteByte(a_valueToWrite);

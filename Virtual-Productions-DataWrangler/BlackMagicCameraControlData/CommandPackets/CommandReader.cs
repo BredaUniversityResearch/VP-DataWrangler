@@ -137,6 +137,17 @@
 			return result;
 		}
 
+		public sbyte ReadSInt8()
+		{
+			int value = m_targetStream.ReadByte();
+			if (value == -1)
+			{
+				throw new Exception("Failed to read 1 byte for int8");
+			}
+
+			return (sbyte)value;
+		}
+
 		public byte ReadInt8()
 		{
 			int value = m_targetStream.ReadByte();

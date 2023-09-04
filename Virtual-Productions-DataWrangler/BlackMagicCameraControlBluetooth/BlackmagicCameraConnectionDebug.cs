@@ -39,7 +39,7 @@ namespace BlackmagicCameraControl
 
 			m_packetSendQueue.Enqueue(new CommandPacketMediaCodec()
 				{BasicCodec = CommandPacketMediaCodec.EBasicCodec.BlackmagicRAW, Variant = 0});
-			m_packetSendQueue.Enqueue(new CommandPacketVendorStorageTargetChanged() {StorageDriveIdentifier = 014 });
+			m_packetSendQueue.Enqueue(new CommandPacketMetadataReel() {Reel = 014 });
 		}
 
 		private void BackgroundProduceMessages()
