@@ -31,8 +31,8 @@ namespace BlackmagicCameraControlData
 			bool wasChanged = false;
 			if (m_currentValues.TryGetValue(a_identifier, out CacheEntry? existingValue))
 			{
-				if (!existingValue.PacketData.Equals(a_packet) && 
-				    existingValue.LastUpdateTime < a_packetTimeCode)
+				//We can have packets that are 'updated' less recently than we had earlier, for example in the case of playback.
+				if (!existingValue.PacketData.Equals(a_packet))
 				{
 					existingValue.PacketData = a_packet;
 					existingValue.LastUpdateTime = a_packetTimeCode;

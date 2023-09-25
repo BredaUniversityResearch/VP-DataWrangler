@@ -24,7 +24,8 @@
 		{
 			CFast = 0,
 			SD = 1,
-			SSD
+			SSD = 2,
+			USB = 3
 		};
 
 		public EMode Mode = EMode.Preview;

@@ -36,7 +36,7 @@ namespace DataWranglerCommon.CameraHandling
 
         private bool m_receivedAnyBatteryStatusPackets = false;
         public event CameraPropertyChangedEventHandler? CameraPropertyChanged;
-        private CameraPropertyCache m_cameraProperties = new CameraPropertyCache();
+        private readonly CameraPropertyCache m_cameraProperties = new CameraPropertyCache();
 
         [AutoNotify]
         private string m_cameraName;
@@ -217,5 +217,10 @@ namespace DataWranglerCommon.CameraHandling
 		        }
 	        }
         }
-	}
+
+        public CameraPropertyCache GetPropertyCache()
+        {
+	        return m_cameraProperties;
+        }
+    }
 }

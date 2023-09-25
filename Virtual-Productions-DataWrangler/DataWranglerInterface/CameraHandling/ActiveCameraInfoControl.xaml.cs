@@ -1,12 +1,10 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Diagnostics.Eventing.Reader;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using BlackmagicCameraControlData;
 using DataWranglerCommon.CameraHandling;
-using DataWranglerInterface.CameraHandling;
-using DataWranglerInterface.Configuration;
 using ActiveCameraInfo = DataWranglerCommon.CameraHandling.ActiveCameraInfo;
 
 namespace DataWranglerInterface.ShotRecording
@@ -137,6 +135,16 @@ namespace DataWranglerInterface.ShotRecording
 		private void ToggleExpandedDetails(object a_sender, RoutedEventArgs a_e)
 		{
 			ExpandedDetails.Visibility = (ExpandedDetails.Visibility == Visibility.Visible)? Visibility.Collapsed : Visibility.Visible;
+		}
+
+		private void OnDetailsToolTipOpening(object a_sender, ToolTipEventArgs a_e)
+		{
+			StringBuilder sb = new StringBuilder(128);
+			foreach (var it in TargetInfo.GetPropertyCache().CurrentValues)
+			{
+				sb.AppendLine(it.Value.PacketData.ToString());
+			}
+			((FrameworkElement) a_sender).ToolTip = sb.ToString();
 		}
 	}
 }
