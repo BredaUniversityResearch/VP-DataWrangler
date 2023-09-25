@@ -79,7 +79,12 @@ namespace DataWranglerCommon.ShogunLiveSupport
 
 		public ShogunLiveService(int a_controlClientPort)
 		{
-			NetworkInterface[] nics = NetworkInterface.GetAllNetworkInterfaces();
+			m_controlClient = new UdpClient();
+			m_controlClient.EnableBroadcast = true;
+			m_controlClient.ExclusiveAddressUse = false;
+			m_controlClient.Client.Bind(new IPEndPoint(IPAddress.Any, a_controlClientPort));
+
+			/*NetworkInterface[] nics = NetworkInterface.GetAllNetworkInterfaces();
 			foreach (NetworkInterface adapter in nics)
 			{
 				IPInterfaceProperties ipProps = adapter.GetIPProperties();
@@ -93,10 +98,6 @@ namespace DataWranglerCommon.ShogunLiveSupport
 						//Double check that we have an IPv4 Address...
 						if (unicastAddr.Address.AddressFamily == AddressFamily.InterNetwork)
 						{
-							m_controlClient = new UdpClient();
-							m_controlClient.EnableBroadcast = true;
-							m_controlClient.ExclusiveAddressUse = false;
-							m_controlClient.Client.Bind(new IPEndPoint(unicastAddr.Address, a_controlClientPort));
 							break;
 						}
 					}
@@ -106,7 +107,7 @@ namespace DataWranglerCommon.ShogunLiveSupport
 						break;
 					}
 				}
-			}
+			}*/
 
 			if (m_controlClient == null)
 			{
