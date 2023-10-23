@@ -91,7 +91,7 @@ namespace DataWranglerInterface.ShotRecording
 				DataWranglerServiceProvider.Instance.TargetDataApi.GetVersionsForShot(targetShotId, (a_lhs, a_rhs) => string.Compare(a_lhs.ShotVersionName, a_rhs.ShotVersionName, StringComparison.Ordinal)).ContinueWith(a_task => {
 					if (!a_task.Result.IsError)
 					{
-						int nextTakeId = FindNextTakeIdFromShotVersions(a_task.Result.ResultData) + 1;
+						int nextTakeId = FindHighestShotVersionIdFromShotVersions(a_task.Result.ResultData) + 1;
 
 						ConfigStringBuilder sb = new ConfigStringBuilder();
 						sb.AddReplacement("ShotVersionId", nextTakeId.ToString("D2"));
@@ -118,20 +118,20 @@ namespace DataWranglerInterface.ShotRecording
 			}
 		}
 
-		private int FindNextTakeIdFromShotVersions(DataEntityShotVersion[] a_resultData)
+		private int FindHighestShotVersionIdFromShotVersions(DataEntityShotVersion[] a_resultData)
 		{
 			ConfigStringBuilder sb = new ConfigStringBuilder();
 			sb.AddReplacement("ShotVersionId", "([0-9]{2})");
 			Regex shotNameTemplateMatcher = new Regex(Configuration.DataWranglerConfig.Instance.ShotVersionNameTemplate.Build(sb));
-
+			
 			int nextShotId = 0;
 			foreach (DataEntityShotVersion shotVersion in a_resultData)
 			{
 				Match nameMatch = shotNameTemplateMatcher.Match(shotVersion.ShotVersionName);
 				if (nameMatch.Success && nameMatch.Groups.Count >= 1)
 				{
-					nextShotId = int.Parse(nameMatch.Groups[1].ValueSpan);
-					break;
+					int parsedShotVersionId = int.Parse(nameMatch.Groups[1].ValueSpan);
+					nextShotId = Math.Max(nextShotId, parsedShotVersionId);
 				}
 			}
 
