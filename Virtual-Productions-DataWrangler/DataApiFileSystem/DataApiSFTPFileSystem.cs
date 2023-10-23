@@ -704,7 +704,11 @@ namespace DataApiSFTP
 				List<FilePublishEntry> entries;
 				using (TextReader textReader = new StreamReader(fs, Encoding.UTF8, true, -1, true))
 				{
-					using (CsvReader reader = new CsvReader(textReader, CultureInfo.InvariantCulture, true))
+					CsvConfiguration readConfig = new CsvConfiguration(CultureInfo.InvariantCulture)
+					{
+						MissingFieldFound = null
+					};
+					using (CsvReader reader = new CsvReader(textReader, readConfig, true))
 					{
 						entries = new List<FilePublishEntry>(reader.GetRecords<FilePublishEntry>());
 

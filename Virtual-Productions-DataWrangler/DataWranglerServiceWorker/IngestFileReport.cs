@@ -9,7 +9,7 @@ namespace DataWranglerServiceWorker
 {
 	public class IngestFileReport
 	{
-		private readonly List<IngestFileReportEntry> SynchronizedEntries = new List<IngestFileReportEntry>();
+		private readonly List<IngestFileReportEntry> m_synchronizedEntries = new List<IngestFileReportEntry>();
         public ObservableCollection<IngestFileReportEntry> Entries { get; } = new ObservableCollection<IngestFileReportEntry>();
 
         public void AddFileResolutionDetails(IngestFileResolutionDetails a_sourceFile)
@@ -31,9 +31,9 @@ namespace DataWranglerServiceWorker
 
         public IngestFileReportEntry? FindEntryForFilePath(Uri a_fileSourcePath)
         {
-			lock (SynchronizedEntries)
+			lock (m_synchronizedEntries)
 	        {
-		        foreach (IngestFileReportEntry entry in Entries)
+		        foreach (IngestFileReportEntry entry in m_synchronizedEntries)
 		        {
 			        if (entry.SourceFile == a_fileSourcePath)
 			        {
@@ -47,7 +47,7 @@ namespace DataWranglerServiceWorker
 
         private IngestFileReportEntry GetEntryForFilePath(Uri a_fileSourcePath)
         {
-	        lock (SynchronizedEntries)
+	        lock (m_synchronizedEntries)
 	        {
 		        IngestFileReportEntry? existingEntry = FindEntryForFilePath(a_fileSourcePath);
 		        if (existingEntry != null)
@@ -56,7 +56,7 @@ namespace DataWranglerServiceWorker
 		        }
 
 		        IngestFileReportEntry newEntry = new IngestFileReportEntry(a_fileSourcePath);
-				SynchronizedEntries.Add(newEntry);
+				m_synchronizedEntries.Add(newEntry);
 				Application.Current.Dispatcher.InvokeAsync(() => Entries.Add(newEntry));
 				return newEntry;
 	        }

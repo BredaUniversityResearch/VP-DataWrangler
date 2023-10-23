@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using BlackmagicCameraControlData;
 using BlackmagicRawAPIInterop;
+using CommonLogging;
 
 namespace DataWranglerCommon.BRAWSupport
 {
@@ -76,10 +77,19 @@ namespace DataWranglerCommon.BRAWSupport
 #pragma warning restore CA1416
 		}
 
-		public BRAWFileMetadata GetMetaForFile(FileInfo a_file)
+		public BRAWFileMetadata? GetMetaForFile(FileInfo a_file)
 		{
 			CallbackHelper handler = new CallbackHelper();
-			m_codec.OpenClip(a_file.FullName, out IBlackmagicRawClip clip);
+			IBlackmagicRawClip clip;
+			try
+			{
+				m_codec.OpenClip(a_file.FullName, out clip);
+			}
+			catch (COMException)
+			{
+				Logger.LogError("BRAWFileDecoder", $"File decoder failed to properly open clip at \"{a_file.FullName}\"");
+				return null;
+			}
 
 			m_codec.SetCallback(handler);
 			SetupFrameDecodeJob(0, clip);
