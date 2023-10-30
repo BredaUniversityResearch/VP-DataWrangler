@@ -5,16 +5,17 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.RegularExpressions;
+using BlackmagicCameraControlData.CommandPackets;
 using CommonLogging;
 
 namespace DataWranglerCommon.ShogunLiveSupport
 {
 	public class ShogunLiveService : IDisposable
 	{
-		private const int MessageIdHistory = 16;
+		private const int MessageIdHistory = 8;
 		private static readonly Regex PacketIdPattern = new Regex("<PacketID VALUE=\"([0-9]+)\"/>");
 		private static readonly Regex CaptureNamePattern = new Regex("<Name VALUE=\"([^\"]+)\"/>");
-		private static readonly TimeSpan DefaultConfirmationTimeout = TimeSpan.FromSeconds(10);
+		private static readonly TimeSpan DefaultConfirmationTimeout = TimeSpan.FromMilliseconds(100);
 
 		class ShogunLivePacket
 		{
@@ -83,7 +84,7 @@ namespace DataWranglerCommon.ShogunLiveSupport
 			m_controlClient = new UdpClient();
 			m_controlClient.EnableBroadcast = true;
 			m_controlClient.ExclusiveAddressUse = false;
-			m_controlClient.MulticastLoopback = true;
+			m_controlClient.DontFragment = true;
 			m_controlClient.Client.Bind(new IPEndPoint(IPAddress.Any, a_controlClientPort));
 
 			/*NetworkInterface[] nics = NetworkInterface.GetAllNetworkInterfaces();
@@ -132,38 +133,58 @@ namespace DataWranglerCommon.ShogunLiveSupport
 			m_controlClient.Dispose();
 		}
 
-		public bool StartCapture(string a_captureName, string a_databasePath, [NotNullWhen(true)] out Task<bool>? a_confirmationResultTask, int a_startDelayMs = 0,
-			string? a_notes = null,
-			string? a_description = null)
+		public Task<bool> AsyncStartCapture(string a_captureName, string a_databasePath, int a_captureStartRetryCount = 3, int a_startDelayMs = 0, 
+			string? a_notes = null, string? a_description = null)
 		{
-			int packetId = Random.Shared.Next();
 
-			string packetContents = $"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>" +
-			                        $"<CaptureStart>" +
-			                        $"  <Name VALUE=\"{a_captureName}\"/>" +
-			                        $"  <Notes VALUE=\"{a_notes}\"/>" +
-			                        $"  <Description VALUE=\"{a_description}\"/>" +
-			                        $"  <DatabasePath VALUE=\"{a_databasePath}\"/>" +
-			                        $"  <Delay VALUE=\"{a_startDelayMs}\"/>" +
-			                        $"  <PacketID VALUE=\"{packetId}\"/>" +
-			                        $"</CaptureStart>";
-			a_confirmationResultTask = null;
-
-			OnPreTransmitMessageWithId(packetId);
-			bool successTransmit = BroadcastStringToShogunLive(packetContents);
-			if (successTransmit)
+			return Task.Run(() =>
 			{
-				a_confirmationResultTask = WaitForConfirmationPacket(ShogunLivePacket.EType.CaptureStart, a_captureName);
-			}
-			else
-			{
-				Logger.LogError("ShogunLiveService", "Failed to broadcast capture start message");
-			}
+				bool captureWasStartedSuccessfully = false;
+				for (int i = 0; i < a_captureStartRetryCount; ++i)
+				{
+					int packetId = Random.Shared.Next();
+					string packetContents = $"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>" +
+					                        $"<CaptureStart>" +
+					                        $"  <Name VALUE=\"{a_captureName}\"/>" +
+					                        $"  <Notes VALUE=\"{a_notes}\"/>" +
+					                        $"  <Description VALUE=\"{a_description}\"/>" +
+					                        $"  <DatabasePath VALUE=\"{a_databasePath}\"/>" +
+					                        $"  <Delay VALUE=\"{a_startDelayMs}\"/>" +
+					                        $"  <PacketID VALUE=\"{packetId}\"/>" +
+					                        $"</CaptureStart>";
 
-			return successTransmit;
+					OnPreTransmitMessageWithId(packetId);
+					Task<bool> confirmationResponseTask =
+						CreateConfirmationPacketEntry(ShogunLivePacket.EType.CaptureStart, a_captureName);
+					bool successTransmit = BroadcastStringToShogunLive(packetContents);
+
+					if (successTransmit)
+					{
+						confirmationResponseTask.Wait();
+						if (confirmationResponseTask.Result)
+						{
+							captureWasStartedSuccessfully = true;
+							break;
+						}
+					}
+					else
+					{
+						Logger.LogError("ShogunLiveService", "Failed to broadcast capture start message");
+						return false;
+					}
+				}
+
+				if (!captureWasStartedSuccessfully)
+				{
+					Logger.LogError("ShotRecording", $"Vicon failed to send a confirmation that recording of library " +
+					                                 $"{a_databasePath} with file name {a_captureName} started");
+				}
+
+				return captureWasStartedSuccessfully;
+			});
 		}
 
-		private Task<bool> WaitForConfirmationPacket(ShogunLivePacket.EType a_packetType, string a_captureName)
+		private Task<bool> CreateConfirmationPacketEntry(ShogunLivePacket.EType a_packetType, string a_captureName)
 		{
 			ConfirmationWaitEntry entry =
 				new ConfirmationWaitEntry(a_packetType, a_captureName, DefaultConfirmationTimeout);

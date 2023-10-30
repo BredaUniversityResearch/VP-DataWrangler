@@ -52,7 +52,7 @@ namespace DataWranglerCommonTests
 			FileInfo file = new FileInfo(TestFile);
 			using (BRAWFileDecoder decoder = new BRAWFileDecoder())
 			{
-				BRAWFileMetadata fileMeta = decoder.GetMetaForFile(file);
+				BRAWFileMetadata fileMeta = decoder.TryDecodeMetaForFile(file)!;
 				Assert.True(fileMeta.FirstFrameTimeCode == new TimeCode(22, 23, 40, 20));
 				Assert.True(fileMeta.CameraNumber == "A");
 			}

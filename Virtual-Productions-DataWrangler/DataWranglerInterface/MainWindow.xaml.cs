@@ -9,6 +9,7 @@ using DataWranglerCommon;
 using DataWranglerCommon.ShogunLiveSupport;
 using DataWranglerCommonWPF.Login;
 using DataWranglerInterface.CameraPreview;
+using DataWranglerInterface.Configuration;
 using DataWranglerInterface.DebugSupport;
 using DataWranglerInterface.Properties;
 using DataWranglerInterface.ShotRecording;
@@ -40,13 +41,16 @@ namespace DataWranglerInterface
 		private DebugWindow? m_debugWindow;
         private CameraPreviewWindow? m_previewWindow;
 
-        private DataApi m_targetAPI = new DataApiSFTPFileSystem(DataApiSFTPConfig.DefaultConfig);
-        private ShogunLiveService m_shogunService = new ShogunLiveService(30);
+        private readonly DataApi m_targetAPI = new DataApiSFTPFileSystem(DataApiSFTPConfig.DefaultConfig);
+        private readonly ShogunLiveService m_shogunService = new ShogunLiveService(30);
+        private readonly DataWranglerInterfaceConfig m_userInterfaceConfig;
 
         public MainWindow()
 		{
 			InitializeComponent();
 
+			m_userInterfaceConfig = new DataWranglerInterfaceConfig();
+			DataWranglerInterfaceConfig.Use(m_userInterfaceConfig);
 			DataWranglerServices services = new DataWranglerServices(m_targetAPI, m_shogunService);
 			DataWranglerServiceProvider.Use(services);	
 
@@ -129,6 +133,8 @@ namespace DataWranglerInterface
 		protected override void OnClosing(CancelEventArgs e)
 		{
 			base.OnClosing(e);
+			DataWranglerInterfaceConfig.Instance.Save();
+
 			Content = null;
 			if (m_shotRecordingPage != null)
 			{

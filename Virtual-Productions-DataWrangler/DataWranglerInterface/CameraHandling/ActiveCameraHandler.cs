@@ -121,7 +121,7 @@ namespace DataWranglerInterface.CameraHandling
 
 		private void OnCommonCameraConnected(CameraDeviceHandle a_deviceHandle)
 		{
-            ConfigActiveCameraGrouping? grouping = DataWranglerConfig.Instance.ConfiguredCameraGroupings.Find(a_obj => a_obj.DeviceHandleUuids.Contains(a_deviceHandle.DeviceUuid));
+            ConfigActiveCameraGrouping? grouping = DataWranglerInterfaceConfig.Instance.ConfiguredCameraGroupings.Find(a_obj => a_obj.DeviceHandleUuids.Contains(a_deviceHandle.DeviceUuid));
             ActiveCameraInfo? info = null;
             if (grouping != null)
             {
@@ -187,8 +187,8 @@ namespace DataWranglerInterface.CameraHandling
 
         private void SaveCameraGroupings()
         {
-	        DataWranglerConfig config = DataWranglerConfig.Instance;
-	        config.ConfiguredCameraGroupings.Clear();
+	        DataWranglerInterfaceConfig interfaceConfig = DataWranglerInterfaceConfig.Instance;
+	        interfaceConfig.ConfiguredCameraGroupings.Clear();
 	        foreach (ActiveCameraInfo info in m_activeCameras)
 	        {
                 if (info.Grouping == null && info.ConnectionsForPhysicalDevice.Count > 0)
@@ -202,11 +202,11 @@ namespace DataWranglerInterface.CameraHandling
 
                 if (info.Grouping != null)
                 {
-	                config.ConfiguredCameraGroupings.Add(info.Grouping);
+	                interfaceConfig.ConfiguredCameraGroupings.Add(info.Grouping);
                 }
 	        }
 
-	        config.Save();
+	        interfaceConfig.MarkDirty();
         }
 
 		private void BackgroundUpdateFramePreview()

@@ -53,20 +53,7 @@ namespace DataWranglerCommon.IngestDataSources
 					return;
 				}
 
-				if (m_targetService.StartCapture(trackingDataMeta.TempCaptureFileName, trackingDataMeta.TempCaptureLibraryPath, out var task))
-				{
-					task.ContinueWith((a_result) => {
-						if (!a_result.Result)
-						{
-							Logger.LogError("ShotRecording", $"Vicon failed to send a confirmation that recording of library " +
-							                                 $"{trackingDataMeta.TempCaptureLibraryPath} with file name {trackingDataMeta.TempCaptureFileName} started");
-						}
-					});
-				}
-				else
-				{
-					Logger.LogError("ShotRecording", "Failed to start shogun live recording.");
-				}
+				m_targetService.AsyncStartCapture(trackingDataMeta.TempCaptureFileName, trackingDataMeta.TempCaptureLibraryPath);
 			}
 		}
 

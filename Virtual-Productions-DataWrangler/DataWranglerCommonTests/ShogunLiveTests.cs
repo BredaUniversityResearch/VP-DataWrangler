@@ -11,9 +11,9 @@ namespace DataWranglerCommonTests
         public void StartCapture()
         {
             using ShogunLiveService service = new ShogunLiveService(30);
-            bool startResult = service.StartCapture(CaptureName + DateTimeOffset.UtcNow.ToUnixTimeSeconds(), CaptureDatabasePath, out Task<bool>? confirmationPromise);
-            Assert.True(startResult);
-            Assert.True(confirmationPromise!.Result);
+            Task<bool> startResult = service.AsyncStartCapture(CaptureName + DateTimeOffset.UtcNow.ToUnixTimeSeconds(), CaptureDatabasePath);
+            startResult.Wait();
+            Assert.True(startResult.Result);
         }
 
         [Fact]

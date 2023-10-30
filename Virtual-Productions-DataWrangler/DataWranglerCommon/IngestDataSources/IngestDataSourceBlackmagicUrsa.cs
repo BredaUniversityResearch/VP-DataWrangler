@@ -65,7 +65,7 @@ namespace DataWranglerCommon.IngestDataSources
 					BRAWFileMetadata? fileMeta = null;
 					if (codec == EBlackmagicCameraCodec.BlackmagicRAW)
 					{
-						fileMeta = fileDecoder.GetMetaForFile(fileInfo);
+						fileMeta = fileDecoder.TryDecodeMetaForFile(fileInfo);
 					}
 
 					if (fileMeta != null)

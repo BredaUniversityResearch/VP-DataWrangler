@@ -98,7 +98,7 @@ namespace DataWranglerInterface.ShotRecording
 
 						DataEntityShotVersion newVersion = new DataEntityShotVersion
 						{
-							ShotVersionName = Configuration.DataWranglerConfig.Instance.ShotVersionNameTemplate.Build(sb),
+							ShotVersionName = Configuration.DataWranglerInterfaceConfig.Instance.ShotVersionNameTemplate.Build(sb),
 							DataWranglerMeta = JsonConvert.SerializeObject(a_meta, DataWranglerSerializationSettings.Instance)
 						};
 
@@ -122,7 +122,7 @@ namespace DataWranglerInterface.ShotRecording
 		{
 			ConfigStringBuilder sb = new ConfigStringBuilder();
 			sb.AddReplacement("ShotVersionId", "([0-9]{2})");
-			Regex shotNameTemplateMatcher = new Regex(Configuration.DataWranglerConfig.Instance.ShotVersionNameTemplate.Build(sb));
+			Regex shotNameTemplateMatcher = new Regex(Configuration.DataWranglerInterfaceConfig.Instance.ShotVersionNameTemplate.Build(sb));
 			
 			int nextShotId = 0;
 			foreach (DataEntityShotVersion shotVersion in a_resultData)
