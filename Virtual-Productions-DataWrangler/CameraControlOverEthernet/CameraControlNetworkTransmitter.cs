@@ -44,14 +44,14 @@ namespace CameraControlOverEthernet
 			NetworkInterface[] nics = NetworkInterface.GetAllNetworkInterfaces();
 			foreach (NetworkInterface adapter in nics)
 			{
-				IPInterfaceProperties ip_properties = adapter.GetIPProperties();
+				IPInterfaceProperties ipProperties = adapter.GetIPProperties();
 				if (adapter.GetIPProperties().MulticastAddresses.Count > 0 &&
 				    adapter.SupportsMulticast &&
 				    adapter.OperationalStatus == OperationalStatus.Up &&
 				    adapter.NetworkInterfaceType != NetworkInterfaceType.Tunnel &&
 				    adapter.Name.StartsWith("vEthernet") == false)
 				{
-					foreach (UnicastIPAddressInformation addr in ip_properties.UnicastAddresses)
+					foreach (UnicastIPAddressInformation addr in ipProperties.UnicastAddresses)
 					{
 						if (addr.Address.AddressFamily == AddressFamily.InterNetwork)
 						{

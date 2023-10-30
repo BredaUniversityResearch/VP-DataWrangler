@@ -5,6 +5,7 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.RegularExpressions;
+using CommonLogging;
 
 namespace DataWranglerCommon.ShogunLiveSupport
 {
@@ -82,6 +83,7 @@ namespace DataWranglerCommon.ShogunLiveSupport
 			m_controlClient = new UdpClient();
 			m_controlClient.EnableBroadcast = true;
 			m_controlClient.ExclusiveAddressUse = false;
+			m_controlClient.MulticastLoopback = true;
 			m_controlClient.Client.Bind(new IPEndPoint(IPAddress.Any, a_controlClientPort));
 
 			/*NetworkInterface[] nics = NetworkInterface.GetAllNetworkInterfaces();
@@ -152,6 +154,10 @@ namespace DataWranglerCommon.ShogunLiveSupport
 			if (successTransmit)
 			{
 				a_confirmationResultTask = WaitForConfirmationPacket(ShogunLivePacket.EType.CaptureStart, a_captureName);
+			}
+			else
+			{
+				Logger.LogError("ShogunLiveService", "Failed to broadcast capture start message");
 			}
 
 			return successTransmit;

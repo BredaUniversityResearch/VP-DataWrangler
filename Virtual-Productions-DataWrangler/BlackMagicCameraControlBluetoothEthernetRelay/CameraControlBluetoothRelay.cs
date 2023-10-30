@@ -4,7 +4,6 @@ using BlackmagicCameraControlData;
 using BlackmagicCameraControlData.CommandPackets;
 using CameraControlOverEthernet;
 using CommonLogging;
-using DataWranglerCommon;
 
 namespace BlackMagicCameraControlBluetoothEthernetRelay
 {
