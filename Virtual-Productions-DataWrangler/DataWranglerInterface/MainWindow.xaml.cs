@@ -1,8 +1,10 @@
-﻿using System.ComponentModel;
+﻿using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Diagnostics;
+using System.Text;
 using System.Windows;
 using System.Windows.Input;
-using System.Windows.Shapes;
+using CommonLogging;
 using DataApiCommon;
 using DataApiSFTP;
 using DataWranglerCommon;
@@ -38,25 +40,26 @@ namespace DataWranglerInterface
 		private APIConnectionPage? m_apiConnectionPage = null;
 		private ShotRecordingPage? m_shotRecordingPage;
 
-		private DebugWindow? m_debugWindow;
+		private ApplicationLogDisplayWindow? m_debugWindow;
         private CameraPreviewWindow? m_previewWindow;
 
         private readonly DataApi m_targetAPI = new DataApiSFTPFileSystem(DataApiSFTPConfig.DefaultConfig);
         private readonly ShogunLiveService m_shogunService = new ShogunLiveService(30);
-        private readonly DataWranglerInterfaceConfig m_userInterfaceConfig;
 
         public MainWindow()
 		{
 			InitializeComponent();
 
-			m_userInterfaceConfig = new DataWranglerInterfaceConfig();
-			DataWranglerInterfaceConfig.Use(m_userInterfaceConfig);
+			TaskScheduler.UnobservedTaskException += TaskSchedulerOnUnobservedTaskException;
+			Logger.Instance.OnMessageLogged += LoggerMessageLogged;
+
+			DataWranglerInterfaceConfig.Use(new DataWranglerInterfaceConfig());
 			DataWranglerServices services = new DataWranglerServices(m_targetAPI, m_shogunService);
 			DataWranglerServiceProvider.Use(services);	
 
 			if (Debugger.IsAttached)
 			{
-				m_debugWindow = new DebugWindow();
+				m_debugWindow = new ApplicationLogDisplayWindow();
 				m_debugWindow.Show();
 			}
 
@@ -77,6 +80,36 @@ namespace DataWranglerInterface
 			OnApiConnectStarted();
 		}
 
+        private void LoggerMessageLogged(TimeOnly a_time, string a_source, ELogSeverity a_severity, string a_message)
+        {
+	        if (a_severity == ELogSeverity.Error)
+	        {
+		        Dispatcher.InvokeAsync(() =>
+		        {
+			        if (m_debugWindow == null || !m_debugWindow.IsVisible)
+			        {
+				        m_debugWindow = new ApplicationLogDisplayWindow();
+				        m_debugWindow.Show();
+			        }
+		        });
+	        }
+        }
+
+        private void TaskSchedulerOnUnobservedTaskException(object? a_sender, UnobservedTaskExceptionEventArgs a_e)
+        {
+	        StringBuilder sb = new StringBuilder();
+	        sb.AppendLine("A task faulted with unobserved exception(s).");
+	        ReadOnlyCollection<Exception> innerExceptions = a_e.Exception.Flatten().InnerExceptions;
+	        for (int i = 0; i < innerExceptions.Count; ++i)
+	        {
+		        Exception ex = innerExceptions[i];
+		        sb.AppendLine($"Exception {i} ( {ex.GetType()} ):");
+		        sb.AppendLine($"\t{ex.Message}\n{ex.StackTrace}");
+	        }
+
+	        Logger.LogError("Task", sb.ToString());
+        }
+
         private void OnApiConnectStarted()
         {
 			Dispatcher.InvokeAsync(() =>
@@ -96,7 +129,7 @@ namespace DataWranglerInterface
 				{
 					if (m_debugWindow == null || !m_debugWindow.IsVisible)
 					{
-						m_debugWindow = new DebugWindow();
+						m_debugWindow = new ApplicationLogDisplayWindow();
 						m_debugWindow.Show();
 					}
 				}

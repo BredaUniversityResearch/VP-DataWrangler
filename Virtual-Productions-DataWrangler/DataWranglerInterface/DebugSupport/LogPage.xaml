@@ -14,6 +14,7 @@
     <Grid>
 		<DataGrid x:Name="LogOutput" VerticalScrollBarVisibility="Visible" ItemsSource="{Binding ElementName=LogPageInstance, Path=Messages}" d:DataContext="{d:DesignInstance Type={x:Type commonLogging:LogMessage}}" AutoGenerateColumns="False" CanUserResizeRows="False" CanUserDeleteRows="False" CanUserAddRows="False" AlternatingRowBackground="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}" IsReadOnly="True" >
             <DataGrid.Columns>
+				<DataGridTextColumn Header="Time" Binding="{Binding Time, StringFormat=T}" Width="1*"></DataGridTextColumn>
 				<DataGridTextColumn Header="Source" Binding="{Binding Source}" Width="1*"></DataGridTextColumn>
 				<DataGridTextColumn Header="Severity" Binding="{Binding Severity}" Width="1*"></DataGridTextColumn>
 				<DataGridTextColumn Header="Message" Binding="{Binding Message}" Width="7*">

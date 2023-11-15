@@ -130,73 +130,80 @@ namespace DataWranglerServiceWorker
 
 		private void DoBackgroundWork()
 		{
-			while (!m_dataImportThreadCancellationToken.IsCancellationRequested)
+			try
 			{
-				bool keyMessageSent = false;
-				while (ServiceWorkerConfig.Instance.DefaultDataStoreFtpKeyFile == null)
+				while (!m_dataImportThreadCancellationToken.IsCancellationRequested)
 				{
-					if (!keyMessageSent)
+					bool keyMessageSent = false;
+					while (ServiceWorkerConfig.Instance.DefaultDataStoreFtpKeyFile == null)
 					{
-						Logger.LogError("Config", $"Waiting for private key file at \"{ServiceWorkerConfig.Instance.DefaultDataStoreFtpKeyFilePath}\"");
-					}
-
-					if (ServiceWorkerConfig.Instance.TryReloadPrivateKey())
-					{
-						break;
-					}
-
-					Thread.Sleep(1000);
-				}
-
-				ImportQueueEntry? resultToCopy;
-				bool didDequeue;
-				lock (m_importQueue)
-				{
-					didDequeue = m_importQueue.TryDequeue(out resultToCopy);
-				}
-
-				if (didDequeue && resultToCopy != null)
-				{
-					ECopyResult result = ECopyResult.UnknownFailure;
-					try
-					{
-						if (m_importClient == null)
+						if (!keyMessageSent)
 						{
-							m_importClient = new SftpClient(ServiceWorkerConfig.Instance.DefaultDataStoreFtpHost, 22, ServiceWorkerConfig.Instance.DefaultDataStoreFtpUserName, ServiceWorkerConfig.Instance.DefaultDataStoreFtpKeyFile);
+							Logger.LogError("Config", $"Waiting for private key file at \"{ServiceWorkerConfig.Instance.DefaultDataStoreFtpKeyFilePath}\"");
 						}
 
-						if (!m_importClient.IsConnected)
+						if (ServiceWorkerConfig.Instance.TryReloadPrivateKey())
 						{
-							m_importClient.Connect();
+							break;
 						}
 
-						OnCopyStarted.Invoke(resultToCopy.TargetShotVersion, resultToCopy.CopyMetaData);
+						Thread.Sleep(1000);
+					}
 
-						result = CopyFileWithProgress(m_importClient, resultToCopy.TargetShotVersion, resultToCopy.CopyMetaData);
+					ImportQueueEntry? resultToCopy;
+					bool didDequeue;
+					lock (m_importQueue)
+					{
+						didDequeue = m_importQueue.TryDequeue(out resultToCopy);
+					}
 
-						if (result == ECopyResult.Success)
+					if (didDequeue && resultToCopy != null)
+					{
+						ECopyResult result = ECopyResult.UnknownFailure;
+						try
 						{
-							OnCopyStartWriteMetaData.Invoke(resultToCopy.TargetShotVersion, resultToCopy.CopyMetaData);
-							WriteMetadata(resultToCopy);
+							if (m_importClient == null)
+							{
+								m_importClient = new SftpClient(ServiceWorkerConfig.Instance.DefaultDataStoreFtpHost, 22, ServiceWorkerConfig.Instance.DefaultDataStoreFtpUserName, ServiceWorkerConfig.Instance.DefaultDataStoreFtpKeyFile);
+							}
+
+							if (!m_importClient.IsConnected)
+							{
+								m_importClient.Connect();
+							}
+
+							OnCopyStarted.Invoke(resultToCopy.TargetShotVersion, resultToCopy.CopyMetaData);
+
+							result = CopyFileWithProgress(m_importClient, resultToCopy.TargetShotVersion, resultToCopy.CopyMetaData);
+
+							if (result == ECopyResult.Success)
+							{
+								OnCopyStartWriteMetaData.Invoke(resultToCopy.TargetShotVersion, resultToCopy.CopyMetaData);
+								WriteMetadata(resultToCopy);
+							}
+
+							OnCopyFinished.Invoke(resultToCopy.TargetShotVersion, resultToCopy.CopyMetaData, result);
+						}
+						catch (SshException ex)
+						{
+							Logger.LogError("DataImporter", $"Failed to copy file. SshException occurred: {ex}");
 						}
 
-						OnCopyFinished.Invoke(resultToCopy.TargetShotVersion, resultToCopy.CopyMetaData, result);
 					}
-					catch (SshException ex)
+					else
 					{
-						Logger.LogError("DataImporter", $"Failed to copy file. SshException occurred: {ex}");
-					}
+						if (m_importClient != null && m_importClient.IsConnected)
+						{
+							m_importClient.Disconnect();
+						}
 
-				}
-				else
-				{
-					if (m_importClient != null && m_importClient.IsConnected)
-					{
-						m_importClient.Disconnect();
+						WaitHandle.WaitAny(new[] {m_dataImportThreadCancellationToken.Token.WaitHandle, m_queueAddedEvent});
 					}
-
-					WaitHandle.WaitAny(new[] {m_dataImportThreadCancellationToken.Token.WaitHandle, m_queueAddedEvent});
 				}
+			}
+			catch (Exception ex)
+			{
+				Logger.LogError("DataImportWorker", $"Thread terminated with an unhandled exception: {ex.Message}");
 			}
 		}
 

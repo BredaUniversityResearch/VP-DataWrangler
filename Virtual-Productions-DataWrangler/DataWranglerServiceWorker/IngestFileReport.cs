@@ -9,6 +9,7 @@ namespace DataWranglerServiceWorker
 {
 	public class IngestFileReport
 	{
+		//TODO: Test if we can get rid of Entries by sending value changed things while using a regular list.
 		private readonly List<IngestFileReportEntry> m_synchronizedEntries = new List<IngestFileReportEntry>();
         public ObservableCollection<IngestFileReportEntry> Entries { get; } = new ObservableCollection<IngestFileReportEntry>();
 
@@ -83,5 +84,14 @@ namespace DataWranglerServiceWorker
 
 	        entry.DestinationFile = a_copyMetaData.DestinationFullFilePath;
         }
-    }
+
+        public void ClearAllEntries()
+        {
+	        lock (m_synchronizedEntries)
+	        {
+		        m_synchronizedEntries.Clear();
+		        Application.Current.Dispatcher.Invoke(() => Entries.Clear());
+	        }
+        }
+	}
 }

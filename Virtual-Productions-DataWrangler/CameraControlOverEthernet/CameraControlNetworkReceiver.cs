@@ -135,83 +135,91 @@ namespace CameraControlOverEthernet
 
 		private void BackgroundReceiveData(ClientConnection a_client)
 		{
-			byte[] receiveBuffer = new byte[8192];
-			int bytesFromLastReceive = 0;
-			a_client.Client.GetStream().ReadTimeout = 1000;
-
-			while (a_client.Client.Connected)
+			try
 			{
-				if (DateTime.UtcNow - a_client.LastActivityTime > InactivityDisconnectTime)
-				{
-					Logger.LogVerbose("CCServer", $"Dropping client at {a_client.Client.Client.RemoteEndPoint} due to inactivity");
-					a_client.Client.Close();
-					break;
-				}
+				byte[] receiveBuffer = new byte[8192];
+				int bytesFromLastReceive = 0;
+				a_client.Client.GetStream().ReadTimeout = 1000;
 
-				int bytesReceived = 0;
-				try
+				while (a_client.Client.Connected)
 				{
-					bytesReceived = a_client.Client.GetStream().Read(receiveBuffer, bytesFromLastReceive, (int) receiveBuffer.Length - bytesFromLastReceive);
-				}
-				catch (IOException ex)
-				{
-					if (ex.InnerException is SocketException soEx)
+					if (DateTime.UtcNow - a_client.LastActivityTime > InactivityDisconnectTime)
 					{
-						if (soEx.SocketErrorCode == SocketError.ConnectionAborted ||
-						    soEx.SocketErrorCode == SocketError.ConnectionReset)
-						{
-							Logger.LogVerbose("CCServer", $"Dropping client at {a_client.Client.Client.RemoteEndPoint} due to connection abort");
-							a_client.Client.Close();
-						}
-						else if (soEx.SocketErrorCode == SocketError.TimedOut)
-						{
-							//Swallow this since we setup a timeout.
-						}
-						else
-						{
-							throw;
-						}
+						Logger.LogVerbose("CCServer", $"Dropping client at {a_client.Client.Client.RemoteEndPoint} due to inactivity");
+						a_client.Client.Close();
+						break;
 					}
-					else
-						throw;
-				}
 
-				if (bytesReceived > 0)
-				{
-					MemoryStream ms = new MemoryStream(receiveBuffer, 0, bytesReceived + bytesFromLastReceive, false);
-					bytesFromLastReceive = 0;
-
-					using (BinaryReader reader = new BinaryReader(ms, Encoding.ASCII))
+					int bytesReceived = 0;
+					try
 					{
-						while (ms.Position < ms.Length)
+						bytesReceived = a_client.Client.GetStream().Read(receiveBuffer, bytesFromLastReceive, (int) receiveBuffer.Length - bytesFromLastReceive);
+					}
+					catch (IOException ex)
+					{
+						if (ex.InnerException is SocketException soEx)
 						{
-							long packetStart = ms.Position;
-							ICameraControlPacket? packet = CameraControlTransport.TryRead(reader);
-							if (packet != null)
+							if (soEx.SocketErrorCode == SocketError.ConnectionAborted ||
+							    soEx.SocketErrorCode == SocketError.ConnectionReset)
 							{
-								//Logger.LogVerbose("CCServer", $"Received Packet From Client {a_client.Client.Client.RemoteEndPoint} of type {packet.GetType()}");
-								m_receivedPacketQueue.Add(new QueuedPacketEntry(packet, a_client.ConnectionId));
-								a_client.LastActivityTime = DateTime.UtcNow;
+								Logger.LogVerbose("CCServer", $"Dropping client at {a_client.Client.Client.RemoteEndPoint} due to connection abort");
+								a_client.Client.Close();
+							}
+							else if (soEx.SocketErrorCode == SocketError.TimedOut)
+							{
+								//Swallow this since we setup a timeout.
 							}
 							else
 							{
-								bytesFromLastReceive = (int)(ms.Length - packetStart);
-								Array.Copy(receiveBuffer, packetStart, receiveBuffer, 0, bytesFromLastReceive);
-								Logger.LogVerbose("CCServer", $"Failed to deserialize data from client {a_client.Client.Client.RemoteEndPoint} moving {bytesFromLastReceive} bytes over to next receive cycle");
-								break;
+								throw;
+							}
+						}
+						else
+							throw;
+					}
+
+					if (bytesReceived > 0)
+					{
+						MemoryStream ms = new MemoryStream(receiveBuffer, 0, bytesReceived + bytesFromLastReceive, false);
+						bytesFromLastReceive = 0;
+
+						using (BinaryReader reader = new BinaryReader(ms, Encoding.ASCII))
+						{
+							while (ms.Position < ms.Length)
+							{
+								long packetStart = ms.Position;
+								ICameraControlPacket? packet = CameraControlTransport.TryRead(reader);
+								if (packet != null)
+								{
+									//Logger.LogVerbose("CCServer", $"Received Packet From Client {a_client.Client.Client.RemoteEndPoint} of type {packet.GetType()}");
+									m_receivedPacketQueue.Add(new QueuedPacketEntry(packet, a_client.ConnectionId));
+									a_client.LastActivityTime = DateTime.UtcNow;
+								}
+								else
+								{
+									bytesFromLastReceive = (int) (ms.Length - packetStart);
+									Array.Copy(receiveBuffer, packetStart, receiveBuffer, 0, bytesFromLastReceive);
+									Logger.LogVerbose("CCServer", $"Failed to deserialize data from client {a_client.Client.Client.RemoteEndPoint} moving {bytesFromLastReceive} bytes over to next receive cycle");
+									break;
+								}
 							}
 						}
 					}
 				}
 			}
-
-			lock (m_connectedClients)
+			catch (Exception ex)
 			{
-				OnClientDisconnected(a_client.ConnectionId);
-				m_connectedClients.Remove(a_client);
+				Logger.LogError("CCServer", $"Background Receive Thread terminated due to unhandled exception {ex.Message}");
 			}
-
-			Logger.LogVerbose("CCServer", $"Dropped client. See previous message for details.");
+			finally
+			{
+				lock (m_connectedClients)
+				{
+					OnClientDisconnected(a_client.ConnectionId);
+					m_connectedClients.Remove(a_client);
+				}
+				Logger.LogVerbose("CCServer", $"Dropped client. See previous message for details.");
+			}
 		}
 
 		public bool TryDequeueMessage([NotNullWhen(true)] out ICameraControlPacket? a_cameraControlPacket, out int a_connectionId, TimeSpan a_timeout, CancellationToken a_cancellationToken)

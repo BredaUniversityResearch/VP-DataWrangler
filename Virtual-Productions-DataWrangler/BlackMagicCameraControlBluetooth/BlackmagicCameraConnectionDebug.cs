@@ -4,7 +4,6 @@ using System.Threading;
 using BlackmagicCameraControlBluetooth;
 using BlackmagicCameraControlData;
 using BlackmagicCameraControlData.CommandPackets;
-using DataWranglerCommon;
 
 namespace BlackmagicCameraControl
 {

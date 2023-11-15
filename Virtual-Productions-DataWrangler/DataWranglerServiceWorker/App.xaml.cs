@@ -1,14 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using CommonLogging;
 using DataApiCommon;
 using DataApiSFTP;
 using DataWranglerCommon.IngestDataSources;
-using ShotGridIntegration;
 
 namespace DataWranglerServiceWorker
 {
@@ -32,7 +33,7 @@ namespace DataWranglerServiceWorker
 
 		private USBDriveEventWatcher m_driveEventWatcher = new USBDriveEventWatcher();
 		//private CopyProgressWindow m_copyProgress;
-		private IngestReportWindow m_ingestReportWindow;
+		private IngestReportWindow? m_ingestReportWindow = null;
 
 		private readonly IngestDataSourceResolverCollection m_resolverCollection = new IngestDataSourceResolverCollection();
 
@@ -40,6 +41,8 @@ namespace DataWranglerServiceWorker
 
 		public App()
 		{
+			TaskScheduler.UnobservedTaskException += TaskSchedulerOnUnobservedTaskException;
+
 			m_targetApi = new DataApiSFTPFileSystem(DataApiSFTPConfig.DefaultConfig);
 			m_metaApiDataRequester = new DataApiDataRequester(m_targetApi);
 			m_importWorker = new DataImportWorker(m_targetApi);
@@ -50,19 +53,38 @@ namespace DataWranglerServiceWorker
 			m_importWorker.OnCopyStartWriteMetaData += OnFileCopyStartWriteMetaData;
 			m_importWorker.OnCopyFinished += OnFileCopyFinished;
 
-			//m_copyProgress = new CopyProgressWindow();
-			m_ingestReportWindow = new IngestReportWindow(m_ingestReport);
-
 			m_driveEventWatcher.OnVolumeChanged += OnVolumeChanged;
 		}
 
+		private void TaskSchedulerOnUnobservedTaskException(object? a_sender, UnobservedTaskExceptionEventArgs a_e)
+		{
+			StringBuilder sb = new StringBuilder();
+			sb.AppendLine("A task faulted with unobserved exception(s).");
+			ReadOnlyCollection<Exception> innerExceptions = a_e.Exception.Flatten().InnerExceptions;
+			for (int i = 0; i < innerExceptions.Count; ++i)
+			{
+				Exception ex = innerExceptions[i];
+				sb.AppendLine($"Exception {i} ( {ex.GetType()} ):");
+				sb.AppendLine($"\t{ex.Message}\n{ex.StackTrace}");
+			}
+
+			Logger.LogError("Task", sb.ToString());
+		}
+
+
 		private void OnFileCopyStarted(DataEntityShotVersion a_shotVersion, FileCopyMetaData a_copyMetaData)
 		{
-			m_ingestReportWindow.SetTargetFile(a_copyMetaData.SourceFilePath, a_copyMetaData.DestinationFullFilePath.LocalPath);
 			Dispatcher.InvokeAsync(() => {
-				if (!m_ingestReportWindow.IsVisible)
+				if (m_ingestReportWindow == null)
 				{
+					m_ingestReportWindow = new IngestReportWindow(m_ingestReport);
+					m_ingestReportWindow.Closed += OnReportWindowClosed;
 					m_ingestReportWindow.Show();
+				}
+
+				if (m_ingestReportWindow != null)
+				{
+					m_ingestReportWindow.SetTargetFile(a_copyMetaData.SourceFilePath, a_copyMetaData.DestinationFullFilePath.LocalPath);
 				}
 			});
 		}
@@ -73,7 +95,10 @@ namespace DataWranglerServiceWorker
 			string humanReadableSourceSize = FormatAsHumanReadableByteAmount(a_progressUpdate.TotalFileSizeBytes);
 			string humanReadableCopySpeed = FormatAsHumanReadableByteAmount(a_progressUpdate.CurrentCopySpeedBytesPerSecond);
 
-			m_ingestReportWindow.ProgressUpdate(a_copyMetaData.SourceFilePath, a_progressUpdate.PercentageCopied, $"{humanReadableCopiedAmount} / {humanReadableSourceSize} @ {humanReadableCopySpeed}/s");
+			if (m_ingestReportWindow != null)
+			{
+				m_ingestReportWindow.ProgressUpdate(a_copyMetaData.SourceFilePath, a_progressUpdate.PercentageCopied, $"{humanReadableCopiedAmount} / {humanReadableSourceSize} @ {humanReadableCopySpeed}/s");
+			}
 			//m_copyProgress.UpdateQueueLength(m_importWorker.ImportQueueLength);
 		}
 
@@ -96,12 +121,14 @@ namespace DataWranglerServiceWorker
 
 		private void OnFileCopyStartWriteMetaData(DataEntityShotVersion a_shotversion, FileCopyMetaData a_metadata)
 		{
-			Dispatcher.InvokeAsync(() => { m_ingestReportWindow.OnFileCopyStartWriteMetaData(a_metadata.SourceFilePath); });
+			Dispatcher.InvokeAsync(() => { 
+				m_ingestReportWindow?.OnFileCopyStartWriteMetaData(a_metadata.SourceFilePath); 
+			});
 		}
 
 		private void OnFileCopyFinished(DataEntityShotVersion a_shotVersion, FileCopyMetaData a_copyMetaData, DataImportWorker.ECopyResult a_copyOperationResult)
 		{
-			Dispatcher.InvokeAsync(() => { m_ingestReportWindow.OnFileCopyCompleted(a_copyMetaData.SourceFilePath, a_copyOperationResult); });
+			Dispatcher.InvokeAsync(() => { m_ingestReportWindow?.OnFileCopyCompleted(a_copyMetaData.SourceFilePath, a_copyOperationResult); });
 
 			if (a_copyOperationResult == DataImportWorker.ECopyResult.Success)
 			{
@@ -113,7 +140,7 @@ namespace DataWranglerServiceWorker
 			Dispatcher.InvokeAsync(() => {
 				if (m_importWorker.ImportQueueLength == 0)
 				{
-					m_ingestReportWindow.OnAllCopyOperationsFinished();
+					m_ingestReportWindow?.OnAllCopyOperationsFinished();
 				}
 			});
 		}
@@ -189,7 +216,7 @@ namespace DataWranglerServiceWorker
 
 			m_driveEventWatcher.DetectCurrentlyPresentUSBDrives();
 
-			/*
+			
 			DataEntityLocalStorage testStorage = new DataEntityLocalStorage() {StorageRoot = new Uri("D:/")};
 
 			IngestFileReport testReport = new IngestFileReport();
@@ -202,20 +229,19 @@ namespace DataWranglerServiceWorker
 			testReport.AddCopiedFile(new DataEntityShotVersion { }, new FileCopyMetaData("C:/invalid_destination", "D:/invalid_destination", testStorage, new DataEntityPublishedFileType()), DataImportWorker.ECopyResult.InvalidDestinationPath);
 			testReport.AddCopiedFile(new DataEntityShotVersion { }, new FileCopyMetaData("C:/unknown_fail", "D:/unknown_fail", testStorage, new DataEntityPublishedFileType()), DataImportWorker.ECopyResult.UnknownFailure);
 			(new IngestReportWindow(testReport)).Show();
-			*/
 		}
 
-		private void OnLoggerMessageLogged(string a_source, ELogSeverity a_severity, string a_message)
+		private void OnLoggerMessageLogged(TimeOnly a_time, string a_source, ELogSeverity a_severity, string a_message)
 		{
-			Console.WriteLine($"{a_source}\t{a_severity}\t{a_message}");
+			Console.WriteLine($"{a_time.ToString("T")}\t{a_source}\t{a_severity}\t{a_message}");
 		}
 
 		protected override void OnExit(ExitEventArgs e)
 		{
 			base.OnExit(e);
 
-			m_ingestReportWindow.Close();
-
+			m_ingestReportWindow?.Close();
+			
 			FreeConsole();
 		}
 
@@ -251,6 +277,12 @@ namespace DataWranglerServiceWorker
 					}
 				}
 			}
+		}
+
+		private void OnReportWindowClosed(object? a_sender, EventArgs a_e)
+		{
+			m_ingestReport.ClearAllEntries();
+			m_ingestReportWindow = null;
 		}
 	}
 }

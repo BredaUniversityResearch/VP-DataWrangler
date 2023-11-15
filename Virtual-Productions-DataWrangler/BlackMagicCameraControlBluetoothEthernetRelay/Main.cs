@@ -27,9 +27,9 @@ class App
 		application.Run();
 	}
 
-	private static void LogToConsole(string a_source, ELogSeverity a_severity, string a_message)
+	private static void LogToConsole(TimeOnly a_time, string a_source, ELogSeverity a_severity, string a_message)
 	{
-		Console.WriteLine($"{a_severity}\t{a_source}\t{a_message}");
+		Console.WriteLine($"{a_time}\t{a_severity}\t{a_source}\t{a_message}");
 	}
 }
 

@@ -24,7 +24,7 @@ namespace DataApiTests
 			Logger.Instance.OnMessageLogged += OnLoggerMessageLogged;
 		}
 
-		private static void OnLoggerMessageLogged(string a_source, ELogSeverity a_severity, string a_message)
+		private static void OnLoggerMessageLogged(TimeOnly a_time, string a_source, ELogSeverity a_severity, string a_message)
 		{
 			if (a_severity == ELogSeverity.Error)
 			{

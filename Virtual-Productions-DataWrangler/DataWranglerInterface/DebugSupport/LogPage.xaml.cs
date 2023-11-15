@@ -20,9 +20,9 @@ namespace DataWranglerInterface.DebugSupport
 			Logger.Instance.OnMessageLogged += OnMessageLogged;
 		}
 
-		private void OnMessageLogged(string a_source, ELogSeverity a_severity, string a_message)
+		private void OnMessageLogged(TimeOnly a_time, string a_source, ELogSeverity a_severity, string a_message)
 		{
-			Dispatcher.InvokeAsync(() => { Messages.Add(new LogMessage(a_source, a_severity, a_message)); });
+			Dispatcher.InvokeAsync(() => { Messages.Add(new LogMessage(a_time, a_source, a_severity, a_message)); });
 		}
 
 		public ELogSeverity GetLogLevel()
