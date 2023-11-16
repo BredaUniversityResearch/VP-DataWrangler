@@ -275,7 +275,9 @@ namespace DataApiSFTP
 				string metaAsString = JsonConvert.SerializeObject(attrib, Formatting.Indented);
 				m_client.TruncateWriteAllText(outputFolderPath + "/" + ShotMetaFileName, metaAsString);
 
-				return new DataApiResponse<DataEntityShot>(attrib.ToDataEntity(project), null);
+				DataEntityShot shot = attrib.ToDataEntity(project);
+				LocalCache.AddCachedEntity(shot);
+				return new DataApiResponse<DataEntityShot>(shot, null);
 			});
 		}
 

@@ -88,10 +88,10 @@ namespace DataWranglerInterface.ShotRecording
 			if (targetShotId != Guid.Empty)
 			{
 				m_parentPage?.BeginAddShotVersion(targetShotId);
-				DataWranglerServiceProvider.Instance.TargetDataApi.GetVersionsForShot(targetShotId, (a_lhs, a_rhs) => string.Compare(a_lhs.ShotVersionName, a_rhs.ShotVersionName, StringComparison.Ordinal)).ContinueWith(a_task => {
-					if (!a_task.Result.IsError)
+				DataWranglerServiceProvider.Instance.TargetDataApi.GetVersionsForShot(targetShotId, (a_lhs, a_rhs) => string.Compare(a_lhs.ShotVersionName, a_rhs.ShotVersionName, StringComparison.Ordinal)).ContinueWith(a_fetchTask => {
+					if (!a_fetchTask.Result.IsError)
 					{
-						int nextTakeId = FindHighestShotVersionIdFromShotVersions(a_task.Result.ResultData) + 1;
+						int nextTakeId = FindHighestShotVersionIdFromShotVersions(a_fetchTask.Result.ResultData) + 1;
 
 						ConfigStringBuilder sb = new ConfigStringBuilder();
 						sb.AddReplacement("ShotVersionId", nextTakeId.ToString("D2"));
@@ -112,7 +112,15 @@ namespace DataWranglerInterface.ShotRecording
                                 DataWranglerEventDelegates.Instance.NotifyShotCreated(a_result.Result
                                     .ResultData.EntityId);
                             }
+							else
+							{
+								Logger.LogError("Ingestinator", $"Failed to create shot with name {newVersion.ShotVersionName}. Api reported failure: {a_result.Result.ErrorInfo}");
+							}
 						});
+					}
+					else
+					{
+						Logger.LogError("Ingestinator", $"Failed to fetch versions for shot {targetShotId}. Api reported failure: {a_fetchTask.Result.ErrorInfo}");
 					}
 				});
 			}

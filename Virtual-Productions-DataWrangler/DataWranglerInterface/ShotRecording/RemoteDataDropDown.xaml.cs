@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
+using CommonLogging;
 using DataApiCommon;
 using ShotGridIntegration;
 
@@ -50,7 +51,11 @@ namespace DataWranglerInterface.ShotRecording
 							result[i] = dropDownType ?? throw new Exception($"Failed to create object {typeof(TDropDownType).Name} with {typeof(TAPIResult).Name} as first argument");
 						}
 					}
-					
+					else
+					{
+						Logger.LogError("Ingestinator", $"Failed to refresh dropdown. Api reported failure: {apiResults.ErrorInfo}");
+					}
+
 					AssignItemsToDropdown(result);
 				}
 				m_itemEntryRefreshTask = null;
