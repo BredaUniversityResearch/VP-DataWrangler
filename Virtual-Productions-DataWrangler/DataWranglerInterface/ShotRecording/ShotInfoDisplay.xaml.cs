@@ -26,13 +26,13 @@ namespace DataWranglerInterface.ShotRecording
 		{
 			if (DisplayedShot != null)
 			{
-				DisplayedShot.PropertyChanged -= OnDisplayedShotPropertyChanged;
+				DisplayedShot.ChangeTracker.OnChangeApplied -= OnDisplayedShotPropertyChanged;
 			}
 
 			DisplayedShot = a_shotInfo;
 			if (DisplayedShot != null)
 			{
-				DisplayedShot.PropertyChanged += OnDisplayedShotPropertyChanged;
+				DisplayedShot.ChangeTracker.OnChangeApplied += OnDisplayedShotPropertyChanged;
 				
 				if (!string.IsNullOrEmpty(DisplayedShot.ImageURL))
 				{

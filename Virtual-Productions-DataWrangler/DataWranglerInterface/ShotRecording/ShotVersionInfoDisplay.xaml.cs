@@ -83,14 +83,14 @@ namespace DataWranglerInterface.ShotRecording
 		{
 			if (CurrentVersion != null)
 			{
-				CurrentVersion.PropertyChanged -= OnCurrentVersionPropertyChanged;
+				CurrentVersion.ChangeTracker.OnChangeApplied -= OnCurrentVersionPropertyChanged;
 			}
 
 			IngestDataShotVersionMeta shotMeta = new IngestDataShotVersionMeta();
 			CurrentVersion = a_shotVersion;
 			if (CurrentVersion != null)
 			{
-				CurrentVersion.PropertyChanged += OnCurrentVersionPropertyChanged;
+				CurrentVersion.ChangeTracker.OnChangeApplied += OnCurrentVersionPropertyChanged;
 
 				if (!string.IsNullOrEmpty(CurrentVersion.DataWranglerMeta))
 				{
@@ -185,15 +185,13 @@ namespace DataWranglerInterface.ShotRecording
 				return;
 			}
 
-			
+			Task<DataApiResponseGeneric> task = CurrentVersion.ChangeTracker.CommitChanges(DataWranglerServiceProvider.Instance.TargetDataApi);
 			if (a_e.PropertyName == nameof(CurrentVersion.Description))
 			{
-				Task<DataApiResponseGeneric> task = CurrentVersion.ChangeTracker.CommitChanges(DataWranglerServiceProvider.Instance.TargetDataApi);
 				DescriptionFeedbackElement.ProvideFeedback(task);
 			}
 			else if (a_e.PropertyName == nameof(CurrentVersion.Flagged))
 			{
-				Task<DataApiResponseGeneric> task = CurrentVersion.ChangeTracker.CommitChanges(DataWranglerServiceProvider.Instance.TargetDataApi);
 				GoodTakeFeedbackElement.ProvideFeedback(task);
 			}
 		}

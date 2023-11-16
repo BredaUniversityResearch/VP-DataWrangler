@@ -13,7 +13,7 @@
 			<Label Content="{Binding ElementName=ActiveCameraInfoControlInstance, Path=TargetInfo.CurrentTimeCode, FallbackValue='12:34:56:78'}" DockPanel.Dock="Right"/>
 			<Label Content="{Binding ElementName=ActiveCameraInfoControlInstance, Path=TargetInfo.CameraName, FallbackValue='CameraNameGoesHere'}"></Label>
 		</DockPanel>
-		<StackPanel x:Name="ExpandedDetails" Margin="4,0,0,0" Visibility="Visible">
+		<StackPanel x:Name="ExpandedDetails" Margin="4,0,0,0" Visibility="Collapsed">
 			<DockPanel>
 				<Label DockPanel.Dock="Left">Name</Label>
 				<TextBox Text="{Binding ElementName=ActiveCameraInfoControlInstance, Path=TargetInfo.CameraName}" DockPanel.Dock="Left"/>

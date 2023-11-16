@@ -103,6 +103,12 @@ namespace DataWranglerInterface.ShotRecording
 		private void OnRequestCreateNewShot(DataEntityShot a_gridEntityShotAttributes)
 		{
 			Guid projectId = ProjectSelector.SelectedProjectId;
+
+			if (ShotInfoDisplay.DisplayedShot != null)
+			{
+				a_gridEntityShotAttributes.DataSourcesTemplate = ShotInfoDisplay.DisplayedShot.DataSourcesTemplate.Clone();
+			}
+
 			ShotSelector.OnNewShotCreationStarted();
 			DataWranglerServiceProvider.Instance.TargetDataApi.CreateNewShot(projectId, a_gridEntityShotAttributes).ContinueWith(a_task =>
 			{

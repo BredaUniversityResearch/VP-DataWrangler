@@ -7,6 +7,8 @@ namespace DataApiCommon
 {
 	public class DataEntityChangeTracker
 	{
+		public event PropertyChangedEventHandler? OnChangeApplied = null;
+
 		private readonly DataEntityBase m_targetEntity;
 		private readonly Dictionary<PropertyInfo, object?> m_changedFields = new();
 		private readonly Dictionary<PropertyInfo, KeyValuePair<INotifyPropertyChanged, PropertyChangedEventHandler>> m_propertyChangedByChildProperty = new();
@@ -59,6 +61,8 @@ namespace DataApiCommon
 			}
 
 			m_changedFields[prop] = newValue;
+
+			OnChangeApplied?.Invoke(a_sender, a_e);
 		}
 
 		public Task<DataApiResponseGeneric> CommitChanges(DataApi a_targetApi)

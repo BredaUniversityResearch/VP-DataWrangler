@@ -181,13 +181,13 @@ namespace DataWranglerInterface.ShotRecording
 		{
 			if (m_targetShot != null)
 			{
-				m_targetShot.DataSourcesTemplate.PropertyChanged -= OnDataSourcesChanged;
+				m_targetShot.ChangeTracker.OnChangeApplied -= OnDataSourcesChanged;
 			}
 
 			m_targetShot = a_targetShot;
 			if (m_targetShot != null)
 			{
-				m_targetShot.DataSourcesTemplate.PropertyChanged += OnDataSourcesChanged;
+				m_targetShot.ChangeTracker.OnChangeApplied += OnDataSourcesChanged;
 			}
 
 			TargetShotIngestData = m_targetShot?.DataSourcesTemplate;

@@ -16,7 +16,20 @@
             <DataGrid.Columns>
 				<DataGridTextColumn Header="Time" Binding="{Binding Time, StringFormat=T}" Width="1*"></DataGridTextColumn>
 				<DataGridTextColumn Header="Source" Binding="{Binding Source}" Width="1*"></DataGridTextColumn>
-				<DataGridTextColumn Header="Severity" Binding="{Binding Severity}" Width="1*"></DataGridTextColumn>
+				<DataGridTextColumn Header="Severity" Binding="{Binding Severity}" Width="1*">
+					<DataGridTextColumn.ElementStyle>
+						<Style TargetType="{x:Type TextBlock}">
+							<Style.Triggers>
+								<DataTrigger Binding="{Binding Severity}" Value="Error">
+									<Setter Property="Background" Value="IndianRed" />
+								</DataTrigger>
+								<DataTrigger Binding="{Binding Severity}" Value="Warning">
+									<Setter Property="Background" Value="Yellow" />
+								</DataTrigger>
+							</Style.Triggers>
+						</Style>
+					</DataGridTextColumn.ElementStyle>
+				</DataGridTextColumn>
 				<DataGridTextColumn Header="Message" Binding="{Binding Message}" Width="7*">
                     <DataGridTextColumn.ElementStyle>
                         <Style>

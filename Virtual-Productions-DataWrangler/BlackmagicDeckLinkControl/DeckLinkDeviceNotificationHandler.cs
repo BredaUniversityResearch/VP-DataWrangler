@@ -61,7 +61,7 @@ internal class DeckLinkDeviceNotificationHandler : IDeckLinkDeviceNotificationCa
             }
             catch (COMException ex)
             {
-				Logger.LogError("DeckLinkInterface", $"Failed to start video input. Exception: {ex.Message}");
+				Logger.LogWarning("DeckLinkInterface", $"Failed to start video input. Exception: {ex.Message}");
             }
 
 
