@@ -215,20 +215,6 @@ namespace DataWranglerServiceWorker
 			});
 
 			m_driveEventWatcher.DetectCurrentlyPresentUSBDrives();
-
-			
-			DataEntityLocalStorage testStorage = new DataEntityLocalStorage() {StorageRoot = new Uri("D:/")};
-
-			IngestFileReport testReport = new IngestFileReport();
-			IngestFileResolutionDetails testDetails = new IngestFileResolutionDetails("C:/success");
-			testDetails.AddRejection(new IngestShotVersionIdentifier(new DataEntityShotVersion {EntityId = Guid.NewGuid(), ShotVersionName = "test_version_01"}, null), "Some random rejection");
-			testDetails.AddRejection(new IngestShotVersionIdentifier(new DataEntityShotVersion {EntityId = Guid.NewGuid(), ShotVersionName = "test_version_02"}, null), "Computer said no");
-			testReport.AddFileResolutionDetails(testDetails);
-			testReport.AddCopiedFile(new DataEntityShotVersion { }, new FileCopyMetaData("C:/success", "D:/success", testStorage, new DataEntityPublishedFileType()), DataImportWorker.ECopyResult.Success);
-			testReport.AddCopiedFile(new DataEntityShotVersion { }, new FileCopyMetaData("C:/up_to_date", "D:/up_to_date", testStorage, new DataEntityPublishedFileType()), DataImportWorker.ECopyResult.FileAlreadyUpToDate);
-			testReport.AddCopiedFile(new DataEntityShotVersion { }, new FileCopyMetaData("C:/invalid_destination", "D:/invalid_destination", testStorage, new DataEntityPublishedFileType()), DataImportWorker.ECopyResult.InvalidDestinationPath);
-			testReport.AddCopiedFile(new DataEntityShotVersion { }, new FileCopyMetaData("C:/unknown_fail", "D:/unknown_fail", testStorage, new DataEntityPublishedFileType()), DataImportWorker.ECopyResult.UnknownFailure);
-			(new IngestReportWindow(testReport)).Show();
 		}
 
 		private void OnLoggerMessageLogged(TimeOnly a_time, string a_source, ELogSeverity a_severity, string a_message)
