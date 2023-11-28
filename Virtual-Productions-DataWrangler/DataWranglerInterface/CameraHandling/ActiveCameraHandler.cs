@@ -17,7 +17,7 @@ namespace DataWranglerInterface.CameraHandling
     {
         private BlackmagicBluetoothCameraAPIController? m_bluetoothController = null;
         private BlackmagicDeckLinkController? m_deckLinkController = null;
-        private EthernetRelayCameraController m_relayCameraControl = null; //new EthernetRelayCameraController();
+        private EthernetRelayCameraController m_relayCameraControl = new EthernetRelayCameraController();
         private List<ActiveCameraInfo> m_activeCameras = new List<ActiveCameraInfo>();
 
         public delegate void CameraConnectedHandler(ActiveCameraInfo a_camera);
