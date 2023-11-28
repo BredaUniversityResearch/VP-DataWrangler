@@ -673,6 +673,7 @@ namespace DataApiSFTP
 			public string ProjectName { get; set; } = "";
 			public string ShotName { get; set; } = "";
 			public string VersionName { get; set; } = "";
+			public bool GoodTake { get; set; } = false;
 			public string FileType { get; set; } = "";
 			public string Path { get; set; } = "";
 		}
@@ -719,6 +720,7 @@ namespace DataApiSFTP
 							ProjectName = a_project.Name,
 							ShotName = a_shot.ShotName,
 							VersionName = a_shotVersion.ShotVersionName,
+							GoodTake = a_shotVersion.Flagged,
 							FileType = fileType?.FileType ?? "",
 							Path = fullPublishedPath.AbsoluteUri,
 						});
