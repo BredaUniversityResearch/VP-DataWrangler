@@ -57,10 +57,13 @@ namespace DataWranglerInterface.ShotRecording
 				return;
 			}
 
-			if (a_e.PropertyName == nameof(DisplayedShot.Description))
+			if (a_sender == m_displayedShot)
 			{
-				Task<DataApiResponseGeneric> task = m_displayedShot.ChangeTracker.CommitChanges(DataWranglerServiceProvider.Instance.TargetDataApi);
-				DescriptionFeedbackElement.ProvideFeedback(task);
+				if (a_e.PropertyName == nameof(m_displayedShot.Description))
+				{
+					Task<DataApiResponseGeneric> task = m_displayedShot.ChangeTracker.CommitChanges(DataWranglerServiceProvider.Instance.TargetDataApi);
+					DescriptionFeedbackElement.ProvideFeedback(task);
+				}
 			}
 		}
 	}

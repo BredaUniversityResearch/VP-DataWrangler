@@ -17,7 +17,7 @@ namespace DataWranglerInterface.CameraHandling
     {
         private BlackmagicBluetoothCameraAPIController? m_bluetoothController = null;
         private BlackmagicDeckLinkController? m_deckLinkController = null;
-        private EthernetRelayCameraController m_relayCameraControl = new EthernetRelayCameraController();
+        private EthernetRelayCameraController m_relayCameraControl = null; //new EthernetRelayCameraController();
         private List<ActiveCameraInfo> m_activeCameras = new List<ActiveCameraInfo>();
 
         public delegate void CameraConnectedHandler(ActiveCameraInfo a_camera);
@@ -40,9 +40,12 @@ namespace DataWranglerInterface.CameraHandling
 	            SubscribeCameraController(m_bluetoothController);
             }
 
-            SubscribeCameraController(m_relayCameraControl);
+            if (m_relayCameraControl != null)
+            {
+	            SubscribeCameraController(m_relayCameraControl);
+            }
 
-			m_deckLinkController = BlackmagicDeckLinkController.Create(out string? errorMessage);
+            m_deckLinkController = BlackmagicDeckLinkController.Create(out string? errorMessage);
             if (m_deckLinkController != null)
             {
 	            SubscribeCameraController(m_deckLinkController);
@@ -65,7 +68,10 @@ namespace DataWranglerInterface.CameraHandling
         {
 	        while (!m_backgroundTaskCancellationSource.IsCancellationRequested)
 	        {
-		        m_relayCameraControl.BlockingProcessReceivedMessages(TimeSpan.FromSeconds(10), m_backgroundTaskCancellationSource.Token);
+		        if (m_relayCameraControl != null)
+		        {
+			        m_relayCameraControl.BlockingProcessReceivedMessages(TimeSpan.FromSeconds(10), m_backgroundTaskCancellationSource.Token);
+		        }
 	        }
         }
 

@@ -42,6 +42,16 @@ namespace DataApiCommon
 			return null;
 		}
 
+		public IngestDataSourceMeta? FindMetaByType(string a_metaTypeName)
+		{
+			return FileSources.Find(a_source => a_source.SourceType == a_metaTypeName);
+		}
+
+		public bool Contains(IngestDataSourceMeta a_meta)
+		{
+			return FileSources.Contains(a_meta);
+		}
+
 		public void AddFileSource(IngestDataSourceMeta a_meta)
 		{
 			FileSources.Add(a_meta);
@@ -57,11 +67,6 @@ namespace DataApiCommon
 			}
 
 			return removed;
-		}
-
-		public IngestDataSourceMeta? FindMetaByType(string a_metaTypeName)
-		{
-			return FileSources.Find(a_source => a_source.SourceType == a_metaTypeName);
 		}
 
 		public event PropertyChangedEventHandler? PropertyChanged;

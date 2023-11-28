@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
+using System.Diagnostics;
 using System.Reflection;
-using AutoNotify;
-using Newtonsoft.Json;
+using CommonLogging;
 
 namespace DataApiCommon
 {
@@ -67,8 +67,15 @@ namespace DataApiCommon
 
 		public Task<DataApiResponseGeneric> CommitChanges(DataApi a_targetApi)
 		{
+			if (m_changedFields.Count == 0)
+			{
+				Logger.LogError("ChangeTracker", "Trying to commit changes without any changes. Could this be a double commit?");
+			}
+
 			Dictionary<PropertyInfo, object?> changedValues = new Dictionary<PropertyInfo, object?>(m_changedFields);
 			m_changedFields.Clear();
+
+			Logger.LogVerbose("ChangeTracker", $"Committing Changes for {m_targetEntity}.");
 
 			return a_targetApi.UpdateEntityProperties(m_targetEntity, changedValues);
 		}

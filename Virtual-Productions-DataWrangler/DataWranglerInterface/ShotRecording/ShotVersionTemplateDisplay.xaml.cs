@@ -205,8 +205,11 @@ namespace DataWranglerInterface.ShotRecording
 		{
 			if (m_targetShot != null)
 			{
-				Task<DataApiResponseGeneric> task = m_targetShot.ChangeTracker.CommitChanges(DataWranglerServiceProvider.Instance.TargetDataApi);
-				FileSourcesFeedback.ProvideFeedback(task);
+				if (m_targetShot == a_sender && a_e.PropertyName == nameof(m_targetShot.DataSourcesTemplate))
+				{
+					Task<DataApiResponseGeneric> task = m_targetShot.ChangeTracker.CommitChanges(DataWranglerServiceProvider.Instance.TargetDataApi);
+					FileSourcesFeedback.ProvideFeedback(task);
+				}
 			}
 		}
 	}
