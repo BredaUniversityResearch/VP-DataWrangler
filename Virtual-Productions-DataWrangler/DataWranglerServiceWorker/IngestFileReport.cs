@@ -25,7 +25,7 @@ namespace DataWranglerServiceWorker
 	        }
 	        else if (a_sourceFile.Rejections.Count > 0)
 	        {
-		        entry.Status = "Not Imported";
+		        entry.Status = "Not imported. Please import manually.";
 		        entry.StatusImageType = IngestFileReportEntry.EStatusImageType.Warning;
 	        }
 		}

@@ -709,7 +709,8 @@ namespace DataApiSFTP
 				{
 					CsvConfiguration readConfig = new CsvConfiguration(CultureInfo.InvariantCulture)
 					{
-						MissingFieldFound = null
+						MissingFieldFound = null,
+						HeaderValidated = OnCsvHeadersValidated
 					};
 					using (CsvReader reader = new CsvReader(textReader, readConfig, true))
 					{
@@ -754,6 +755,34 @@ namespace DataApiSFTP
 					}
 				}
 			}
+		}
+
+		void OnCsvHeadersValidated(HeaderValidatedArgs args)
+		{
+			if (args.InvalidHeaders.Count() == 0)
+			{
+				return;
+			}
+
+			var errorMessage = new StringBuilder();
+			foreach (var invalidHeader in args.InvalidHeaders)
+			{
+				errorMessage.AppendLine($"Header with name '{string.Join("' or '", invalidHeader.Names)}'[{invalidHeader.Index}] was not found.");
+			}
+
+			if (args.Context.Reader.HeaderRecord != null)
+			{
+				foreach (var header in args.Context.Reader.HeaderRecord)
+				{
+					errorMessage.AppendLine($"Headers: '{string.Join("', '", args.Context.Reader.HeaderRecord)}'");
+				}
+			}
+
+			var messagePostfix =
+				$"If you are expecting some headers to be missing and want to ignore this validation, " +
+				$"set the configuration {nameof(HeaderValidated)} to null. You can also change the " +
+				$"functionality to do something else, like logging the issue.";
+			errorMessage.AppendLine(messagePostfix);
 		}
 	}
 }
