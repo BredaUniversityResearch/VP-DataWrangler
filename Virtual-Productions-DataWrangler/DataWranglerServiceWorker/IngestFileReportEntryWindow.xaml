@@ -6,13 +6,13 @@
         xmlns:local="clr-namespace:DataWranglerServiceWorker"
         mc:Ignorable="d"
         Title="Ingestinator File Report" Height="450" Width="800">
-    <StackPanel>
-		<DockPanel>
+    <DockPanel>
+		<DockPanel DockPanel.Dock ="Top">
 			<Label>Source File:</Label>
 			<Label Content="{Binding Entry.SourceFile, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:IngestFileReportEntryWindow}}}"></Label>
 		</DockPanel>
-		<Label>Attempted Resolutions:</Label>
-		<DataGrid ItemsSource="{Binding Entry.IngestReport, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:IngestFileReportEntryWindow}}}" AutoGenerateColumns="False">
+		<Label DockPanel.Dock ="Top">Attempted Resolutions:</Label>
+		<DataGrid ItemsSource="{Binding Entry.IngestReport, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:IngestFileReportEntryWindow}}}" AutoGenerateColumns="False" DockPanel.Dock ="Top" VerticalScrollBarVisibility="Visible">
 			<DataGrid.Columns>
 				<DataGridTextColumn Header="Project" Binding="{Binding Key.ProjectName}"/>
 				<DataGridTextColumn Header="Shot Name" Binding="{Binding Key.ShotName}"/>
@@ -20,5 +20,5 @@
 				<DataGridTextColumn Header="Rejection Reason" Binding="{Binding Value}"/>
 			</DataGrid.Columns>
 		</DataGrid>
-	</StackPanel>
+	</DockPanel>
 </Window>
