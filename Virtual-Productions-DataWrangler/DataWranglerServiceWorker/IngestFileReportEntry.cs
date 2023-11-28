@@ -9,14 +9,15 @@ public partial class IngestFileReportEntry
 {
 	public enum EStatusImageType
 	{
-		Success,
-		Warning,
 		Error,
-		Pending
+		Warning,
+		Informational,
+		Pending,
+		Success,
 	};
 
 	[AutoNotify]
-	private EStatusImageType m_statusImageType = EStatusImageType.Warning;
+	private EStatusImageType m_statusImageType = EStatusImageType.Informational;
 	[AutoNotify]
 	private string m_status = "Ignored File Type";
 	[AutoNotify]

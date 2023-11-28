@@ -11,6 +11,7 @@ namespace DataWranglerServiceWorker
 		private readonly BitmapImage WarningImage = new BitmapImage(new Uri("pack://application:,,,/DataWranglerCommonWPF;component/Resources/StatusIcons/Warning.png"));
 		private readonly BitmapImage ErrorImage = new BitmapImage(new Uri("pack://application:,,,/DataWranglerCommonWPF;component/Resources/StatusIcons/Error.png"));
 		private readonly BitmapImage PendingImage = new BitmapImage(new Uri("pack://application:,,,/DataWranglerCommonWPF;component/Resources/StatusIcons/Pending.png"));
+		private readonly BitmapImage InformationalImage = new BitmapImage(new Uri("pack://application:,,,/DataWranglerCommonWPF;component/Resources/StatusIcons/Informational.png"));
 
 		public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
 		{
@@ -25,6 +26,8 @@ namespace DataWranglerServiceWorker
 					return SuccessImage;
 				case IngestFileReportEntry.EStatusImageType.Pending:
 					return PendingImage;
+				case IngestFileReportEntry.EStatusImageType.Informational:
+					return InformationalImage;
 			}
 
 			throw new ArgumentException($"Unknown value {val} for StatusImageType");

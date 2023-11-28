@@ -120,8 +120,28 @@ namespace DataWranglerCommon.IngestDataSources
 
 				if (matchedCount == 0)
 				{
-					Logger.LogError("MetaFileResolverVicon", $"Failed to find any files to import for meta {currentMeta.Key.ShotVersionName} " +
-						$"at directory {currentMeta.Value.TempCaptureLibraryPath} with name {currentMeta.Value.TempCaptureFileName}");
+					string shotName = "???";
+					if (currentMeta.Key.EntityRelationships.Parent != null)
+					{
+						DataEntityShot? shot = a_cache.FindEntityById<DataEntityShot>(currentMeta.Key.EntityRelationships.Parent.EntityId);
+						if (shot != null)
+						{
+							shotName = shot.ShotName;
+						}
+					}
+
+					string projectName = "???";
+					if (currentMeta.Key.EntityRelationships.Project != null)
+					{
+						DataEntityProject? project = a_cache.FindEntityById<DataEntityProject>(currentMeta.Key.EntityRelationships.Project.EntityId);
+						if (project != null)
+						{
+							projectName = project.Name;
+						}
+					}
+
+					Logger.LogError("MetaFileResolverVicon", $"Failed to find any files to import for meta {projectName}/{shotName}/{currentMeta.Key.ShotVersionName} " +
+					                                         $"at directory {currentMeta.Value.TempCaptureLibraryPath} with name {currentMeta.Value.TempCaptureFileName}");
 				}
 			}
 
