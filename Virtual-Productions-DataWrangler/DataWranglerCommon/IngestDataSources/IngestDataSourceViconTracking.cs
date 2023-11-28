@@ -140,7 +140,7 @@ namespace DataWranglerCommon.IngestDataSources
 						}
 					}
 
-					Logger.LogError("MetaFileResolverVicon", $"Failed to find any files to import for meta {projectName}/{shotName}/{currentMeta.Key.ShotVersionName} " +
+					Logger.LogInfo("MetaFileResolverVicon", $"Failed to find any files to import for meta {projectName}/{shotName}/{currentMeta.Key.ShotVersionName} " +
 					                                         $"at directory {currentMeta.Value.TempCaptureLibraryPath} with name {currentMeta.Value.TempCaptureFileName}");
 				}
 			}
