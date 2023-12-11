@@ -1,4 +1,7 @@
-﻿using System.Windows.Controls;
+﻿using System.Diagnostics;
+using System.IO;
+using System.Windows;
+using System.Windows.Controls;
 using BlackmagicCameraControlBluetooth;
 using CommonLogging;
 using DataApiCommon;
@@ -118,6 +121,27 @@ namespace DataWranglerInterface.ShotRecording
 					Dispatcher.InvokeAsync(() => ShotCreationControl.OnNewShotCreationFailed(a_newShotAttributes, a_task.Result.ErrorInfo.ToString()));
 				}
 				ShotSelector.OnNewShotCreationFinished(a_task.Result.ResultData);
+			});
+		}
+
+		private void OpenProjectFolderButton_OnClick(object a_sender, RoutedEventArgs a_e)
+		{
+			Guid projectId = ProjectSelector.SelectedProjectId;
+			DataWranglerServiceProvider.Instance.TargetDataApi.GetBrowsableLocalStoragePathForProject(projectId).ContinueWith(a_task => 
+			{
+				if (!a_task.Result.IsError)
+				{
+					string localPath = a_task.Result.ResultData.LocalPath;
+					Process.Start(new ProcessStartInfo() { 
+							FileName = localPath + Path.DirectorySeparatorChar,
+							UseShellExecute = true,
+							Verb = "open"
+						});
+				}
+				else
+				{
+					Logger.LogError("ShotRecording", $"Failed to browse to project data store. API call returned: {a_task.Result.ErrorInfo}");
+				}
 			});
 		}
 	}

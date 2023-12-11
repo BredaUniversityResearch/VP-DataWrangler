@@ -3,9 +3,7 @@ using System.Threading.Tasks;
 using CommonLogging;
 using DataApiCommon;
 using DataWranglerCommon;
-using DataWranglerCommon.IngestDataSources;
 using Newtonsoft.Json;
-using ShotGridIntegration;
 
 namespace DataWranglerServiceWorker
 {

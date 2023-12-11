@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using AutoNotify;
+﻿using AutoNotify;
 
 namespace DataApiCommon
 {
@@ -10,5 +9,8 @@ namespace DataApiCommon
 
 		[AutoNotify]
 		private Uri? m_storageRoot = null;
+
+		[AutoNotify]
+		private Uri? m_browsableLocalStorageRoot = null;
 	}
 }

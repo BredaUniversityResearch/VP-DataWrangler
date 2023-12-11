@@ -163,6 +163,11 @@ namespace ShotGridIntegration
 				JsonAttributeFieldEnumerator.Get<ShotVersionAttributes>(), null);
 		}
 
+		public override Task<DataApiResponse<Uri>> GetBrowsableLocalStoragePathForProject(Guid a_projectId)
+		{
+			throw new NotImplementedException();
+		}
+
 		public async Task<DataApiResponse<DataEntityShotVersion>> FindShotVersionById(int a_shotVersionId)
 		{
 			ShotGridSimpleSearchFilter filter = new ShotGridSimpleSearchFilter();

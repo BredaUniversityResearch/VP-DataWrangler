@@ -1,15 +1,12 @@
 ﻿using System.Globalization;
 using System.Net.Sockets;
 using System.Reflection;
-using System.Reflection.PortableExecutable;
-using System.Runtime.Serialization;
 using System.Text;
 using CommonLogging;
 using CsvHelper;
 using CsvHelper.Configuration;
 using DataApiCommon;
 using DataApiTests;
-using Microsoft.VisualBasic.FileIO;
 using Newtonsoft.Json;
 using Renci.SshNet;
 using Renci.SshNet.Sftp;
@@ -28,7 +25,8 @@ namespace DataApiSFTP
 			{
 				EntityId = LocalStorageGuid,
 				LocalStorageName = "CradleNas",
-				StorageRoot = new Uri("file://cradlenas/Virtual Productions/")
+				StorageRoot = new Uri("sftp://cradlenas/projects/VirtualProductions/"),
+				BrowsableLocalStorageRoot = new Uri("file://cradlenas/Virtual Productions/")
 			}
 		};
 				
@@ -52,6 +50,11 @@ namespace DataApiSFTP
 		public DataApiSFTPFileSystem(DataApiSFTPConfig a_config)
 		{
 			m_config = a_config;
+
+			foreach(DataEntityLocalStorage storage in LocalStorages)
+			{
+				LocalCache.AddCachedEntity(storage);
+			}
 		}
 
 		public override Task<bool> StartConnect()
@@ -156,11 +159,13 @@ namespace DataApiSFTP
 
 						if (attrib.Active)
 						{
-							DataEntityProject project = new DataEntityProject
+							DataEntityProject project = attrib.ToDataEntity();
+							project.Name = directoryEntry.Name;
+							if (project.DataStore == null)
 							{
-								EntityId = attrib.EntityId,
-								Name = directoryEntry.Name
-							};
+								project.DataStore = new DataEntityReference(LocalStorages[0]);	
+							}
+
 							project.ChangeTracker.ClearChangedState();
 
 							LocalCache.AddCachedEntity(project);
@@ -483,6 +488,34 @@ namespace DataApiSFTP
 				versions.Sort((a_lhs, a_rhs) => string.Compare(a_lhs.ShotVersionName, a_rhs.ShotVersionName, StringComparison.Ordinal));
 				return new DataApiResponse<DataEntityShotVersion[]>(versions.ToArray(), null);
 			});
+		}
+
+		public override Task<DataApiResponse<Uri>> GetBrowsableLocalStoragePathForProject(Guid a_projectId)
+		{
+			DataEntityProject? project = LocalCache.FindEntityById<DataEntityProject>(a_projectId);
+			if (project == null)
+			{
+				return Task.FromResult(new DataApiResponse<Uri>(null, new DataApiErrorDetails($"Could not find project with ID {a_projectId} in local cache")));
+			}
+
+			if (project.DataStore == null)
+			{
+				return Task.FromResult(new DataApiResponse<Uri>(null, new DataApiErrorDetails($"Project with ID {a_projectId} has no data store attached")));
+			}
+
+			DataEntityLocalStorage? localStorage = LocalCache.FindEntityById<DataEntityLocalStorage>(project.DataStore.EntityId);
+			if (localStorage == null)
+			{
+				return Task.FromResult(new DataApiResponse<Uri>(null, new DataApiErrorDetails($"Could not find data store with id {project.DataStore.EntityId} for project {a_projectId}")));
+			}
+
+			if (localStorage.BrowsableLocalStorageRoot == null)
+			{
+				return Task.FromResult(new DataApiResponse<Uri>(null, new DataApiErrorDetails($"Local store with id {project.DataStore.EntityId} does not have a browsable data store path")));
+			}
+
+			Uri result = new Uri(localStorage.BrowsableLocalStorageRoot, project.Name);
+			return Task.FromResult(new DataApiResponse<Uri>(result, null));
 		}
 
 		public override Task<DataApiResponseGeneric> UpdateEntityProperties(DataEntityBase a_targetEntity, Dictionary<PropertyInfo, object?> a_changedValues)

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Reflection;
-using System.Threading.Tasks;
+﻿using System.Reflection;
 
 namespace DataApiCommon
 {
@@ -23,6 +18,8 @@ namespace DataApiCommon
 		public abstract Task<DataApiResponse<DataEntityPublishedFileType[]>> GetPublishedFileTypes();
 
 		public abstract Task<DataApiResponse<DataEntityShotVersion[]>> GetVersionsForShot(Guid a_shotEntityId);
+
+		public abstract Task<DataApiResponse<Uri>> GetBrowsableLocalStoragePathForProject(Guid a_projectId);
 
 		public async Task<DataApiResponse<DataEntityShotVersion[]>> GetVersionsForShot(Guid a_shotEntityId, Comparison<DataEntityShotVersion> a_sortComparer)
 		{
