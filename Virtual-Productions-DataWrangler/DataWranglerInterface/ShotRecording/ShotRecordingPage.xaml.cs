@@ -100,21 +100,22 @@ namespace DataWranglerInterface.ShotRecording
 			ShotCreationControl.Show();
 		}
 
-		private void OnRequestCreateNewShot(DataEntityShot a_gridEntityShotAttributes)
+		private void OnRequestCreateNewShot(DataEntityShot a_newShotAttributes)
 		{
 			Guid projectId = ProjectSelector.SelectedProjectId;
 
 			if (ShotInfoDisplay.DisplayedShot != null)
 			{
-				a_gridEntityShotAttributes.DataSourcesTemplate = ShotInfoDisplay.DisplayedShot.DataSourcesTemplate.Clone();
+				a_newShotAttributes.DataSourcesTemplate = ShotInfoDisplay.DisplayedShot.DataSourcesTemplate.Clone();
 			}
 
 			ShotSelector.OnNewShotCreationStarted();
-			DataWranglerServiceProvider.Instance.TargetDataApi.CreateNewShot(projectId, a_gridEntityShotAttributes).ContinueWith(a_task =>
+			DataWranglerServiceProvider.Instance.TargetDataApi.CreateNewShot(projectId, a_newShotAttributes).ContinueWith(a_task =>
 			{
 				if (a_task.Result.IsError)
 				{
-					Logger.LogError("ShotRecording", $"Failed to create new shot, error response: {a_task.Result.ErrorInfo}");
+					Logger.LogWarning("ShotRecording", $"Failed to create new shot, error response: {a_task.Result.ErrorInfo}");
+					Dispatcher.InvokeAsync(() => ShotCreationControl.OnNewShotCreationFailed(a_newShotAttributes, a_task.Result.ErrorInfo.ToString()));
 				}
 				ShotSelector.OnNewShotCreationFinished(a_task.Result.ResultData);
 			});

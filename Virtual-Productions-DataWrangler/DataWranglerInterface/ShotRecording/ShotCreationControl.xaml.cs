@@ -18,6 +18,11 @@ namespace DataWranglerInterface.ShotRecording
 			HideAndReset();
 		}
 
+		private void SetupInputFieldsFromAttributes(DataEntityShot a_attributes)
+		{
+			ShotNameInput.Text = a_attributes.ShotName;
+		}
+
 		private void ResetInputFields()
 		{
 			ShotNameInput.Text = "";
@@ -27,12 +32,15 @@ namespace DataWranglerInterface.ShotRecording
 		{
 			ResetInputFields();
 			Visibility = Visibility.Hidden;
+			ErrorBox.Visibility = Visibility.Collapsed;
 		}
 
 		private void ButtonCreate_Click(object a_sender, RoutedEventArgs a_e)
 		{
-			DataEntityShot gridEntityShotAttributes = new DataEntityShot();
-			gridEntityShotAttributes.ShotName = ShotNameInput.Text;
+			DataEntityShot gridEntityShotAttributes = new DataEntityShot
+			{
+				ShotName = ShotNameInput.Text
+			};
 			OnRequestCreateNewShot.Invoke(gridEntityShotAttributes);
 
 			HideAndReset();
@@ -46,6 +54,16 @@ namespace DataWranglerInterface.ShotRecording
 		public void Show()
 		{
 			Visibility = Visibility.Visible;
+		}
+
+		public void OnNewShotCreationFailed(DataEntityShot a_failedCreationAttributes, string a_errorMessage)
+		{
+			SetupInputFieldsFromAttributes(a_failedCreationAttributes);
+
+			ErrorBox.Visibility = Visibility.Visible;
+			ErrorMessage.Content = a_errorMessage;
+
+			Show();
 		}
 	}
 }

@@ -11,6 +11,9 @@
              <Label Width="80">Shot Name</Label>
              <TextBox x:Name="ShotNameInput"></TextBox>
          </DockPanel>
+		<Border x:Name="ErrorBox" BorderBrush="Red" BorderThickness="2,2,2,2">
+			<Label x:Name="ErrorMessage">Hello world</Label>
+		</Border>
 		<UniformGrid Columns="2">
 		    <Button Click="ButtonCreate_Click">Create</Button>
 		    <Button Click="ButtonCancel_Click">Cancel</Button>

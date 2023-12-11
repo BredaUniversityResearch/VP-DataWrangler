@@ -77,14 +77,20 @@ namespace DataWranglerServiceWorker
 
 		public void OnFileCopyCompleted(Uri a_sourceFilePath, DataImportWorker.ECopyResult a_copyOperationResult)
 		{
-			//if (a_copyOperationResult == DataImportWorker.ECopyResult.Success)
-			//{
-			//	IngestFileReportEntry? entry = Report.FindEntryForFilePath(a_sourceFilePath);
-			//	if (entry != null)
-			//	{
-			//		entry.Status = "Success";
-			//	}
-			//}	
+			if (!Dispatcher.CheckAccess())
+			{
+				Dispatcher.InvokeAsync(() => OnFileCopyCompleted(a_sourceFilePath, a_copyOperationResult));
+				return;
+			}
+
+			if (a_copyOperationResult == DataImportWorker.ECopyResult.FileAlreadyUpToDate)
+			{
+				IngestFileReportEntry? entry = Report.FindEntryForFilePath(a_sourceFilePath);
+				if (entry != null)
+				{
+					entry.Status = "File already up to date";
+				}
+			}
 		}
 
 		public void OnFileCopyStartWriteMetaData(Uri a_sourceFilePath)

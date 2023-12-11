@@ -39,7 +39,7 @@ namespace DataWranglerInterface.ShotRecording
 				    propertyChangedCallback: OnSourceMetaChanged)
 		    );
 
-	    public IngestDataShotVersionMeta SourceMeta
+	    public IngestDataShotVersionMeta? SourceMeta
 	    {
 		    get => (IngestDataShotVersionMeta)GetValue(SourceMetaProperty);
 		    set => SetValue(SourceMetaProperty, value);
@@ -85,10 +85,13 @@ namespace DataWranglerInterface.ShotRecording
 			Dispatcher.InvokeAsync(() =>
 			{
 				FileSourceControl.Children.Clear();
-				foreach (IngestDataSourceMeta fs in SourceMeta.FileSources)
+				if (SourceMeta != null)
 				{
-					DataWranglerFileSourceUIDecorator control = new DataWranglerFileSourceUIDecorator(fs, () => { RemoveMeta(fs); }, IsTemplateDisplay);
-					FileSourceControl.Children.Add(control);
+					foreach (IngestDataSourceMeta fs in SourceMeta.FileSources)
+					{
+						DataWranglerFileSourceUIDecorator control = new DataWranglerFileSourceUIDecorator(fs, () => { RemoveMeta(fs); }, IsTemplateDisplay);
+						FileSourceControl.Children.Add(control);
+					}
 				}
 			});
 		}
@@ -101,6 +104,11 @@ namespace DataWranglerInterface.ShotRecording
 
 		private void TryAddSource(IngestDataSourceMeta a_meta)
 		{
+			if (SourceMeta == null)
+			{
+				return;
+			}
+
 			IngestDataSourceMeta? meta = SourceMeta.FindMetaByType(a_meta.SourceType);
 			if (meta == null)
 			{
@@ -115,6 +123,11 @@ namespace DataWranglerInterface.ShotRecording
 
 		private void RemoveMeta(IngestDataSourceMeta a_meta)
 		{
+			if (SourceMeta == null)
+			{
+				return;
+			}
+
 			bool success = SourceMeta.RemoveFileSourceInstance(a_meta);
 			if (!success)
 			{
