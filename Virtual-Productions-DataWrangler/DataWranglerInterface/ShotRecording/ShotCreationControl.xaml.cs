@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using DataApiCommon;
 
 namespace DataWranglerInterface.ShotRecording
@@ -64,6 +65,14 @@ namespace DataWranglerInterface.ShotRecording
 			ErrorMessage.Content = a_errorMessage;
 
 			Show();
+		}
+
+		private void ShotNameInput_OnKeyDown(object a_sender, KeyEventArgs a_e)
+		{
+			if (a_e.Key == Key.Enter)
+			{
+				ButtonCreate_Click(a_sender, a_e);
+			}
 		}
 	}
 }

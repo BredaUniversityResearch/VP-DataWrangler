@@ -9,10 +9,10 @@
 	<StackPanel Background="#EAEAEAEA">
          <DockPanel>
              <Label Width="80">Shot Name</Label>
-             <TextBox x:Name="ShotNameInput"></TextBox>
+             <TextBox x:Name="ShotNameInput" KeyDown="ShotNameInput_OnKeyDown"></TextBox>
          </DockPanel>
 		<Border x:Name="ErrorBox" BorderBrush="Red" BorderThickness="2,2,2,2">
-			<Label x:Name="ErrorMessage">Hello world</Label>
+			<Label x:Name="ErrorMessage">Error messages go here</Label>
 		</Border>
 		<UniformGrid Columns="2">
 		    <Button Click="ButtonCreate_Click">Create</Button>
