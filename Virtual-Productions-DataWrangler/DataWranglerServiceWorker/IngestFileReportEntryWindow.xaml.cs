@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -26,6 +28,31 @@ namespace DataWranglerServiceWorker
 			Entry = a_entry;
 
 			InitializeComponent();
+		}
+
+		private void OpenFileButton_OnClick(object a_sender, RoutedEventArgs a_e)
+		{
+			Process.Start(new ProcessStartInfo()
+				{
+					FileName = Entry.SourceFile.LocalPath,
+					UseShellExecute = true,
+					Verb = "open"
+				}
+			);
+		}
+
+		private void BrowseFileButton_OnClick(object a_sender, RoutedEventArgs a_e)
+		{
+			string selectArgument = $"/select,\"{Entry.SourceFile.LocalPath}\"";
+
+			Process.Start(new ProcessStartInfo()
+				{
+					FileName = "explorer.exe",
+					UseShellExecute = true,
+					Verb = "open", 
+					Arguments = selectArgument
+				}
+			);
 		}
 	}
 }

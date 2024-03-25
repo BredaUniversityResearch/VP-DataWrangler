@@ -58,7 +58,7 @@
 			//		Time: HHMMSSFF - Frame (FF) not used.
 			byte[] dateBuffer = BitConverter.GetBytes(a_date);
 			byte[] timeBuffer = BitConverter.GetBytes(a_time);
-		
+
 			int year = ReadInt16(dateBuffer, 3);
 			int month = ReadInt8(dateBuffer, 1);
 			int day = ReadInt8(dateBuffer, 0);

@@ -16,7 +16,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\BlackmagicCameraControlBluetooth\BlackmagicCameraControlBluetooth.csproj" />
 		<ProjectReference Include="..\BlackmagicDeckLinkControl\BlackmagicDeckLinkControl.csproj" />
 		<ProjectReference Include="..\CameraControlOverEthernet\CameraControlOverEthernet.csproj" />
 		<ProjectReference Include="..\DataApiFileSystem\DataApiSFTP.csproj" />

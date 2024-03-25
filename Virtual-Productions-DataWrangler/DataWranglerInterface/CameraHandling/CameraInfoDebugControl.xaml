@@ -7,7 +7,5 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <StackPanel>
-		<Button Click="OnClickDebugConnectCamera">Debug Connect Camera</Button>
-	    <Button Click="OnClickDebugToggleRecording">Toggle Recording</Button>
 	</StackPanel>
 </UserControl>

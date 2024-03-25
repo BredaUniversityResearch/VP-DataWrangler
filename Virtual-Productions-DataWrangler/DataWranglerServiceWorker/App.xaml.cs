@@ -84,7 +84,7 @@ namespace DataWranglerServiceWorker
 
 				if (m_ingestReportWindow != null)
 				{
-					m_ingestReportWindow.SetTargetFile(a_copyMetaData.SourceFilePath, a_copyMetaData.DestinationFullFilePath.LocalPath);
+					m_ingestReportWindow.SetTargetFile(a_copyMetaData.SourceFilePath, a_copyMetaData.DestinationFullPath.LocalPath);
 				}
 			});
 		}
@@ -163,7 +163,7 @@ namespace DataWranglerServiceWorker
 
 			DataEntityFilePublish publishData = new DataEntityFilePublish
 			{
-				Path = new DataEntityFileLink(a_copyMetaData.DestinationFullFilePath),
+				Path = new DataEntityFileLink(a_copyMetaData.DestinationFullPath),
 				StorageRoot = new DataEntityReference(a_copyMetaData.StorageTarget),
 				PublishedFileName = publishFileName,
 				PublishedFileType = new DataEntityReference(a_copyMetaData.FileTag),
@@ -176,11 +176,11 @@ namespace DataWranglerServiceWorker
 				{
 					if (!a_taskResult.Result.IsError)
 					{
-						Logger.LogInfo("DataImporter", $"Successfully published file {a_copyMetaData.DestinationFullFilePath}");
+						Logger.LogInfo("DataImporter", $"Successfully published file {a_copyMetaData.DestinationFullPath}");
 					}
 					else
 					{
-						Logger.LogError("DataImporter", $"Failed to publish file {a_copyMetaData.DestinationFullFilePath}. Error: {a_taskResult.Result.ErrorInfo}");
+						Logger.LogError("DataImporter", $"Failed to publish file {a_copyMetaData.DestinationFullPath}. Error: {a_taskResult.Result.ErrorInfo}");
 					}
 				});
 		}

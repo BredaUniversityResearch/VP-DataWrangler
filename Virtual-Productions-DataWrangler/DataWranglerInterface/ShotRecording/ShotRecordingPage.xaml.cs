@@ -2,7 +2,6 @@
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
-using BlackmagicCameraControlBluetooth;
 using CommonLogging;
 using DataApiCommon;
 using DataWranglerCommon;
@@ -17,7 +16,6 @@ namespace DataWranglerInterface.ShotRecording
     /// </summary>
     public partial class ShotRecordingPage : Page, IDisposable
 	{
-		private BlackmagicBluetoothCameraAPIController? m_bluetoothController = null;
 		private ActiveCameraHandler m_activeCameraHandler;
 		private IngestDataSourceHandlerCollection m_ingestDataHandler = new IngestDataSourceHandlerCollection();
 
@@ -36,7 +34,7 @@ namespace DataWranglerInterface.ShotRecording
 		{
 			InitializeComponent();
 		
-			m_activeCameraHandler = new ActiveCameraHandler(m_bluetoothController);
+			m_activeCameraHandler = new ActiveCameraHandler();
 			m_activeCameraHandler.OnVirtualCameraConnected += VirtualCameraConnected;
 			m_activeCameraHandler.OnCameraDisconnected += OnCameraDisconnected;
 
@@ -61,7 +59,6 @@ namespace DataWranglerInterface.ShotRecording
 		{
 			m_activeCameraHandler.OnVirtualCameraConnected -= VirtualCameraConnected;
 			m_activeCameraHandler.OnCameraDisconnected -= OnCameraDisconnected;
-			m_bluetoothController?.Dispose();
 		}
 
 		private void VirtualCameraConnected(ActiveCameraInfo a_camera)

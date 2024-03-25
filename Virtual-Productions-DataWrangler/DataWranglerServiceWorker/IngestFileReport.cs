@@ -82,7 +82,7 @@ namespace DataWranglerServiceWorker
 					break;
 	        }
 
-	        entry.DestinationFile = a_copyMetaData.DestinationFullFilePath;
+	        entry.DestinationFile = a_copyMetaData.DestinationFullPath;
         }
 
         public void ClearAllEntries()

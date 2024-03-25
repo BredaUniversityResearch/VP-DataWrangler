@@ -21,7 +21,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\BlackmagicCameraControlBluetooth\BlackmagicCameraControlBluetooth.csproj" />
+	  <ProjectReference Include="..\DataWranglerCommon\DataWranglerCommon.csproj" />
 	</ItemGroup>
 
 </Project>

@@ -1,7 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Windows.Media;
-using BlackmagicCameraControlBluetooth;
 using BlackmagicCameraControlData;
 using BlackmagicCameraControlData.CommandPackets;
 using BlackmagicDeckLinkControl;
@@ -15,9 +14,8 @@ namespace DataWranglerInterface.CameraHandling
 {
     public class ActiveCameraHandler
     {
-        private BlackmagicBluetoothCameraAPIController? m_bluetoothController = null;
         private BlackmagicDeckLinkController? m_deckLinkController = null;
-        private EthernetRelayCameraController m_relayCameraControl = new EthernetRelayCameraController();
+        private EthernetRelayCameraController? m_relayCameraControl = new EthernetRelayCameraController();
         private List<ActiveCameraInfo> m_activeCameras = new List<ActiveCameraInfo>();
 
         public delegate void CameraConnectedHandler(ActiveCameraInfo a_camera);
@@ -32,14 +30,8 @@ namespace DataWranglerInterface.CameraHandling
         private CancellationTokenSource m_backgroundTaskCancellationSource = new CancellationTokenSource();
         private Task m_backgroundDispatchTask;
 
-        public ActiveCameraHandler(BlackmagicBluetoothCameraAPIController? a_bluetoothController)
+        public ActiveCameraHandler()
         {
-            m_bluetoothController = a_bluetoothController;
-            if (m_bluetoothController != null)
-            {
-	            SubscribeCameraController(m_bluetoothController);
-            }
-
             if (m_relayCameraControl != null)
             {
 	            SubscribeCameraController(m_relayCameraControl);

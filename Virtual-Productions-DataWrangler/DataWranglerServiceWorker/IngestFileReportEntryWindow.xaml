@@ -8,8 +8,10 @@
         Title="Ingestinator File Report" Height="450" Width="800">
     <DockPanel>
 		<DockPanel DockPanel.Dock ="Top">
-			<Label>Source File:</Label>
-			<Label Content="{Binding Entry.SourceFile, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:IngestFileReportEntryWindow}}}"></Label>
+			<Label DockPanel.Dock="Left">Source File:</Label>
+			<Button DockPanel.Dock="Right" Click="OpenFileButton_OnClick">Open File</Button>
+			<Button DockPanel.Dock="Right" Click="BrowseFileButton_OnClick">Browse File</Button>
+			<Label Content="{Binding Entry.SourceFile, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:IngestFileReportEntryWindow}}}" DockPanel.Dock="Left"></Label>
 		</DockPanel>
 		<Label DockPanel.Dock ="Top">Attempted Resolutions:</Label>
 		<DataGrid ItemsSource="{Binding Entry.IngestReport, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:IngestFileReportEntryWindow}}}" AutoGenerateColumns="False" DockPanel.Dock ="Top" VerticalScrollBarVisibility="Visible">

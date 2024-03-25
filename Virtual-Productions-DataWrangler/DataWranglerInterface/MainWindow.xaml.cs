@@ -68,7 +68,7 @@ namespace DataWranglerInterface
 
 			m_targetAPI.StartConnect().ContinueWith(a_resultTask =>
 			{
-				if (a_resultTask.Result)
+				if (!a_resultTask.IsFaulted && a_resultTask.Result)
 				{
 					OnLoggedIn();
 				}

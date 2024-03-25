@@ -9,6 +9,7 @@ using DataApiCommon;
 using DataApiTests;
 using Newtonsoft.Json;
 using Renci.SshNet;
+using Renci.SshNet.Common;
 using Renci.SshNet.Sftp;
 
 namespace DataApiSFTP
@@ -76,6 +77,10 @@ namespace DataApiSFTP
 				try
 				{
 					m_client.Connect();
+				}
+				catch (SshAuthenticationException ex)
+				{
+					Logger.LogWarning("SFTPApi", $"SFTP Credentials were rejected at host \"{a_hostName}\": {ex.Message}");
 				}
 				catch (SocketException ex)
 				{

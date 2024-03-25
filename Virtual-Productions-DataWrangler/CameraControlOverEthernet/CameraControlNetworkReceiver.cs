@@ -4,8 +4,6 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
-using System.Xml;
-using BlackmagicCameraControlData.CommandPackets;
 using CommonLogging;
 
 namespace CameraControlOverEthernet

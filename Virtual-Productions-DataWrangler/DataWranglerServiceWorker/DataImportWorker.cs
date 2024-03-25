@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Text.RegularExpressions;
 using System.Threading;
 using CommonLogging;
 using DataApiCommon;
@@ -11,7 +10,6 @@ using Newtonsoft.Json;
 using Renci.SshNet;
 using Renci.SshNet.Common;
 using Renci.SshNet.Sftp;
-using ShotGridIntegration;
 
 namespace DataWranglerServiceWorker
 {
@@ -56,6 +54,7 @@ namespace DataWranglerServiceWorker
 		private CancellationTokenSource m_dataImportThreadCancellationToken = new CancellationTokenSource();
 
 		private SftpClient? m_importClient = null;
+		private string m_importClientLastHost = string.Empty;
 
 		public DataImportWorker(DataApi a_api)
 		{
@@ -159,27 +158,35 @@ namespace DataWranglerServiceWorker
 
 					if (didDequeue && resultToCopy != null)
 					{
-						ECopyResult result = ECopyResult.UnknownFailure;
+						ECopyResult result;
 						try
 						{
+							if (m_importClient == null || m_importClientLastHost != resultToCopy.CopyMetaData.StorageTarget.StorageRoot?.Host)
+							{
+								m_importClient = SetupSftpConnectionForStorageTarget(resultToCopy.CopyMetaData.StorageTarget);
+							}
+
 							if (m_importClient == null)
 							{
-								m_importClient = new SftpClient(ServiceWorkerConfig.Instance.DefaultDataStoreFtpHost, 22, ServiceWorkerConfig.Instance.DefaultDataStoreFtpUserName, ServiceWorkerConfig.Instance.DefaultDataStoreFtpKeyFile);
+								Logger.LogError("DataImportWorker", $"Skipping import of {resultToCopy.CopyMetaData.SourceFilePath} as import client did not connect properly");
+								result = ECopyResult.UnknownFailure;
 							}
-
-							if (!m_importClient.IsConnected)
+							else
 							{
-								m_importClient.Connect();
-							}
+								if (!m_importClient.IsConnected)
+								{
+									m_importClient.Connect();
+								}
 
-							OnCopyStarted.Invoke(resultToCopy.TargetShotVersion, resultToCopy.CopyMetaData);
+								OnCopyStarted.Invoke(resultToCopy.TargetShotVersion, resultToCopy.CopyMetaData);
 
-							result = CopyFileWithProgress(m_importClient, resultToCopy.TargetShotVersion, resultToCopy.CopyMetaData);
+								result = CopyFileWithProgress(m_importClient, resultToCopy.TargetShotVersion, resultToCopy.CopyMetaData);
 
-							if (result == ECopyResult.Success)
-							{
-								OnCopyStartWriteMetaData.Invoke(resultToCopy.TargetShotVersion, resultToCopy.CopyMetaData);
-								WriteMetadata(resultToCopy);
+								if (result == ECopyResult.Success)
+								{
+									OnCopyStartWriteMetaData.Invoke(resultToCopy.TargetShotVersion, resultToCopy.CopyMetaData);
+									WriteMetadata(resultToCopy);
+								}
 							}
 
 							OnCopyFinished.Invoke(resultToCopy.TargetShotVersion, resultToCopy.CopyMetaData, result);
@@ -207,6 +214,25 @@ namespace DataWranglerServiceWorker
 			}
 		}
 
+		private SftpClient? SetupSftpConnectionForStorageTarget(DataEntityLocalStorage a_storageTarget)
+		{
+			if (a_storageTarget.StorageRoot == null)
+			{
+				Logger.LogError("DataImportWorker", $"Storage root invalid for storage id {a_storageTarget.EntityId}");
+				return null;
+			}
+
+			if (ServiceWorkerConfig.Instance.DefaultDataStoreFtpHost.Equals(a_storageTarget.StorageRoot.Host))
+			{
+				return new SftpClient(ServiceWorkerConfig.Instance.DefaultDataStoreFtpHost, 22, ServiceWorkerConfig.Instance.DefaultDataStoreFtpUserName, ServiceWorkerConfig.Instance.DefaultDataStoreFtpKeyFile);
+			}
+			else
+			{
+				Logger.LogError("DataImportWorker", $"Don't know how to connect to host \"{a_storageTarget.StorageRoot.Host}\" found in storage root {a_storageTarget.StorageRoot} for storage id {a_storageTarget.EntityId}");
+				return null;
+			}
+		}
+
 		private void WriteMetadata(ImportQueueEntry a_resultToCopy)
 		{
 			string targetPath = Path.ChangeExtension(a_resultToCopy.CopyMetaData.SourceFilePath.LocalPath, "imported");
@@ -219,7 +245,14 @@ namespace DataWranglerServiceWorker
 
 		private ECopyResult CopyFileWithProgress(SftpClient a_client, DataEntityShotVersion a_shotVersion, FileCopyMetaData a_copyMetaData)
 		{
-			string ftpTargetPath = Path.Combine(ServiceWorkerConfig.Instance.DefaultDataStoreFtpRelativeRoot, a_copyMetaData.DestinationRelativeFilePath);
+			if (a_copyMetaData.StorageTarget.StorageRoot == null)
+			{
+				Logger.LogError("DataImporter", $"Failed to import {a_copyMetaData.SourceFilePath}. StorageTarget storage root is not set");
+				return ECopyResult.UnknownFailure;
+			}
+
+			string dataStoreRelativePath = a_copyMetaData.StorageTarget.StorageRoot.AbsolutePath;
+			string ftpTargetPath = Path.Combine(dataStoreRelativePath, a_copyMetaData.DestinationRelativeFilePath);
 
 			string targetDirectory = ftpTargetPath.Substring(0, ftpTargetPath.LastIndexOf('/'));
 			CreateRemoteDirectoryRecursively(a_client, targetDirectory);

@@ -9,7 +9,7 @@ namespace DataWranglerServiceWorker
 	{
 		public Uri SourceFilePath;
 		public string DestinationRelativeFilePath;
-		public Uri DestinationFullFilePath;
+		public Uri DestinationFullPath;
 
 		public DataEntityLocalStorage StorageTarget;
 		public DataEntityPublishedFileType FileTag;
@@ -26,13 +26,13 @@ namespace DataWranglerServiceWorker
 				throw new Exception("Storage root was null when creating FileCopyMeta");
 			}
 
-			string storageTargetPath = a_storageTarget.StorageRoot.LocalPath;
-			if (!storageTargetPath.EndsWith('/'))
-			{
-				storageTargetPath += '/';
-			}
+			//string storageTargetPath = a_storageTarget.StorageRoot.LocalPath;
+			//if (!storageTargetPath.EndsWith('/'))
+			//{
+			//	storageTargetPath += '/';
+			//}
 
-			DestinationFullFilePath = new Uri(new Uri(storageTargetPath), a_destinationRelativeFilePath);
+			DestinationFullPath = new Uri(a_storageTarget.StorageRoot, a_destinationRelativeFilePath);
 		}
 	}
 }
