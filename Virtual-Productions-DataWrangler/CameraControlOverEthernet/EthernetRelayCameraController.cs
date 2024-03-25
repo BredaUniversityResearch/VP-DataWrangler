@@ -1,20 +1,21 @@
 ﻿using BlackmagicCameraControlData;
 using BlackmagicCameraControlData.CommandPackets;
+using CameraControlOverEthernet.CameraControl;
 using DataWranglerCommon;
 
 namespace CameraControlOverEthernet
 {
-	public class EthernetRelayCameraController: CameraControllerBase
+    public class EthernetRelayCameraController: CameraControllerBase
 	{
-		private CameraControlNetworkReceiver m_receiver = new CameraControlNetworkReceiver();
+		private NetworkAPIServer m_apiServer = new NetworkAPIServer();
 
 		private Dictionary<int, List<CameraDeviceHandle>> m_cameraHandlesByConnectionId = new();
 
 		public EthernetRelayCameraController()
 		{
-			m_receiver.OnClientDisconnected += OnClientDisconnected;
+			m_apiServer.OnClientDisconnected += OnClientDisconnected;
 
-			m_receiver.Start();
+			m_apiServer.Start();
 		}
 
 		private void OnClientDisconnected(int a_connectionId)
@@ -35,7 +36,7 @@ namespace CameraControlOverEthernet
 			bool processedMessage = false;
 			do
 			{
-				processedMessage = m_receiver.TryDequeueMessage(out ICameraControlPacket? packet, out int a_connectionId, a_fromSeconds, a_token);
+				processedMessage = m_apiServer.TryDequeueMessage(out INetworkAPIPacket? packet, out int a_connectionId, a_fromSeconds, a_token);
 				if (processedMessage)
 				{
 					ProcessPacket(packet!, a_connectionId);
@@ -43,7 +44,7 @@ namespace CameraControlOverEthernet
 			} while (processedMessage);
 		}
 
-		private void ProcessPacket(ICameraControlPacket a_cameraControlPacket, int a_connectionId)
+		private void ProcessPacket(INetworkAPIPacket a_cameraControlPacket, int a_connectionId)
 		{
 			if (a_cameraControlPacket is CameraControlCameraConnectedPacket connectedPacket)
 			{
@@ -57,7 +58,7 @@ namespace CameraControlOverEthernet
 				handles.Add(handle);
 				CameraConnected(handle);
 
-				m_receiver.SendMessageToConnection(a_connectionId, new CameraControlRequestCurrentState(connectedPacket.DeviceUuid));
+				m_apiServer.SendMessageToConnection(a_connectionId, new CameraControlRequestCurrentState(connectedPacket.DeviceUuid));
 			}
 			else if (a_cameraControlPacket is CameraControlCameraDisconnectedPacket disconnectedPacket)
 			{
@@ -106,7 +107,7 @@ namespace CameraControlOverEthernet
 				uint timeBcd = BinaryCodedDecimal.FromTime(a_timeSyncPoint);
 				uint dateBcd = BinaryCodedDecimal.FromDate(a_timeSyncPoint);
 
-				m_receiver.SendMessageToConnection(connectionId, new CameraControlConfigurationTimePacket((short)a_minutesOffsetFromUtc, timeBcd, dateBcd));
+				m_apiServer.SendMessageToConnection(connectionId, new CameraControlConfigurationTimePacket((short)a_minutesOffsetFromUtc, timeBcd, dateBcd));
 				return true;
 			}
 

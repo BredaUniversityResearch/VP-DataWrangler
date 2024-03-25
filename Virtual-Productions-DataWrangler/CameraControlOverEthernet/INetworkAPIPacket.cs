@@ -1,5 +1,5 @@
 ﻿namespace CameraControlOverEthernet;
 
-public interface ICameraControlPacket
+public interface INetworkAPIPacket
 {
 }

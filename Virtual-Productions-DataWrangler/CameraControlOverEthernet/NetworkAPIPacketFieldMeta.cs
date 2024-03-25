@@ -3,7 +3,7 @@ using System.Text;
 
 namespace CameraControlOverEthernet;
 
-internal class CommandControlPacketFieldMeta
+internal class NetworkAPIPacketFieldMeta
 {
 	enum EDataType
 	{
@@ -16,7 +16,7 @@ internal class CommandControlPacketFieldMeta
 	private EDataType m_dataType;
 	private FieldInfo m_targetField;
 
-	public CommandControlPacketFieldMeta(FieldInfo a_info)
+	public NetworkAPIPacketFieldMeta(FieldInfo a_info)
 	{
 		m_targetField = a_info;
 		m_dataType = FieldTypeToDefaultDataType(a_info.FieldType);

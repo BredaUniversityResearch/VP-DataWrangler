@@ -8,7 +8,7 @@ using CommonLogging;
 
 namespace CameraControlOverEthernet
 {
-	public class CameraControlNetworkReceiver
+	public class NetworkAPIServer
 	{
 		private class ClientConnection
 		{
@@ -26,10 +26,10 @@ namespace CameraControlOverEthernet
 
 		private class QueuedPacketEntry
 		{
-			public readonly ICameraControlPacket Packet;
+			public readonly INetworkAPIPacket Packet;
 			public readonly int ConnectionId;
 
-			public QueuedPacketEntry(ICameraControlPacket a_packet, int a_connectionId)
+			public QueuedPacketEntry(INetworkAPIPacket a_packet, int a_connectionId)
 			{
 				Packet = a_packet;
 				ConnectionId = a_connectionId;
@@ -100,7 +100,7 @@ namespace CameraControlOverEthernet
 				MemoryStream ms = new MemoryStream(buffer, 0, buffer.Length, true, false);
 				using (BinaryWriter writer = new BinaryWriter(ms, Encoding.ASCII, true))
 				{
-					CameraControlTransport.Write(new CameraControlDiscoveryPacket(m_serverIdentifier, ((IPEndPoint) m_connectionListener.LocalEndpoint).Port), writer);
+					NetworkApiTransport.Write(new NetworkAPIDiscoveryPacket(m_serverIdentifier, ((IPEndPoint) m_connectionListener.LocalEndpoint).Port), writer);
 				}
 
 				m_discoveryBroadcaster.Send(new ReadOnlySpan<byte>(buffer, 0, (int) ms.Position), DiscoveryMulticastEndpoint);
@@ -186,7 +186,7 @@ namespace CameraControlOverEthernet
 							while (ms.Position < ms.Length)
 							{
 								long packetStart = ms.Position;
-								ICameraControlPacket? packet = CameraControlTransport.TryRead(reader);
+								INetworkAPIPacket? packet = NetworkApiTransport.TryRead(reader);
 								if (packet != null)
 								{
 									//Logger.LogVerbose("CCServer", $"Received Packet From Client {a_client.Client.Client.RemoteEndPoint} of type {packet.GetType()}");
@@ -220,7 +220,7 @@ namespace CameraControlOverEthernet
 			}
 		}
 
-		public bool TryDequeueMessage([NotNullWhen(true)] out ICameraControlPacket? a_cameraControlPacket, out int a_connectionId, TimeSpan a_timeout, CancellationToken a_cancellationToken)
+		public bool TryDequeueMessage([NotNullWhen(true)] out INetworkAPIPacket? a_cameraControlPacket, out int a_connectionId, TimeSpan a_timeout, CancellationToken a_cancellationToken)
 		{
 			if (m_receivedPacketQueue.TryTake(out QueuedPacketEntry? entry, (int) a_timeout.TotalMilliseconds, a_cancellationToken))
 			{
@@ -234,7 +234,7 @@ namespace CameraControlOverEthernet
 			return false;
 		}
 
-		public void SendMessageToConnection(int a_connectionId, ICameraControlPacket a_packetToSend)
+		public void SendMessageToConnection(int a_connectionId, INetworkAPIPacket a_packetToSend)
 		{
 			lock (m_connectedClients)
 			{
@@ -244,7 +244,7 @@ namespace CameraControlOverEthernet
 					byte[] bufferBytes = new byte[128];
 					using MemoryStream ms = new MemoryStream(bufferBytes, true);
 					using BinaryWriter writer = new BinaryWriter(ms, Encoding.ASCII, true);
-					CameraControlTransport.Write(a_packetToSend, writer);
+					NetworkApiTransport.Write(a_packetToSend, writer);
 
 					conn.Client.GetStream().Write(bufferBytes, 0, (int)ms.Position);
 				}
