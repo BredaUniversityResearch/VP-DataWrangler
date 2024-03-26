@@ -73,6 +73,39 @@ namespace DataWranglerInterface.ShotRecording
 		{
 			m_parentPage = a_parentPage;
 			m_shotRecordingState = a_applicationState;
+			m_shotRecordingState.OnSelectedShotChanged += OnSelectedShotChanged;
+		}
+
+		private void OnSelectedShotChanged(DataEntityShot? a_obj)
+		{
+			UpdatePredictedNextShotVersionName();
+		}
+
+		private void UpdatePredictedNextShotVersionName()
+		{
+			if (m_shotRecordingState?.SelectedShot != null)
+			{
+				DataWranglerServiceProvider.Instance.TargetDataApi.GetVersionsForShot(m_shotRecordingState.SelectedShot.EntityId, 
+						(a_lhs, a_rhs) => string.Compare(a_lhs.ShotVersionName, a_rhs.ShotVersionName, StringComparison.Ordinal))
+					.ContinueWith(a_fetchTask =>
+					{
+						if (!a_fetchTask.Result.IsError)
+						{
+							string nextShotVersionName = GetNextShotVersionName(a_fetchTask.Result.ResultData);
+							m_shotRecordingState?.NextShotVersionNameChanged(nextShotVersionName);
+						}
+					});
+			}
+		}
+
+		private string GetNextShotVersionName(DataEntityShotVersion[] a_currentShotVersions)
+		{
+			int nextTakeId = FindHighestShotVersionIdFromShotVersions(a_currentShotVersions) + 1;
+
+			ConfigStringBuilder sb = new ConfigStringBuilder();
+			sb.AddReplacement("ShotVersionId", nextTakeId.ToString("D2"));
+
+			return Configuration.DataWranglerInterfaceConfig.Instance.ShotVersionNameTemplate.Build(sb);
 		}
 
 		private void CreateNewShotVersion(IngestDataShotVersionMeta a_meta)
@@ -90,14 +123,9 @@ namespace DataWranglerInterface.ShotRecording
 				DataWranglerServiceProvider.Instance.TargetDataApi.GetVersionsForShot(targetShotId, (a_lhs, a_rhs) => string.Compare(a_lhs.ShotVersionName, a_rhs.ShotVersionName, StringComparison.Ordinal)).ContinueWith(a_fetchTask => {
 					if (!a_fetchTask.Result.IsError)
 					{
-						int nextTakeId = FindHighestShotVersionIdFromShotVersions(a_fetchTask.Result.ResultData) + 1;
-
-						ConfigStringBuilder sb = new ConfigStringBuilder();
-						sb.AddReplacement("ShotVersionId", nextTakeId.ToString("D2"));
-
 						DataEntityShotVersion newVersion = new DataEntityShotVersion
 						{
-							ShotVersionName = Configuration.DataWranglerInterfaceConfig.Instance.ShotVersionNameTemplate.Build(sb),
+							ShotVersionName = GetNextShotVersionName(a_fetchTask.Result.ResultData),
 							DataWranglerMeta = JsonConvert.SerializeObject(a_meta, DataWranglerSerializationSettings.Instance)
 						};
 
@@ -179,6 +207,8 @@ namespace DataWranglerInterface.ShotRecording
 
 					a_camera.CameraPropertyChanged -= m_subscriber.OnCameraPropertyChanged;
 					m_subscriber = null;
+
+					UpdatePredictedNextShotVersionName();
 				}
 			}
 		}

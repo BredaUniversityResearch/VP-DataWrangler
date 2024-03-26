@@ -7,10 +7,12 @@ namespace DataWranglerInterface.ShotRecording
 		public event Action<DataEntityProject?>? OnSelectedProjectChanged;
 		public event Action<DataEntityShot?>? OnSelectedShotChanged;
 		public event Action<DataEntityShotVersion?>? OnSelectedShotVersionChanged;
+		public event Action<string>? OnPredictedNextShotVersionNameChanged;
 
 		public DataEntityProject? SelectedProject { get; private set; } = null;
 		public DataEntityShot? SelectedShot { get; private set; } = null;
 		public DataEntityShotVersion? SelectedShotVersion { get; private set; } = null;
+		public string NextPredictedShotVersionName { get; private set; } = "";
 
 		public void ProjectSelectionChanged(DataEntityProject? a_project)
 		{
@@ -22,6 +24,12 @@ namespace DataWranglerInterface.ShotRecording
 		{
 			SelectedShot = a_shotInfo;
 			OnSelectedShotChanged?.Invoke(a_shotInfo);
+		}
+
+		public void NextShotVersionNameChanged(string a_nextShotVersionName)
+		{
+			NextPredictedShotVersionName = a_nextShotVersionName;
+			OnPredictedNextShotVersionNameChanged?.Invoke(NextPredictedShotVersionName);
 		}
 
 		public void SelectedShotVersionChanged(DataEntityShotVersion? a_shotVersion)

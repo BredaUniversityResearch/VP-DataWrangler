@@ -1,10 +1,11 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 
 namespace DataApiCommon
 {
 	public class DataEntityCache
 	{
-		private Dictionary<Type, Dictionary<Guid, DataEntityBase>> m_entitiesByNameAndId = new();
+		private ConcurrentDictionary<Type, ConcurrentDictionary<Guid, DataEntityBase>> m_entitiesByNameAndId = new();
 
 		public TEntityType? FindEntityById<TEntityType>(Guid a_entityId)
 			where TEntityType : DataEntityBase
@@ -23,7 +24,7 @@ namespace DataApiCommon
 			return null;
 		}
 
-		private Dictionary<Guid, DataEntityBase>? FindEntitiesByType(Type a_entityName)
+		private ConcurrentDictionary<Guid, DataEntityBase>? FindEntitiesByType(Type a_entityName)
 		{
 			if (m_entitiesByNameAndId.TryGetValue(a_entityName, out var result))
 			{
@@ -44,8 +45,8 @@ namespace DataApiCommon
 			var entitiesById = FindEntitiesByType(a_entityName);
 			if (entitiesById == null)
 			{
-				entitiesById = new Dictionary<Guid, DataEntityBase>();
-				m_entitiesByNameAndId.Add(a_entityName, entitiesById);
+				entitiesById = new ConcurrentDictionary<Guid, DataEntityBase>();
+				m_entitiesByNameAndId.TryAdd(a_entityName, entitiesById);
 			}
 
 			entitiesById[a_entity.EntityId] = a_entity;
