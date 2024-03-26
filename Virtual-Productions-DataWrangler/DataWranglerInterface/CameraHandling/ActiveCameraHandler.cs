@@ -4,7 +4,7 @@ using System.Windows.Media;
 using BlackmagicCameraControlData;
 using BlackmagicCameraControlData.CommandPackets;
 using BlackmagicDeckLinkControl;
-using CameraControlOverEthernet;
+using CameraControlOverEthernet.CameraControl;
 using CommonLogging;
 using DataWranglerCommon.CameraHandling;
 using DataWranglerInterface.Configuration;
@@ -15,7 +15,6 @@ namespace DataWranglerInterface.CameraHandling
     public class ActiveCameraHandler
     {
         private BlackmagicDeckLinkController? m_deckLinkController = null;
-        private EthernetRelayCameraController? m_relayCameraControl = new EthernetRelayCameraController();
         private List<ActiveCameraInfo> m_activeCameras = new List<ActiveCameraInfo>();
 
         public delegate void CameraConnectedHandler(ActiveCameraInfo a_camera);
@@ -27,14 +26,11 @@ namespace DataWranglerInterface.CameraHandling
         public VideoPreviewControl? PreviewControl { get; set; }
         private Task? PreviewUpdateTask = null;
 
-        private CancellationTokenSource m_backgroundTaskCancellationSource = new CancellationTokenSource();
-        private Task m_backgroundDispatchTask;
-
-        public ActiveCameraHandler()
+        public ActiveCameraHandler(EthernetRelayCameraController? a_relayCameraController)
         {
-            if (m_relayCameraControl != null)
+            if (a_relayCameraController != null)
             {
-	            SubscribeCameraController(m_relayCameraControl);
+				SubscribeCameraController(a_relayCameraController);
             }
 
             m_deckLinkController = BlackmagicDeckLinkController.Create(out string? errorMessage);
@@ -53,18 +49,6 @@ namespace DataWranglerInterface.CameraHandling
                 PreviewUpdateTask = Task.Run(BackgroundUpdateFramePreview);
             }
 
-            m_backgroundDispatchTask = Task.Run(BackgroundDispatchReceivedEvents);
-        }
-
-        private void BackgroundDispatchReceivedEvents()
-        {
-	        while (!m_backgroundTaskCancellationSource.IsCancellationRequested)
-	        {
-		        if (m_relayCameraControl != null)
-		        {
-			        m_relayCameraControl.BlockingProcessReceivedMessages(TimeSpan.FromSeconds(10), m_backgroundTaskCancellationSource.Token);
-		        }
-	        }
         }
 
         private void SubscribeCameraController(CameraControllerBase a_cameraController)
@@ -140,8 +124,11 @@ namespace DataWranglerInterface.CameraHandling
 				OnVirtualCameraConnected(info);
             }
 
-            info.TransferCameraHandle(null, a_deviceHandle);
-        }
+            if (!info.ContainsHandle(a_deviceHandle))
+            {
+	            info.TransferCameraHandle(null, a_deviceHandle);
+            }
+		}
 
 		private void OnCameraConnectionChanged(ActiveCameraInfo a_source)
 		{

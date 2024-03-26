@@ -21,7 +21,7 @@
 		<DockPanel Margin="10, 10, 10, 10" Grid.Column="0">
 			<ShotRecordingPage:ProjectSelectorControl x:Name="ProjectSelector" DockPanel.Dock="Top"/>
 			<ShotRecordingPage:ShotSelectorControl x:Name="ShotSelector" DockPanel.Dock="Top"/>
-			<Button DockPanel.Dock="Top" Click="OpenProjectFolderButton_OnClick">Open Project Folder</Button>
+			<Button Margin="4" DockPanel.Dock="Top" Click="OpenProjectFolderButton_OnClick">Open Project Folder</Button>
 			<Grid>
 				<ShotRecordingPage:ShotInfoDisplay x:Name="ShotInfoDisplay"/>
 				<ShotRecordingPage:ShotCreationControl x:Name="ShotCreationControl" Visibility="Hidden"/>

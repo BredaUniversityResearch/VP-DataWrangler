@@ -4,11 +4,12 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
+using CameraControlOverEthernet.CameraControl;
 using CommonLogging;
 
 namespace CameraControlOverEthernet
 {
-	public class NetworkAPIServer
+	public class NetworkedDeviceAPIServer: IDisposable
 	{
 		private class ClientConnection
 		{
@@ -16,6 +17,8 @@ namespace CameraControlOverEthernet
 			public readonly int ConnectionId;
 			public Task? ReceiveTask;
 			public DateTime LastActivityTime;
+			public bool IsInConnectionProcess = true;
+			public NetworkAPIDeviceCapabilities? Capabilities = null;
 
 			public ClientConnection(TcpClient a_client, int a_connectionId)
 			{
@@ -55,10 +58,29 @@ namespace CameraControlOverEthernet
 
 		private readonly List<ClientConnection> m_connectedClients = new List<ClientConnection>();
 		private BlockingCollection<QueuedPacketEntry> m_receivedPacketQueue = new BlockingCollection<QueuedPacketEntry>();
+		private readonly List<INetworkAPIEventHandler> m_callbackEventHandlers = new List<INetworkAPIEventHandler>();
 
-		public delegate void ClientDisconnectedDelegate(int a_connectionId);
+		private Task? m_backgroundDispatchTask = null;
 
-		public event ClientDisconnectedDelegate OnClientDisconnected = delegate { };
+		public void Dispose()
+		{
+			m_cancellationTokenSource.Cancel();
+
+			if (!(m_discoveryBroadcastTask?.Wait(TimeSpan.FromMilliseconds(100)) ?? true) ||
+			    !(m_connectAcceptTask?.Wait(TimeSpan.FromMilliseconds(100)) ?? true) ||
+			    !(m_backgroundDispatchTask?.Wait(TimeSpan.FromMilliseconds(100)) ?? true))
+			{
+				throw new Exception("One or more subtasks failed to terminate within a reasonable amount of time");
+			}
+
+			m_discoveryBroadcastTask?.Dispose();
+			m_connectAcceptTask?.Dispose();
+			m_backgroundDispatchTask?.Dispose();
+
+			m_discoveryBroadcaster.Dispose();
+			m_cancellationTokenSource.Dispose();
+			m_receivedPacketQueue.Dispose();
+		}
 
 		public void Start()
 		{
@@ -69,7 +91,31 @@ namespace CameraControlOverEthernet
 
 			m_connectAcceptTask = new Task(BackgroundAcceptConnections);
 			m_connectAcceptTask.Start();
-			Logger.LogVerbose("CCServer", $"Starting Camera Control Server. Using Multicast endpoint {DiscoveryMulticastEndpoint}. Listening on {m_connectionListener.LocalEndpoint}");
+
+			m_backgroundDispatchTask = Task.Run(BackgroundDispatchReceivedEvents);
+
+			Logger.LogVerbose("NetworkDeviceAPI", $"Starting Server. Using Multicast endpoint {DiscoveryMulticastEndpoint}. Listening on {m_connectionListener.LocalEndpoint}");
+		}
+
+		public void RegisterEventHandler(INetworkAPIEventHandler a_handler)
+		{
+			lock (m_callbackEventHandlers)
+			{
+				if (m_callbackEventHandlers.Contains(a_handler))
+				{
+					throw new Exception("Double registration of a packet handler");
+				}
+
+				m_callbackEventHandlers.Add(a_handler);
+			}
+		}
+
+		public void UnregisterEventHandler(INetworkAPIEventHandler a_handler)
+		{
+			lock (m_callbackEventHandlers)
+			{
+				m_callbackEventHandlers.Remove(a_handler);
+			}
 		}
 
 		private async void BackgroundDiscoveryBroadcastTask()
@@ -105,7 +151,14 @@ namespace CameraControlOverEthernet
 
 				m_discoveryBroadcaster.Send(new ReadOnlySpan<byte>(buffer, 0, (int) ms.Position), DiscoveryMulticastEndpoint);
 
-				await Task.Delay(DiscoveryMulticastInterval, m_cancellationTokenSource.Token);
+				try
+				{
+					await Task.Delay(DiscoveryMulticastInterval, m_cancellationTokenSource.Token);
+				}
+				catch (TaskCanceledException)
+				{
+					return;
+				}
 			}
 		}
 
@@ -113,15 +166,23 @@ namespace CameraControlOverEthernet
 		{
 			while (!m_cancellationTokenSource.IsCancellationRequested)
 			{
-				TcpClient client = await m_connectionListener.AcceptTcpClientAsync(m_cancellationTokenSource.Token);
-				if (!m_cancellationTokenSource.IsCancellationRequested)
+				TcpClient? client = null;
+				try
+				{
+					client = await m_connectionListener.AcceptTcpClientAsync(m_cancellationTokenSource.Token);
+				}
+				catch (OperationCanceledException)
+				{
+				}
+
+				if (!m_cancellationTokenSource.IsCancellationRequested && client != null)
 				{
 					ClientConnection conn = new ClientConnection(client, ++m_lastConnectionId);
 					conn.ReceiveTask = new Task(() => BackgroundReceiveData(conn));
 					conn.ReceiveTask.Start();
 					conn.LastActivityTime = DateTime.UtcNow;
 
-					Logger.LogVerbose("CCServer", $"Client connected from {client.Client.RemoteEndPoint}");
+					Logger.LogVerbose("NetworkDeviceAPI", $"Client connected from {client.Client.RemoteEndPoint}");
 
 					lock (m_connectedClients)
 					{
@@ -143,7 +204,7 @@ namespace CameraControlOverEthernet
 				{
 					if (DateTime.UtcNow - a_client.LastActivityTime > InactivityDisconnectTime)
 					{
-						Logger.LogVerbose("CCServer", $"Dropping client at {a_client.Client.Client.RemoteEndPoint} due to inactivity");
+						Logger.LogVerbose("NetworkDeviceAPI", $"Dropping client at {a_client.Client.Client.RemoteEndPoint} due to inactivity");
 						a_client.Client.Close();
 						break;
 					}
@@ -160,7 +221,7 @@ namespace CameraControlOverEthernet
 							if (soEx.SocketErrorCode == SocketError.ConnectionAborted ||
 							    soEx.SocketErrorCode == SocketError.ConnectionReset)
 							{
-								Logger.LogVerbose("CCServer", $"Dropping client at {a_client.Client.Client.RemoteEndPoint} due to connection abort");
+								Logger.LogVerbose("NetworkDeviceAPI", $"Dropping client at {a_client.Client.Client.RemoteEndPoint} due to connection abort");
 								a_client.Client.Close();
 							}
 							else if (soEx.SocketErrorCode == SocketError.TimedOut)
@@ -189,15 +250,22 @@ namespace CameraControlOverEthernet
 								INetworkAPIPacket? packet = NetworkApiTransport.TryRead(reader);
 								if (packet != null)
 								{
-									//Logger.LogVerbose("CCServer", $"Received Packet From Client {a_client.Client.Client.RemoteEndPoint} of type {packet.GetType()}");
-									m_receivedPacketQueue.Add(new QueuedPacketEntry(packet, a_client.ConnectionId));
-									a_client.LastActivityTime = DateTime.UtcNow;
+									if (a_client.IsInConnectionProcess)
+									{
+										TryHandlePacketHandshakePhase(a_client, packet);
+									}
+									else
+									{
+										//Logger.LogVerbose("NetworkDeviceAPI", $"Received Packet From Client {a_client.Client.Client.RemoteEndPoint} of type {packet.GetType()}");
+										m_receivedPacketQueue.Add(new QueuedPacketEntry(packet, a_client.ConnectionId));
+										a_client.LastActivityTime = DateTime.UtcNow;
+									}
 								}
 								else
 								{
 									bytesFromLastReceive = (int) (ms.Length - packetStart);
 									Array.Copy(receiveBuffer, packetStart, receiveBuffer, 0, bytesFromLastReceive);
-									Logger.LogVerbose("CCServer", $"Failed to deserialize data from client {a_client.Client.Client.RemoteEndPoint} moving {bytesFromLastReceive} bytes over to next receive cycle");
+									Logger.LogVerbose("NetworkDeviceAPI", $"Failed to deserialize data from client {a_client.Client.Client.RemoteEndPoint} moving {bytesFromLastReceive} bytes over to next receive cycle");
 									break;
 								}
 							}
@@ -207,31 +275,101 @@ namespace CameraControlOverEthernet
 			}
 			catch (Exception ex)
 			{
-				Logger.LogError("CCServer", $"Background Receive Thread terminated due to unhandled exception {ex.Message}");
+				Logger.LogError("NetworkDeviceAPI", $"Background Receive Thread terminated due to unhandled exception {ex.Message}");
 			}
 			finally
 			{
+				if (!a_client.IsInConnectionProcess)
+				{
+					lock (m_callbackEventHandlers)
+					{
+						foreach (INetworkAPIEventHandler handler in m_callbackEventHandlers)
+						{
+							handler.OnClientDisconnected(a_client.ConnectionId);
+						}
+					}
+				}
+
 				lock (m_connectedClients)
 				{
-					OnClientDisconnected(a_client.ConnectionId);
 					m_connectedClients.Remove(a_client);
 				}
-				Logger.LogVerbose("CCServer", $"Dropped client. See previous message for details.");
+				Logger.LogVerbose("NetworkDeviceAPI", $"Dropped client. See previous message for details.");
+			}
+		}
+
+		private void TryHandlePacketHandshakePhase(ClientConnection a_client, INetworkAPIPacket a_packet)
+		{
+			if (a_packet is NetworkAPIReportDeviceCapabilitiesPacket deviceCapabilitiesPacket)
+			{
+				a_client.Capabilities = new NetworkAPIDeviceCapabilities()
+				{
+					DeviceRole = (NetworkAPIDeviceCapabilities.EDeviceRole) deviceCapabilitiesPacket.DeviceRole
+				};
+
+				a_client.IsInConnectionProcess = false;
+				a_client.LastActivityTime = DateTime.UtcNow;
+
+				lock (m_callbackEventHandlers)
+				{
+					foreach (INetworkAPIEventHandler handler in m_callbackEventHandlers)
+					{
+						handler.OnClientConnected(a_client.ConnectionId, a_client.Capabilities);
+					}
+				}
+
+				SendMessageToConnection(a_client.ConnectionId, new NetworkAPIHandshakeCompletePacket());
+
+				Logger.LogVerbose("NetworkDeviceAPI", $"Handshake Completed for client {a_client.Client.Client.RemoteEndPoint}");
+
+			}
+			else if (a_packet is NetworkAPIHeartbeat)
+			{
+				//Ignore heartbeat packets for now.
+			}
+			else
+			{
+				Logger.LogWarning("NetworkDeviceAPI", $"Received packet {a_packet.GetType()} from client {a_client.ConnectionId} during handshake process");
 			}
 		}
 
 		public bool TryDequeueMessage([NotNullWhen(true)] out INetworkAPIPacket? a_cameraControlPacket, out int a_connectionId, TimeSpan a_timeout, CancellationToken a_cancellationToken)
 		{
-			if (m_receivedPacketQueue.TryTake(out QueuedPacketEntry? entry, (int) a_timeout.TotalMilliseconds, a_cancellationToken))
+			try
 			{
-				a_cameraControlPacket = entry.Packet;
-				a_connectionId = entry.ConnectionId;
-				return true;
+				if (m_receivedPacketQueue.TryTake(out QueuedPacketEntry? entry, (int) a_timeout.TotalMilliseconds, a_cancellationToken))
+				{
+					a_cameraControlPacket = entry.Packet;
+					a_connectionId = entry.ConnectionId;
+					return true;
+				}
+			}
+			catch (TaskCanceledException)
+			{
+			}
+			catch (OperationCanceledException)
+			{
 			}
 
 			a_cameraControlPacket = null;
 			a_connectionId = -1;
 			return false;
+		}
+
+		public void SendMessageToAllConnectedClients(INetworkAPIPacket a_packetToSend)
+		{
+			byte[] bufferBytes = new byte[128];
+			using MemoryStream ms = new MemoryStream(bufferBytes, true);
+			using BinaryWriter writer = new BinaryWriter(ms, Encoding.ASCII, true);
+			NetworkApiTransport.Write(a_packetToSend, writer);
+
+			lock (m_connectedClients)
+			{
+				foreach (ClientConnection conn in m_connectedClients)
+				{
+					conn.Client.GetStream().Write(bufferBytes, 0, (int) ms.Position);
+				}
+			}
 		}
 
 		public void SendMessageToConnection(int a_connectionId, INetworkAPIPacket a_packetToSend)
@@ -247,6 +385,23 @@ namespace CameraControlOverEthernet
 					NetworkApiTransport.Write(a_packetToSend, writer);
 
 					conn.Client.GetStream().Write(bufferBytes, 0, (int)ms.Position);
+				}
+			}
+		}
+
+		private void BackgroundDispatchReceivedEvents()
+		{
+			while (!m_cancellationTokenSource.IsCancellationRequested)
+			{
+				if (TryDequeueMessage(out INetworkAPIPacket? packet, out int connectionId, TimeSpan.FromSeconds(10), m_cancellationTokenSource.Token))
+				{
+					lock (m_callbackEventHandlers)
+					{
+						foreach (INetworkAPIEventHandler handler in m_callbackEventHandlers)
+						{
+							handler.OnPacketReceived(packet, connectionId);
+						}
+					}
 				}
 			}
 		}

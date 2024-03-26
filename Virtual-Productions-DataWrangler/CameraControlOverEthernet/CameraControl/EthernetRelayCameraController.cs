@@ -1,24 +1,29 @@
 ﻿using BlackmagicCameraControlData;
 using BlackmagicCameraControlData.CommandPackets;
-using CameraControlOverEthernet.CameraControl;
+using CommonLogging;
 using DataWranglerCommon;
 
-namespace CameraControlOverEthernet
+namespace CameraControlOverEthernet.CameraControl
 {
-    public class EthernetRelayCameraController: CameraControllerBase
+    public class EthernetRelayCameraController: CameraControllerBase, INetworkAPIEventHandler
 	{
-		private NetworkAPIServer m_apiServer = new NetworkAPIServer();
+		private NetworkedDeviceAPIServer m_apiServer;
 
 		private Dictionary<int, List<CameraDeviceHandle>> m_cameraHandlesByConnectionId = new();
 
-		public EthernetRelayCameraController()
+		public EthernetRelayCameraController(NetworkedDeviceAPIServer a_sourceServer)
 		{
-			m_apiServer.OnClientDisconnected += OnClientDisconnected;
+			m_apiServer = a_sourceServer;
+			m_apiServer.RegisterEventHandler(this);
 
-			m_apiServer.Start();
+			m_apiServer.SendMessageToAllConnectedClients(new CameraControlRequestAllConnectedCameras());
 		}
 
-		private void OnClientDisconnected(int a_connectionId)
+		public void OnClientConnected(int a_connectionId, NetworkAPIDeviceCapabilities a_deviceCapabilities)
+		{
+		}
+
+		public void OnClientDisconnected(int a_connectionId)
 		{
 			if (m_cameraHandlesByConnectionId.TryGetValue(a_connectionId, out var deviceHandles))
 			{
@@ -31,22 +36,9 @@ namespace CameraControlOverEthernet
 			}
 		}
 
-		public void BlockingProcessReceivedMessages(TimeSpan a_fromSeconds, CancellationToken a_token)
+		public void OnPacketReceived(INetworkAPIPacket a_packet, int a_connectionId)
 		{
-			bool processedMessage = false;
-			do
-			{
-				processedMessage = m_apiServer.TryDequeueMessage(out INetworkAPIPacket? packet, out int a_connectionId, a_fromSeconds, a_token);
-				if (processedMessage)
-				{
-					ProcessPacket(packet!, a_connectionId);
-				}
-			} while (processedMessage);
-		}
-
-		private void ProcessPacket(INetworkAPIPacket a_cameraControlPacket, int a_connectionId)
-		{
-			if (a_cameraControlPacket is CameraControlCameraConnectedPacket connectedPacket)
+			if (a_packet is CameraControlCameraConnectedPacket connectedPacket)
 			{
 				CameraDeviceHandle handle = new CameraDeviceHandle(connectedPacket.DeviceUuid, this);
 				if (!m_cameraHandlesByConnectionId.TryGetValue(a_connectionId, out List<CameraDeviceHandle>? handles))
@@ -60,7 +52,7 @@ namespace CameraControlOverEthernet
 
 				m_apiServer.SendMessageToConnection(a_connectionId, new CameraControlRequestCurrentState(connectedPacket.DeviceUuid));
 			}
-			else if (a_cameraControlPacket is CameraControlCameraDisconnectedPacket disconnectedPacket)
+			else if (a_packet is CameraControlCameraDisconnectedPacket disconnectedPacket)
 			{
 				CameraDeviceHandle handle = new CameraDeviceHandle(disconnectedPacket.DeviceUuid, this);
 				if (m_cameraHandlesByConnectionId.TryGetValue(a_connectionId, out List<CameraDeviceHandle>? handles))
@@ -74,7 +66,7 @@ namespace CameraControlOverEthernet
 
 				CameraDisconnected(handle);
 			}
-			else if (a_cameraControlPacket is CameraControlDataPacket dataPacket)
+			else if (a_packet is CameraControlDataPacket dataPacket)
 			{
 				CameraDeviceHandle handle = new CameraDeviceHandle(dataPacket.DeviceUuid, this);
 				TimeCode receivedTimeCode = TimeCode.FromBCD(dataPacket.ReceivedTimeCodeAsBCD);
@@ -82,9 +74,23 @@ namespace CameraControlOverEthernet
 				MemoryStream ms = new MemoryStream(dataPacket.PacketData);
 				CommandReader.DecodeStream(ms, (_, a_packet) => { CameraDataReceived(handle, receivedTimeCode, a_packet);});
 			}
-			else if (a_cameraControlPacket is CameraControlTimeCodeChanged timeCodeChanged)
+			else if (a_packet is CameraControlTimeCodeChanged timeCodeChanged)
 			{
 				CameraDeviceHandle handle = new CameraDeviceHandle(timeCodeChanged.DeviceUuid, this);
+				if (!m_cameraHandlesByConnectionId.TryGetValue(a_connectionId, out List<CameraDeviceHandle>? camerasForThisConnection))
+				{
+					m_apiServer.SendMessageToConnection(a_connectionId, new CameraControlRequestAllConnectedCameras());
+					Logger.LogWarning("EthernetRelay", $"Received camera packet from handle that wasn't known, discarding packet of type {timeCodeChanged.GetType()} and requesting all active cameras");
+					return;
+				}
+
+				if (!camerasForThisConnection.Contains(handle))
+				{
+					m_apiServer.SendMessageToConnection(a_connectionId, new CameraControlRequestAllConnectedCameras());
+					Logger.LogWarning("EthernetRelay", $"Received camera packet from handle that wasn't known, discarding packet of type {timeCodeChanged.GetType()} and requesting all active cameras");
+					return;
+				}
+
 				TimeCode receivedTimeCode = TimeCode.FromBCD(timeCodeChanged.TimeCodeAsBCD);
 				CameraDataReceived(handle, receivedTimeCode, new CommandPacketSystemTimeCode() {BinaryCodedTimeCode = receivedTimeCode.TimeCodeAsBinaryCodedDecimal, TimeCode = receivedTimeCode});
 			}
@@ -112,6 +118,17 @@ namespace CameraControlOverEthernet
 			}
 
 			return false;
+		}
+
+		public void ReReportAllCameras()
+		{
+			foreach(var cameraHandlesByConnection in m_cameraHandlesByConnectionId)
+			{
+				foreach (var cameraHandle in cameraHandlesByConnection.Value)
+				{
+					CameraConnected(cameraHandle);
+				}
+			}
 		}
 	}
 }

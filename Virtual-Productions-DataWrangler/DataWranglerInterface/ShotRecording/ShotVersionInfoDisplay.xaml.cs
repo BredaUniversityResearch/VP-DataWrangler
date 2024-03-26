@@ -2,19 +2,13 @@
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Markup;
-using System.Windows.Media;
 using AutoNotify;
 using CommonLogging;
 using DataApiCommon;
 using DataWranglerCommon;
-using DataWranglerCommon.IngestDataSources;
 using DataWranglerCommonWPF;
-using Microsoft.Win32;
 using Newtonsoft.Json;
-using ShotGridIntegration;
 
 namespace DataWranglerInterface.ShotRecording
 {
@@ -25,7 +19,8 @@ namespace DataWranglerInterface.ShotRecording
 	{
 		[AutoNotify] 
 		private DataEntityShotVersion? m_currentVersion = null;
-		
+
+		private ShotRecordingApplicationState? m_recordingApplicationState = null;
 		private IngestDataShotVersionMeta m_currentVersionMeta = new IngestDataShotVersionMeta();
 
 		private bool m_isInBatchMetaChange = false;
@@ -68,15 +63,21 @@ namespace DataWranglerInterface.ShotRecording
 			VersionSelectorControl.OnShotVersionSelected += OnShotVersionSelected;
 		}
 
-		public void SetParentControls(ShotRecordingPage a_parentPage)
+		public void SetParentControls(ShotRecordingPage a_parentPage, ShotRecordingApplicationState a_applicationState)
 		{
+			m_recordingApplicationState = a_applicationState;
+			m_recordingApplicationState.OnSelectedShotChanged += OnShotSelected;
+
 			a_parentPage.OnNewShotVersionCreationStarted += (_) => VersionSelectorControl.BeginAddShotVersion();
 			a_parentPage.OnNewShotVersionCreated += (a_data) => VersionSelectorControl.EndAddShotVersion(a_data);
 		}
 
-		public void OnShotSelected(Guid a_shotId)
+		private void OnShotSelected(DataEntityShot? a_shot)
 		{
-			VersionSelectorControl.AsyncRefreshShotVersion(a_shotId);
+			if (a_shot != null)
+			{
+				VersionSelectorControl.AsyncRefreshShotVersion(a_shot.EntityId);
+			}
 		}
 
 		private void OnShotVersionSelected(DataEntityShotVersion? a_shotVersion)
@@ -114,6 +115,8 @@ namespace DataWranglerInterface.ShotRecording
 				}
 			}
 			SetTargetMeta(shotMeta);
+
+			m_recordingApplicationState?.SelectedShotVersionChanged(a_shotVersion);
 		}
 
 		private void OnAnyMetaPropertyChanged(object? a_sender, PropertyChangedEventArgs a_e)

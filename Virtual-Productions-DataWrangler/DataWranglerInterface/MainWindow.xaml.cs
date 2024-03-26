@@ -4,6 +4,8 @@ using System.Diagnostics;
 using System.Text;
 using System.Windows;
 using System.Windows.Input;
+using CameraControlOverEthernet;
+using CameraControlOverEthernet.CameraControl;
 using CommonLogging;
 using DataApiCommon;
 using DataApiSFTP;
@@ -15,7 +17,6 @@ using DataWranglerInterface.Configuration;
 using DataWranglerInterface.DebugSupport;
 using DataWranglerInterface.Properties;
 using DataWranglerInterface.ShotRecording;
-using ShotGridIntegration;
 
 namespace DataWranglerInterface
 {
@@ -45,6 +46,10 @@ namespace DataWranglerInterface
 
         private readonly DataApi m_targetAPI = new DataApiSFTPFileSystem(DataApiSFTPConfig.DefaultConfig);
         private readonly ShogunLiveService m_shogunService = new ShogunLiveService(30);
+        private readonly NetworkedDeviceAPIServer m_communicationApiServer = new NetworkedDeviceAPIServer(); 
+
+        private readonly EthernetRelayCameraController m_relayCameraControl;
+
 
         public MainWindow()
 		{
@@ -53,9 +58,13 @@ namespace DataWranglerInterface
 			TaskScheduler.UnobservedTaskException += TaskSchedulerOnUnobservedTaskException;
 			Logger.Instance.OnMessageLogged += LoggerMessageLogged;
 
+			m_relayCameraControl = new EthernetRelayCameraController(m_communicationApiServer); 
+
 			DataWranglerInterfaceConfig.Use(new DataWranglerInterfaceConfig());
-			DataWranglerServices services = new DataWranglerServices(m_targetAPI, m_shogunService);
-			DataWranglerServiceProvider.Use(services);	
+			DataWranglerServices services = new DataWranglerServices(m_targetAPI, m_shogunService, m_communicationApiServer);
+			DataWranglerServiceProvider.Use(services);
+
+			m_communicationApiServer.Start();
 
 			if (Debugger.IsAttached)
 			{
@@ -149,7 +158,7 @@ namespace DataWranglerInterface
 		{
 			Dispatcher.Invoke(() =>
 			{
-				m_shotRecordingPage = new ShotRecordingPage();
+				m_shotRecordingPage = new ShotRecordingPage(m_relayCameraControl);
                 if (m_previewWindow != null)
                 {
                     m_shotRecordingPage.PreviewControl = m_previewWindow.PreviewControl;
@@ -184,6 +193,8 @@ namespace DataWranglerInterface
 			{
 				m_previewWindow.Close();
 			}
+
+			m_communicationApiServer.Dispose();
 		}
 
 		private void OnWindowMouseDown(object a_sender, MouseButtonEventArgs a_e)

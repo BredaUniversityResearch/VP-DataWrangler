@@ -17,7 +17,6 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\BlackmagicDeckLinkControl\BlackmagicDeckLinkControl.csproj" />
-		<ProjectReference Include="..\CameraControlOverEthernet\CameraControlOverEthernet.csproj" />
 		<ProjectReference Include="..\DataApiFileSystem\DataApiSFTP.csproj" />
 		<ProjectReference Include="..\DataWranglerCommonWPF\DataWranglerCommonWPF.csproj" />
 		<ProjectReference Include="..\DataWranglerCommon\DataWranglerCommon.csproj" />

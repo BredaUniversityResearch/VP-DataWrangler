@@ -96,7 +96,7 @@ namespace DataWranglerInterface.ShotRecording
 				Dispatcher.InvokeAsync(() => OnTargetDeviceConnectionsChanged(a_source));
 				return;
 			}
-
+			
 			HashSet<CameraDeviceHandle> newConnections = new HashSet<CameraDeviceHandle>(TargetInfo.ConnectionsForPhysicalDevice);
 			HashSet<CameraDeviceHandle> oldConnections = new HashSet<CameraDeviceHandle>();
 			foreach (CameraDeviceHandleControl control in DeviceHandleControls)

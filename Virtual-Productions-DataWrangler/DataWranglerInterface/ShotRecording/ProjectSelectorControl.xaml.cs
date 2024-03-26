@@ -7,22 +7,20 @@ namespace DataWranglerInterface.ShotRecording
 	{
 		public class ProjectSelectionEntry
 		{
-			public readonly Guid ProjectId;
-			public readonly string ProjectName;
+			public readonly DataEntityProject Project;
 
 			public ProjectSelectionEntry(DataEntityProject a_project)
 			{
-				ProjectId = a_project.EntityId;
-				ProjectName = a_project.Name;
+				Project = a_project;
 			}
 
 			public override string ToString()
 			{
-				return ProjectName;
+				return Project.Name;
 			}
 		};
 
-		public delegate void SelectedProjectChangedDelegate(Guid projectId, string projectName);
+		public delegate void SelectedProjectChangedDelegate(DataEntityProject a_selectedProject);
 		public event SelectedProjectChangedDelegate OnSelectedProjectChanged = delegate { };
 
 		public Guid SelectedProjectId { get; private set; }
@@ -37,8 +35,8 @@ namespace DataWranglerInterface.ShotRecording
 		private void DropDownOnSelectionChanged(object a_sender, SelectionChangedEventArgs a_e)
 		{
 			ProjectSelectionEntry entry = (ProjectSelectionEntry) ProjectListDropDown.DropDown.SelectedItem;
-			SelectedProjectId = entry.ProjectId;
-			OnSelectedProjectChanged.Invoke(entry.ProjectId, entry.ProjectName);
+			SelectedProjectId = entry.Project.EntityId;
+			OnSelectedProjectChanged.Invoke(entry.Project);
 		}
 
 		public void AsyncRefreshProjects()

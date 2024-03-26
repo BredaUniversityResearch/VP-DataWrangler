@@ -222,5 +222,10 @@ namespace DataWranglerCommon.CameraHandling
         {
 	        return m_cameraProperties;
         }
+
+        public bool ContainsHandle(CameraDeviceHandle a_deviceHandle)
+        {
+	        return ConnectionsForPhysicalDevice.Contains(a_deviceHandle);
+        }
     }
 }

@@ -47,11 +47,10 @@ namespace DataWranglerInterface.ShotRecording
 		};
 
 		private ShotRecordingPage? m_parentPage = null;
+		private ShotRecordingApplicationState? m_shotRecordingState = null;
 
 		private DataEntityShot? m_targetShot = null;
-		private ProjectSelectorControl? m_projectSelector = null;
-		private ShotSelectorControl? m_shotSelectorControl = null;
-
+		
 		private bool m_shouldCreateNewShotOnRecord = true;
 
 		[AutoNotify]
@@ -70,22 +69,22 @@ namespace DataWranglerInterface.ShotRecording
 			};
 		}
 
-		public void SetParentControls(ShotRecordingPage a_parentPage, ProjectSelectorControl a_projectSelector, ShotSelectorControl a_shotSelector)
+		public void SetParentControls(ShotRecordingPage a_parentPage, ShotRecordingApplicationState a_applicationState)
 		{
 			m_parentPage = a_parentPage;
-			m_projectSelector = a_projectSelector;
-			m_shotSelectorControl = a_shotSelector;
+			m_shotRecordingState = a_applicationState;
 		}
 
 		private void CreateNewShotVersion(IngestDataShotVersionMeta a_meta)
 		{
-			if (m_shotSelectorControl == null || m_projectSelector == null)
+			if (m_shotRecordingState == null)
 			{
 				throw new Exception();
 			}
 
-			Guid targetShotId = m_shotSelectorControl.SelectedShotId;
-			if (targetShotId != Guid.Empty)
+			Guid targetShotId = m_shotRecordingState.SelectedShot?.EntityId ?? Guid.Empty;
+			Guid targetProjectId = m_shotRecordingState.SelectedProject?.EntityId ?? Guid.Empty;
+			if (targetShotId != Guid.Empty && targetProjectId != Guid.Empty)
 			{
 				m_parentPage?.BeginAddShotVersion(targetShotId);
 				DataWranglerServiceProvider.Instance.TargetDataApi.GetVersionsForShot(targetShotId, (a_lhs, a_rhs) => string.Compare(a_lhs.ShotVersionName, a_rhs.ShotVersionName, StringComparison.Ordinal)).ContinueWith(a_fetchTask => {
@@ -102,8 +101,7 @@ namespace DataWranglerInterface.ShotRecording
 							DataWranglerMeta = JsonConvert.SerializeObject(a_meta, DataWranglerSerializationSettings.Instance)
 						};
 
-						DataWranglerServiceProvider.Instance.TargetDataApi.CreateNewShotVersion(
-							m_projectSelector.SelectedProjectId, targetShotId, newVersion)
+						DataWranglerServiceProvider.Instance.TargetDataApi.CreateNewShotVersion(targetProjectId, targetShotId, newVersion)
 							.ContinueWith(a_result =>
 						{
 							if (!a_result.Result.IsError)

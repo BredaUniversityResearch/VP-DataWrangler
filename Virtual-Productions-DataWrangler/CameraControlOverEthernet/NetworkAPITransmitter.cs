@@ -25,7 +25,7 @@
 //		private static readonly TimeSpan HeartbeatSendInterval = TimeSpan.FromSeconds(5);
 
 //		private List<ServerConnection> m_activeClients = new List<ServerConnection>();
-//		private UdpClient m_discoveryReceiver = new UdpClient(NetworkAPIServer.DiscoveryMulticastPort);
+//		private UdpClient m_discoveryReceiver = new UdpClient(NetworkedDeviceAPIServer.DiscoveryMulticastPort);
 
 //		private CancellationTokenSource m_stopListeningToken = new CancellationTokenSource();
 //		private Task? m_listenTask;
@@ -55,7 +55,7 @@
 //					{
 //						if (addr.Address.AddressFamily == AddressFamily.InterNetwork)
 //						{
-//							m_discoveryReceiver.JoinMulticastGroup(NetworkAPIServer.DiscoveryMulticastAddress, addr.Address);
+//							m_discoveryReceiver.JoinMulticastGroup(NetworkedDeviceAPIServer.DiscoveryMulticastAddress, addr.Address);
 //						}
 //					}
 //				}
@@ -73,7 +73,7 @@
 //		{
 //			while (!m_stopListeningToken.IsCancellationRequested)
 //			{
-//				IPEndPoint remoteEndPoint = new IPEndPoint(NetworkAPIServer.DiscoveryMulticastAddress, NetworkAPIServer.DiscoveryMulticastPort);
+//				IPEndPoint remoteEndPoint = new IPEndPoint(NetworkedDeviceAPIServer.DiscoveryMulticastAddress, NetworkedDeviceAPIServer.DiscoveryMulticastPort);
 //				byte[]? buffer = null;
 //				try
 //				{

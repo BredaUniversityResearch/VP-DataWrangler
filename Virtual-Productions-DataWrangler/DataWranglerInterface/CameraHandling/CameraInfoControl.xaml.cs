@@ -26,7 +26,7 @@ namespace DataWranglerInterface.ShotRecording
 
 		public void AddTargetCameraInfo(ActiveCameraInfo a_activeCamera)
 		{
-			Dispatcher.Invoke(() =>
+			Dispatcher.InvokeAsync(() =>
 			{
 				ActiveCameraInfoControl control = new ActiveCameraInfoControl(a_activeCamera);
 				ActiveCameras.Add(control);

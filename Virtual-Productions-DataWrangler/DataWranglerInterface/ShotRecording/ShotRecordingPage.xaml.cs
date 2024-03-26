@@ -2,6 +2,7 @@
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using CameraControlOverEthernet.CameraControl;
 using CommonLogging;
 using DataApiCommon;
 using DataWranglerCommon;
@@ -25,34 +26,48 @@ namespace DataWranglerInterface.ShotRecording
 		public delegate void ShotVersionCreatedDelegate(DataEntityShotVersion a_data);
 		public event ShotVersionCreatedDelegate? OnNewShotVersionCreated;
 
+		private ShotRecordingApplicationState m_shotRecordingState = new ShotRecordingApplicationState();
+		private ShotRecordingStateTransmitter m_shotRecordingStateTransmitter;
+
         public VideoPreviewControl? PreviewControl
         {
             set => m_activeCameraHandler.PreviewControl = value;
         }
 
-        public ShotRecordingPage()
+        public ShotRecordingPage(EthernetRelayCameraController? a_cameraController)
 		{
 			InitializeComponent();
-		
-			m_activeCameraHandler = new ActiveCameraHandler();
+
+			m_activeCameraHandler = new ActiveCameraHandler(a_cameraController);
 			m_activeCameraHandler.OnVirtualCameraConnected += VirtualCameraConnected;
 			m_activeCameraHandler.OnCameraDisconnected += OnCameraDisconnected;
 
 			//CameraInfoDebug.CameraApiController = m_bluetoothController;
 
+			m_shotRecordingState.OnSelectedProjectChanged += OnSelectedProjectChanged;
+			m_shotRecordingState.OnSelectedShotChanged += OnSelectedShotChanged;
+
 			ProjectSelector.AsyncRefreshProjects();
 
-			ProjectSelector.OnSelectedProjectChanged += OnSelectedProjectChanged;
-			ShotSelector.OnSelectedShotChanged += OnSelectedShotChanged;
+			ProjectSelector.OnSelectedProjectChanged += m_shotRecordingState.ProjectSelectionChanged;
+			ShotSelector.OnSelectedShotChanged += m_shotRecordingState.SelectedShotChanged;
+
 			CameraInfo.OnCameraRecordingStateChanged += ShotTemplateDisplay.OnActiveCameraRecordingStateChanged;
 
-			ShotTemplateDisplay.SetParentControls(this, ProjectSelector, ShotSelector);
-			ShotVersionInfoDisplay.SetParentControls(this);
+			ShotTemplateDisplay.SetParentControls(this, m_shotRecordingState);
+			ShotVersionInfoDisplay.SetParentControls(this, m_shotRecordingState);
 
 			ShotSelector.OnNewShotCreatedButtonClicked += ShowShotCreationUI;
 			ShotCreationControl.OnRequestCreateNewShot += OnRequestCreateNewShot;
 
 			m_ingestDataHandler.CreateAvailableHandlers(DataWranglerEventDelegates.Instance, DataWranglerServiceProvider.Instance);
+
+			m_shotRecordingStateTransmitter = new ShotRecordingStateTransmitter(m_shotRecordingState);
+
+			if (a_cameraController != null)
+			{
+				a_cameraController.ReReportAllCameras();
+			}
 		}
 
         public void Dispose()
@@ -73,15 +88,17 @@ namespace DataWranglerInterface.ShotRecording
 			//CameraInfoDebug.SetTargetCamera(null);
 		}
 
-		private void OnSelectedProjectChanged(Guid a_projectId, string a_projectName)
+		private void OnSelectedProjectChanged(DataEntityProject? a_project)
 		{
-			ShotSelector.AsyncRefreshShots(a_projectId);
+			if (a_project != null)
+			{
+				ShotSelector.AsyncRefreshShots(a_project.EntityId);
+			}
 		}
 
 		private void OnSelectedShotChanged(DataEntityShot? a_shotInfo)
 		{
 			ShotInfoDisplay.SetDisplayedShot(a_shotInfo);
-			ShotVersionInfoDisplay.OnShotSelected(a_shotInfo?.EntityId ?? Guid.Empty);
 			ShotTemplateDisplay.SetDisplayedShot(a_shotInfo);
 		}
 
