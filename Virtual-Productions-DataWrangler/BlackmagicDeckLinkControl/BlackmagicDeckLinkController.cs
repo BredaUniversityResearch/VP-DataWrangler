@@ -32,7 +32,7 @@ namespace BlackmagicDeckLinkControl
 			m_deckLinkDiscovery.InstallDeviceNotifications(m_deckLinkDeviceNotificationHandler);
 		}
 
-		public static BlackmagicDeckLinkController? Create(out string? a_errorMessage)
+		public static BlackmagicDeckLinkController? TryCreate(out string? a_errorMessage)
 		{
 			a_errorMessage = null;
 			try

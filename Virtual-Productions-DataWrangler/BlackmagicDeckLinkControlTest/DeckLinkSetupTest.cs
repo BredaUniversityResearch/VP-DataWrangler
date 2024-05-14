@@ -8,7 +8,7 @@ namespace BlackmagicDeckLinkControlTest
 		[Fact]
 		public void ConnectToCamera()
 		{
-			BlackmagicDeckLinkController? iface = BlackmagicDeckLinkController.Create(out string? message);
+			BlackmagicDeckLinkController? iface = BlackmagicDeckLinkController.TryCreate(out string? message);
 			Assert.True(message == null);
 			Assert.True(iface != null);
 		}

@@ -33,7 +33,7 @@ namespace DataWranglerInterface.CameraHandling
 				SubscribeCameraController(a_relayCameraController);
             }
 
-            m_deckLinkController = BlackmagicDeckLinkController.Create(out string? errorMessage);
+            m_deckLinkController = BlackmagicDeckLinkController.TryCreate(out string? errorMessage);
             if (m_deckLinkController != null)
             {
 	            SubscribeCameraController(m_deckLinkController);
@@ -41,14 +41,13 @@ namespace DataWranglerInterface.CameraHandling
             }
             else
             {
-                Logger.LogWarning("ACH", $"Failed to create DeckLink controller. Reason: {errorMessage}");
+                Logger.LogInfo("ACH", $"Failed to create DeckLink controller. Reason: {errorMessage}");
             }
 
             if (m_deckLinkController != null)
             {
                 PreviewUpdateTask = Task.Run(BackgroundUpdateFramePreview);
             }
-
         }
 
         private void SubscribeCameraController(CameraControllerBase a_cameraController)
