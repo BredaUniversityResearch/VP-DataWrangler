@@ -14,6 +14,7 @@ namespace CameraControlOverEthernet
 		{
 			public readonly TcpClient Client;
 			public readonly int ConnectionId;
+            public readonly CancellationTokenSource ReceiveTaskCancellation = new CancellationTokenSource();
 			public Task? ReceiveTask;
 			public DateTime LastActivityTime;
 			public bool IsInConnectionProcess = true;
@@ -63,7 +64,12 @@ namespace CameraControlOverEthernet
 
 		public void Dispose()
 		{
-			m_cancellationTokenSource.Cancel();
+            foreach (ClientConnection conn in m_connectedClients)
+            {
+                conn.ReceiveTaskCancellation.Cancel();
+            }
+
+            m_cancellationTokenSource.Cancel();
 
 			if (!(m_discoveryBroadcastTask?.Wait(TimeSpan.FromMilliseconds(100)) ?? true) ||
 			    !(m_connectAcceptTask?.Wait(TimeSpan.FromMilliseconds(100)) ?? true) ||
@@ -177,7 +183,7 @@ namespace CameraControlOverEthernet
 				if (!m_cancellationTokenSource.IsCancellationRequested && client != null)
 				{
 					ClientConnection conn = new ClientConnection(client, ++m_lastConnectionId);
-					conn.ReceiveTask = new Task(() => BackgroundReceiveData(conn));
+					conn.ReceiveTask = new Task(() => BackgroundReceiveData(conn), conn.ReceiveTaskCancellation.Token);
 					conn.ReceiveTask.Start();
 					conn.LastActivityTime = DateTime.UtcNow;
 
@@ -203,7 +209,7 @@ namespace CameraControlOverEthernet
 				{
 					if (DateTime.UtcNow - a_client.LastActivityTime > InactivityDisconnectTime)
 					{
-						Logger.LogVerbose("NetworkDeviceAPI", $"Dropping client at {a_client.Client.Client.RemoteEndPoint} due to inactivity");
+						Logger.LogVerbose("NetworkDeviceAPI", $"Dropping client at {a_client.Client.Client.RemoteEndPoint} due to inactivity. {((a_client.IsInConnectionProcess)? "Client was still in handshaking process." : "" )}");
 						a_client.Client.Close();
 						break;
 					}
@@ -211,7 +217,7 @@ namespace CameraControlOverEthernet
 					int bytesReceived = 0;
 					try
 					{
-						bytesReceived = a_client.Client.GetStream().Read(receiveBuffer, bytesFromLastReceive, (int) receiveBuffer.Length - bytesFromLastReceive);
+						bytesReceived = a_client.Client.GetStream().ReadAsync(receiveBuffer, bytesFromLastReceive, (int) receiveBuffer.Length - bytesFromLastReceive, a_client.ReceiveTaskCancellation.Token).Result;
 					}
 					catch (IOException ex)
 					{

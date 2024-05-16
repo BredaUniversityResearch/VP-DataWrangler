@@ -15,7 +15,6 @@ namespace CameraControlOverEthernet
 			public readonly TcpClient Socket;
             public Task? ReceiveDataTask;
             public CancellationTokenSource ReceiveDataCancellationSource = new CancellationTokenSource();
-            public bool IsInConnectionProcess = true;
             public DateTime LastActivityTime = DateTime.Now;
 
 			public ServerConnection(int a_serverIdentifier, TcpClient a_socket)
@@ -53,12 +52,14 @@ namespace CameraControlOverEthernet
 		private AutoResetEvent m_receivedServerBroadcastEvent = new(false);
 		private DateTime m_lastHeartbeatSendTime = DateTime.UtcNow;
 
-		public event Action<int> OnConnected = delegate { };
-		public event Action<int> OnDisconnected = delegate { };
+        public delegate void ConnectedOrDisconnectedDelegate(int serverIdentifier);
+        public delegate void DataReceivedDelegate(INetworkAPIPacket packet, int serverIdentifier);
 
-        private BlockingCollection<QueuedPacketEntry> m_receivedPacketQueue = new BlockingCollection<QueuedPacketEntry>();
+		public event ConnectedOrDisconnectedDelegate OnConnected = delegate { };
+		public event ConnectedOrDisconnectedDelegate OnDisconnected = delegate { };
+        public event DataReceivedDelegate OnDataReceived = delegate { };
 
-		public void StartListenForServer()
+        public void StartListenForServer()
 		{
 			m_discoveryReceiver.Client.ReceiveTimeout = 1000;
 			NetworkInterface[] nics = NetworkInterface.GetAllNetworkInterfaces();
@@ -97,8 +98,10 @@ namespace CameraControlOverEthernet
 				byte[]? buffer = null;
 				try
 				{
-					buffer = m_discoveryReceiver.Receive(ref remoteEndPoint);
-				}
+					UdpReceiveResult result = m_discoveryReceiver.ReceiveAsync(m_stopListeningToken.Token).Result;
+                    buffer = result.Buffer;
+                    remoteEndPoint = result.RemoteEndPoint;
+                }
 				catch (SocketException ex)
 				{
 					if (ex.SocketErrorCode != SocketError.TimedOut)
@@ -179,6 +182,9 @@ namespace CameraControlOverEthernet
 						Logger.LogVerbose("CCClient", $"Successfully connected to server {a_endPointValue}");
 					}
 
+                    NetworkAPIReportDeviceCapabilitiesPacket capabilities = new NetworkAPIReportDeviceCapabilitiesPacket() {DeviceRole = (int)NetworkAPIDeviceCapabilities.EDeviceRole.ApplicationStateDisplay};
+                    SendPacket(capabilities);
+
 					OnConnected(a_serverIdentifier);
 				}
 				else
@@ -213,7 +219,6 @@ namespace CameraControlOverEthernet
 			{
 				byte[] receiveBuffer = new byte[8192];
 				int bytesFromLastReceive = 0;
-                a_targetConnection.Socket.GetStream().ReadTimeout = 1000;
 
 				while (a_targetConnection.Socket.Connected)
 				{
@@ -227,7 +232,7 @@ namespace CameraControlOverEthernet
 					int bytesReceived = 0;
 					try
 					{
-						bytesReceived = a_targetConnection.Socket.GetStream().Read(receiveBuffer, bytesFromLastReceive, (int) receiveBuffer.Length - bytesFromLastReceive);
+						bytesReceived = a_targetConnection.Socket.GetStream().ReadAsync(receiveBuffer, bytesFromLastReceive, (int) receiveBuffer.Length - bytesFromLastReceive, a_targetConnection.ReceiveDataCancellationSource.Token).Result;
 					}
 					catch (IOException ex)
 					{
@@ -238,10 +243,6 @@ namespace CameraControlOverEthernet
 							{
 								Logger.LogVerbose("NetworkDeviceAPI", $"Dropping client at {a_targetConnection.Socket.Client.RemoteEndPoint} due to connection abort");
                                 a_targetConnection.Socket.Close();
-							}
-							else if (soEx.SocketErrorCode == SocketError.TimedOut)
-							{
-								//Swallow this since we setup a timeout.
 							}
 							else
 							{
@@ -265,8 +266,8 @@ namespace CameraControlOverEthernet
 								INetworkAPIPacket? packet = NetworkApiTransport.TryRead(reader);
 								if (packet != null)
 								{
-									Logger.LogVerbose("NetworkDeviceAPI", $"Received Packet From Client {a_targetConnection.Socket.Client.RemoteEndPoint} of type {packet.GetType()}");
-									m_receivedPacketQueue.Add(new QueuedPacketEntry(packet, a_targetConnection.ServerIdentifier));
+									//Logger.LogVerbose("NetworkDeviceAPI", $"Received Packet From Client {a_targetConnection.Socket.Client.RemoteEndPoint} of type {packet.GetType()}");
+                                    OnDataReceived.Invoke(packet, a_targetConnection.ServerIdentifier);
 									a_targetConnection.LastActivityTime = DateTime.UtcNow;
 									
 								}

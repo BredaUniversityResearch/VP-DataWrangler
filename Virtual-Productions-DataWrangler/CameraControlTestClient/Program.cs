@@ -13,6 +13,7 @@ namespace CameraControlTestClient
 
             client.OnConnected += ClientOnConnected;
             client.OnDisconnected += ClientOnDisconnected;
+            client.OnDataReceived += ClientOnDataReceived;
 
             client.StartListenForServer();
             while (true)
@@ -35,6 +36,11 @@ namespace CameraControlTestClient
         private static void ClientOnDisconnected(int a_serverIdentifier)
         {
             Console.WriteLine($"Disconnected from server with identifier {a_serverIdentifier}");
+        }
+
+        private static void ClientOnDataReceived(INetworkAPIPacket a_packet, int a_serverIdentifier)
+        {
+            Console.WriteLine($"Data packet received {a_packet.GetType()}");
         }
     }
 }
