@@ -71,9 +71,9 @@ namespace CameraControlOverEthernet
 
             m_cancellationTokenSource.Cancel();
 
-			if (!(m_discoveryBroadcastTask?.Wait(TimeSpan.FromMilliseconds(100)) ?? true) ||
-			    !(m_connectAcceptTask?.Wait(TimeSpan.FromMilliseconds(100)) ?? true) ||
-			    !(m_backgroundDispatchTask?.Wait(TimeSpan.FromMilliseconds(100)) ?? true))
+			if (!(m_discoveryBroadcastTask?.Wait(TimeSpan.FromMilliseconds(250)) ?? true) ||
+			    !(m_connectAcceptTask?.Wait(TimeSpan.FromMilliseconds(250)) ?? true) ||
+			    !(m_backgroundDispatchTask?.Wait(TimeSpan.FromMilliseconds(250)) ?? true))
 			{
 				throw new Exception("One or more subtasks failed to terminate within a reasonable amount of time");
 			}

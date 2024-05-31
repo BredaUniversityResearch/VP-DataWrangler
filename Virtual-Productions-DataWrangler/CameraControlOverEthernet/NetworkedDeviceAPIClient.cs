@@ -7,7 +7,7 @@ using CommonLogging;
 
 namespace CameraControlOverEthernet
 {
-	public class NetworkedDeviceAPIClient
+	public class NetworkedDeviceAPIClient: IDisposable
 	{
 		private class ServerConnection
 		{
@@ -59,6 +59,23 @@ namespace CameraControlOverEthernet
 		public event ConnectedOrDisconnectedDelegate OnDisconnected = delegate { };
         public event DataReceivedDelegate OnDataReceived = delegate { };
 
+        public void Dispose()
+        {
+            m_stopListeningToken.Cancel();
+
+            if (!(m_listenTask?.Wait(TimeSpan.FromMilliseconds(250)) ?? true) ||
+                !(m_connectTask?.Wait(TimeSpan.FromMilliseconds(250)) ?? true))
+            {
+                throw new Exception("One or more subtasks failed to terminate within a reasonable amount of time");
+            }
+
+            m_discoveryReceiver.Dispose();
+            m_stopListeningToken.Dispose();
+            m_listenTask?.Dispose();
+            m_connectTask?.Dispose();
+            m_receivedServerBroadcastEvent.Dispose();
+        }
+
         public void StartListenForServer()
 		{
 			m_discoveryReceiver.Client.ReceiveTimeout = 1000;
@@ -66,31 +83,31 @@ namespace CameraControlOverEthernet
 			foreach (NetworkInterface adapter in nics)
 			{
 				IPInterfaceProperties ipProperties = adapter.GetIPProperties();
-				if (adapter.GetIPProperties().MulticastAddresses.Count > 0 &&
-					adapter.SupportsMulticast &&
-					adapter.OperationalStatus == OperationalStatus.Up &&
-					adapter.NetworkInterfaceType != NetworkInterfaceType.Tunnel &&
-					adapter.Name.StartsWith("vEthernet") == false)
+				if (adapter.SupportsMulticast &&
+                    adapter.OperationalStatus == OperationalStatus.Up &&
+                    adapter.NetworkInterfaceType != NetworkInterfaceType.Tunnel &&
+                    adapter.Name.StartsWith("vEthernet") == false)
 				{
 					foreach (UnicastIPAddressInformation addr in ipProperties.UnicastAddresses)
 					{
 						if (addr.Address.AddressFamily == AddressFamily.InterNetwork)
 						{
 							m_discoveryReceiver.JoinMulticastGroup(NetworkedDeviceAPIServer.DiscoveryMulticastAddress, addr.Address);
-						}
+                            Logger.LogVerbose("CCClient", $"Joining multicast on local address {addr.Address}");
+                        }
 					}
 				}
 			}
 
 
-			m_listenTask = new Task(BackgroundListenForServer);
+			m_listenTask = new Task(BackgroundListenForServer, m_stopListeningToken.Token);
 			m_listenTask.Start();
 
-			m_connectTask = new Task(BackgroundConnectToServer);
+			m_connectTask = new Task(BackgroundConnectToServer, m_stopListeningToken.Token);
 			m_connectTask.Start();
 		}
 
-		private void BackgroundListenForServer()
+        private void BackgroundListenForServer()
 		{
 			while (!m_stopListeningToken.IsCancellationRequested)
 			{
@@ -369,5 +386,5 @@ namespace CameraControlOverEthernet
 				m_lastHeartbeatSendTime = DateTime.UtcNow;
 			}
 		}
-	}
+    }
 }
