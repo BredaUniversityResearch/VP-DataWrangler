@@ -113,21 +113,25 @@ namespace CameraControlOverEthernet
 			{
 				IPEndPoint remoteEndPoint = new IPEndPoint(NetworkedDeviceAPIServer.DiscoveryMulticastAddress, NetworkedDeviceAPIServer.DiscoveryMulticastPort);
 				byte[]? buffer = null;
-				try
-				{
-					UdpReceiveResult result = m_discoveryReceiver.ReceiveAsync(m_stopListeningToken.Token).Result;
+                try
+                {
+                    UdpReceiveResult result = m_discoveryReceiver.ReceiveAsync(m_stopListeningToken.Token).Result;
                     buffer = result.Buffer;
                     remoteEndPoint = result.RemoteEndPoint;
                 }
-				catch (SocketException ex)
-				{
-					if (ex.SocketErrorCode != SocketError.TimedOut)
-					{
-						throw;
-					}
-				}
+                catch (OperationCanceledException)
+                {
+					//Swallow exception as during shutdown this will be thrown.
+                }
+                catch (SocketException ex)
+                {
+                    if (ex.SocketErrorCode != SocketError.TimedOut)
+                    {
+                        throw;
+                    }
+                }
 
-				if (!m_stopListeningToken.IsCancellationRequested && buffer?.Length > 0)
+                if (!m_stopListeningToken.IsCancellationRequested && buffer?.Length > 0)
 				{
 					Logger.LogVerbose("CCClient", $"Received multicast packet from {remoteEndPoint}");
 					using (MemoryStream ms = new MemoryStream(buffer))
