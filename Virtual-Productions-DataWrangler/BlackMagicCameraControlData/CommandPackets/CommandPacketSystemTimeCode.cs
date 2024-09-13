@@ -12,7 +12,13 @@ namespace BlackmagicCameraControlData.CommandPackets
 		{
 		}
 
-		public CommandPacketSystemTimeCode(CommandReader a_reader)
+        public CommandPacketSystemTimeCode(TimeCode a_timeCode)
+        {
+            BinaryCodedTimeCode = a_timeCode.TimeCodeAsBinaryCodedDecimal;
+            TimeCode = a_timeCode;
+        }
+
+        public CommandPacketSystemTimeCode(CommandReader a_reader)
 		{
 			BinaryCodedTimeCode = a_reader.ReadUInt32();
 			TimeCode = TimeCode.FromBCD((uint)BinaryCodedTimeCode);

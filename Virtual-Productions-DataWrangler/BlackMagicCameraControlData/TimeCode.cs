@@ -64,7 +64,12 @@ namespace BlackmagicCameraControlData
 			return new TimeCode(hour, minute, second, frame);
 		}
 
-		public bool Equals(TimeCode other)
+        public static TimeCode FromTime(TimeOnly a_time, int a_frameRate)
+        {
+            return new TimeCode(a_time.Hour, a_time.Minute, a_time.Second, a_time.Millisecond / (1000 / a_frameRate));
+        }
+
+        public bool Equals(TimeCode other)
 		{
 			return TimeCodeAsBinaryCodedDecimal == other.TimeCodeAsBinaryCodedDecimal;
 		}

@@ -78,6 +78,7 @@ namespace DataWranglerInterface.ShotRecording
 
 		public void SetCurrentMeta(IngestDataShotVersionMeta a_meta)
 		{
+			Dispatcher.InvokeAsync(() => { SourceMeta = a_meta; });
 		}
 
 		public void UpdateDisplayedWidgets()

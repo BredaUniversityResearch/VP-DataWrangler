@@ -12,7 +12,7 @@ namespace DataWranglerInterface.Configuration
 		public static DataWranglerInterfaceConfig Instance { get; private set; } = null!;
 
 		public List<ConfigActiveCameraGrouping> ConfiguredCameraGroupings = new List<ConfigActiveCameraGrouping>();
-		public ConfigString ShotVersionNameTemplate = new ConfigString("Take_${ShotVersionId}");
+		public ConfigString ShotVersionNameTemplate = new ConfigString("Take ${ShotVersionId}");
 
 		private bool m_needsToBeSaved = false;
 		private readonly object m_saveSychPrimitive = new();

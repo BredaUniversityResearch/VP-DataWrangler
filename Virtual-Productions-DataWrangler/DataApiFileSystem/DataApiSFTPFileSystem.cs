@@ -460,7 +460,14 @@ namespace DataApiSFTP
 							if (m_client.Exists(metaPath))
 							{
 								string metaAsString = m_client.ReadAllText(metaPath);
-								attrib = JsonConvert.DeserializeObject<DataApiSFTPShotVersionAttributes>(metaAsString);
+								try
+								{
+									attrib = JsonConvert.DeserializeObject<DataApiSFTPShotVersionAttributes>(metaAsString);
+								}
+								catch (JsonReaderException)
+								{
+									return new DataApiResponse<DataEntityShotVersion[]>(null, new DataApiErrorDetails($"Shot {a_shotEntityId} has invalid metadata at \"{metaPath}\"."));
+								}
 							}
 
 							if (attrib == null)

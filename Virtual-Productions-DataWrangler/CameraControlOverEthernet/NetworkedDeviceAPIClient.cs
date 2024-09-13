@@ -41,8 +41,10 @@ namespace CameraControlOverEthernet
 		private static readonly TimeSpan HeartbeatSendInterval = TimeSpan.FromSeconds(5);
         private static readonly TimeSpan InactivityDisconnectTime = TimeSpan.FromSeconds(15);
 
+        private readonly NetworkAPIDeviceCapabilities.EDeviceRole m_targetDeviceRole;
+
 		private List<ServerConnection> m_activeClients = new List<ServerConnection>();
-		private UdpClient m_discoveryReceiver = new UdpClient(NetworkedDeviceAPIServer.DiscoveryMulticastPort);
+		private UdpClient? m_discoveryReceiver = null;
 
 		private CancellationTokenSource m_stopListeningToken = new CancellationTokenSource();
 		private Task? m_listenTask;
@@ -59,6 +61,22 @@ namespace CameraControlOverEthernet
 		public event ConnectedOrDisconnectedDelegate OnDisconnected = delegate { };
         public event DataReceivedDelegate OnDataReceived = delegate { };
 
+        public bool IsConnected
+        {
+            get
+            {
+                lock (m_activeClients)
+                {
+                    return m_activeClients.Count > 0;
+                }
+            }
+        }
+
+        public NetworkedDeviceAPIClient(NetworkAPIDeviceCapabilities.EDeviceRole a_deviceRole = NetworkAPIDeviceCapabilities.EDeviceRole.ApplicationStateDisplay)
+        {
+            m_targetDeviceRole = a_deviceRole;
+        }
+
         public void Dispose()
         {
             m_stopListeningToken.Cancel();
@@ -69,7 +87,7 @@ namespace CameraControlOverEthernet
                 throw new Exception("One or more subtasks failed to terminate within a reasonable amount of time");
             }
 
-            m_discoveryReceiver.Dispose();
+            m_discoveryReceiver?.Dispose();
             m_stopListeningToken.Dispose();
             m_listenTask?.Dispose();
             m_connectTask?.Dispose();
@@ -78,28 +96,6 @@ namespace CameraControlOverEthernet
 
         public void StartListenForServer()
 		{
-			m_discoveryReceiver.Client.ReceiveTimeout = 1000;
-			NetworkInterface[] nics = NetworkInterface.GetAllNetworkInterfaces();
-			foreach (NetworkInterface adapter in nics)
-			{
-				IPInterfaceProperties ipProperties = adapter.GetIPProperties();
-				if (adapter.SupportsMulticast &&
-                    adapter.OperationalStatus == OperationalStatus.Up &&
-                    adapter.NetworkInterfaceType != NetworkInterfaceType.Tunnel &&
-                    adapter.Name.StartsWith("vEthernet") == false)
-				{
-					foreach (UnicastIPAddressInformation addr in ipProperties.UnicastAddresses)
-					{
-						if (addr.Address.AddressFamily == AddressFamily.InterNetwork)
-						{
-							m_discoveryReceiver.JoinMulticastGroup(NetworkedDeviceAPIServer.DiscoveryMulticastAddress, addr.Address);
-                            Logger.LogVerbose("CCClient", $"Joining multicast on local address {addr.Address}");
-                        }
-					}
-				}
-			}
-
-
 			m_listenTask = new Task(BackgroundListenForServer, m_stopListeningToken.Token);
 			m_listenTask.Start();
 
@@ -110,8 +106,65 @@ namespace CameraControlOverEthernet
         private void BackgroundListenForServer()
 		{
 			while (!m_stopListeningToken.IsCancellationRequested)
-			{
-				IPEndPoint remoteEndPoint = new IPEndPoint(NetworkedDeviceAPIServer.DiscoveryMulticastAddress, NetworkedDeviceAPIServer.DiscoveryMulticastPort);
+            {
+                bool hasActiveConnection = false;
+                lock (m_activeClients)
+                {
+                    hasActiveConnection = m_activeClients.Count > 0;
+                }
+
+				if (hasActiveConnection)
+                {
+                    if (m_discoveryReceiver != null)
+                    {
+                        m_discoveryReceiver.Dispose();
+                        m_discoveryReceiver = null;
+                    }
+
+                    Thread.Sleep(TimeSpan.FromSeconds(1));
+                    continue;
+                }
+
+                if (m_discoveryReceiver == null)
+                {
+                    try
+                    {
+                        m_discoveryReceiver = new UdpClient(NetworkedDeviceAPIServer.DiscoveryMulticastPort);
+                        m_discoveryReceiver.Client.ReceiveTimeout = 1000;
+                    }
+                    catch (SocketException ex)
+                    {
+                        if (ex.SocketErrorCode == SocketError.AddressAlreadyInUse)
+                        {
+                            Thread.Sleep(TimeSpan.FromSeconds(1));
+                            continue;
+                        }
+
+                        throw;
+                    }
+
+                    NetworkInterface[] nics = NetworkInterface.GetAllNetworkInterfaces();
+                    foreach (NetworkInterface adapter in nics)
+                    {
+                        IPInterfaceProperties ipProperties = adapter.GetIPProperties();
+                        if (adapter.SupportsMulticast &&
+                            adapter.OperationalStatus == OperationalStatus.Up &&
+                            adapter.NetworkInterfaceType != NetworkInterfaceType.Tunnel &&
+                            adapter.Name.StartsWith("vEthernet") == false)
+                        {
+                            foreach (UnicastIPAddressInformation addr in ipProperties.UnicastAddresses)
+                            {
+                                if (addr.Address.AddressFamily == AddressFamily.InterNetwork)
+                                {
+                                    m_discoveryReceiver.JoinMulticastGroup(NetworkedDeviceAPIServer.DiscoveryMulticastAddress, addr.Address);
+                                    Logger.LogVerbose("CCClient", $"Joining multicast on local address {addr.Address}");
+                                }
+                            }
+                        }
+                    }
+                }
+
+                IPEndPoint remoteEndPoint = new IPEndPoint(NetworkedDeviceAPIServer.DiscoveryMulticastAddress, NetworkedDeviceAPIServer.DiscoveryMulticastPort);
 				byte[]? buffer = null;
                 try
                 {
@@ -203,7 +256,7 @@ namespace CameraControlOverEthernet
 						Logger.LogVerbose("CCClient", $"Successfully connected to server {a_endPointValue}");
 					}
 
-                    NetworkAPIReportDeviceCapabilitiesPacket capabilities = new NetworkAPIReportDeviceCapabilitiesPacket() {DeviceRole = (int)NetworkAPIDeviceCapabilities.EDeviceRole.ApplicationStateDisplay};
+                    NetworkAPIReportDeviceCapabilitiesPacket capabilities = new NetworkAPIReportDeviceCapabilitiesPacket() {DeviceRole = (int)m_targetDeviceRole};
                     SendPacket(capabilities);
 
 					OnConnected(a_serverIdentifier);
