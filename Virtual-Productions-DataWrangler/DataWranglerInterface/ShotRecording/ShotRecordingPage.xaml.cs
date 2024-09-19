@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -44,13 +45,12 @@ namespace DataWranglerInterface.ShotRecording
 
 			//CameraInfoDebug.CameraApiController = m_bluetoothController;
 
-			m_shotRecordingState.OnSelectedProjectChanged += OnSelectedProjectChanged;
-			m_shotRecordingState.OnSelectedShotChanged += OnSelectedShotChanged;
-
+			m_shotRecordingState.PropertyChanged += OnRecordingStatePropertyChanged;
+			
 			ProjectSelector.AsyncRefreshProjects();
 
-			ProjectSelector.OnSelectedProjectChanged += m_shotRecordingState.ProjectSelectionChanged;
-			ShotSelector.OnSelectedShotChanged += m_shotRecordingState.SelectedShotChanged;
+			ProjectSelector.OnSelectedProjectChanged += (a_selectedProject) => m_shotRecordingState.SelectedProject = a_selectedProject;
+			ShotSelector.OnSelectedShotChanged += (a_selectedShot) => m_shotRecordingState.SelectedShot = a_selectedShot;
 
 			CameraInfo.OnCameraRecordingStateChanged += ShotTemplateDisplay.OnActiveCameraRecordingStateChanged;
 
@@ -70,7 +70,7 @@ namespace DataWranglerInterface.ShotRecording
 			}
 		}
 
-        public void Dispose()
+		public void Dispose()
 		{
 			m_activeCameraHandler.OnVirtualCameraConnected -= VirtualCameraConnected;
 			m_activeCameraHandler.OnCameraDisconnected -= OnCameraDisconnected;
@@ -86,6 +86,24 @@ namespace DataWranglerInterface.ShotRecording
 		{
 			CameraInfo.RemoveTargetCameraInfo(a_handle);
 			//CameraInfoDebug.SetTargetCamera(null);
+		}
+
+		private void OnRecordingStatePropertyChanged(object? a_sender, PropertyChangedEventArgs a_e)
+		{
+			ShotRecordingApplicationState? appState = (ShotRecordingApplicationState?) a_sender;
+			if (appState == null)
+			{
+				throw new Exception();
+			}
+
+			if (a_e.PropertyName == nameof(ShotRecordingApplicationState.SelectedProject))
+			{
+				OnSelectedProjectChanged(appState.SelectedProject);
+			}
+			else if (a_e.PropertyName == nameof(ShotRecordingApplicationState.SelectedShot))
+			{
+				OnSelectedShotChanged(appState.SelectedShot);
+			}
 		}
 
 		private void OnSelectedProjectChanged(DataEntityProject? a_project)

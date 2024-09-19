@@ -73,12 +73,15 @@ namespace DataWranglerInterface.ShotRecording
 		{
 			m_parentPage = a_parentPage;
 			m_shotRecordingState = a_applicationState;
-			m_shotRecordingState.OnSelectedShotChanged += OnSelectedShotChanged;
+			m_shotRecordingState.PropertyChanged += OnRecordingStatePropertyChanged;
 		}
 
-		private void OnSelectedShotChanged(DataEntityShot? a_obj)
+		private void OnRecordingStatePropertyChanged(object? a_sender, PropertyChangedEventArgs a_e)
 		{
-			UpdatePredictedNextShotVersionName();
+			if (a_e.PropertyName == nameof(ShotRecordingApplicationState.SelectedShot))
+			{
+				UpdatePredictedNextShotVersionName();
+			}
 		}
 
 		private void UpdatePredictedNextShotVersionName()
@@ -92,7 +95,7 @@ namespace DataWranglerInterface.ShotRecording
 						if (!a_fetchTask.Result.IsError)
 						{
 							string nextShotVersionName = GetNextShotVersionName(a_fetchTask.Result.ResultData);
-							m_shotRecordingState?.NextShotVersionNameChanged(nextShotVersionName);
+							m_shotRecordingState.NextPredictedShotVersionName = nextShotVersionName;
 						}
 					});
 			}

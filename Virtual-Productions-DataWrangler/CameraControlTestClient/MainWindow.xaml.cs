@@ -40,8 +40,6 @@ namespace CameraControlTestClient
             {
                 while (!m_backgroundUpdateCancellationToken.IsCancellationRequested)
                 {
-                    m_apiClient.Update();
-
                     if (m_apiClient.IsConnected)
                     {
                         TimeCode currentTimeCode = TimeCode.FromTime(TimeOnly.FromDateTime(DateTime.Now), 25);

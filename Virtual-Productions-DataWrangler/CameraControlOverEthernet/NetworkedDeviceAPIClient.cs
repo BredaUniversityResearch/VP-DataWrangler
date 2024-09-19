@@ -106,7 +106,7 @@ namespace CameraControlOverEthernet
         private void BackgroundListenForServer()
 		{
 			while (!m_stopListeningToken.IsCancellationRequested)
-            {
+			{
                 bool hasActiveConnection = false;
                 lock (m_activeClients)
                 {
@@ -114,14 +114,16 @@ namespace CameraControlOverEthernet
                 }
 
 				if (hasActiveConnection)
-                {
+				{
+					Update();
+
                     if (m_discoveryReceiver != null)
                     {
                         m_discoveryReceiver.Dispose();
                         m_discoveryReceiver = null;
                     }
 
-                    Thread.Sleep(TimeSpan.FromSeconds(1));
+                    Thread.Sleep(TimeSpan.FromMilliseconds(100));
                     continue;
                 }
 
@@ -434,7 +436,7 @@ namespace CameraControlOverEthernet
 			}
 		}
 
-		public void Update()
+		private void Update()
 		{
 			CleanDisconnectedClients();
 			if (DateTime.UtcNow - m_lastHeartbeatSendTime > HeartbeatSendInterval)

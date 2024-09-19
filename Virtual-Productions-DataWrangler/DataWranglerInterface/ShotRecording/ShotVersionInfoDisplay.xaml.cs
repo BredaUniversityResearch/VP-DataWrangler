@@ -66,17 +66,23 @@ namespace DataWranglerInterface.ShotRecording
 		public void SetParentControls(ShotRecordingPage a_parentPage, ShotRecordingApplicationState a_applicationState)
 		{
 			m_recordingApplicationState = a_applicationState;
-			m_recordingApplicationState.OnSelectedShotChanged += OnShotSelected;
+			m_recordingApplicationState.PropertyChanged += OnRecordingStatePropertyChanged;
 
 			a_parentPage.OnNewShotVersionCreationStarted += (_) => VersionSelectorControl.BeginAddShotVersion();
 			a_parentPage.OnNewShotVersionCreated += (a_data) => VersionSelectorControl.EndAddShotVersion(a_data);
 		}
 
-		private void OnShotSelected(DataEntityShot? a_shot)
+		private void OnRecordingStatePropertyChanged(object? a_sender, PropertyChangedEventArgs a_e)
 		{
-			if (a_shot != null)
+			if (m_recordingApplicationState != null)
 			{
-				VersionSelectorControl.AsyncRefreshShotVersion(a_shot.EntityId);
+				if (a_e.PropertyName == nameof(ShotRecordingApplicationState.SelectedShot))
+				{
+					if (m_recordingApplicationState.SelectedShot != null)
+					{
+						VersionSelectorControl.AsyncRefreshShotVersion(m_recordingApplicationState.SelectedShot.EntityId);
+					}
+				}
 			}
 		}
 
@@ -116,7 +122,10 @@ namespace DataWranglerInterface.ShotRecording
 			}
 			SetTargetMeta(shotMeta);
 
-			m_recordingApplicationState?.SelectedShotVersionChanged(a_shotVersion);
+			if (m_recordingApplicationState != null)
+			{
+				m_recordingApplicationState.SelectedShotVersion = a_shotVersion;
+			}
 		}
 
 		private void OnAnyMetaPropertyChanged(object? a_sender, PropertyChangedEventArgs a_e)

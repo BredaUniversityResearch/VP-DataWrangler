@@ -1,4 +1,5 @@
-﻿using CameraControlOverEthernet;
+﻿using System.ComponentModel;
+using CameraControlOverEthernet;
 using DataApiCommon;
 
 namespace DataWranglerInterface.ShotRecording;
@@ -12,20 +13,14 @@ internal class ShotRecordingStateTransmitter: IDisposable, INetworkAPIEventHandl
 		DataWranglerServiceProvider.Instance.NetworkDeviceAPI.RegisterEventHandler(this);
 
 		m_state = a_applicationState;
-		m_state.OnSelectedProjectChanged += OnProjectChanged;
-		m_state.OnSelectedShotChanged += OnShotChanged;
-		m_state.OnSelectedShotVersionChanged += OnShotVersionChanged;
-		m_state.OnPredictedNextShotVersionNameChanged += OnPredictedShotVersionNameChanged;
+		m_state.PropertyChanged += OnRecordingStagePropertyChanged;
 	}
 
 	public void Dispose()
 	{
 		DataWranglerServiceProvider.Instance.NetworkDeviceAPI.UnregisterEventHandler(this);
 
-		m_state.OnSelectedProjectChanged -= OnProjectChanged;
-		m_state.OnSelectedShotChanged -= OnShotChanged;
-		m_state.OnSelectedShotVersionChanged -= OnShotVersionChanged;
-		m_state.OnPredictedNextShotVersionNameChanged -= OnPredictedShotVersionNameChanged;
+		m_state.PropertyChanged -= OnRecordingStagePropertyChanged;
 	}
 
 	private ShotRecordingStatePacket CreateUpdatedRecordingStatePacket()
@@ -35,25 +30,7 @@ internal class ShotRecordingStateTransmitter: IDisposable, INetworkAPIEventHandl
 			m_state.NextPredictedShotVersionName);
 	}
 
-	private void OnProjectChanged(DataEntityProject? a_obj)
-	{
-		var transmitter = DataWranglerServiceProvider.Instance.NetworkDeviceAPI;
-		transmitter.SendMessageToAllConnectedClients(CreateUpdatedRecordingStatePacket()); 
-	}
-
-	private void OnShotChanged(DataEntityShot? a_obj)
-	{
-		var transmitter = DataWranglerServiceProvider.Instance.NetworkDeviceAPI;
-		transmitter.SendMessageToAllConnectedClients(CreateUpdatedRecordingStatePacket()); 
-	}
-
-	private void OnShotVersionChanged(DataEntityShotVersion? a_obj)
-	{
-		var transmitter = DataWranglerServiceProvider.Instance.NetworkDeviceAPI;
-		transmitter.SendMessageToAllConnectedClients(CreateUpdatedRecordingStatePacket()); 
-	}
-
-	private void OnPredictedShotVersionNameChanged(string a_obj)
+	private void OnRecordingStagePropertyChanged(object? a_sender, PropertyChangedEventArgs a_e)
 	{
 		var transmitter = DataWranglerServiceProvider.Instance.NetworkDeviceAPI;
 		transmitter.SendMessageToAllConnectedClients(CreateUpdatedRecordingStatePacket()); 
