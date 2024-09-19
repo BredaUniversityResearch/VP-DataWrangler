@@ -178,6 +178,11 @@ namespace DataWranglerInterface.ShotRecording
 			{
 				if (m_shouldCreateNewShotOnRecord)
 				{
+					if (m_targetShot?.DataSourcesTemplate != null)
+					{
+						DataWranglerEventDelegates.Instance.NotifyRecordingStartedBeforeShotDataCreated(a_camera, m_targetShot.DataSourcesTemplate);
+					}
+
 					IngestDataShotVersionMeta targetMeta = m_targetShot?.DataSourcesTemplate.Clone() ?? new IngestDataShotVersionMeta();
 					if (m_subscriber != null)
 					{

@@ -29,11 +29,11 @@ namespace DataWranglerCommon.IngestDataSources
 
 	public class IngestDataSourceHandlerTascam : IngestDataSourceHandler
 	{	
-		private int m_nextFileIndex = 0;
+		private int m_nextFileIndex = 1;
 
 		public override void InstallHooks(DataWranglerEventDelegates a_eventDelegates, DataWranglerServices a_services)
 		{
-			a_eventDelegates.OnRecordingStarted += OnRecordingStarted;
+			a_eventDelegates.OnRecordingStartedBeforeShotDataCreated += OnRecordingStarted;
 		}
 
 		private void OnRecordingStarted(ActiveCameraInfo a_sourceCamera, IngestDataShotVersionMeta a_shotMetaData)
